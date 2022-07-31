@@ -25,8 +25,8 @@ _____________
 | Window Manager:      | XFWM    |
 | Display Manager:     | LightDM |
 
-______________
-##Ada Projects
+_______________
+## Ada Projects
 
 - adacurses
 - ada_language_server
@@ -76,8 +76,8 @@ ___________
 
 - Archlinux
 - Ada 2012
-- Lace Project
-- aShell Project
+- [Lace Project](https://github.com/charlie5/lace)
+- [aShell Project](https://github.com/charlie5/aShell)
 - An Internet Connection
 
 Install the dependencies and then ...
@@ -116,8 +116,8 @@ The installer will only accept legal hostnames, usernames and passwords. The use
 Disks and partitions may be customised during the install process (via the 'gnome-disk-utility').
 
 
-__________
-##Feedback
+___________
+## Feedback
 
 Comments, suggestions and critiques are very welcome, either via the github project 'Issues' section or IRC to 'charlie5' on #ada channel
  at 'irc.libera.chat'.
