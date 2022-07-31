@@ -2,9 +2,9 @@
 
 set -e
 
-pushd ../installer
-gprbuild -P laceos_installer
-popd
+#pushd ../installer
+#gprbuild -P laceos_installer
+#popd
 
 cp ../installer/install_laceOS  \
    profile/airootfs/usr/local/bin
