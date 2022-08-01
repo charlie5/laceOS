@@ -95,7 +95,8 @@ Should the build fail (due to a slow internet connnection) or is otherwise inter
 _____________
 ## Installing
 
-Either build the install ISO as detailed above or download a pre-built ISO using a bittorrent client ([magnet](https://tinyurl.com/4ufwe9t4)).
+Either build the install ISO as detailed above or download a pre-built
+[ISO](https://github.com/charlie5/laceOS/blob/master/laceOS-0.0-x86_64.iso.torrent) using a bittorrent client.
 
 As the current initial version is a prototype, please test/trial in a virtual machine until a stable version is released.
 
