@@ -37,7 +37,8 @@ _______________
 - alire
 - aunit
 - florist
-- gcc-ada (v12.1.0)
+- gcc-ada (v12.1.1)
+- gcc-ada-debug (v12.1.1)
 - gnatcoll-core
 - gnatcoll-db2ada
 - gnatcoll-gmp
@@ -53,6 +54,7 @@ _______________
 - gnatcoll-syslog
 - gnatcoll-xref
 - gnatcoll-zlib
+- gnatdoc
 - gnatstudio
 - gnatsymbolize
 - gprbuild
