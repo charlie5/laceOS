@@ -737,6 +737,7 @@ is
          end loop;
 
          Dlog (run ("grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB", in_Chroot => True));
+         Dlog (run ("rsync -av custom/boot/grub/ada-mascot.png /mnt/boot/grub"));
          Dlog (run ("grub-mkconfig -o /boot/grub/grub.cfg",                                        in_Chroot => True));
 
          for i in 1 .. Id
