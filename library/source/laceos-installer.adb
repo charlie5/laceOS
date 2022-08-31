@@ -669,7 +669,13 @@ is
       procedure add_custom_Files_to_etc
       is
       begin
-         run ("rsync -av custom/etc/ /mnt/etc");
+         Dlog (run ("rsync -av custom/etc/ /mnt/etc"));
+
+         Dlog (run ("chmod --recursive u+x /mnt/etc/skel/Desktop/study/ada/1983"));
+         Dlog (run ("chmod --recursive u+x /mnt/etc/skel/Desktop/study/ada/1995"));
+         Dlog (run ("chmod --recursive u+x /mnt/etc/skel/Desktop/study/ada/2005"));
+         Dlog (run ("chmod --recursive u+x /mnt/etc/skel/Desktop/study/ada/2012"));
+         Dlog (run ("chmod --recursive u+x /mnt/etc/skel/Desktop/study/ada/2022"));
       end add_custom_Files_to_etc;
 
 
