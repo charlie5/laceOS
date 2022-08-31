@@ -512,6 +512,32 @@ is
       end install_AUR_Packages;
 
 
+
+      procedure install_desktop_Backgrounds
+      is
+         use lace.Text;
+         Lines : constant lace.Text.items_64 := all_Lines.Lines (forge.to_Text ("miscellaneous_packages"));
+      begin
+         Dlog ("Installing desktop backgrounds.");
+         Dlog ("");
+
+         Dlog (run ("rsync -av --quiet --mkpath custom/usr/share/backgrounds/ /mnt/usr/share/backgrounds"));
+      end install_desktop_Backgrounds;
+
+
+
+      procedure install_ada_Documents
+      is
+         use lace.Text;
+         Lines : constant lace.Text.items_64 := all_Lines.Lines (forge.to_Text ("miscellaneous_packages"));
+      begin
+         Dlog ("Installing Ada documents.");
+         Dlog ("");
+
+         Dlog (run ("rsync -av --quiet --mkpath custom/usr/share/doc/ada/ /mnt/usr/share/doc/ada"));
+      end install_ada_Documents;
+
+
    begin
       run ("mount -o remount,size=8G /run/archiso/cowspace");                      -- Increase the size of cowspace.
       run ("rsync -av --quiet custom/var/cache/pacman/pkg /var/cache/pacman");     -- Add the pacman cache for use by 'pacstrap -c' below.
@@ -519,6 +545,8 @@ is
       install_essential_Packages;
       install_miscellaneous_Packages;
       install_AUR_Packages;
+      install_desktop_Backgrounds;
+      install_ada_Documents;
    end install_Packages;
 
 
