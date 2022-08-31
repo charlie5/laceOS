@@ -1,0 +1,486 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Rationale, Sec 12.4: Rationale for the Formulation of Generic Units</TITLE>
+</HEAD>
+
+<BODY>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 12: Generic Units</H2>
+
+<H3><a name="12.4">12.4 Rationale for the Formulation of Generic Units</a></H3>
+
+The generic  facility is  expected to  serve for  the construction  of
+general-purpose parameterized  packages.  Whereas  such  packages  are
+likely to be utilized by large classes of users, it should be realized
+that fewer  programmers will  actually be  involved in writing generic
+packages. Accordingly,  we have tried to design a facility that can be
+almost ignored  by the majority of users. They must indeed know how to
+instantiate a  generic package,  and this is fairly easy. On the other
+hand, they  need not  be  familiar  with  the  rules  and  precautions
+necessary for writing generic units.
+<p>
+A major  simplification, in  this respect,  is achieved by adopting an
+approach based  on a  context-dependent extension  of the  traditional
+techniques of  macro-expansion. This  solution has  the  advantage  of
+introducing  only  a  minimum  of  additional  features.  It  is  well
+implementable within  the state  of  the  art,  and  it  provides  the
+flexibility required by the applications.
+<p>
+This approach  has important  consequences for  the  specification  of
+generic formal  parameters. The  other major  simplifying  assumptions
+made  in   the  language   concern  the   requirement   for   explicit
+instantiation, and  the specification  of formal operations applicable
+to formal types. These issues will be discussed separately below.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<br><br>
+<a href="#12.4.1">12.4.1 Explicit Instantiation of Generic Units</a><BR>
+<a href="#12.4.2">12.4.2 Generic Formal Parameters: The Contract Model</a><BR>
+<a href="#12.4.3">12.4.3 Default Generic Parameters</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="12.4.1">12.4.1 Explicit Instantiation of Generic Units</a></H3>
+
+The requirement  that instantiation be explicit greatly simplifies the
+compilation of program units obtained by generic instantiation.
+<p>
+The  approach   taken   here   clearly   distinguishes   between   the
+instantiation of a program unit, obtained from a generic unit, and the
+invocation of the resulting program unit - calling a subprogram, using
+a package. Thereby it emphasizes the contrast between translation-time
+substitution of  generic actual  parameters and execution-time passage
+of actual parameters to subprograms. Explicit instantiation provides a
+well-defined locus  for  the  point  of  instantiation  and  also  for
+reporting any  errors  arising  from  inconsistent  substitution.  The
+resultant program  unit  can  be  invoked  subsequently  as  often  as
+required, with  the same degree of power and security as for any other
+nongeneric program  unit; this  is a  consequence of  the fact  that a
+program unit  obtained by  generic instantiation  is indistinguishable
+from the  same  program  unit  defined  explicitly  at  the  point  of
+instantiation.
+<p>
+An alternative solution considered was implicit instantiation. For the
+purpose of the discussion of the complexity of implicit instantiation,
+consider the  following generic  function (which  is actually  just  a
+different way  of writing  the power  function  given  in  a  previous
+section):
+<table border cellpadding=6><tr><td><pre>
+generic
+  type ELEM is private;
+  with function "&#42;" (LEFT, RIGHT :  ELEM) return ELEM;
+function POWER(E :  ELEM;  N :  POSITIVE) return ELEM;
+
+function POWER(E :  ELEM;  N :  POSITIVE) return ELEM is
+begin
+  if N = 1 then
+    return E;
+  else
+    return E &#42; POWER(E, N - 1);
+  end if;
+end POWER;
+</pre></td></tr></table>
+<p>
+If implicit instantiation were provided, then for:
+<table border cellpadding=6><tr><td><pre>
+R :  RATIONAL;
+I :  INTEGER;
+</pre></td></tr></table>
+<p>
+exponentiation could  be applied without prior explicit instantiation.
+Thus:
+<table border cellpadding=6><tr><td><pre>
+POWER(R , 5)
+POWER(I , 5)
+</pre></td></tr></table>
+<p>
+would both be legal. The actual type used for ELEM would be implicitly
+inferred from  the actual  parameter associated  with E in each call -
+that is, RATIONAL for R, INTEGER for I.
+<p>
+Implicit  instantiation   would   complicate   the   rules   for   the
+identification of  overloaded subprograms.  If a version of POWER were
+defined directly within the package RATIONAL_NUMBERS itself:
+<p>
+<PRE>    function POWER(E :  RATIONAL;  N :  INTEGER) return RATIONAL;</PRE>
+<p>
+then this  explicit definition would hide the generic definition in an
+application such  as POWER(R, 5). Thus the generic definition would be
+visible for  some types  and hidden  for others. This added complexity
+would reflect on compilers, and also on program readability.
+<p>
+Another problem  would arise  for the  identification of  POWER in the
+body of  the generic  unit itself:  would this be a recursive implicit
+instantiation or  a recursive call of the same instance? In the simple
+example considered,  it could  be easily  interpreted as  a  recursive
+call. However, in general, it is not at all clear that the problem can
+always be  resolved by  a  static  analysis  of  the  program  (unless
+restrictions are adopted). A sufficient condition to guarantee that no
+generic operation  will ever  require an  unbounded number of implicit
+generic instantiations  during execution  has been  given in  <a href="ratl-BIB.html">[BJ 78]</a>.
+However such checks require a quite complex analysis of the program.
+<p>
+In conclusion, implicit instantiation is still a research subject. The
+only solution  within  the  current  state  of  the  art  is  explicit
+instantiation and this is therefore the solution chosen for Ada.
+<p>
+Explicit instantiation  certainly requires more writing on the part of
+the user,  but it  provides better awareness of the instances that are
+created and  thus  contributes  to  reliability  and  readability.  In
+addition, it  offers distinct advantages in terms of efficiency, since
+compilers can easily identify the existing instantiations and, in some
+cases, achieve  optimizations such  as sharing  of code  among several
+instantiations of the same generic unit.
+
+<H3><BR><a name="12.4.2">12.4.2 Generic Formal Parameters: The Contract Model</a></H3>
+
+As stated earlier, a user instantiating a given generic package should
+be able  to ignore  the details  of the  generic body  completely.  In
+particular, if  any error is made in instantiating a generic unit, the
+error should  be  reported  to  the  user  in  terms  of  the  generic
+instantiation itself  - not  in terms  of the internals of the generic
+body. This requirement influences the form used for specifying generic
+formal parameters.
+<p>
+Consider by  analogy what is done for subprograms. For a normal - that
+is,  nongeneric  -  procedure,  specification  of  parameters  permits
+independent checks  of the  procedure body on the one hand, and of the
+procedure calls  on the  other hand.  Both must  conform to the formal
+parameter  specifications  and  these  legality  checks  can  be  done
+independently: the  procedure specification  is  a  sort  of  contract
+between the procedure body and the corresponding procedure calls.
+<p>
+The specification  of generic  formal parameters must achieve the same
+degree of independence:
+<ol type=a>
+<li>For a  given generic  body, it  should be possible to
+   check that  its text  is consistent  with  respect  to  the  formal
+   parameter specifications.
+<p>
+<li>For a  given  generic  instantiation,  it  should  be
+   possible to  check that  the actual  parameters are consistent with
+   respect to the formal parameter specifications.
+<p>
+<li>The precision  of the formal parameter specifications
+   should be  sufficient to  guarantee that  if the checks (a) and (b)
+   are successful, then the corresponding instantiations produce legal
+   program units.
+</ol>
+
+The solution  adopted to  achieve these  goals is  to require that all
+operations  of   a  generic  formal  type  be  determinable  from  its
+specification:
+<ul>
+<li>For a  formal type  specified as  limited private,  no operation is
+   assumed available  (apart from  certain attributes:  see <a href="http://archive.adaic.com/standards/83lrm/html/lrm-07-04.html#7.4.2">RM 7.4.2</a>).
+   Hence any operation that is applied to an object of the formal type
+   within the  generic unit  must be  provided as  an explicit generic
+   formal parameter.
+<p>
+<li>For a  formal type  specified as  private (not  limited), the  same
+   holds except  that assignment  and the  predefined  comparison  for
+   equality and inequality are available.
+<p>
+<li>For a  generic formal  type declared  as a type pattern with a box,
+   the operations  of the  corresponding kind  of type  are available:
+   they are  implicitly declared.  For  example,  the  floating  point
+   operators are  available for  any generic  formal type  defined  by
+   "digits &lt;&gt;".  Any other  operation must be provided explicitly by a
+   generic formal parameter.
+</ul>
+
+When the  body of  a generic unit is being checked, the generic formal
+part thus  provides the information required for the identification of
+all operations.  When a  given instantiation  is  being  checked,  the
+demands of  the generic  formal part  must be met and incorrect actual
+parameters  can  be  reported.  These  two  checks  can  be  performed
+independently. Furthermore, if errors exist in an instantiation, error
+messages can  be formulated in terms of the generic formal part, which
+is necessarily  known, rather  than in  terms of  the details  of  the
+generic body, which might be separately compiled and hidden.
+<p>
+Consider for  example the  generic formal  part given  for the generic
+function POWER:
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type ELEM is private;
+  with function "&#42;" (LEFT, RIGHT :  ELEM) return ELEM;
+function POWER(E :  ELEM;  N :  POSITIVE) return ELEM;
+</pre></td></tr></table>
+<p>
+The operation "&#42;" is explicitly provided as a generic parameter, along
+with the  type ELEM  itself. The  parameter E  and the  result of  the
+function POWER  are both  specified as  being  of  this  formal  type.
+Thereafter the  identification of the "&#42;" appearing within the generic
+body:
+<p>
+<table border cellpadding=6><tr><td><pre>
+function POWER(E :  ELEM;  N :  POSITIVE) return ELEM is
+begin
+  if N = 1 then
+    return E;
+  else
+    return E &#42; POWER(E, N - 1);
+  end if;
+end POWER;
+</pre></td></tr></table>
+<p>
+within the  expression   E &#42;  POWER(E, N-1)  can be done as usual - it
+refers to  the "&#42;"  declared in the generic formal part. Similarly the
+recursive call  of POWER  can be  correctly identified (since implicit
+instantiation  is   not  allowed).  Hence  the  generic  body  can  be
+completely checked.
+<p>
+Similarly a generic instantiation such as
+<p>
+<PRE>    function "&#42;&#42;" is new POWER(ELEM =&gt;  MATRIX, "&#42;" =&gt; MULT);</PRE>
+<p>
+can be  fully checked: Consider the function specification obtained by
+substituting in  the generic  formal function  the name  MULT for  the
+designator "&#42;", and the actual type MATRIX for the formal type ELEM:
+<p>
+<PRE>    function MULT(LEFT, RIGHT :  MATRIX) return MATRIX;</PRE>
+<p>
+Then the  instantiation is correct if there is - in the context of the
+instantiation - a function MULT with this parameter and result profile
+- the  only allowed  difference being  for the names of the parameters
+(LEFT and RIGHT). Conversely, consider:
+<p>
+<PRE>    function "&#42;&#42;" is new POWER(ELEM =&gt;  RATIONAL,  "&#42;" =&gt;  "not");     -- ILLEGAL!</PRE>
+<p>
+This generic instantiation can be reported as incorrect since there is
+no operation not corresponding to the specification
+<p>
+<PRE>    function "not" (LEFT, RIGHT :  RATIONAL) return RATIONAL;     -- ILLEGAL!</PRE>
+<p>
+An alternative considered in this design was the implicit inference of
+operations  of   a  formal   type.  The  reasons  for  rejecting  this
+alternative are  similar to those leading to the rejection of implicit
+instantiation. With  implicit inference  of operations,  the  previous
+example could be rewritten as:
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type ELEM is private;
+function POWER(E :  ELEM;  N :  POSITIVE) return ELEM;
+</pre></td></tr></table>
+<p>
+and we would be left with the problem of identifying the "&#42;" operation
+used in  the body.  For a  given  instantiation,  say  with  the  type
+RATIONAL, should the "&#42;" operation be identified as a global operation
+in the  context of  the generic  declaration or  in the context of the
+generic instantiation?  The two  alternatives might  lead to different
+results.
+<p>
+Note also that a statement such as
+<p>
+<PRE>    return E &#42; E &#42; E;</PRE>
+<p>
+would be ambiguous in the presence of several overloadings of "&#42;"; for
+example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+function "&#42;" (X, Y :  RATIONAL)  return RATIONAL;        --  (1)
+function "&#42;" (X, Y :  RATIONAL)  return INTEGER;         --  (2)
+function "&#42;" (X, :  INTEGER;  Y :  RATIONAL)  return RATIONAL;   -- (3)
+</pre></td></tr></table>
+<p>
+One  possible  interpretation  would  identify  both  operations  with
+definition (1);  another interpretation  would identify  the first "&#42;"
+with (2) and the second with (3).
+<p>
+In general,  the specifications  of the identified operations could be
+quite different  from instantiation  to instantiation depending on the
+operations visible  in the  context of the instantiation. None of this
+can happen with an explicit specification of the formal operation "&#42;".
+<p>
+To  summarize,   implicit  inference   of  operations,  based  on  the
+instantiation, would  introduce awkward  context-dependence and  would
+require  complete   rechecking  of   the   generic   body   for   each
+instantiation.   This   last   consequence   would   be   particularly
+unfortunate, since  generic bodies  could not  be checked  (and proved
+correct) independently of the context. It would defeat the goal stated
+initially, since  some error messages would have to be stated in terms
+of what is done within the generic body.
+<p>
+Note that  none of  the problems  of implicit  inference based  on the
+instantiation  arise   with  the   implicit  specification  of  formal
+operations that  exists for  type patterns  with boxes.  Consider  for
+example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type ELEM is digits &lt;&gt;;
+function SQUARING(X :  ELEM) return ELEM;
+
+function SQUARING(X :  ELEM) return ELEM is
+begin
+  return X &#42; X;
+end;
+</pre></td></tr></table>
+<p>
+Here the  declaration of  the formal  type has the effect of providing
+implicit declarations  for the operators of floating point types. Thus
+we have an implicitly declared formal function
+<p>
+<PRE>    function "&#42;" (LEFT, RIGHT :  ELEM) return ELEM;</PRE>
+<p>
+so that  identification of  the "&#42;"  used in  the generic body is done
+solely in terms of the generic specification.
+<p>
+The Ada  solution permits independent checking of generic units and of
+generic  instantiations.   Hence  it  largely  fulfills  our  goal  of
+permitting the  user to  ignore the  internal details  of the  generic
+units instantiated in his programs.
+<p>
+One limitation  of the  contract model concerns the ability to declare
+unconstrained objects.  Consider a  variant of  the formulation of the
+generic procedure EXCHANGE:
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type ITEM is private;
+procedure EXCHANGE(LEFT, RIGHT :  in out ITEM);
+
+procedure EXCHANGE(LEFT, RIGHT :  in out ITEM) is
+  TEMPORARY :  ITEM;
+begin
+  TEMPORARY :=  LEFT;
+  LEFT :=  RIGHT;
+  RIGHT :=  TEMPORARY;
+end;
+</pre></td></tr></table>
+<p>
+Then an instantiation with an unconstrained array type such as
+<p>
+<PRE>    procedure SWAP is new EXCHANGE(ITEM =&gt;  STRING);</PRE>
+<p>
+will not work since a declaration of an unconstrained variable of type
+STRING (here  TEMPORARY) would  not be allowed. The same problem would
+arise if  the actual  type were a type with discriminants that must be
+constrained. Note  on the  other hand  that the problem does not exist
+for constants - as in the original formulation:
+<p>
+<PRE>    OLD_LEFT :  constant ITEM  :=  LEFT;</PRE>
+<p>
+This limitation  means that some instantiations may be rejected on the
+grounds that  the body  requires the  ability to declare unconstrained
+objects of  the formal type. We have considered this consequence to be
+preferable to an increase in the complexity of the syntax.
+<p>
+Another limitation  concerns representation clauses. It is illustrated
+by the following example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type T is private;
+package OCTETS is
+  type R is
+    record
+      A :  T;
+    end record;
+  for R'SIZE use 8;
+end;
+</pre></td></tr></table>
+<p>
+since any  instantiation with  a type  such that T'SIZE &gt; 8 will fail.
+Again, such  cases are considered sufficiently abnormal not to warrant
+any special language rule.
+<p>
+To conclude this section on formal types let us note that Ada provides
+formal types for all classes of type except record and task types. The
+major reason for this is that it is not clear that reasonable criteria
+for matching  exist for  these type  classes -  criteria that would be
+consistent with  the degree  of type checking performed elsewhere, yet
+at the  same time  have a  good probability  of being  usable for many
+actual record types and task types.
+
+<H3><BR><a name="12.4.3">12.4.3 Default Generic Parameters</a></H3>
+
+As stated  before, all  operations applicable to a formal type must be
+specified explicitly  in the  generic formal  part.  Nevertheless,  in
+order to keep generic instantiations as simple as possible, a facility
+for specifying default values for generic parameters is offered, as it
+is for normal subprograms.
+<p>
+In many  cases, such defaults will actually be expressed by boxes. For
+example, the  generic formal part of the generic function POWER can be
+rewritten as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type ELEM is private;
+  with function "&#42;" (LEFT, RIGHT :  ELEM) return ELEM is &lt;&gt;;
+</pre></td></tr></table>
+<p>
+This parallels  exactly the  treatment of  in parameters  with default
+values for  subprograms. The  default parameter  is optional,  and  an
+instantiation such as
+<p>
+<PRE>    function "&#42;&#42;" is new POWER(RATIONAL);</PRE>
+<p>
+is taken as equivalent to the generic instantiation
+<p>
+<PRE>    function "&#42;&#42;" is new POWER(ELEM =&gt;  RATIONAL,  "&#42;" =&gt;  "&#42;");</PRE>
+<p>
+where the actual operation "&#42;" should have the specification
+<p>
+<PRE>    function "&#42;" (name_1, name_2 :  RATIONAL) return RATIONAL;</PRE>
+<p>
+and the  instantiation is  legal if  there is such a "&#42;" operation for
+the type  RATIONAL, whatever  may be the parameter names. For the same
+reason
+<p>
+<PRE>    function "&#42;&#42;" is new POWER(BOOLEAN);</PRE>
+<p>
+would be an error, since no such operation exists for the type BOOLEAN
+(assuming no  explicit definition).  Again, the  generic body  and the
+generic instantiations  can be checked independently. Furthermore, the
+default can always be overridden by providing an explicit parameter as
+in
+<p>
+<PRE>    function "&#42;&#42;" is new POWER(VECTOR, MULT);</PRE>
+<p>
+To summarize,  the necessity  to be  able  to  check  a  generic  body
+independently  of   its  generic  instantiations  (an  important  user
+requirement) forces  all operations  applicable to a formal type to be
+specified, explicitly  or implicitly, by the generic formal part. This
+could increase  the number of generic parameters that must be supplied
+and could  hence lead  to a  heavy syntax  of generic  instantiations.
+However,  defaults   can  be  specified  for  these  operations,  thus
+restoring much of the simplicity while losing none of the security.
+<p>
+In most  applications it  should be  possible to  have only  types  as
+mandatory parameters  and to provide defaults for all operations. This
+is consistent with the goal stated in the introduction, that writing a
+generic unit  may well  require some  care, but  using it  ought to be
+extremely simple.
+
+<center>
+<hr width=60%>
+&#164; <a href="ratl-13.html#13"><b>NEXT</b></a>
+&#164; <a href="ratl-12-03.html#12.3"><b>PREVIOUS</b></a>
+&#164; <a href="ratl-12.html#12"><b>UP</b></a>
+&#164; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#164; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#164;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+</BODY></HTML>

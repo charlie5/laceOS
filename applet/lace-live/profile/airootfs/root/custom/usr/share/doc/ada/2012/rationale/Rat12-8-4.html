@@ -1,0 +1,629 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Multiway tree containers</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.Indented1 {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>8.4 Multiway tree containers</H1>
+<div class="Normal">Three new containers are added for multiway trees; 
+two correspond to the existing unbounded definite and unbounded indefinite 
+forms for existing structures such as Lists and Maps in Ada 2005. There 
+is also a bounded form corresponding to the newly introduced bounded 
+containers for the existing structures discussed above. As expected their 
+names are<A NAME="I1633"></A><A NAME="I1634"></A></div>
+<div class="SwissExamples">A.C.Multiway_Trees<A NAME="I1635"></A><A NAME="I1636"></A><BR>
+A.C.Indefinite_Multiway_Trees<A NAME="I1637"></A><A NAME="I1638"></A><BR>
+A.C.Bounded_Multiway_Trees<A NAME="I1639"></A><A NAME="I1640"></A></div>
+<div class="Normal">These containers have all the operations required 
+to operate on a tree structure where each node can have multiple child 
+nodes to any depth. Thus there are operations on subtrees, the ability 
+to find siblings, to insert and remove children and so on. It will be 
+noted that many of the operations on trees are similar to corresponding 
+operations on lists.</div>
+<div class="Normal">We will look in detail at the unbounded definite 
+form by giving its specification interspersed with some explanation. 
+It starts with the usual generic parameters.</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Iterator_Interfaces;<BR>
+<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;<B>function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Ada.Containers.Multiway_Trees&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Multiway_Trees);<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Remote_Types(Multiway_Trees);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Tree&nbsp;<B>is</B>&nbsp;<B>tagged&nbsp;private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Constant_Indexing&nbsp;=&gt;&nbsp;Constant_Reference,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Variable_Indexing&nbsp;=&gt;&nbsp;Reference,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default_Iterator&nbsp;=&gt;&nbsp;Iterate,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Iterator_Element&nbsp;=&gt;&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(Tree);<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Cursor&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(Cursor);<BR>
+&nbsp;&nbsp;&nbsp;Empty_Tree:&nbsp;<B>constant</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;No_Element:&nbsp;<B>constant</B>&nbsp;Cursor;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Has_Element(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;Tree_Iterator_Interfaces&nbsp;<B>is&nbsp;new</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ada.Iterator_Interfaces(Cursor,&nbsp;Has_Element);</div>
+<div class="Normal">This is much as expected and follows the same pattern 
+as the start of the list container in the previous section.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Equal_Subtree<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Left_Position:&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right_Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Tree)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Is_Empty(Container:&nbsp;Tree)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Node_Count(Container:&nbsp;Tree)&nbsp;<B>return</B>&nbsp;Count_Type;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Subtree_Node_Count(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Count_Type;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Depth(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Count_Type;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Is_Root(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Is_Leaf(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Root(Container:&nbsp;Tree)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Clear(Container:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Tree);</div>
+<div class="Normal">A tree consists of a set of nodes linked together 
+in a hierarchical manner. Nodes are identified as usual by the value 
+of a cursor. Nodes can have one or more child nodes; the children are 
+ordered so that there is a first child and a last child. Nodes with the 
+same parent are siblings. One node is the root of the tree. If a node 
+has no children then it is a leaf node.<A NAME="I1641"></A><A NAME="I1642"></A><A NAME="I1643"></A><A NAME="I1644"></A><A NAME="I1645"></A><A NAME="I1646"></A><A NAME="I1647"></A><A NAME="I1648"></A></div>
+<div class="Normal">All nodes other than the root node have an associated 
+element whose type is <SPAN Class="swiss">Element_Type</SPAN>. The whole 
+purpose of the tree is of course to give access to these element values 
+in a structured manner.</div>
+<div class="Normal">The function <SPAN Class="swiss">&quot;=&quot;</SPAN> 
+compares two trees and returns true if and only if they have the same 
+structure of nodes and corresponding nodes have the same values as determined 
+by the generic parameter <SPAN Class="swiss">&quot;=&quot;</SPAN> for 
+comparing elements. Similarly, the function <SPAN Class="swiss">Equal_Subtree</SPAN> 
+compares two subtrees.</div>
+<div class="Normal">The function <SPAN Class="swiss">Node_Count</SPAN> 
+gives the number of nodes in a tree. All trees have at least one node, 
+the root node. The function <SPAN Class="swiss">Is_Empty</SPAN> returns 
+true only if the tree consists of just this root node. Note that <SPAN Class="swiss">A_Tree 
+= Empty_Tree</SPAN>, <SPAN Class="swiss">Node_Count(A_Tree) = 1</SPAN> 
+and <SPAN Class="swiss">Is_Empty(A_Tree)</SPAN> always have the same 
+value. The function <SPAN Class="swiss">Subtree_Node_Count</SPAN> returns 
+the number of nodes in the subtree identified by the cursor. If the cursor 
+value is <SPAN Class="swiss">No_Element</SPAN> then the result is zero.</div>
+<div class="Normal">The functions <SPAN Class="swiss">Is_Root</SPAN> 
+and <SPAN Class="swiss">Is_Leaf</SPAN> indicate whether a node is the 
+root or a leaf respectively. If a tree is empty and so consists of just 
+a root node then that node is both the root and a leaf so both functions 
+return true.</div>
+<div class="Normal">The function <SPAN Class="swiss">Depth</SPAN> returns 
+1 if the node is the root, and otherwise indicates the number of ancestor 
+nodes. Thus a node which is an immediate child of the root has depth 
+equal to 2. The function <SPAN Class="swiss">Root</SPAN> returns the 
+cursor designating the root of a tree. The procedure <SPAN Class="swiss">Clear</SPAN> 
+removes all elements from the tree so that it consists just of a root 
+node.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Element(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Element_Type;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Replace_Element<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Query_Element<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Position:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;Element:&nbsp;<B>in</B>&nbsp;Element_Type));</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Update_Element<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Element:&nbsp;<B>in&nbsp;out</B>&nbsp;Element_Type));</div>
+<div class="Normal">These subprograms have the expected behaviour similar 
+to other containers.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Constant&nbsp;Reference_Type<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Element:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;constant</B>&nbsp;Element_Type)&nbsp;<B>is&nbsp;private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Implicit_Dereference&nbsp;=&gt;&nbsp;Element;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Reference_Type<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Element:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;Element_Type)&nbsp;<B>is&nbsp;private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Implicit_Dereference&nbsp;=&gt;&nbsp;Element;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Constant_Reference<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>aliased&nbsp;in</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Constant_Reference_Type;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Reference<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>aliased&nbsp;in&nbsp;out</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Reference_Type;</div>
+<div class="Normal">These types and functions are similar to those for 
+the other containers and were explained in Section <A HREF="Rat12-6-3.html">6.3</A> 
+on iteration and also in the previous section (Section <A HREF="Rat12-8-3.html">8.3</A>).</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Assign(Target:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Tree;&nbsp;Source:&nbsp;<B>in</B>&nbsp;Tree);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Copy(Source:&nbsp;Tree)&nbsp;<B>return</B>&nbsp;Tree;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Move(Target:&nbsp;<B>in&nbsp;out</B>&nbsp;Tree;&nbsp;Source:&nbsp;<B>in&nbsp;out</B>&nbsp;Tree);</div>
+<div class="Normal">The subprograms <SPAN Class="swiss">Assign</SPAN> 
+and <SPAN Class="swiss">Copy</SPAN> behave as expected and were explained 
+in Section <A HREF="Rat12-8-2.html">8.2</A> on Bounded and unbounded 
+containers. The procedure <SPAN Class="swiss">Move</SPAN> moves all the 
+nodes from the source to the target after first clearing the target; 
+it does not make copies of the elements so after the operation the source 
+only has a root node.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Delete_Leaf(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Tree;&nbsp;Position:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Delete_Subtree(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Tree;&nbsp;Position:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Swap(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Tree;&nbsp;I,&nbsp;J:&nbsp;<B>in</B>&nbsp;Cursor);</div>
+<div class="Normal">The procedures <SPAN Class="swiss">Delete_Leaf</SPAN> 
+and <SPAN Class="swiss">Delete_Subtree</SPAN> check that the cursor value 
+designates a node of the container and raise <SPAN Class="swiss">Program_Error</SPAN> 
+if it does not. <SPAN Class="swiss">Program_Error</SPAN> is also raised 
+if <SPAN Class="swiss">Position</SPAN> designates the root node and so 
+cannot be removed. In the case of <SPAN Class="swiss">Delete_Leaf</SPAN>, 
+if the node has any children then <SPAN Class="swiss">Constraint_Error</SPAN> 
+is raised. The appropriate nodes are then deleted and <SPAN Class="swiss">Position</SPAN> 
+is set to <SPAN Class="swiss">No_Element</SPAN>.</div>
+<div class="Normal">The procedure <SPAN Class="swiss">Swap</SPAN> interchanges 
+the values in the two elements denoted by the two cursors. The elements 
+must be in the given container (and must not denote the root) otherwise 
+<SPAN Class="swiss">Program_Error</SPAN> is raised.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Find(Container:&nbsp;Tree;&nbsp;Item:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Cursor;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Find_In_Subtree(Item:&nbsp;Element_Type;&nbsp;Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Ancestor_Find(Item:&nbsp;Element_Type;&nbsp;Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Contains(Container:&nbsp;Tree;&nbsp;Item:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="Normal">These search for an element in the container with 
+the given value <SPAN Class="swiss">Item</SPAN>. The function <SPAN Class="swiss">Contains</SPAN> 
+returns false if the item is not found; the other functions return <SPAN Class="swiss">No_Element</SPAN> 
+if the item is not found. The function <SPAN Class="swiss">Find</SPAN> 
+searches the whole tree starting at the root node, <SPAN Class="swiss">Find_In_Subtree</SPAN> 
+searches the subtree rooted at the node given by <SPAN Class="swiss">Position</SPAN> 
+including the node itself; these searches are in depth-first order. The 
+function <SPAN Class="swiss">Ancestor_Find</SPAN> searches upwards through 
+the ancestors of the node given by <SPAN Class="swiss">Position</SPAN> 
+including the node itself.</div>
+<div class="Normal">Depth-first order is explained at the end of the 
+section.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Iterate<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Position:&nbsp;<B>in</B>&nbsp;Cursor));</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Iterate_Subtree<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Position:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Position:&nbsp;<B>in</B>&nbsp;Cursor));</div>
+<div class="Normal">These apply the procedure designated by the parameter 
+<SPAN Class="swiss">Process</SPAN> to each element of the whole tree 
+or the subtree. This includes the node at the subtree but not at the 
+root; iteration is in depth-first order.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Iterate(Container:&nbsp;<B>in</B>&nbsp;Tree)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Tree_Iterator_Interfaces.Forward_Iterator'Class;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Iterate_Subtree(Position:&nbsp;<B>in</B>&nbsp;Cursor)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Tree_Iterator_Interfaces.Forward_Iterator'Class;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The first of these 
+is called if we write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;The_Tree.Iterate&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;via&nbsp;cursor&nbsp;C</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and iterates over the 
+whole tree in the usual depth-first order. In order to iterate over a 
+subtree we write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;The_Tree.Iterate_Subtree(S)&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;via&nbsp;cursor&nbsp;C</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">and this iterates over the subtree rooted at the 
+cursor position given by <SPAN Class="swiss">S</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we use the other 
+new form of loop using <B>of</B> thus</div>
+<div class="SwissExamples"><B>for</B>&nbsp;E&nbsp;<B>of</B>&nbsp;The_Tree&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;to&nbsp;element&nbsp;E</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">then this also calls <SPAN Class="swiss">Iterate</SPAN> 
+since the aspect <SPAN Class="swiss">Default_Iterator</SPAN> of the type 
+<SPAN Class="swiss">Tree</SPAN> (see above) is <SPAN Class="swiss">Iterate</SPAN>. 
+However, we cannot iterate over a subtree using this mechanism.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Child_Count(Parent:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Count_Type;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Child_Depth(Parent,&nbsp;Child:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Count_Type;</div>
+<div class="Normal">The function <SPAN Class="swiss">Child_Count</SPAN> 
+returns the number of child nodes of the node denoted by <SPAN Class="swiss">Parent</SPAN>. 
+This count covers immediate children only and not grandchildren.</div>
+<div class="Normal">The function <SPAN Class="swiss">Child_Depth</SPAN> 
+indicates how many ancestors there are from <SPAN Class="swiss">Child</SPAN> 
+to <SPAN Class="swiss">Parent</SPAN>. If <SPAN Class="swiss">Child</SPAN> 
+is an immediate child of <SPAN Class="swiss">Parent</SPAN> then the result 
+is 1; if it is a grandchild then 2 and so on.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Insert_Child<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parent:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count:&nbsp;<B>in</B>&nbsp;Count_Type&nbsp;:=&nbsp;1);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Insert_Child<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parent:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count:&nbsp;<B>in</B>&nbsp;Count_Type&nbsp;:=&nbsp;1);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Insert_Child<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parent:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count:&nbsp;<B>in</B>&nbsp;Count_Type&nbsp;:=&nbsp;1);</div>
+<div class="Normal">These three procedures enable one or more new child 
+nodes to be inserted. The parent node is given by <SPAN Class="swiss">Parent</SPAN>. 
+If <SPAN Class="swiss">Parent</SPAN> already has children then the new 
+nodes are inserted before the child node identified by <SPAN Class="swiss">Before</SPAN>; 
+if <SPAN Class="swiss">Before</SPAN> is <SPAN Class="swiss">No_Element</SPAN> 
+then the new nodes are inserted after all existing children. The second 
+procedure is similar to the first but also returns a cursor to the first 
+of the added nodes. The third is like the second but the new elements 
+take their default values. Note the default value of one for the number 
+of new nodes.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Prepend_Child<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parent:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count:&nbsp;<B>in</B>&nbsp;Count_Type&nbsp;:=&nbsp;1);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Append_Child<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parent:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count:&nbsp;<B>in</B>&nbsp;Count_Type:=&nbsp;1);</div>
+<div class="Normal">These insert the new children before or after any 
+existing children.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Delete_Children(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Tree;&nbsp;Parent:&nbsp;<B>in</B>&nbsp;Cursor);</div>
+<div class="Normal">This procedure simply deletes all the children, grandchildren, 
+and so on of the node designated by <SPAN Class="swiss">Parent</SPAN>.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Copy_Subtree<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Target:&nbsp;<B>in&nbsp;out</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parent:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source:&nbsp;<B>in</B>&nbsp;Cursor);</div>
+<div class="Normal">This copies the complete subtree rooted at <SPAN Class="swiss">Source</SPAN> 
+into the tree denoted by <SPAN Class="swiss">Tree</SPAN> as a subtree 
+of <SPAN Class="swiss">Parent</SPAN> at the place denoted by <SPAN Class="swiss">Before</SPAN> 
+using the same rules as <SPAN Class="swiss">Insert_Child</SPAN>. Note 
+that this makes a complete copy and creates new nodes with values equal 
+to the corresponding existing nodes. Note also that <SPAN Class="swiss">Source</SPAN> 
+might be within <SPAN Class="swiss">Tree</SPAN> but might not. There 
+are the usual various checks.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Splice_Subtree<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Target:&nbsp;<B>in&nbsp;out</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parent:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Cursor);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Splice_Subtree<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parent:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Splice_Children<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Target:&nbsp;<B>in&nbsp;out</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Target_Parent:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source_Parent:&nbsp;<B>in</B>&nbsp;Cursor);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Splice_Children<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Target_Parent:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source_Parent:&nbsp;<B>in</B>&nbsp;Cursor);</div>
+<div class="Normal">These are similar to the procedures <SPAN Class="swiss">Splice</SPAN> 
+applying to lists. They enable nodes to be moved without copying. The 
+destination is indicated by <SPAN Class="swiss">Parent</SPAN> or <SPAN Class="swiss">Target_Parent</SPAN> 
+together with <SPAN Class="swiss">Before</SPAN> as usual indicating where 
+the moved nodes are to be placed with respect to existing children of 
+<SPAN Class="swiss">Parent</SPAN> or <SPAN Class="swiss">Target_Parent</SPAN>.</div>
+<div class="Normal">The first <SPAN Class="swiss">Splice_Subtree</SPAN> 
+moves the subtree rooted at <SPAN Class="swiss">Position</SPAN> in the 
+tree <SPAN Class="swiss">Source</SPAN> to be a child of <SPAN Class="swiss">Parent</SPAN> 
+in the tree <SPAN Class="swiss">Target</SPAN>. Note that <SPAN Class="swiss">Position</SPAN> 
+is updated to be the appropriate element of <SPAN Class="swiss">Target</SPAN>. 
+We can use this procedure to move a subtree within a tree but an attempt 
+to create circularities raises <SPAN Class="swiss">Program_Error</SPAN>.</div>
+<div class="Normal">The second <SPAN Class="swiss">Slice_Subtree</SPAN> 
+is similar but only moves a subtree within a container. Again, circularities 
+cannot be created.</div>
+<div class="Normal">The procedures <SPAN Class="swiss">Splice_Children</SPAN> 
+are similar but move all the children and their descendants of <SPAN Class="swiss">Source_Parent</SPAN> 
+to be children of <SPAN Class="swiss">Target_Parent</SPAN>.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Parent(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;First_Child(Parent:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;First_Child_Element(Parent:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Last_Child(Parent:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Last_Child_Element(Parent:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Next_Sibling(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Previous_Sibling(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Next_Sibling(Position:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Cursor);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Previous_Sibling(Position:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Cursor);</div>
+<div class="Normal">Hopefully, the purpose of these is self-evident.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Iterate_Children<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Parent:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Position:&nbsp;<B>in</B>&nbsp;Cursor));</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Reverse_Iterate_Children<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Parent&nbsp;:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Position:&nbsp;<B>in</B>&nbsp;Cursor));</div>
+<div class="Normal">These apply the procedure designated by the parameter 
+<SPAN Class="swiss">Process</SPAN> to each child of the node given by 
+<SPAN Class="swiss">Parent</SPAN>. The procedure <SPAN Class="swiss">Iterate_Children</SPAN> 
+starts with the first child and ends with the last child whereas <SPAN Class="swiss">Reverse_Iterate_Children</SPAN> 
+starts with the last child and ends with the first child. Note that these 
+do not iterate over grandchildren.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Iterate_Children<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in</B>&nbsp;Tree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parent:&nbsp;<B>in</B>&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Tree_Iterator_Interfaces.Reversible_Iterator'Class;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is called if we 
+write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;Parent.Iterate_Children&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;via&nbsp;cursor&nbsp;C</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and iterates over all 
+the children from <SPAN Class="swiss">Parent.First_Child&nbsp;</SPAN>to <SPAN Class="swiss">Parent.Last_Child</SPAN>. 
+Note that we could also insert <B>reverse</B> thus</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in&nbsp;reverse</B>&nbsp;Parent.Iterate_Children&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;via&nbsp;cursor&nbsp;C</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">in which case the iteration goes in reverse from 
+<SPAN Class="swiss">Parent.Last_Child</SPAN> to <SPAN Class="swiss">Parent.First_Child</SPAN>. 
+The observant reader will note that this function returns <SPAN Class="swiss">Reversible_Iterator'Class</SPAN> 
+and so can go in either direction whereas the functions <SPAN Class="swiss">Iterate</SPAN> 
+and <SPAN Class="swiss">Iterate_Subtree</SPAN> described earlier use 
+<SPAN Class="swiss">Forward_Iterator'Class</SPAN> and cannot be reversed.</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;Ada.Containers.Multiway_Trees;</div>
+<div class="Normal">The above descriptions have not described all the 
+situations in which something can go wrong and so raise <SPAN Class="swiss">Constraint_Error</SPAN> 
+or <SPAN Class="swiss">Program_Error</SPAN>. Generally, the former is 
+raised if a source or target is <SPAN Class="swiss">No_Element</SPAN>; 
+the latter is raised if a cursor does not belong to the appropriate tree. 
+In particular, as mentioned above, an attempt to create an illegal tree 
+such as one with circularities using <SPAN Class="swiss">Splice_Subtree</SPAN> 
+raises<SPAN Class="swiss">&nbsp;Program_Error</SPAN>. Remember also that every 
+tree has a root node but the root node has no element value; attempts 
+to remove the root node or read its value or assign a value similarly 
+raise <SPAN Class="swiss">Program_Error</SPAN>.</div>
+<div class="Normal">The containers for indefinite and bounded trees are 
+much as expected.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the case of the 
+indefinite tree container the generic formal type is</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Element_Type(&lt;&gt;)&nbsp;<B>is&nbsp;private</B>;</div>
+<div class="Normal">The other significant difference is that the procedure 
+<SPAN Class="swiss">Insert_Child</SPAN> without the parameter <SPAN Class="swiss">New_Item</SPAN> 
+is omitted; this is because indefinite types do not have a default value.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the case of the 
+bounded tree container the changes are similar to those for the other 
+containers. One change is that the package has pragma <SPAN Class="swiss">Pure</SPAN>; 
+the other changes concern the capacity. The type <SPAN Class="swiss">Tree</SPAN> 
+is</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Tree(Capacity:&nbsp;Count_Type)&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and the function <SPAN Class="swiss">Copy</SPAN> 
+is</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Copy(Source:&nbsp;Tree;&nbsp;Capacity:&nbsp;Count_Type&nbsp;:=&nbsp;0)&nbsp;<B>return</B>&nbsp;Tree;</div>
+<div class="Normal">And of course the exception <SPAN Class="swiss">Capacity_Error</SPAN> 
+is raised in various circumstances.</div>
+<div class="Normal">Applications of trees are usually fairly complex. 
+The tree structure for depicting the analysis of a program for a whole 
+language such as even Ada 83 has an enormous variety of nodes corresponding 
+to the various syntactic structures. And trees depicting human relationships 
+are complex because of multiple marriages, divorces, illegitimacy and 
+so on. So we content ourselves with a couple of small examples.</div>
+<div class="Normal">A tree representing a simple algebraic expression 
+involving just the binary operations of addition, subtraction, multiplication 
+and division applied to simple variables and real literals is straightforward. 
+Nodes are of three kinds, those representing operations have two children 
+giving the two operands, and those representing variables and literals 
+have no children and so are leaf nodes.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can declare the 
+element type thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Operator&nbsp;<B>is</B>&nbsp;('+',&nbsp;'&#8211;',&nbsp;'&#215;',&nbsp;'/');<BR>
+<B>type</B>&nbsp;Kind&nbsp;<B>is</B>&nbsp;(Op,&nbsp;Var,&nbsp;Lit);</div>
+<div class="SwissExamples"><B>type</B>&nbsp;El(K:&nbsp;Kind)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>case</B>&nbsp;K&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Op&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fn:&nbsp;Operator;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Var&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V:&nbsp;Character;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Lit&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Val:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;case</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal">Note that the variables are (as typically in mathematics) 
+represented by single letters. So the expression</div>
+<div class="Indented1">(<I>x</I> + 3) &#215; (<I>y</I> &#8211; 4)&nbsp;</div>
+<div class="Normal">is represented by nodes with elements such as</div>
+<div class="SwissExamples">(Op,&nbsp;'&#215;')<BR>
+(Var,&nbsp;'x')<BR>
+(Lit,&nbsp;3.0)</div>
+<div class="Normal" style="margin-bottom: 0.4em">So now we can declare 
+a suitable tree thus</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Expression_Trees&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Ada.Containers.Multiway_Trees(El);</div>
+<div class="SwissExamples"><B>use</B>&nbsp;Expression_Trees;</div>
+<div class="SwissExamples">My_Tree:&nbsp;Tree&nbsp;:=&nbsp;Empty_Tree;</div>
+<div class="SwissExamples">C:&nbsp;Cursor;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then build it by 
+the following statements</div>
+<div class="SwissExamples">C&nbsp;:=&nbsp;Root(My_Tree);</div>
+<div class="SwissExamples">Insert_Child<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container&nbsp;=&gt;&nbsp;My_Tree,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parent&nbsp;=&gt;&nbsp;C,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;=&gt;&nbsp;No_Element,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;=&gt;&nbsp;(Op,&nbsp;'&#215;'),<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;=&gt;&nbsp;C);</div>
+<div class="Normal">This puts in the first real node as a child of the 
+root which is designated by the cursor <SPAN Class="swiss">C</SPAN>. 
+There are no existing children so <SPAN Class="swiss">Before</SPAN> is 
+<SPAN Class="swiss">No_Element</SPAN>. The <SPAN Class="swiss">New_Item</SPAN> 
+is as mentioned earlier. Finally, the cursor <SPAN Class="swiss">C</SPAN> 
+is changed to designate the position of the newly inserted node.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can then insert 
+the two children of this node which represent the mathematical operations 
++ and &#8211;.</div>
+<div class="SwissExamples">Insert_Child(My_Tree,&nbsp;C,&nbsp;No_Element,&nbsp;(Op,&nbsp;'+'));<BR>
+Insert_Child(My_Tree,&nbsp;C,&nbsp;No_Element,&nbsp;(Op,&nbsp;'&#8211;'));</div>
+<div class="Normal" style="margin-bottom: 0.4em">These calls are to 
+a different overloading of <SPAN Class="swiss">Insert_Child</SPAN> and 
+have not changed the cursor. The second call also has <SPAN Class="swiss">Before</SPAN> 
+equal to <SPAN Class="swiss">No_Element</SPAN> and so the second child 
+goes after the first child. We now change the cursor to that of the first 
+newly inserted child and then insert its children which represent <I>x</I> 
+and 3. Thus</div>
+<div class="SwissExamples">C&nbsp;:=&nbsp;First_Child(C);<BR>
+Insert_Child(My_Tree,&nbsp;C,&nbsp;No_Element,&nbsp;(Var,&nbsp;'x'));<BR>
+Insert_Child(My_Tree,&nbsp;C,&nbsp;No_Element,&nbsp;(Lit,&nbsp;3.0));</div>
+<div class="Normal" style="margin-bottom: 0.4em">And then we can complete 
+the tree by inserting the final two nodes thus</div>
+<div class="SwissExamples">C&nbsp;:=&nbsp;Next_Sibling(C);<BR>
+Insert_Child(My_Tree,&nbsp;C,&nbsp;No_Element,&nbsp;(Var,&nbsp;'y'));<BR>
+Insert_Child(My_Tree,&nbsp;C,&nbsp;No_Element,&nbsp;(Lit,&nbsp;4.0));</div>
+<div class="Normal">Of course a compiler will do all this recursively 
+and keep track of the cursor rather more neatly than we have in this 
+manual illustration.</div>
+<div class="Normal">The resulting tree should be as in Figure 1.</div>
+<DIV Style="text-align: center; margin-bottom: 0.4em"><IMG src="tree1.png" height="205" width="260" alt="The expression tree" border="0"></DIV>
+<div class="Normal" style="text-align: center"><B>Figure 1   The expression 
+tree</B></div>
+<div class="Normal" style="margin-bottom: 0.4em">We can assume that 
+the variables are held in an array which might be as follows</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Variable_Name&nbsp;<B>is</B>&nbsp;Character&nbsp;<B>range</B>&nbsp;'a'&nbsp;..&nbsp;'z';</div>
+<div class="SwissExamples">Variables:&nbsp;<B>array</B>&nbsp;(Variable_Name)&nbsp;<B>of</B>&nbsp;Float;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can then evaluate 
+the tree by a recursive function such as</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Eval(C:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;E:&nbsp;El&nbsp;:=&nbsp;Element(C);<BR>
+&nbsp;&nbsp;&nbsp;L,&nbsp;R:&nbsp;Float;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>case</B>&nbsp;E.K&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Op&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;L&nbsp;:=&nbsp;Eval(First_Child(C));<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R&nbsp;:=&nbsp;Eval(Last_Child(C));<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>case</B>&nbsp;E.Fn&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;'+'&nbsp;=&gt;&nbsp;<B>return</B>&nbsp;(L+R);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;'&#8211;'&nbsp;=&gt;&nbsp;<B>return</B>&nbsp;(L&#8211;R);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;'&#215;'&nbsp;=&gt;&nbsp;<B>return</B>&nbsp;(L*R);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;'/'&nbsp;=&gt;&nbsp;<B>return</B>&nbsp;(L/R);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;case</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Var&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Variables(E.V);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Lit&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;E.Val;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;case</B>;<BR>
+<B>end</B>&nbsp;Eval;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Finally, we obtain 
+the value of the tree by</div>
+<div class="SwissExamples">X&nbsp;:=&nbsp;Eval(First_Child(Root(My_Tree)));</div>
+<div class="Normal">Remember that the node at the root has no element 
+so hence the call of <SPAN Class="swiss">First_Child</SPAN>.</div>
+<div class="Normal">An alternative approach would be to use tagged types 
+with a different type for each kind of node rather than the variant record. 
+This would be much more flexible and would have required the use of the 
+unbounded indefinite container <SPAN Class="swiss">Ada.Containers.Indefinite_Multiway_Trees</SPAN>.</div>
+<div class="Normal">As a more human example we can consider the family 
+tree of the Tudor Kings and Queens of England. We start with Henry VII, 
+who had four children, Arthur, Margaret, Henry VIII and Mary. See Figure 
+2.</div>
+<DIV Style="text-align: center; margin-bottom: 0.4em"><IMG src="tree2.png" height="256" width="712" alt="The Tutor tree" border="0"></DIV>
+<div class="Normal" style="text-align: center"><B>Figure 2   The Tudor 
+tree</B></div>
+<div class="Normal">Arthur died young, Margaret married James IV of Scotland 
+and had James (who was thus James V of Scotland), Henry VIII had three 
+children, namely Edward VI, Mary I and Elizabeth I. And Mary had Frances. 
+Henry VII was succeeded by Henry VIII and he was succeeded by his three 
+children.</div>
+<div class="Normal">Remember the rules of primogeniture. The heir is 
+the eldest son if there are sons; if not then the heir is the eldest 
+daughter. If there are no offspring at all then we go back a generation 
+and try again. Hence Edward VI became king despite being younger than 
+Mary.</div>
+<div class="Normal">Since Edward, Mary and Elizabeth had no children 
+we go back to the descendants of the other children of Henry VII. Margaret, 
+her son James, and his daughter Mary Queen of Scots were all dead by 
+then, so the throne of England went to the son of Mary who became James 
+I of England and VI of Scotland and thus united the two thrones. So the 
+Tudor line died with Elizabeth (Good Queen Bess).</div>
+<div class="Normal">Incidentally, Frances, the daughter of Mary, the 
+fourth child of Henry VII, had a daughter, Lady Jane Grey; she was Queen 
+for 9 days but lost her head over a row with Mary I.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Representing this is 
+tricky, especially with people such as Henry VIII having so many wives. 
+But the essence could be represented by a tree with a simple element 
+type thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Person&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name:&nbsp;String(1&nbsp;..&nbsp;10);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sex:&nbsp;Gender;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Birth:&nbsp;Date;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Death:&nbsp;Date;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal">With such a structure and the dates, starting from 
+Henry VII and using the rules of primogeniture, one should be able to 
+trace the monarchs (apart from poor Lady Jane Grey who would I am sure 
+much rather not have been involved).</div>
+<div class="Normal">The overall tree structure is shown in Figure 2.</div>
+<div class="Normal" style="margin-bottom: 0.4em">With the obvious connections 
+we can define useful functions such as</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Are_Cousins(A,&nbsp;B:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;(Parent(A)&nbsp;/=&nbsp;Parent&nbsp;(B)&nbsp;<B>and&nbsp;then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Parent(Parent(A))&nbsp;=&nbsp;Parent(Parent(B)));</div>
+<div class="Normal">More of a challenge is to define a function <SPAN Class="swiss">Is_Successor</SPAN> 
+using the rules described above. The reader can contemplate these and 
+other family relationships and attempt to construct the Tudor tree.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Finally, an explanation 
+of depth-first order. The general principle is that child nodes are visited 
+in order before their parent. We can symbolically write this as</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Do_Node(N)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>for</B>&nbsp;CN&nbsp;<B>in</B>&nbsp;N.First_Child&nbsp;..&nbsp;N.Last_Child&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Do_Node(CN);<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;loop</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;<B>not</B>&nbsp;N.Is_Root&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Do_Element(N);<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end</B>&nbsp;Do_Node;</div>
+<div class="Normal">and the whole thing is triggered by calling <SPAN Class="swiss">Do_Node(Root)</SPAN>. 
+Remember that the root node has no element. The result is that the first 
+element to be processed is that of the leftmost leaf.</div>
+<div class="Normal">Thus in the tree illustrated below in Figure 3, the 
+elements are visited in order A, B, C, D, and so on. Note that the root 
+has no element and so is not visited.</div>
+<DIV Style="text-align: center; margin-bottom: 0.4em"><IMG src="tree3.png" height="256" width="340" alt="A tree showing depth-first order" border="0"></DIV>
+<div class="Normal" style="text-align: center"><B>Figure 3   A tree showing 
+depth-first order</B></div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

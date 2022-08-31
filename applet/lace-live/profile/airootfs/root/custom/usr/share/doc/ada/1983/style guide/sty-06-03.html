@@ -1,0 +1,281 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 6.3: Termination
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 6: Concurrency</H2>
+
+<H3><a name="6.3">6.3     Termination</a></H3>
+The ability of tasks to interact with each other using Ada's intertask 
+communication features makes it especially important to manage planned or 
+unplanned (e.g., in response to a catastrophic exception condition) 
+termination in a disciplined way. To do otherwise can lead to a proliferation 
+of undesired and unpredictable side effects as a result of the termination of 
+a single task.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-04.html#9.4">9.4&nbsp;Task Dependence - Termination of Tasks</A>
+
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><br>
+<a href="#6.3.1">6.3.1   Avoiding Termination</a><BR>
+<a href="#6.3.2">6.3.2   Normal Termination</a><BR>
+<a href="#6.3.3">6.3.3   The Abort Statement</a><BR>
+<a href="#6.3.4">6.3.4   Abnormal Termination</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-06-04.html#6.4.3"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="6.3.1">6.3.1   Avoiding Termination</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Place an exception handler for a rendezvous within the main tasking  
+loop. 
+</UL>
+
+<H4>example</H4>
+In the following example an exception raised using the primary sensor is used  
+to change <CODE>Mode</CODE> to <CODE>Degraded</CODE> still allowing execution of the system.
+<table border cellpadding=6><tr><td><pre>... 
+loop
+
+   Recognize_Degraded_Mode: 
+      begin
+      
+         if Mode = Primary then
+         
+            select 
+               Current_Position_Primary.Request_New_Coordinates 
+                        (X, Y);
+                        
+            or 
+               delay 0.25; 
+               -- Decide whether to switch modes; 
+            end select;
+            
+         else  -- Mode = Degraded
+         
+            Current_Position_Backup.Request_New_Coordinates 
+                     (X, Y); 
+         end if;
+         
+         ... 
+      exception 
+         when Tasking_Error | Program_Error =&gt; 
+            Mode := Degraded; 
+      end Recognize_Degraded_Mode;
+      
+end loop; 
+...</pre></td></tr></table>
+
+<H4>rationale</H4>
+Allowing a task to terminate may not support the requirements of the system.  
+Without an exception handler for the rendezvous within the main task loop, the  
+functions of the task may not be performed.
+
+<H4>note</H4>
+The use of an exception handler is the only way to guarantee recovery from an 
+entry call to an abnormal task. Use of the <CODE>'Terminated</CODE> attribute to test a 
+task's availability before making the entry call can introduce a race 
+condition where the tested task fails after the test but before the entry call 
+(see <a href="sty-06-02.html#6.2.3">Guideline 6.2.3</a>).<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-05.html#9.5">9.5&nbsp;Entries, Entry Calls, and Accept Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-02.html#11.2">11.2&nbsp;Exception Handlers</A>
+
+
+<H3><BR><a name="6.3.2">6.3.2   Normal Termination</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Do not create non-terminating tasks unintentionally.   
+<li>Explicitly shut down tasks dependent on library packages. 
+<li>Use a select statement rather than an accept statement alone.  
+<li>Provide a terminate alternative for every selective wait that does not  
+require an else part or a delay. 
+</UL>
+
+<H4>example</H4>
+This task will never terminate:
+<table border cellpadding=6><tr><td><pre>--------------------------------------------------------------------- 
+task body Message_Buffer is 
+   ...
+   
+begin  -- Message_Buffer 
+   loop
+   
+      select 
+         when Head /= Tail =&gt; -- Circular buffer not empty 
+            accept Retrieve (Value :    out Element) do 
+               ... 
+            end Retrieve; 
+              
+      or 
+         when not ((Head  = Lower_Bound and then 
+                    Tail  = Upper_Bound)    or else 
+                   (Head /= Lower_Bound and then 
+                    Tail  = Index'Pred(Head))    ) 
+                 =&gt; -- Circular buffer not full
+                 
+            accept Store (Value : in     Element); 
+      end select; 
+   end loop;
+   
+... 
+end Message_Buffer; 
+---------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+A nonterminating task is a task whose body consists of a nonterminating loop 
+with no selective wait with terminate, or a task that is dependent on a 
+library package. Execution of a subprogram or block containing a task cannot 
+complete until the task terminates. Any task that calls a subprogram 
+containing a nonterminating task will be delayed indefinitely.<P>
+The effect of unterminated tasks at the end of program execution is undefined. 
+A task dependent on a library package cannot be forced to terminate using a 
+selective wait construct with terminate alternative and should be terminated 
+explicitly during program shutdown. One way to terminate tasks dependent on 
+library packages is to provide them with exit entries. Have the main 
+subprogram call the exit entry just before it terminates.<P>
+Execution of an accept statement or of a selective wait statement without an  
+else part, a delay, or a terminate alternative cannot proceed if no task ever  
+calls the entry(s) associated with that statement.  This could result in  
+deadlock.  Following this guideline entails programming multiple termination  
+points in the task body.  A reader can easily &quot;know where to look&quot; for the 
+normal termination points in a task body.  The termination points are the end  
+of the body's sequence of statements, and alternatives of select statements.
+
+<H4>exceptions</H4>
+If you are simulating a cyclic executive, you may need a scheduling task that  
+does not terminate. It has been said that no real-time system should be 
+programmed to terminate. This is extreme. Systematic shutdown of many real-time 
+systems is a desirable safety feature.<P>
+If you are considering programming a task not to terminate, be certain that it  
+is not a dependent of a block or subprogram from which the task's caller(s)  
+will ever expect to return. Since entire programs can be candidates for reuse  
+(see <a href="sty-08.html">Chapter 8</a>),
+note that the task (and whatever it depends upon) will not  
+terminate. Also be certain that for any other task that you do wish to  
+terminate, its termination does not await this task's termination. Reread and  
+fully understand <a href="http://archive.adaic.com/standards/83lrm/html/lrm-09-04.html#9.4">paragraph 9.4 of Department of Defense
+(1983)</a> on &quot;Task Dependence - Termination of Tasks.&quot;<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-03.html#9.3">9.3&nbsp;Task Execution - Task Activation</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-05.html#9.5">9.5&nbsp;Entries, Entry Calls, and Accept Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-07.html#9.7.1">9.7.1&nbsp;Selective Waits</A>
+
+
+<H3><BR><a name="6.3.3">6.3.3   The Abort Statement</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Avoid using the abort statement. 
+</UL>
+
+<H4>example</H4>
+If required in the application, provide a task entry for orderly shutdown.
+
+<H4>rationale</H4>
+When an abort statement is executed, there is no way to know what the targeted 
+task was doing beforehand. Data for which the target task is responsible may 
+be left in an inconsistent state. The overall effect on the system of aborting 
+a task in such an uncontrolled way requires careful analysis. The system 
+design must ensure that all tasks depending on the aborted task can detect the 
+termination and respond appropriately.<P>
+Tasks are not aborted until they reach a synchronization point such as  
+beginning or end of elaboration, a delay statement, an accept statement, an  
+entry call, a select statement, task allocation, or the execution of an  
+exception handler. Consequently, the abort statement may not release processor  
+resources as soon as you may expect. It also may not stop a runaway task  
+because the task may be executing an infinite loop containing no  
+synchronization points.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-01.html#9.1">9.1&nbsp;Abort Statements</A>
+
+
+<H3><BR><a name="6.3.4">6.3.4   Abnormal Termination</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Place an exception handler for <CODE>others</CODE> at the end of a task body. 
+<li> Have each exception handler at the end of a task body report the 
+task's demise. 
+</UL>
+
+<H4>example</H4>
+This is one of many tasks updating the positions of blips on a radar screen. 
+When started, it is given part of the name by which its parent knows it. 
+Should it terminate due to an exception, it signals the fact in one of its 
+parent's data structures.
+<table border cellpadding=6><tr><td><pre>--------------------------------------------------------------------- 
+task body Track is
+
+   My_Index : Track_Index; 
+   Neutral  : Boolean    := True;
+   
+begin  -- Track
+
+   select 
+      accept Start (Who_Am_I : in     Track_Index) do 
+         My_Index := Who_Am_I; 
+      end Start; 
+      Neutral := False; 
+      ...
+      
+   or 
+      terminate; 
+   end select;
+   
+   ... 
+exception 
+   when others =&gt; 
+      if not Neutral then 
+         Station(My_Index).Status := Dead; 
+      end if;
+      
+end Track; 
+---------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+A task will terminate if an exception is raised within it for which it has no  
+handler. In such a case, the exception is not propagated outside of the task  
+(unless it occurs during a rendezvous). The task simply dies with no  
+notification to other tasks in the program. Therefore, providing exception  
+handlers within the task, and especially a handler for <CODE>others</CODE>, ensures that a  
+task can regain control after an exception occurs. If the task cannot proceed  
+normally after handling an exception, this affords it the opportunity to shut  
+itself down cleanly and to notify tasks responsible for error recovery  
+necessitated by the abnormal termination of the task.
+
+<H4>note</H4>
+Do not use the task status to determine if a rendezvous can be made with the 
+task. If task A is dependent on task B and task A checks the status flag 
+before it rendezvous with task B, there is a potential that task B fails 
+between the status test and the rendezvous. In this case, task A must provide 
+an exception handler to handle the <CODE>Tasking_Error</CODE> exception raised by the call 
+to an entry of an abnormal task (see <a href="#6.3.1">Guideline 6.3.1</a>).<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-01.html#9.1">9.1&nbsp;Abort Statements</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-02.html#11.2">11.2&nbsp;Exception Handlers</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-04.html#11.4">11.4&nbsp;Exception Handling</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

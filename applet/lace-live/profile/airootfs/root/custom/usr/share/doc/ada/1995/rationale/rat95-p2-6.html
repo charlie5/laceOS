@@ -1,0 +1,450 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Two - Chapter 6
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-5.html> Previous </a> |
+<a href=rat95-p2-7.html> Next </a>
+<hr>
+
+<h1>
+6   Subprograms
+</h1>
+
+
+<p>
+Perhaps the most important change to subprograms and their use in Ada 95
+is the fact that they are more nearly first class types since they may be
+manipulated as the target of access types.  However, this topic is dealt
+with in Chapter 3 and we concern ourselves here with other relatively
+minor improvements to subprograms.  These are
+</p>
+<ul>
+<li>
+     Various aspects of the parameter and result mechanism are improved.
+     The notions of by-copy and by-reference parameters are made more
+     formal.  Parameters of mode out may now be read.  Subprograms may
+     have parameters of mode out for a limited view of a type.
+<li>
+    A parameter may also be of an anonymous access type.
+<li>
+    A subprogram body may now be provided by renaming; this and other
+     changes increases the categories of conformance rules.
+<li>
+    The rules for new overloadings of "=" and "/=" are relaxed.
+</ul>
+<p>
+Other related matters are the calling conventions for interfacing with
+other languages; these are discussed in Part Three.  Abstract subprograms
+are discussed in Chapter 3.
+</p>
+
+<h2>
+<a name=1>
+6.1  Parameter and Result Mechanism
+</a>
+</h2>
+
+<p>
+For Ada 95, we define by-copy parameter passing in terms of a subtype
+conversion and an assignment.  This minimizes the number of special rules
+associated with parameter passing.
+</p>
+<p>
+For by-reference parameters, the formal parameter is considered a view
+of the actual.
+</p>
+<p>
+Certain types are called by-copy types and are always passed by copy.
+Some other types are called by-reference types and are always passed by
+reference.  For the remaining types the implementation is free to choose
+either mechanism.  Note that the parameter mechanism is independent of
+the view; thus a private type is always passed by the mechanism
+appropriate to the full view of the type.
+</p>
+<p>
+   Note that tagged types, task types and protected types are by-
+reference types.
+</p>
+<p>
+   A similar approach is taken with function results.  Certain types are
+classified as return-by-reference types.  Again these include task types
+and protected types (and most other limited types, see 7.3).  In the case
+of a result returned by reference the function call denotes a constant
+view of the object denoted by the return expression.  In other cases a
+copy is made.  Remember that the result of a function call is treated as
+an object in Ada 95.
+</p>
+<p>
+   A difference between parameters and results is that tagged types are
+always by reference as parameters but only returned by reference if
+limited.
+</p>
+<p>
+   For all modes and both mechanisms of parameters and for results, a
+subtype conversion is performed if necessary (to provide sliding).
+</p>
+<p>
+   Note in particular that sliding is used for array parameters and
+results whereas Ada 83 required the more restrictive exact matching of
+bounds.  An array aggregate with others is still allowed as a parameter
+or as a result and with the same meaning although for different reasons.
+In Ada 83 it was allowed because the matching rules provide the bounds
+whereas in Ada 95 it is allowed because the rules for others in
+assignment are relaxed but there is the overriding rule that aggregates
+with others never slide.
+</p>
+<p>
+   In Ada 95 it is not erroneous to depend on the parameter passing
+mechanism (by-reference versus by-copy) for those types that allow both,
+though it is nonportable.  This is an example of reducing totally
+unpredictable behavior (see 1.3).
+</p>
+
+<h3>
+<a name=1-1>
+6.1.1  Out Parameters
+</a>
+</h3>
+
+<p>
+In Ada 83 a formal parameter of mode out could not be read, even after
+being initialized within the procedure.  This forced certain algorithms
+to include a local variable just to accumulate a result and which was
+then assigned to the out parameter.  Introducing such a local variable is
+error prone, because the final assignment may be mistakenly omitted.
+</p>
+<p>
+Similarly, if an out parameter is passed to a second procedure to be
+filled in, the value returned cannot be checked prior to returning from
+the first procedure.
+</p>
+<p>
+   For Ada 95, we have removed the restrictions on the use of out
+parameters.  Specifying that a formal parameter is of mode out indicates
+that the caller need not initialize it prior to the call.  However,
+within the procedure, once the parameter has been initialized, it may be
+read and updated like any other variable.  As with a normal variable, it
+is an error to depend on the value of an out parameter prior to its being
+initialized.
+</p>
+<p>
+   The added simplicity and flexibility provided by removing the
+restrictions on reading an out parameter allows many of the special cases
+associated with out parameters to be eliminated, including the
+restriction regarding their use with limited types.
+</p>
+<p>
+   Safety is preserved by ensuring that a subcomponent does not become
+"deinitialized" by being passed as an out parameter.  If any subcomponent
+of a type passed by copy has default initialization, then the whole
+object is copied in at the start of the call so that the value of such a
+subcomponent is not lost as a result of a subprogram call during which no
+assignment is made to the subcomponent.  But in practice records are
+usually passed by reference anyway.
+</p>
+
+<h3>
+<a name=1-2>
+6.1.2  Access Parameters
+</a>
+</h3>
+
+<p>
+A formal in parameter may be specified with an access definition.  Such a
+parameter is of a general access type that is totally anonymous (has no
+nameable subtypes), but is convertible to other general access types with
+the same designated subtype.  Access parameters are valuable because they
+allow dispatching on access values; they are also convenient for use with
+access discriminants; see 3.7.1.
+</p>
+<p>
+   Access parameters are often an alternative to in out parameters
+especially for tagged types.  Thus suppose we have a tagged type and an
+access type referring to it and appropriate variables such as
+<pre>
+   type T is tagged
+      record ...
+
+   type Access_T is access T;
+
+   Obj: T;
+
+   Obj_Ptr: Access_T := new T'(...);
+</pre>
+plus subprograms taking parameters thus
+<pre>
+   procedure P(X: in out T);
+
+   procedure PA(XA: access T);
+</pre>
+then within the body of both P and PA we have read and write access to
+the components of the record.  Indeed because of automatic dereferencing
+the components are referred to in the same way.  And since tagged types
+are all always passed by reference and never by copy, the effect is much
+the same for many situations.  For example dispatching is possible in
+both cases.  However, there are a number of important differences.
+</p>
+<p>
+   In the case of the in out parameter, the actual parameter could be Obj
+or Obj_Ptr.all thus
+<pre>
+   P(Obj);  P(Obj_Ptr.all);
+</pre>
+whereas in the case of the access parameter, the actual parameter has to
+be Obj'Access or Obj_Ptr.  Moreover in the former case the variable Obj
+must be marked as aliased
+<pre>
+   Obj: aliased T;
+   PA(Obj'Access);  PA(Obj_Ptr);
+</pre>
+</p>
+<p>
+   Remember also that an actual parameter corresponding to an access
+parameter cannot be null.  Moreover, accessibility checks for access
+parameters are dynamic and the parameter carries with it an indication of
+its accessibility.
+</p>
+<p>
+   A vital difference is that a function cannot have an in out parameter
+and so an access parameter is essential if we need a function.  We recall
+from 4.4.1 that the alternative of a procedure with an out parameter
+corresponding to the function result is not possible in some cases such
+as where the result type is class wide and we do not know the anticipated
+specific type.
+</p>
+<p>
+   Other important considerations occur if we have a sequence of nested
+calls.  Thus suppose we have other procedures Q and QA and that in their
+bodies we wish to call the procedures P and PA with the parameter passed
+on.  There are four possible combinations of calls to consider.  We have
+<pre>
+   procedure Q(X: in out T) is
+   begin
+      P(X);                  -- in out passed on to in out
+      ...
+      PA(X'Access);          -- in out passed on to access
+   end Q;
+
+   procedure QA(XA: access T) is
+   begin
+      P(XA.all);             -- access passed on to in out
+      ...
+      PA(XA);                -- access passed on to access
+   end QA;
+</pre>
+</p>
+<p>
+All of these calls are legal.  The call of PA from within Q is legal
+because formal parameters of a tagged type are considered aliased and
+treated just like an aliased local variable.  Hence X'Access is allowed
+but the accessibility level is that of a variable local to Q.  This means
+that the accessibility level passed to PA indicates that Q.X is local to
+Q and will not reflect the accessibility level of the original actual
+parameter passed to Q (and of course that information was not passed to Q
+anyway).
+</p>
+<p>
+   In the reverse situation where QA calls P no accessibility information
+is passed on.  Moreover, it should be noted that the parameter XA.all
+creates a view of the original parameter and this view is passed on; no
+local object is created.  Thus the information passed on is simply the
+original "reference" minus the accessibility information.
+</p>
+<p>
+   The uniform cases where Q calls P or QA calls PA are straightforward.
+The parameter is passed on unchanged, in the first case there is no
+accessibility information and in the second it is passed on intact.
+</p>
+<p>
+   There is a lot of merit in using access parameters because they pass
+the correct accessibility level and avoid the risk of an illegal program
+or unexpectedly raising Program_Error when attempting a conversion to a
+named access type.  For example, assuming T and Access_T are declared at
+the same level as the procedures and that Q and QA are called with actual
+parameter Obj or Obj'Access respectively, then it would be illegal to
+write
+<pre>
+   Obj_Ptr := Access_T(X'Access);
+</pre>
+inside Q since the static accessibility check fails, whereas it is legal
+to write the corresponding
+<pre>
+   Obj_Ptr := Access_T(XA);
+</pre>
+inside QA, and the dynamic accessibility check succeeds.
+</p>
+<p>
+   Furthermore if we also had a procedure
+<pre>
+   procedure RA(XA: access T) is
+   begin
+      ...
+      Obj_Ptr := Access_T(XA);
+      ...
+   end RA;
+</pre>
+in which a similar conversion is performed, then calling RA from Q by
+<pre>
+   RA(X'Access);
+</pre>
+results in raising Program_Error on the attempted conversion in RA
+whereas calling RA from QA by
+<pre>
+   RA(XA);
+</pre>
+works successfully because the original accessibility level is preserved.
+</p>
+<p>
+   However, remember that we can always use Unchecked_Access which avoids
+the accessibility checks.  This would overcome the difficulties in the
+above examples but of course the use of Unchecked_Access in general can
+result in dangling references; the responsibility lies with the user to
+ensure that this does not happen.
+</p>
+<p>
+   For a further discussion on access parameters and a comparison between
+them and parameters of a named access type see 3.7.1.
+</p>
+
+<h2>
+<a name=2>
+6.2  Renaming of Bodies and Conformance
+</a>
+</h2>
+
+<p>
+In Ada 95, we allow a subprogram body to be provided by renaming another
+subprogram.  This is a great convenience in those many cases in Ada 83
+where the programmer was forced to provide a body which simply called
+some other existing subprogram.  In order that the implementation can be
+just a jump instruction, the subprogram specification must be "subtype
+conformant" with the body used to implement it.  Subtype conformance is
+required because the caller sees only the subprogram specification, and
+therefore has prepared the parameters, performed constraint checks, and
+followed the parameter passing conventions determined by the
+specification.
+</p>
+<p>
+   Several different rules existed in Ada 83 governing matching between
+subprogram specifications.  For the purposes of hiding the name of the
+subprogram, only the types of the formal parameters and the result, if
+any, were relevant (see [RM83 8.3(15)]).  For renaming and generic
+instantiation, the modes also had to match (see [RM83 8.5(7)] and [RM83
+12.3.6(1)]).  Between a specification and its body, syntactic equivalence
+was required ([RM83 6.3.1(5)]).
+</p>
+<p>
+   For Ada 95, in order to support access to subprogram types, and to
+support the provision of a body by a renaming, an intermediate level of
+matching is needed.  This intermediate level requires static subtype
+matching, but allows formal parameter names and defaults to differ.
+</p>
+<p>
+   To improve the presentation in Ada 95, the descriptions of these
+various levels of subprogram matching are gathered into the section on
+Conformance Rules [RM95 6.3.1].  Each level of matching is given a name
+and they can be arranged in a strictly ascending order of strength as
+follows
+</p>
+<ul>
+<li>
+Type conformance.   This is the matching that controls hiding.
+<li>
+Mode conformance.   This  is  the  matching  required  for  renaming  and
+               generic formal subprograms.
+<li>
+Subtype conformance.     This is  the matching  required  for  access  to
+               subprogram types, and for specifying a body via renaming.
+<li>
+Full conformance.   This is the matching required between the declaration
+               and  body   of  a   subprogram,   and   between   multiple
+               specifications of a discriminant part.
+</ul>
+<p>
+   In addition to centralizing these definitions, we have also relaxed
+the full conformance rules, in order to make them represent static
+semantic equivalence, rather than syntactic equivalence.  This has the
+effect of eliminating certain anomalies (such as the non-transitivity of
+Ada 83 conformance), as well as being more natural for the programmer and
+easier to implement.
+</p>
+
+<h2>
+<a name=3>
+6.3  Overloading of Equality and Inequality Operators
+</a>
+</h2>
+
+<p>
+In Ada 83, the "=" operator could be explicitly defined only for limited
+types (other than via a devious method based on a curious loophole in
+generic instantiation).  This restriction was justified largely on
+methodological grounds.  However, experience with Ada has illustrated
+several circumstances where it is very natural to provide a user-defined
+equality operator for nonlimited types.  For example, within a three-
+value logic abstraction, "=" should return either True, False, or
+Unknown.  For vector processing, it is natural to define a component-wise
+"=" operator for vectors, producing a vector of Boolean values as the
+result.  In such cases, it is also important to be able to explicitly
+define "/=", since it is not the simple Boolean complement of "=".
+</p>
+<p>
+   In Ada 95, we allow "=" to be treated like any other relational
+operator.  But note that when the result type of a user-defined "="
+operator is Standard.Boolean, a complementary definition for "/=" is
+automatically provided.  Explicit definitions for "/=" are also
+permitted, so long as the result type is not Standard.Boolean.  A "/="
+operator with a result type of Standard.Boolean may thus become defined
+only as an implicit side-effect of a definition for "=".
+</p>
+<p>
+   Of course, dispatching can occur on "=".  For example in the procedure
+Convert in 4.4.3, the comparison in
+<pre>
+   while Temp /= Empty loop
+</pre>
+dispatches.  Typically the equality will be predefined but of course it
+might not be.
+</p>
+
+<h2>
+<a name=4>
+6.4  Requirements Summary
+</a>
+</h2>
+
+<p>
+Many of the changes in this chapter are consequences of the general
+requirement
+<pre>
+     R2.2-C(1) - Minimize Special Case Restrictions
+</pre>
+discussed in [DoD 90 A.3]; this lists three examples which have been met
+by this chapter.  They are the ability to redefine "=", the ability to
+read out parameters and the use of sliding (array subtype conversion).
+</p>
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-5.html> Previous </a> |
+<a href=rat95-p2-7.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

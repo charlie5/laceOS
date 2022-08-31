@@ -1,0 +1,715 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Anonymous access types</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>3.3 Anonymous access types</H1>
+<div class="Normal">As just mentioned, Ada 95 permits anonymous access 
+types only as access parameters and access discriminants. And in the 
+latter case only for limited types. Ada 2005 sweeps away these restrictions 
+and permits anonymous access types quite freely.<A NAME="I1105"></A><A NAME="I1106"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">The main motivation 
+for this change concerns type conversion. It often happens that we have 
+a type <SPAN Class="swiss">T</SPAN> somewhere in a program and later 
+discover that we need an access type referring to <SPAN Class="swiss">T</SPAN> 
+in some other part of the program. So we introduce&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Ref_T&nbsp;<B>is&nbsp;access</B>&nbsp;<B>all</B>&nbsp;T;</div>
+<div class="Normal" style="margin-bottom: 0.4em">And then we find that 
+we also need a similar access type somewhere else and so declare another 
+access type&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T_Ptr<B>&nbsp;is&nbsp;access&nbsp;all&nbsp;</B>T;</div>
+<div class="Normal">If the uses of these two access types overlap then 
+we will find that we have explicit type conversions all over the place 
+despite the fact that they are really the same type. Of course one might 
+argue that planning ahead would help a lot but, as we know, programs 
+often evolve in an unplanned way.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A more important example 
+of the curse of explicit type conversion concerns object oriented programming. 
+Access types feature quite widely in many styles of OO programming. We 
+might have a hierarchy of geometrical object types starting with a root 
+abstract type <SPAN Class="swiss">Object</SPAN> thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Object&nbsp;<B>is&nbsp;abstract</B>;<BR>
+<B>type</B>&nbsp;Circle&nbsp;<B>is&nbsp;new</B>&nbsp;Object&nbsp;<B>with</B>&nbsp;...</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Polygon&nbsp;<B>is&nbsp;new</B>&nbsp;Object&nbsp;<B>with</B>&nbsp;...<BR>
+<B>type</B>&nbsp;Pentagon&nbsp;<B>is&nbsp;new</B>&nbsp;Polygon&nbsp;<B>with</B>&nbsp;...</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Triangle&nbsp;<B>is&nbsp;new</B>&nbsp;Polygon&nbsp;<B>with</B>&nbsp;...<BR>
+<B>type</B>&nbsp;Equilateral_Triangle&nbsp;<B>is&nbsp;new</B>&nbsp;Triangle&nbsp;<B>with</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">then we might well 
+find ourselves declaring named access types such as&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Ref_Object&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Object'Class;<BR>
+<B>type</B>&nbsp;Ref_Circle<B>&nbsp;is&nbsp;access&nbsp;all</B>&nbsp;Circle;<BR>
+<B>type</B>&nbsp;Ref_Triangle&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Triangle'Class;<BR>
+<B>type</B>&nbsp;Ref_Equ_Triangle&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Equilateral_Triangle;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Conversion between 
+these clearly ought to be permitted in many cases. In some cases it can 
+never go wrong and in others a run time check is required. Thus a conversion 
+between a <SPAN Class="swiss">Ref_Circle</SPAN> and a <SPAN Class="swiss">Ref_Object</SPAN> 
+is always possible because every value of <SPAN Class="swiss">Ref_Circle</SPAN> 
+is also a value of <SPAN Class="swiss">Ref_Object</SPAN> but the reverse 
+is not the case. So we might have&nbsp;</div>
+<div class="SwissExamples">RC:&nbsp;Ref_Circle&nbsp;:=&nbsp;A_Circle'Access;<BR>
+RO:&nbsp;Ref_Object;<BR>
+...<BR>
+RO&nbsp;:=&nbsp;Ref_Object(RC);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>explicit&nbsp;conversion,&nbsp;no&nbsp;check</I></SPAN><BR>
+...<BR>
+RC&nbsp;:=&nbsp;Ref_Circle(RO);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>needs&nbsp;a&nbsp;check</I></SPAN></div>
+<div class="Normal">However, it is a rule of Ada 95 that type conversions 
+between these named access types have to be explicit and give the type 
+name. This is considered to be a nuisance by many programmers because 
+such conversions are allowed without naming the type in other OO languages. 
+It would not be quite so bad if the explicit conversion were only required 
+in those cases where a run time check was necessary.</div>
+<div class="Normal">Moreover, these are trivial (view) conversions since 
+they are all just pointers and no actual change of value takes place 
+anyway; all that has to be done is to check that the value is a legal 
+reference for the target type and in many cases this is clear at compilation. 
+So requiring the type name is very annoying.</div>
+<div class="Normal">In fact the only conversions between named tagged 
+types (and named access types) that are allowed implicitly in Ada are 
+conversions to a class wide type when it is initialized or when it is 
+a parameter (which is really the same thing).</div>
+<div class="Normal">It would have been nice to have been able to relax 
+the rules in Ada 2005 perhaps by saying that a named conversion is only 
+required when a run time check is required. However, such a change would 
+have caused lots of existing programs to become ambiguous.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So, rather than meddle 
+with the conversion rules, it was instead decided to permit the use of 
+anonymous access types in more contexts in Ada 2005. Anonymous access 
+types have the interesting property that they are anonymous and so necessarily 
+do not have a name that could be used in a conversion. Thus we can have 
+</div>
+<div class="SwissExamples">RC:&nbsp;<B>access</B>&nbsp;Circle&nbsp;:=&nbsp;A_Circle'Access;<BR>
+RO:&nbsp;<B>access</B>&nbsp;Object'Class;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>default&nbsp;null</I></SPAN><BR>
+...<BR>
+RO&nbsp;:=&nbsp;RC;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>implicit&nbsp;conversion,&nbsp;no&nbsp;check</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">On the other hand we 
+cannot write&nbsp;</div>
+<div class="SwissExamples">RC&nbsp;:=&nbsp;RO;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal,&nbsp;would&nbsp;need&nbsp;a&nbsp;check</I></SPAN></div>
+<div class="Normal">because the general rule is that if a tag check is 
+required then the conversion must be explicit. So typically we will still 
+need to introduce named access types for some conversions. But checks 
+relating to accessibility and null exclusions do not require an explicit 
+conversion and so anonymous access types cause no problems in those areas.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The use of null exclusions 
+with anonymous access types is illustrated by&nbsp;</div>
+<div class="SwissExamples">RC:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;Circle&nbsp;:=&nbsp;A_Circle'Access;<BR>
+RO:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;Object'Class;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>careful</I></SPAN></div>
+<div class="Normal">The declaration of <SPAN Class="swiss">RO</SPAN> 
+is unfortunate because no initial value is given and the default of null 
+is not permitted and so it will raise <SPAN Class="swiss">Constraint_Error</SPAN>; 
+a worthy compiler will detect this during compilation and give us a friendly 
+warning.</div>
+<div class="Normal">Note that we never never write <B>all</B> with anonymous 
+access types.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can of course also 
+use <B>constant</B><A NAME="I1107"></A><A NAME="I1108"></A> with anonymous 
+access types. Note carefully the difference between the following&nbsp;</div>
+<div class="SwissExamples">ACT:&nbsp;<B>access&nbsp;constant</B>&nbsp;T&nbsp;:=&nbsp;T1'Access;<BR>
+CAT:&nbsp;<B>constant&nbsp;access</B>&nbsp;T&nbsp;:=&nbsp;T1'Access;</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the first case <SPAN Class="swiss">ACT</SPAN> 
+is a variable and can be used to access different objects <SPAN Class="swiss">T1</SPAN> 
+and <SPAN Class="swiss">T2</SPAN> of type <SPAN Class="swiss">T</SPAN>. 
+But it cannot be used to change the value of those objects. In the second 
+case <SPAN Class="swiss">CAT</SPAN> is a constant and can only refer 
+to the object given in its initialization. But we can change the value 
+of the object that <SPAN Class="swiss">CAT</SPAN> refers to. So we have</div>
+<div class="SwissExamples">ACT&nbsp;:=&nbsp;T2'Access;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal,&nbsp;can&nbsp;assign</I></SPAN><BR>
+ACT.<B>all</B>&nbsp;:=&nbsp;T2;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal,&nbsp;constant&nbsp;view</I></SPAN><BR>
+CAT&nbsp;:=&nbsp;T2'Access;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal,&nbsp;cannot&nbsp;assign</I></SPAN></div>
+<div class="SwissExamples">CAT.<B>all</B>&nbsp;:=&nbsp;T2;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal,&nbsp;variable&nbsp;view</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">At first sight this 
+may seem confusing and consideration was given to disallowing the use 
+of constants such as <SPAN Class="swiss">CAT</SPAN> (but permitting <SPAN Class="swiss">ACT</SPAN> 
+which is probably more useful since it protects the accessed value). 
+But the lack of orthogonality was considered very undesirable. Moreover 
+Ada is a left to right language and we are familiar with equivalent constructions 
+such as&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;CT&nbsp;<B>is&nbsp;access&nbsp;constant</B>&nbsp;T;<BR>
+ACT:&nbsp;CT;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;AT&nbsp;<B>&nbsp;is&nbsp;access</B>&nbsp;T;<BR>
+CAT:&nbsp;<B>constant</B>&nbsp;AT;</div>
+<div class="Normal">(although the alert reader will note that the latter 
+is illegal because I have foolishly used the reserved word <B>at</B> 
+as an identifier).</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can of course also 
+write&nbsp;</div>
+<div class="SwissExamples">CACT:&nbsp;<B>constant&nbsp;access&nbsp;constant</B>&nbsp;T&nbsp;:=&nbsp;T1'Access;</div>
+<div class="Normal">The object <SPAN Class="swiss">CACT</SPAN> is then 
+a constant and provides read-only access to the object <SPAN Class="swiss">T1</SPAN> 
+it refers to. It cannot be changed to refer to another object such as 
+<SPAN Class="swiss">T2</SPAN> nor can the value of <SPAN Class="swiss">T1</SPAN> 
+be changed via <SPAN Class="swiss">CACT</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">An object of an anonymous 
+access type, like other objects, can also be declared as aliased thus 
+</div>
+<div class="SwissExamples">X:&nbsp;<B>aliased&nbsp;access</B>&nbsp;T;</div>
+<div class="Normal">although such constructions are likely to be used 
+rarely.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Anonymous access types 
+can also be used as the components of arrays and records. In the Introduction 
+we saw that rather than having to write&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Cell;<BR>
+<B>type</B>&nbsp;Cell_Ptr&nbsp;<B>is&nbsp;access</B>&nbsp;Cell;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Cell&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next:&nbsp;Cell_Ptr;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Value:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">we can simply write 
+</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Cell&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next:&nbsp;<B>access</B>&nbsp;Cell;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Value:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal">and this not only avoids having to declare the named 
+access type <SPAN Class="swiss">Cell_Ptr</SPAN> but it also avoids the 
+need for the incomplete type declaration of <SPAN Class="swiss">Cell</SPAN>.</div>
+<div class="Normal">Permitting this required some changes to a rule regarding 
+the use of a type name within its own declaration &ndash; the so-called 
+current instance rule.</div>
+<div class="Normal">The original current instance rule was that within 
+a type declaration the type name did not refer to the type itself but 
+to the current object of the type. The following task type declaration 
+illustrates both a legal and illegal use of the task type name within 
+its own declaration. It is essentially an extract from a program in Section 
+18.10 of <A HREF="Rat-0-2.html#R6">[6]</A> which finds prime numbers 
+by a multitasking implementation of the Sieve of Eratosthenes. Each task 
+of the type is associated with a prime number and is responsible for 
+removing multiples of that number and for creating the next task when 
+a new prime number is discovered. It is thus quite natural that the task 
+should need to make a clone of itself.<A NAME="I1109"></A></div>
+<div class="SwissExamples"><B>task&nbsp;type</B>&nbsp;TT&nbsp;(P:&nbsp;Integer)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;ATT<B>&nbsp;is&nbsp;access</B>&nbsp;TT;</div>
+<div class="SwissExamples"><B>task&nbsp;body</B>&nbsp;TT&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Make_Clone(N:&nbsp;Integer)&nbsp;<B>return</B>&nbsp;ATT&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return&nbsp;new</B>&nbsp;TT(N);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Make_Clone;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;Ref_Clone:&nbsp;ATT;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;Ref_Clone&nbsp;:=&nbsp;Make_Clone(N);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>abort</B>&nbsp;TT;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;TT;</div>
+<div class="Normal">The attempt to make a slave clone of the task in 
+the function <SPAN Class="swiss">Make_Clone</SPAN> is illegal because 
+within the task type its name refers to the current instance and not 
+to the type. However, the abort statement is permitted and will abort 
+the current instance of the task. In this example the solution is simply 
+to move the function <SPAN Class="swiss">Make_Clone</SPAN> outside the 
+task body.</div>
+<div class="Normal">However, this rule would have prevented the use of 
+the type name <SPAN Class="swiss">Cell</SPAN> to declare the component 
+<SPAN Class="swiss">Next</SPAN> within the type <SPAN Class="swiss">Cell</SPAN> 
+and this would have been infuriating since the linked list paradigm is 
+very common.</div>
+<div class="Normal">In order to permit this the current instance rule 
+has been changed in Ada 2005 to allow the type name to denote the type 
+itself within an anonymous access type declaration (but not a named access 
+type declaration). So the type <SPAN Class="swiss">Cell</SPAN> is permitted.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note however that in 
+Ada 2005, the task <SPAN Class="swiss">TT</SPAN> still cannot contain 
+the declaration of the function <SPAN Class="swiss">Make_Clone</SPAN>. 
+Although we no longer need to declare the named type <SPAN Class="swiss">ATT</SPAN> 
+since we can now declare <SPAN Class="swiss">Ref_Clone</SPAN> as&nbsp;</div>
+<div class="SwissExamples">Ref_Clone:&nbsp;<B>access</B>&nbsp;TT;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and we can declare 
+the function as&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Make_Clone(N:&nbsp;Integer)&nbsp;<B>return</B>&nbsp;<B>access</B>&nbsp;TT&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return&nbsp;new</B>&nbsp;TT(N);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Make_Clone;</div>
+<div class="Normal">where we have an anonymous result type, nevertheless 
+the allocator <B>new</B><SPAN Class="swiss">&nbsp;TT</SPAN> inside<SPAN Class="swiss">&nbsp;Make_Clone</SPAN> remains illegal if <SPAN Class="swiss">Make_Clone</SPAN> 
+is declared within the task body <SPAN Class="swiss">TT</SPAN>. But such 
+a use is unusual and declaring a distinct external function is hardly 
+a burden.</div>
+<div class="Normal" style="margin-bottom: 0.4em">To be honest we can 
+simply declare a subtype of a different name outside the task&nbsp;</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;XTT&nbsp;<B>is</B>&nbsp;TT;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then we can write 
+<B>new</B> <SPAN Class="swiss">XTT(N);</SPAN> in the function and keep 
+the function hidden inside the task. Indeed we don't need the function 
+anyway because we can just write&nbsp;</div>
+<div class="SwissExamples">Ref_Clone&nbsp;:=&nbsp;<B>new</B>&nbsp;XTT(N);</div>
+<div class="Normal">in the task body.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The introduction of 
+the wider use of anonymous access types requires some revision to the 
+rules concerning type comparisons and conversions. This is achieved by 
+the introduction of a type <SPAN Class="roman"><I>universal_access</I></SPAN> 
+by analogy with the types <SPAN Class="roman"><I>universal_integer</I></SPAN> 
+and <SPAN Class="roman"><I>universal_real</I></SPAN>. Two new equality 
+operators are defined in the package <SPAN Class="swiss">Standard</SPAN> 
+thus<A NAME="I1110"></A><A NAME="I1111"></A>&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;<SPAN Class="roman"><I>universal_access</I></SPAN>)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;/=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;<SPAN Class="roman"><I>universal_access</I></SPAN>)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="Normal">The literal <B>null</B> is now deemed to be of type 
+<I>universal_access</I> and appropriate conversions are defined as well. 
+These new operations are only applied when at least one of the arguments 
+is of an anonymous access type (not counting <B>null</B>).</div>
+<div class="Normal" style="margin-bottom: 0.4em">Interesting problems 
+arise if we define our own equality operation. For example, suppose we 
+wish to do a deep comparison on two lists defined by the type <SPAN Class="swiss">Cell</SPAN>. 
+We might decide to write a recursive function with specification&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;=&quot;&nbsp;(L,&nbsp;R:&nbsp;<B>access</B>&nbsp;Cell)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that it is easier 
+to use access parameters rather than parameters of type <SPAN Class="swiss">Cell</SPAN> 
+itself because it then caters naturally for cases where null is used 
+to represent an empty list. We might attempt to write the body as&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;=&quot;&nbsp;(L,&nbsp;R:&nbsp;<B>access</B>&nbsp;Cell)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;L&nbsp;=&nbsp;<B>null&nbsp;or</B>&nbsp;R&nbsp;=&nbsp;<B>null&nbsp;then</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>wrong&nbsp;=</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;L&nbsp;=&nbsp;R;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>wrong&nbsp;=</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>elsif</B>&nbsp;L.Value&nbsp;=&nbsp;R.Value&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;L.Next&nbsp;=&nbsp;R.Next;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>recurses&nbsp;OK</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;False;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end</B>&nbsp;&quot;=&quot;&nbsp;;</div>
+<div class="Normal">But this doesn't work because the calls of <SPAN Class="swiss">&quot;=&quot;</SPAN> 
+in the first two lines recursively call the function being declared whereas 
+we want to call the predefined <SPAN Class="swiss">&quot;=&quot;</SPAN> 
+in these cases.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The difficulty is overcome 
+by writing<SPAN Class="swiss">&nbsp;Standard.&quot;=&quot;</SPAN> thus&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Standard.&quot;=&quot;&nbsp;(L,&nbsp;<B>null</B>)&nbsp;<B>or</B>&nbsp;Standard.&quot;=&quot;&nbsp;(R,&nbsp;<B>null</B>)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Standard.&quot;=&quot;&nbsp;(L,&nbsp;R);</div>
+<div class="Normal">The full rules regarding the use of the predefined 
+equality are that it cannot be used if there is a user-defined primitive 
+equality operation for either operand type unless we use the prefix <SPAN Class="swiss">Standard</SPAN>. 
+A similar rule applies to fixed point types as we shall see in Section 
+<A HREF="Rat-6-3.html">6.3</A>.<A NAME="I1112"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Another example of 
+the use of the type <SPAN Class="swiss">Cell</SPAN> occurred in Section 
+<A HREF="Rat-2-5.html">2.5</A> when we were discussing type extension 
+at nested levels. That example also illustrated that access types have 
+to be named in some circumstances such as when they provide the full 
+type for a private type. We had&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Lists&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;List&nbsp;<B>is&nbsp;limited&nbsp;private</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>private&nbsp;type</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Cell&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next:&nbsp;<B>access</B>&nbsp;Cell;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>anonymous&nbsp;type</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C:&nbsp;Colour;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;List&nbsp;<B>is&nbsp;access</B>&nbsp;Cell;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>full&nbsp;type</I></SPAN><BR>
+<B>end</B>;</div>
+<div class="SwissExamples"><B>package&nbsp;body</B>&nbsp;Lists&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Iterate(IC:&nbsp;<B>in</B>&nbsp;Iterator'Class;&nbsp;L:&nbsp;<B>in</B>&nbsp;List)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This:&nbsp;<B>access</B>&nbsp;Cell&nbsp;:=&nbsp;L;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>anonymous&nbsp;type</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>while</B>&nbsp;This&nbsp;/=&nbsp;<B>null&nbsp;loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IC.Action(This.C);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>dispatches</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;:=&nbsp;This.Next;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;loop</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Iterate;<BR>
+<B>end</B>&nbsp;Lists;</div>
+<div class="Normal">In this case we have to name the type <SPAN Class="swiss">List</SPAN> 
+because it is a private type. Nevertheless it is convenient to use an 
+anonymous access type to avoid an incomplete declaration of <SPAN Class="swiss">Cell</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the procedure <SPAN Class="swiss">Iterate</SPAN> 
+the local variable <SPAN Class="swiss">This</SPAN> is also of an anonymous 
+type. It is interesting to observe that if <SPAN Class="swiss">This</SPAN> 
+had been declared to be of the named type <SPAN Class="swiss">List</SPAN> 
+then we would have needed an explicit conversion in&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;:=&nbsp;List(This.Next);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>explicit&nbsp;conversion</I></SPAN></div>
+<div class="Normal">Remember that we <I>always</I> need an explicit conversion 
+when converting to a named access type. There is clearly an art in using 
+anonymous types to best advantage.</div>
+<div class="Normal">The Introduction showed a number of other uses of 
+anonymous access types in arrays and records and as function results 
+when discussing Noah's Ark and other animal situations. We will now turn 
+to more weighty matters.</div>
+<div class="Normal">An important matter in the case of access types is 
+accessibility. The accessibility rules are designed to prevent dangling 
+references. The basic rule is that we cannot create an access value if 
+the object referred to has a lesser lifetime than the access type.<A NAME="I1113"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">However there are circumstances 
+where the rule is unnecessarily severe and that was one reason for the 
+introduction of access parameters. Perhaps some recapitulation of the 
+problems would be helpful. Consider&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is</B>&nbsp;...<BR>
+Global:&nbsp;T;<BR>
+<B>type</B>&nbsp;Ref_T&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;T;<BR>
+Dodgy:&nbsp;Ref_T;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(Ptr:&nbsp;<B>access</B>&nbsp;T)&nbsp;is<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;Dodgy&nbsp;:=&nbsp;Ref_T(Ptr);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>dynamic&nbsp;check</I></SPAN><BR>
+<B>end</B>&nbsp;P;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Q(Ptr:&nbsp;Ref_T)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;Dodgy&nbsp;:=&nbsp;Ptr;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal</I></SPAN><BR>
+<B>end</B>&nbsp;Q;<BR>
+...<BR>
+<B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;X:&nbsp;<B>aliased</B>&nbsp;T;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;P(X'Access);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;Q(X'Access);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+<B>end</B>;</div>
+<div class="Normal">Here we have an object <SPAN Class="swiss">X</SPAN> 
+with a short lifetime and we must not squirrel away an access referring 
+to <SPAN Class="swiss">X</SPAN> in an object with a longer lifetime such 
+as <SPAN Class="swiss">Dodgy</SPAN>. Nevertheless we want to manipulate 
+<SPAN Class="swiss">X</SPAN> indirectly using a procedure such as <SPAN Class="swiss">P</SPAN>.</div>
+<div class="Normal">If the parameter were of a named type such as <SPAN Class="swiss">Ref_T</SPAN> 
+as in the case of the procedure <SPAN Class="swiss">Q</SPAN> then the 
+call would be illegal since within <SPAN Class="swiss">Q</SPAN> we could 
+then assign to a variable such as <SPAN Class="swiss">Dodgy</SPAN> which 
+would then retain the &quot;address&quot; of <SPAN Class="swiss">X</SPAN> 
+after <SPAN Class="swiss">X</SPAN> had ceased to exist.</div>
+<div class="Normal">However, the procedure <SPAN Class="swiss">P</SPAN> 
+which uses an access parameter permits the call. The reason is that access 
+parameters carry dynamic accessibility information regarding the actual 
+parameter. This extra information enables checks to be performed only 
+if we attempt to do something foolish within the procedure such as make 
+an assignment to <SPAN Class="swiss">Dodgy</SPAN>. The conversion to 
+the type <SPAN Class="swiss">Ref_T</SPAN> in this assignment fails dynamically 
+and disaster is avoided.</div>
+<div class="Normal" style="margin-bottom: 0.4em">But note that if we 
+had called <SPAN Class="swiss">P</SPAN> with&nbsp;</div>
+<div class="SwissExamples">P(Global'Access);</div>
+<div class="Normal">where <SPAN Class="swiss">Global</SPAN> is declared 
+at the same level as <SPAN Class="swiss">Ref_T</SPAN> then the assignment 
+to <SPAN Class="swiss">Dodgy</SPAN> would be permitted.</div>
+<div class="Normal">The accessibility rules for the new uses of anonymous 
+access types are very simple. The accessibility level is simply the level 
+of the enclosing declaration and no dynamic information is involved. 
+(The possibility of preserving dynamic information was considered but 
+this would have led to inefficiencies at the points of use.)</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the case of a stand-alone 
+variable such as&nbsp;</div>
+<div class="SwissExamples">V:&nbsp;<B>access</B>&nbsp;Integer;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then this is essentially 
+equivalent to&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;<SPAN Class="roman"><I>anon</I></SPAN>&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Integer;<BR>
+V:&nbsp;<SPAN Class="roman"><I>anon</I></SPAN>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">A similar situation 
+applies in the case of a component of a record or array type. Thus if 
+we have&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;R&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C:&nbsp;<B>access</B>&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then this is essentially 
+equivalent to&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;<SPAN Class="roman"><I>anon</I></SPAN>&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Integer;<BR>
+<B>type</B>&nbsp;R&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C:&nbsp;<SPAN Class="roman"><I>anon</I></SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Further if we now declare 
+a derived type then there is no new physical access definition, and the 
+accessibility level is that of the original declaration. Thus consider 
+</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Proc&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Local:&nbsp;<B>aliased</B>&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;D&nbsp;<B>is&nbsp;new</B>&nbsp;R;<BR>
+&nbsp;&nbsp;&nbsp;X:&nbsp;D&nbsp;:=&nbsp;D'(C&nbsp;=&gt;&nbsp;Local'Access,&nbsp;...&nbsp;);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Proc;</div>
+<div class="Normal">In this example the accessibility level of the component 
+<SPAN Class="swiss">C</SPAN> of the derived type is the same as that 
+of the parent type <SPAN Class="swiss">R&nbsp;</SPAN>and so the aggregate 
+is illegal. This somewhat surprising rule is necessary to prevent some 
+very strange problems which we will not explore here.</div>
+<div class="Normal" style="margin-bottom: 0.4em">One consequence of 
+which users should be aware is that if we assign the value in an access 
+parameter to a local variable of an anonymous access type then the dynamic 
+accessibility of the actual parameter will not be held in the local variable. 
+Thus consider again the example of the procedure <SPAN Class="swiss">P</SPAN> 
+containing the assignment to <SPAN Class="swiss">Dodgy</SPAN>&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(Ptr:&nbsp;<B>access</B>&nbsp;T)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;Dodgy&nbsp;:=&nbsp;Ref_T(Ptr);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>dynamic&nbsp;check</I></SPAN><BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and this variation 
+in which we have introduced a local variable of an anonymous access type 
+</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P1(Ptr:&nbsp;<B>access</B>&nbsp;T)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Local_Ptr:&nbsp;<B>access</B>&nbsp;T;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;Local_Ptr&nbsp;:=&nbsp;Ptr;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>implicit&nbsp;conversion</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;Dodgy&nbsp;:=&nbsp;Ref_T(Local_Ptr);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>static&nbsp;check,&nbsp;illegal</I></SPAN><BR>
+<B>end</B>&nbsp;P1;</div>
+<div class="Normal">Here we have copied the value in the parameter to 
+a local variable before attempting the assignment to <SPAN Class="swiss">Dodgy</SPAN>. 
+(Actually it won't compile but let us analyze it in detail anyway.)</div>
+<div class="Normal">The conversion in <SPAN Class="swiss">P</SPAN> using 
+the access parameter <SPAN Class="swiss">Ptr</SPAN> is dynamic and will 
+only fail if the actual parameter has an accessibility level greater 
+than that of the type <SPAN Class="swiss">Ref_T</SPAN>. So it will fail 
+if the actual parameter is <SPAN Class="swiss">X</SPAN> and so raise 
+<SPAN Class="swiss">Program_Error</SPAN> but will pass if it has the 
+same level as the type <SPAN Class="swiss">Ref_T</SPAN> such as the variable 
+<SPAN Class="swiss">Global</SPAN>.</div>
+<div class="Normal">In the case of <SPAN Class="swiss">P1</SPAN>, the 
+assignment from <SPAN Class="swiss">Ptr</SPAN> to <SPAN Class="swiss">Local_Ptr</SPAN> 
+involves an implicit conversion and static check which always passes. 
+(Remember that implicit conversions are never allowed if they involve 
+a dynamic check.) However, the conversion in the assignment to <SPAN Class="swiss">Dodgy</SPAN> 
+in <SPAN Class="swiss">P1</SPAN> is also static and will always fail 
+no matter whether <SPAN Class="swiss">X</SPAN> or <SPAN Class="swiss">Global</SPAN> 
+is passed as actual parameter.</div>
+<div class="Normal">So the effective behaviours of <SPAN Class="swiss">P</SPAN> 
+and<SPAN Class="swiss">&nbsp;P1</SPAN> are the same if the actual parameter 
+is <SPAN Class="swiss">X</SPAN> (they both fail, although one dynamically 
+and the other statically) but will be different if the actual parameter 
+has the same level as the type <SPAN Class="swiss">Ref_T</SPAN> such 
+as the variable <SPAN Class="swiss">Global</SPAN>. The assignment to 
+<SPAN Class="swiss">Dodgy</SPAN> in <SPAN Class="swiss">P</SPAN> will 
+work in the case of <SPAN Class="swiss">Global</SPAN> but the assignment 
+to <SPAN Class="swiss">Dodgy</SPAN> in <SPAN Class="swiss">P1</SPAN> 
+never works.</div>
+<div class="Normal">This is perhaps surprising, an apparently innocuous 
+intermediate assignment has a significant effect because of the implicit 
+conversion and the consequent loss of the accessibility information. 
+In practice this is very unlikely to be a problem. In any event programmers 
+are aware that access parameters are special and carry dynamic information.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In this particular 
+example the loss of the accessibility information through the use of 
+the intermediate stand-alone variable is detected at compile time. More 
+elaborate examples can be constructed whereby the problem only shows 
+up at execution time. Thus suppose we introduce a third procedure <SPAN Class="swiss">Agent</SPAN> 
+and modify <SPAN Class="swiss">P</SPAN> and <SPAN Class="swiss">P1</SPAN> 
+so that we have&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Agent(A:&nbsp;<B>access</B>&nbsp;T)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Dodgy&nbsp;:=&nbsp;Ref_T(A);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>dynamic&nbsp;check</I></SPAN><BR>
+<B>end</B>&nbsp;Agent;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(Ptr:&nbsp;<B>access</B>&nbsp;T)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Agent(Ptr);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>may&nbsp;be&nbsp;OK</I></SPAN><BR>
+<B>end</B>&nbsp;P;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P1(Ptr:&nbsp;<B>access</B>&nbsp;T)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Local_Ptr:&nbsp;<B>access</B>&nbsp;T;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Local_Ptr&nbsp;:=&nbsp;Ptr;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>implicit&nbsp;conversion&nbsp;</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;Agent(Local_Ptr);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>never&nbsp;OK</I></SPAN><BR>
+<B>end</B>&nbsp;P1;</div>
+<div class="Normal">Now we find that <SPAN Class="swiss">P</SPAN> works 
+much as before. The accessibility level passed into <SPAN Class="swiss">P</SPAN> 
+is passed to <SPAN Class="swiss">Agent</SPAN> which then carries out 
+the assignment to <SPAN Class="swiss">Dodgy</SPAN>. If the parameter 
+passed to <SPAN Class="swiss">P</SPAN> is the local <SPAN Class="swiss">X</SPAN> 
+then <SPAN Class="swiss">Program_Error</SPAN> is raised in <SPAN Class="swiss">Agent</SPAN> 
+and propagated to <SPAN Class="swiss">P</SPAN>. If the parameter passed 
+is <SPAN Class="swiss">Global</SPAN> then all is well.</div>
+<div class="Normal">The procedure <SPAN Class="swiss">P1</SPAN> now compiles 
+whereas it did not before. However, because the accessibility of the 
+original parameter is lost by the assignment to <SPAN Class="swiss">Local_Ptr</SPAN>, 
+it is the accessibility level of <SPAN Class="swiss">Local_Ptr</SPAN> 
+that is passed to <SPAN Class="swiss">Agent</SPAN> and this means that 
+the assignment to <SPAN Class="swiss">Dodgy</SPAN> always fails and raises 
+<SPAN Class="swiss">Program_Error</SPAN> irrespective of whether <SPAN Class="swiss">P1</SPAN> 
+was called with <SPAN Class="swiss">X</SPAN> or <SPAN Class="swiss">Global</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we just want to 
+use another name for some reason then we can avoid the loss of the accessibility 
+level by using renaming. Thus we could have<A NAME="I1114"></A>&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P2(Ptr:&nbsp;<B>access</B>&nbsp;T)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Local_Ptr:&nbsp;<B>access</B>&nbsp;T&nbsp;<B>renames</B>&nbsp;Ptr;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;Dodgy&nbsp;:=&nbsp;Ref_T(Local_Ptr);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>dynamic&nbsp;check</I></SPAN><BR>
+<B>end</B>&nbsp;P2;</div>
+<div class="Normal">and this will behave exactly as the original procedure 
+<SPAN Class="swiss">P</SPAN>.</div>
+<div class="Normal">As usual a renaming just provides another view of 
+the same entity and thus preserves the accessibility information.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A renaming can also 
+include <B>not null</B> thus&nbsp;</div>
+<div class="SwissExamples">Local_Ptr:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;T&nbsp;<B>renames</B>&nbsp;Ptr;</div>
+<div class="Normal">Remember that not null must never lie so this is 
+only legal if <SPAN Class="swiss">Ptr</SPAN> is indeed of a type that 
+excludes null (which it will be if <SPAN Class="swiss">Ptr</SPAN> is 
+a controlling access parameter of the procedure <SPAN Class="swiss">P2</SPAN>).</div>
+<div class="Normal" style="margin-bottom: 0.4em">A renaming might be 
+useful when the accessed type <SPAN Class="swiss">T</SPAN> has components 
+that we wish to refer to many times in the procedure. For example the 
+accessed type might be the type <SPAN Class="swiss">Cell</SPAN> declared 
+earlier in which case we might usefully have&nbsp;</div>
+<div class="SwissExamples">Next:&nbsp;<B>access</B>&nbsp;Cell&nbsp;<B>renames</B>&nbsp;Ptr.Next;</div>
+<div class="Normal">and this will preserve the accessibility information.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Anonymous access types 
+can also be used as the result of a function. In the Introduction we 
+had&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Mate_Of(A:&nbsp;<B>access</B>&nbsp;Animal'Class)&nbsp;<B>return</B>&nbsp;<B>access</B>&nbsp;Animal'Class;</div>
+<div class="Normal">The accessibility level of the result in this case 
+is the same as that of the declaration of the function itself.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can also dispatch 
+on the result of a function if the result is an access to a tagged type. 
+Consider&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Unit&nbsp;<B>return&nbsp;access</B>&nbsp;T;</div>
+<div class="Normal">We can suppose that <SPAN Class="swiss">T</SPAN> 
+is a tagged type representing some category of objects such as our geometrical 
+objects and that <SPAN Class="swiss">Unit</SPAN> is a function returning 
+a unit object such as a circle of unit radius or a triangle with unit 
+side.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We might also have 
+a function&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Is_Bigger(X,&nbsp;Y:&nbsp;<B>access</B>&nbsp;T)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then&nbsp;</div>
+<div class="SwissExamples">Thing:&nbsp;<B>access</B>&nbsp;T'Class&nbsp;:=&nbsp;...&nbsp;;<BR>
+...<BR>
+Test:&nbsp;Boolean&nbsp;:=&nbsp;Is_Bigger(Thing,&nbsp;Unit);</div>
+<div class="Normal">This will dispatch to the function <SPAN Class="swiss">Unit</SPAN> 
+according to the tag of <SPAN Class="swiss">Thing</SPAN> and then of 
+course dispatch to the appropriate function<SPAN Class="swiss">&nbsp;Is_Bigger</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The function <SPAN Class="swiss">Unit</SPAN> 
+could also be used as a default value for a parameter thus&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Is_Bigger(X:&nbsp;<B>access</B>&nbsp;T;&nbsp;Y:&nbsp;<B>access</B>&nbsp;T&nbsp;:=&nbsp;Unit)<BR>
+<B>return</B>&nbsp;Boolean;</div>
+<div class="Normal">Remember that a default used in such a construction 
+has to be tag indeterminate.</div>
+<div class="Normal">Permitting anonymous access types as result types 
+eliminates the need to define the concept of a &quot;return by reference&quot; 
+type. This was a strange concept in Ada 95 and primarily concerned limited 
+types (including task and protected types) which of course could not 
+be copied. Enabling us to write <B>access</B> explicitly and thereby 
+tell the truth removes much confusion. Limited types will be discussed 
+in detail in a later chapter (see <A HREF="Rat-4-5.html">4.5</A>).<A NAME="I1115"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Access return types 
+can be a convenient way of getting a constant view of an object such 
+as a table. We might have an array in a package body (or private part) 
+and a function in the specification thus&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Vector&nbsp;<B>is&nbsp;array</B>&nbsp;(Integer&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;of&nbsp;Float;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Read_Vec&nbsp;<B>return&nbsp;access&nbsp;constant</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>private</B></div>
+<div class="SwissExamples"><B>end</B>;</div>
+<div class="SwissExamples"><B>package&nbsp;body</B>&nbsp;P&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;The_Vector:&nbsp;<B>aliased</B>&nbsp;Vector&nbsp;:=&nbsp;&nbsp;&nbsp;;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Read_Vec&nbsp;<B>return&nbsp;access&nbsp;constant</B>&nbsp;Vector&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;The_Vector'Access;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can now write&nbsp;</div>
+<div class="SwissExamples">X&nbsp;:=&nbsp;Read_Vec(7);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>read&nbsp;element&nbsp;of&nbsp;array</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">This is strictly short 
+for&nbsp;</div>
+<div class="SwissExamples">X&nbsp;:=&nbsp;Read_Vec.<B>all</B>(7);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that we cannot 
+write&nbsp;</div>
+<div class="SwissExamples">Read_Vec(7)&nbsp;:=&nbsp;Y;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal">although we could do so if we removed <B>constant</B> 
+from the return type (in which case we should use a different name for 
+the function).</div>
+<div class="Normal" style="margin-bottom: 0.4em">The last new use of 
+anonymous access types concerns discriminants. Remember that a discriminant 
+can be of a named access type or an anonymous access type (as well as 
+oher things). Discriminants of an anonymous access type are known as 
+access discriminants. In Ada 95, access discriminants are only allowed 
+with limited types. Discriminants of a named access type are just additional 
+components with no special properties. But access discriminants of limited 
+types are special. Since the type is limited, the object cannot be changed 
+by a whole record assignment and so the discriminant cannot be changed 
+even if it has defaults. Thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Minor&nbsp;<B>is</B>&nbsp;...</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Major(M:&nbsp;<B>access</B>&nbsp;Minor)&nbsp;<B>is&nbsp;limited</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">Small:&nbsp;<B>aliased</B>&nbsp;Minor;<BR>
+Large:&nbsp;Major(Small'Access);</div>
+<div class="Normal">The objects <SPAN Class="swiss">Small</SPAN> and 
+<SPAN Class="swiss">Large</SPAN> are now bound permanently together.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 2005, access 
+discriminants are also allowed for nonlimited types. However, defaults 
+are not permitted so that the discriminant cannot be changed so again 
+the objects are bound permanently together. An interesting case arises 
+when the discriminant is provided by an allocator thus&nbsp;</div>
+<div class="SwissExamples">Larger:&nbsp;Major(<B>new</B>&nbsp;Minor(&nbsp;...&nbsp;));</div>
+<div class="Normal">In this case we say that the allocated object is 
+a coextension of <SPAN Class="swiss">Larger</SPAN>. Coextensions have 
+the same lifetime as the major object and so are finalized when it is 
+finalized. There are various accessibility and other rules concerning 
+objects which have coextensions which prevent difficulty when returning 
+such objects from functions.<A NAME="I1116"></A></div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

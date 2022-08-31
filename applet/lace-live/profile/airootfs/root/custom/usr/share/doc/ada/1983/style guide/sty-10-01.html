@@ -1,0 +1,610 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 10.1: Menu-Driven User Interface
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 10: Complete Examples</H2>
+
+<H3><a name="10.1">10.1  Menu-Driven User Interface</a></H3>
+The program implements a simple menu-driven user interface that can be used as  
+the front end for a variety of applications.  It consists of a package for  
+locally defined types; <CODE>SPC_Numeric_Types</CODE>; instantiations of Input/Output  
+packages for those types; a package to perform ASCII terminal I/O for  
+generating menus, writing prompts, and receiving user input; <CODE>Terminal_IO</CODE>; and  
+finally an example using the terminal I/O routines, <CODE>Example</CODE>.<P>
+Within <CODE>Terminal_IO</CODE>, subprogram names are overloaded when several subprograms  
+perform the same general function but for different data types.<P>
+The body for <CODE>Terminal_IO</CODE> uses separate compilation capabilities for a 
+subprogram, <CODE>Display_Menu</CODE>, that is larger and more involved than the rest. 
+Note, all literals that would be required are defined as constants. Nested 
+loops, where they exist, are also named. The numeric &quot;get&quot; functions defined 
+in the body of package, <CODE>Terminal_IO</CODE>, encapsulate exception handlers within a 
+loop.  Where locally defined types could not be used, there is a comment 
+explaining the reason. The use of short circuit control forms, both on an if 
+and an exit statement, are also illustrated.<P>
+The information that would have been in the file headers is redundant since it  
+is contained in the title page of this book. The file headers are omitted from  
+the following listings:
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------
+
+package SPC_Numeric_Types is
+
+   type Tiny_Integer   is range -2** 7 .. 2** 7 - 1; 
+   type Medium_Integer is range -2**15 .. 2**15 - 1; 
+   type Big_Integer    is range -2**31 .. 2**31 - 1;
+   
+   subtype Tiny_Natural   is 
+                          Tiny_Integer   range 0 ..   Tiny_Integer'Last; 
+   subtype Medium_Natural is 
+                          Medium_Integer range 0 .. Medium_Integer'Last; 
+   subtype Big_Natural    is 
+                          Big_Integer    range 0 ..    Big_Integer'Last;
+                          
+   subtype Tiny_Positive   is 
+                          Tiny_Integer   range 1 ..   Tiny_Integer'Last; 
+   subtype Medium_Positive is 
+                          Medium_Integer range 1 .. Medium_Integer'Last; 
+   subtype Big_Positive    is 
+                          Big_Integer    range 1 ..    Big_Integer'Last;
+                          
+   type Medium_Float is digits 6; 
+   type Big_Float    is digits 9;
+   
+   subtype Probabilities is Medium_Float range 0.0 .. 1.0;
+   
+   function Min (Left  : in     Tiny_Integer; 
+                 Right : in     Tiny_Integer) 
+         return Tiny_Integer;
+         
+   function Max (Left  : in     Tiny_Integer; 
+                 Right : in     Tiny_Integer) 
+         return Tiny_Integer;
+         
+   -- Additional function declarations to return the minimum and maximum 
+   --|   values for each type.
+   
+end SPC_Numeric_Types;
+
+------------------------------------------------------------------------
+
+package body SPC_Numeric_Types is
+
+   ---------------------------------------------------------------------
+   
+   function Min (Left  : in     Tiny_Integer; 
+                 Right : in     Tiny_Integer) 
+         return Tiny_Integer is 
+   begin
+   
+      if Left &lt; Right then 
+         return Left; 
+      else -- Left &gt;= Right 
+         return Right; 
+      end if;
+      
+   end Min;
+   
+   ---------------------------------------------------------------------
+   
+   function Max (Left  : in     Tiny_Integer; 
+                 Right : in     Tiny_Integer) 
+         return Tiny_Integer is 
+   begin
+   
+      if Left &gt; Right then 
+         return Left; 
+      else -- Left &lt;= Right 
+         return Right; 
+      end if;
+      
+   end Max;
+   
+   ---------------------------------------------------------------------
+   
+   -- Additional functions to return minimum and maximum value for each 
+   --|   type defined in the package.
+   
+end SPC_Numeric_Types;
+
+------------------------------------------------------------------------
+
+with SPC_Numeric_Types; 
+with Text_IO; 
+package SPC_Small_Integer_IO is 
+      new Text_IO.Integer_IO (SPC_Numeric_Types.Tiny_Integer);
+      
+with SPC_Numeric_Types; 
+with Text_IO; 
+package Medium_Integer_IO is 
+      new Text_IO.Integer_IO (SPC_Numeric_Types.Medium_Integer);
+      
+with SPC_Numeric_Types; 
+with Text_IO; 
+package Big_Integer_IO is 
+      new Text_IO.Integer_IO (SPC_Numeric_Types.Big_Integer);
+      
+with SPC_Numeric_Types; 
+with Text_IO; 
+package Medium_Float_IO is 
+      new Text_IO.Float_IO   (SPC_Numeric_Types.Medium_Float);
+      
+with SPC_Numeric_Types; 
+with Text_IO; 
+package Big_Float_IO is 
+      new Text_IO.Float_IO   (SPC_Numeric_Types.Big_Float);
+      
+------------------------------------------------------------------------
+
+with SPC_Numeric_Types; 
+use  SPC_Numeric_Types;
+
+package Terminal_IO is
+
+   Max_File_Name_Length : constant := 30; 
+   Max_Line             : constant := 30;
+   
+   subtype Alpha_Numeric is Character range '0' .. 'Z'; 
+   subtype Line          is String (1 .. Max_Line);
+   
+   Empty_Line : constant Line := (others =&gt; ' ');
+   
+   type Menu is array (Alpha_Numeric) of Line;
+   
+   subtype File_Name is String (1 .. Max_File_Name_Length);
+   
+   procedure Get_File_Name (Prompt      : in     String; 
+                            Name        :    out File_Name; 
+                            Name_Length :    out Natural);
+   function Yes (Prompt : in     String) return Boolean; 
+   function Get (Prompt : in     String) return Medium_Integer; 
+   function Get (Prompt : in     String) return Medium_Float;
+   
+   procedure Display_Menu (Title   : in     String; 
+                           Options : in     Menu; 
+                           Choice  :    out Alpha_Numeric);
+                           
+   procedure Pause (Prompt : in     String); 
+   procedure Pause;
+   
+   procedure Put (Integer_Value : in     Medium_Integer); 
+   procedure Put (Real_Value    : in     Medium_Float); 
+   procedure Put (Label         : in     String; 
+                  Integer_Value : in     Medium_Integer); 
+   procedure Put (Label         : in     String; 
+                  Real_Value    : in     Medium_Float);
+                  
+   procedure Put_Line (Integer_Value : in     Medium_Integer); 
+   procedure Put_Line (Real_Value    : in     Medium_Float); 
+   procedure Put_Line (Label         : in     String; 
+                       Integer_Value : in     Medium_Integer); 
+   procedure Put_Line (Label         : in     String; 
+                       Real_Value    : in     Medium_Float);
+                       
+end Terminal_IO;
+
+------------------------------------------------------------------------
+
+with Medium_Integer_IO; 
+with Medium_Float_IO; 
+with Text_IO;
+
+package body Terminal_IO is
+
+   -- simple terminal i/o routines 
+   subtype Response is String (1 .. 20);
+   
+   Prompt_Column   : constant           := 30; 
+   Question_Mark   : constant String    := &quot; ? &quot;; 
+   Standard_Prompt : constant String    := &quot; ==&gt; &quot;; 
+   Blank           : constant Character := ' ';
+   
+   Real_Fore     : constant := 4; 
+   Real_Aft      : constant := 3; 
+   Integer_Width : constant := 4;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Put_Prompt (Prompt   : in     String; 
+                         Question : in     Boolean := False) is 
+      use Text_IO; 
+   begin 
+      Put(Prompt); 
+      if Question then 
+         Put(Question_Mark); 
+      end if;
+      
+      Set_Col(Prompt_Column); 
+      Put(Standard_Prompt); 
+   end Put_Prompt;
+   
+   ---------------------------------------------------------------------
+   
+   function Yes (Prompt : in     String) return Boolean is
+   
+      Response_String : Response := (others =&gt; Blank); 
+      Response_String_Length : Natural;
+      
+   begin  -- Yes 
+      Get_Response:
+      
+         loop 
+            Put_Prompt(Prompt, Question =&gt; True); 
+            Text_IO.Get_Line(Response_String, Response_String_Length);
+            
+            Find_First_Non_Blank_Character: 
+               for Position in 1 .. Response_String_Length loop
+               
+                  if Response_String(Position) /= Blank then
+                  
+                     return Response_String(Position) = 'Y' or 
+                           Response_String(Position) = 'y';
+                           
+                  end if;
+                  
+               end loop Find_First_Non_Blank_Character;
+               
+            -- issue prompt until non-blank responses 
+            Text_IO.New_Line; 
+         end loop Get_Response; 
+   end Yes;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Get_File_Name (Prompt      : in     String; 
+                            Name        :    out File_Name; 
+                            Name_Length :    out Natural) is 
+   begin 
+      Put_Prompt(Prompt); 
+      Text_IO.Get_Line(Name, Name_Length); 
+   end Get_File_Name;
+   
+   ---------------------------------------------------------------------
+   
+   function Get (Prompt : in     String) return Medium_Integer is
+   
+      Response_String : Response := (others =&gt; Blank); 
+      Last            : Natural;               -- Required by Get_Line. 
+      Value           : Medium_Integer;
+      
+   begin  -- Get 
+      loop
+      
+         Catch_Input_Errors: 
+            begin 
+               Put_Prompt(Prompt); 
+               Text_IO.Get_Line(Response_String, Last); 
+               Value := 
+                     Medium_Integer'Value(Response_String(1 .. Last));
+                     
+               return Value;
+               
+            exception 
+               when others =&gt; 
+                  Text_IO.Put_Line(&quot;Please enter an integer&quot;); 
+            end Catch_Input_Errors;
+            
+      end loop; 
+   end Get;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Display_Menu (Title   : in     String; 
+                           Options : in     Menu; 
+                           Choice  :    out Alpha_Numeric) is separate;
+                           
+   ---------------------------------------------------------------------
+   
+   procedure Pause (Prompt : in     String) is 
+   begin 
+      Text_IO.Put_Line(Prompt); 
+      Pause; 
+   end Pause;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Pause is
+   
+      Buffer : Response; 
+      Last : Natural;
+      
+   begin  -- Pause 
+      Text_IO.Put(&quot;Press return to continue&quot;); 
+      Text_IO.Get_Line(Buffer, Last); 
+   end Pause;
+   
+   ---------------------------------------------------------------------
+   
+   function Get (Prompt : in     String) return Medium_Float is
+   
+      Value : Medium_Float;
+      
+   begin  -- Get 
+      loop
+      
+         Catch_Input_Errors: 
+            begin 
+               Put_Prompt(Prompt); 
+               Medium_Float_IO.Get(Value); 
+               Text_IO.Skip_Line;
+               
+               return Value;
+               
+            exception 
+               when others =&gt; 
+                  Text_IO.Skip_Line; 
+                  Text_IO.Put_Line(&quot;Please enter a real number&quot;); 
+            end Catch_Input_Errors;
+            
+      end loop; 
+   end Get;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Put (Integer_Value : in     Medium_Integer) is 
+   begin 
+      Medium_Integer_IO.Put(Integer_Value, Width =&gt; Integer_Width); 
+   end Put;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Put (Real_Value : in     Medium_Float) is 
+   begin 
+      Medium_Float_IO.Put 
+               (Real_Value, 
+                Fore =&gt; Real_Fore, 
+                Aft  =&gt; Real_Aft, 
+                Exp  =&gt; 0); 
+   end Put;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Put (Label         : in     String; 
+                  Integer_Value : in     Medium_Integer) is 
+   begin 
+      Text_IO.Put(Label); 
+      Medium_Integer_IO.Put(Integer_Value); 
+   end Put;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Put (Label      : in     String; 
+                  Real_Value : in     Medium_Float) is 
+   begin 
+      Text_IO.Put(Label); 
+      Medium_Float_IO.Put 
+               (Real_Value, 
+                Fore =&gt; Real_Fore, 
+                Aft  =&gt; Real_Aft, 
+                Exp  =&gt; 0); 
+   end Put;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Put_Line (Integer_Value : in     Medium_Integer) is 
+   begin 
+      Terminal_IO.Put(Integer_Value); 
+      Text_IO.New_Line; 
+   end Put_Line;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Put_Line (Real_Value : in     Medium_Float) is 
+   begin 
+      Terminal_IO.Put(Real_Value); 
+      Text_IO.New_Line; 
+   end Put_Line;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Put_Line (Label         : in     String; 
+                       Integer_Value : in     Medium_Integer) is 
+   begin 
+      Terminal_IO.Put(Label, Integer_Value); 
+      Text_IO.New_Line; 
+   end Put_Line;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Put_Line (Label      : in     String; 
+                       Real_Value : in     Medium_Float) is 
+   begin 
+      Terminal_IO.Put(Label, Real_Value); 
+      Text_IO.New_Line; 
+   end Put_Line;
+   
+   ---------------------------------------------------------------------
+   
+end Terminal_IO;
+
+------------------------------------------------------------------------
+
+separate (Terminal_IO) 
+procedure Display_Menu (Title   : in     String; 
+                        Options : in     Menu; 
+                        Choice  :    out Alpha_Numeric) is
+                        
+   Left_Column  : constant := 15; 
+   Right_Column : constant := 20;
+   
+   type Alpha_Array is array (Alpha_Numeric) of Boolean;
+   
+   Valid        : Boolean; 
+   Valid_Option : Alpha_Array := (others =&gt; False);
+   
+   ---------------------------------------------------------------------
+   
+   procedure Draw_Menu (Title   : in     String; 
+                        Options : in     Menu) is
+                        
+      use Text_IO;
+      
+   begin 
+      New_Page; 
+      New_Line; 
+      Set_Col(Right_Column); 
+      Put_Line(Title); 
+      New_Line;
+      
+      for Choice in Alpha_Numeric loop
+      
+         if Options(Choice) /= Empty_Line then 
+            Valid_Option(Choice) := True; 
+            Set_Col(Left_Column); 
+            Put(Choice &amp; &quot; -- &quot;); 
+            Put_Line(Options(Choice)); 
+         end if;
+         
+      end loop; 
+   end Draw_Menu;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Get_Response (Valid  :    out Boolean; 
+                           Choice :    out Alpha_Numeric) is
+                           
+      Buffer_Size : constant               := 20; 
+      Dummy       : constant Alpha_Numeric := 'X';
+      
+      First_Char : Character; 
+      Buffer     : String (1 .. Buffer_Size);
+      
+      -- IMPLEMENTATION NOTE: 
+      -- The following two declarations do not use locally defined types 
+      --|   because a variable of type Natural is required by the 
+      --|   Text_IO routines for strings, and there is no relational 
+      --|   operator defined for our local Tiny_, Medium_, or 
+      --|   Big_Positive and the standard type Natural. 
+      Last  : Natural; 
+      Index : Positive;
+      
+      ------------------------------------------------------------------
+      
+      function Upper_Case (Current_Char : in     Character) 
+              return Character is
+
+         Case_Difference : constant 
+                         := Character'Pos('a') - Character'Pos('A');
+
+      begin  -- Upper_Case
+
+         if Current_Char in 'a' .. 'z' then 
+            return 
+              Character'Val 
+                (Character'Pos(Current_Char) - Case_Difference);
+
+         else -- Current_Char not in 'a' .. 'z' 
+            return Current_Char; 
+         end if;
+         
+      end Upper_Case;
+      
+      ------------------------------------------------------------------
+      
+      use Text_IO; 
+   begin  -- Get_Response
+   
+      New_Line; 
+      Set_Col(Left_Column); 
+      Put(Standard_Prompt);
+      
+      Get_Line(Buffer, Last);
+      
+      Index := Buffer'First; 
+      for Position in Buffer'First .. Last loop 
+         Index := Position; 
+         exit when Upper_Case(Buffer(Index)) in Alpha_Numeric; 
+      end loop;
+      
+      First_Char := Upper_Case(Buffer(Index));
+      
+      if First_Char in Alpha_Numeric and then 
+         Valid_Option(First_Char) then 
+         Valid  := True; 
+         Choice := First_Char;
+         
+      else -- not a valid character 
+         Valid  := False; 
+         Choice := Dummy; 
+      end if;
+      
+   end Get_Response;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Beep is 
+   begin 
+      Text_IO.Put(ASCII.Bel); 
+   end Beep;
+   
+   ---------------------------------------------------------------------
+   
+begin  -- Display_Menu 
+   loop 
+      Draw_Menu(Title, Options); 
+      Get_Response(Valid, Choice); 
+      exit when Valid; 
+      Beep; 
+   end loop; 
+end Display_Menu;
+
+------------------------------------------------------------------------
+
+with SPC_Numeric_Types; 
+with Terminal_IO;
+
+procedure Example is
+
+   package TIO renames Terminal_IO;
+   
+   Example_Menu : constant TIO.Menu := TIO.Menu' 
+                  ('A'    =&gt; &quot;Add item                      &quot;, 
+                   'D'    =&gt; &quot;Delete item                   &quot;, 
+                   'M'    =&gt; &quot;Modify item                   &quot;, 
+                   'Q'    =&gt; &quot;Quit                          &quot;, 
+                   others =&gt; TIO.Empty_Line);
+                   
+   User_Choice : TIO.Alpha_Numeric; 
+   Item        : SPC_Numeric_Types.Medium_Integer;
+   
+begin  -- Example
+
+   loop 
+      TIO.Display_Menu(&quot;Example Menu&quot;, Example_Menu, User_Choice);
+      
+      case User_Choice is 
+         when 'A'    =&gt;    Item := TIO.Get (&quot;Item to add&quot;); 
+         when 'D'    =&gt;    Item := TIO.Get (&quot;Item to delete&quot;); 
+         when 'M'    =&gt;    Item := TIO.Get (&quot;Item to modify&quot;); 
+         when 'Q'    =&gt;    exit;
+         
+         when others =&gt; -- error has already been signaled to user 
+            null; 
+      end case;
+      
+   end loop;
+   
+end Example;
+
+------------------------------------------------------------------------ 
+--  This is what is displayed, anything but A, D, M or Q beeps 
+-- 
+--                 Example Menu 
+-- 
+--            A -- Add item 
+--            D -- Delete item 
+--            M -- Modify item 
+--            Q -- Quit 
+-- 
+--             ==&gt;</pre></td></tr></table>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

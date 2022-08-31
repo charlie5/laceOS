@@ -1,0 +1,571 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 12.3: Generic Instantiation</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="12.3">12.3</A>.  Generic Instantiation</H2>
+<A HREF="lrm-12-02.html#12.2"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-12.html#12"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-12-04.html#12.4"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+An instance of a generic unit is declared by a generic instantiation. 
+<pre>
+    generic_instantiation ::=
+         package identifier is
+             new generic_package_name [generic_actual_part];
+       | procedure identifier is
+             new generic_procedure_name [generic_actual_part];
+       | function designator is
+             new generic_function_name [generic_actual_part]; 
+
+    generic_actual_part ::=
+       (generic_association {, generic_association}) 
+
+    generic_association ::=
+       [generic_formal_parameter =&gt;] generic_actual_parameter 
+
+    generic_formal_parameter ::= parameter_simple_name | operator_symbol 
+
+    generic_actual_parameter ::= expression | variable_name
+       | subprogram_name | entry_name | type_mark 
+</pre>
+<P>
+An  explicit  generic  actual  parameter  must be supplied for each generic
+formal parameter, unless the corresponding  generic  parameter  declaration
+specifies  that  a default can be used.  Generic associations can be either
+positional or named  in  the  same  manner  as  parameter  associations  of
+subprogram  calls  (see  <a href="lrm-06-04.html#6.4">6.4</a>).   If two or more formal subprograms have the
+same  designator,  then  named  associations  are  not  allowed   for   the
+corresponding generic parameters. 
+<P>
+Each  generic  actual parameter must match the corresponding generic formal
+parameter.  An expression can match a formal object of mode in;  a variable
+name can match a formal object of mode in out;  a  subprogram  name  or  an
+entry  name  can match a formal subprogram;  a type mark can match a formal
+type.  The detailed  rules  defining  the  allowed  matches  are  given  in
+sections <a href="#12.3.1">12.3.1</a> to <a href="#12.3.6">12.3.6</a>;  these are the only allowed matches.   
+<P>
+The  instance  is a copy of the generic unit, apart from the generic formal
+part;  thus the instance of a generic package  is  a  package,  that  of  a
+generic  procedure  is  a  procedure,  and  that of a generic function is a
+function.  For each  occurrence, within the generic unit, of  a  name  that
+denotes  a given entity, the following list defines which entity is denoted
+by the corresponding occurrence within the instance. 
+<ol TYPE=a>
+<li>For a  name  that  denotes  the  generic  unit:     The  corresponding
+occurrence denotes the instance.<br><br> 
+<li>For a name that denotes a generic formal  object  of  mode  in:    The
+corresponding  name  denotes  a  constant whose value is a copy of the
+value of the associated generic actual parameter.<br><br> 
+<li>For a name that denotes a generic formal object of mode in out:    The
+corresponding  name  denotes  the  variable  named  by  the associated  
+generic actual parameter.<br><br> 
+<li><a name="12.3d">For</a> a name that denotes a generic  formal  type:    The  corresponding
+name  denotes  the  subtype  named  by  the  associated generic actual
+parameter (the actual subtype).<br><br> 
+<li>For a name that denotes a discriminant of a generic formal type:   The
+corresponding name denotes the corresponding discriminant (there  must
+be one) of the actual type associated with the generic formal type.<br><br>                                                
+<li><a name="12.3f">For</a> a  name  that  denotes  a  generic  formal   subprogram:      The
+corresponding  name  denotes  the  subprogram, enumeration literal, or
+entry named by the associated generic  actual  parameter  (the  actual
+subprogram).<br><br>  
+<li>For a name that  denotes  a  formal  parameter  of  a  generic  formal
+subprogram:    The corresponding name denotes the corresponding formal
+parameter  of  the  actual  subprogram  associated  with  the   formal
+subprogram.<br><br> 
+<li>For a name that denotes a local entity  declared  within  the  generic
+unit:    The  corresponding  name  denotes  the entity declared by the
+corresponding local declaration within the instance.<br><br> 
+<li>For a name that denotes  a  global  entity  declared  outside  of  the
+generic unit:   The corresponding name denotes the same global entity. 
+</ol>
+Similar  rules  apply  to  operators  and basic operations:  in particular,
+formal operators follow a rule similar to rule (f), local operations follow
+a rule similar to rule (h), and operations for global types follow  a  rule
+similar  to rule (i).  In addition, if within the generic unit a predefined
+operator or basic operation of a formal  type  is  used,  then  within  the
+instance   the   corresponding   occurrence  refers  to  the  corresponding
+predefined operation of the actual type associated with the formal type. 
+<P>
+The above rules apply also to any type mark or (default)  expression  given
+within the generic formal part of the generic unit. 
+<P>
+For the elaboration of a generic instantiation, each expression supplied as
+an  explicit  generic  actual parameter is first evaluated, as well as each
+expression that appears as a constituent of a variable name or  entry  name
+supplied  as  an  explicit  generic  actual  parameter;   these evaluations
+proceed in some order that is not defined by the language.  Then, for  each
+omitted  generic association (if any), the corresponding default expression
+or default name is evaluated;  such evaluations are performed in the  order
+of  the  generic parameter declarations.  Finally, the implicitly generated  
+instance is elaborated.  The elaboration of  a  generic  instantiation  may
+also  involve  certain constraint checks as described in later subsections. 
+<P>
+Recursive generic instantiation is not allowed in the following sense:   if
+a  given  generic  unit includes an instantiation of a second generic unit,
+then the instance generated by  this  instantiation  must  not  include  an
+instance  of  the  first  generic  unit (whether this instance is generated
+directly, or indirectly by intermediate instantiations). 
+<P>
+Examples of generic instantiations (see <a href="lrm-12-01.html#12.1">12.1</a>): 
+<pre>
+    procedure SWAP is new EXCHANGE(ELEM =&gt; INTEGER);
+    procedure SWAP is new EXCHANGE(CHARACTER);  --  SWAP is overloaded 
+
+    function SQUARE is new SQUARING(INTEGER);  --  "*" of INTEGER used by default
+    function SQUARE is new SQUARING(ITEM =&gt; MATRIX, "*" =&gt; MATRIX_PRODUCT);
+    function SQUARE is new SQUARING(MATRIX, MATRIX_PRODUCT); -- same as previous    
+
+    package INT_VECTORS is new ON_VECTORS(INTEGER, TABLE, "+"); 
+</pre>
+<P>
+Examples of uses of instantiated units: 
+<pre>
+    SWAP(A, B);
+    A := SQUARE(A); 
+
+    T : TABLE(1 .. 5) := (10, 20, 30, 40, 50);
+    N : INTEGER := INT_VECTORS.SIGMA(T);  --  150 (see <a href="lrm-12-02.html#12.2">12.2</a> for the body of
+                                              SIGMA)
+    use INT_VECTORS;
+    M : INTEGER := SIGMA(T);  --  150                                            
+</pre>
+<P>
+Notes:
+<P>
+Omission of a generic actual parameter is only allowed if  a  corresponding
+default exists.  If default expressions or default names (other than simple
+names) are used, they are evaluated in the order in which the corresponding
+generic formal parameters are declared.  
+<P>
+If  two  overloaded subprograms declared in a generic package specification
+differ only by the (formal) type of  their  parameters  and  results,  then
+there  exist  legal instantiations for which all calls of these subprograms
+from outside the instance are ambiguous.  For example: 
+<pre>
+    generic
+       type A is (&lt;&gt;);
+       type B is private;
+    package G is
+       function NEXT(X : A) return A;
+       function NEXT(X : B) return B;
+    end; 
+
+    package P is new G(A =&gt; BOOLEAN, B =&gt; BOOLEAN);
+    -- calls of P.NEXT are ambiguous 
+</pre>
+<P>
+<b>References:</b>   <A HREF="lrm-03-01.html#3.1">declaration</A>,
+<A HREF="lrm-06-01.html#6.1">designator</A>,
+<A HREF="lrm-03-07.html#3.7.1">discriminant</A>,
+<A HREF="lrm-03-01.html#3.1">elaboration</A>,
+ and <A HREF="lrm-03-09.html#3.9">3.9</A>,
+<A HREF="lrm-03-01.html#3.1">entity</A>,
+<A HREF="lrm-09-05.html#9.5">entry name</A>,
+<A HREF="lrm-04-05.html#4.5">evaluation</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="lrm-12-01.html#12.1">generic  formal  object</A>,
+<A HREF="lrm-12-01.html#12.1">generic formal parameter</A>,
+<A HREF="lrm-12-01.html#12.1">generic formal  subprogram</A>,
+<A HREF="lrm-12-01.html#12.1">generic  formal  type</A>,
+<A HREF="lrm-12-01.html#12.1">generic  parameter declaration</A>,
+<A HREF="lrm-08-01.html#8.1">global  declaration</A>,
+<A HREF="lrm-02-03.html#2.3">identifier</A>,
+<A HREF="lrm-03-01.html#3.1">implicit declaration</A>,
+<A HREF="lrm-08-01.html#8.1">local declaration</A>,
+<A HREF="lrm-12-01.html#12.1.1">mode in</A>,
+<A HREF="lrm-12-01.html#12.1.1">mode in out</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-03-03.html#3.3">operation</A>,
+<A HREF="lrm-06-01.html#6.1">operator symbol</A>,
+<A HREF="lrm-06-06.html#6.6">overloading</A>,
+ and <A HREF="lrm-08-07.html#8.7">8.7</A>,
+<A HREF="lrm-07.html#7">package</A>,
+<A HREF="lrm-04-01.html#4.1">simple name</A>,
+<A HREF="lrm-06.html#6">subprogram</A>,
+<A HREF="lrm-06-04.html#6.4">subprogram call</A>,
+<A HREF="lrm-06-01.html#6.1">subprogram name</A>,
+<A HREF="lrm-03-03.html#3.3.2">subtype  declaration</A>,
+<A HREF="lrm-03-03.html#3.3.2">type mark</A>,
+<A HREF="lrm-03-02.html#3.2.1">variable</A>,
+<A HREF="lrm-08-03.html#8.3">visibility</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-12-02.html#12.2.2">12.2.2&nbsp;Generic Instantiations</a>
+<p>
+
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-02-01.html#2.1.2">2.1.2&nbsp;Indentation</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-03-02.html#3.2.4">3.2.4&nbsp;Program Unit Names</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-02.html#5.2.2">5.2.2&nbsp;Named Association</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-01.html#8.1.1">8.1.1&nbsp;Application-Independent Naming</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-02.html#8.2.4">8.2.4&nbsp;Subtypes in Generic Specifications</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-02.html#8.2.5">8.2.5&nbsp;Overloading in Generic Units</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-03.html#8.3.2">8.3.2&nbsp;Generic Units</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-03.html#8.3.6">8.3.6&nbsp;Private and Limited Private Types</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-04.html#8.4.4">8.4.4&nbsp;Conditional Compilation</a>
+<p>
+<b>Sub-topics:</b>
+<ul>
+<li><A HREF="#12.3.1">12.3.1</A> Matching Rules for Formal Objects  
+<li><A HREF="#12.3.2">12.3.2</A> Matching Rules for Formal Private Types
+<li><A HREF="#12.3.3">12.3.3</A> Matching Rules for Formal Scalar Types    
+<li><A HREF="#12.3.4">12.3.4</A> Matching Rules for Formal Array Types
+<li><A HREF="#12.3.5">12.3.5</A> Matching Rules for Formal Access Types
+<li><A HREF="#12.3.6">12.3.6</A> Matching Rules for Formal Subprograms
+</ul>
+
+<H3><A NAME="12.3.1">12.3.1</A>.  Matching Rules for Formal Objects  </H3>
+<A HREF="#12.3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#12.3.2"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+A generic formal parameter of mode in of a given  type  is  matched  by  an
+expression of the same type.  If a generic unit has a generic formal object
+of  mode  in,  a check is made that the value of the expression  belongs to
+the subtype  denoted  by  the  type  mark,  as  for  an  explicit  constant
+declaration  (see  <a href="lrm-03-02.html#3.2.1">3.2.1</a>). The exception CONSTRAINT_ERROR is raised if this
+check fails. 
+<P>
+A generic formal parameter of mode in out of a given type is matched by the
+name of a variable of the same type.  The variable must  not  be  a  formal
+parameter  of  mode  out or a subcomponent thereof.  The name must denote a  
+variable for which renaming is allowed (see <a href="lrm-08-05.html#8.5">8.5</a>). 
+<P>
+Notes: 
+<P>
+The type of a generic actual parameter of mode in must  not  be  a  limited
+type.   The constraints that apply to a generic formal parameter of mode in  
+out are those of the corresponding generic actual parameter  (see  <a href="lrm-12-01.html#12.1.1">12.1.1</a>). 
+<P>
+<b>References:</b>   <A HREF="lrm-03-03.html#3.3">constraint</A>,
+<A HREF="lrm-11-01.html#11.1">constraint_error exception</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="lrm-06-01.html#6.1">formal parameter</A>,
+<A HREF="#12.3">generic actual parameter</A>,
+<A HREF="lrm-12-01.html#12.1.1">generic  formal object</A>,
+<A HREF="lrm-12-01.html#12.1">generic formal parameter</A>,
+<A HREF="#12.3">generic instantiation</A>,
+<A HREF="lrm-12-01.html#12.1">generic unit</A>,
+<A HREF="lrm-07-04.html#7.4.4">limited type</A>,
+<A HREF="#12.3">matching  generic  actual  parameter</A>,
+<A HREF="lrm-12-01.html#12.1.1">mode  in</A>,
+<A HREF="lrm-12-01.html#12.1.1">mode in out</A>,
+<A HREF="lrm-06-02.html#6.2">mode out</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-11.html#11">raising of exceptions</A>,
+<A HREF="lrm-03-03.html#3.3">satisfy</A>,
+<A HREF="lrm-03-03.html#3.3">subcomponent</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-03-03.html#3.3.2">type mark</A>,
+<A HREF="lrm-03-02.html#3.2.1">variable</A>.
+
+<H3><A NAME="12.3.2">12.3.2</A>.  Matching Rules for Formal Private Types</H3>
+<A HREF="#12.3.1"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#12.3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#12.3.3"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+A generic formal private type is matched by any type or subtype (the actual
+subtype) that satisfies the following conditions: 
+<ul>
+<li>If the formal type is not limited, the  actual  type  must  not  be  a
+limited  type.  (If, on the other hand, the formal type is limited, no
+such condition is imposed on the corresponding actual type, which  can
+be limited or not limited.)<br><br> 
+<li>If the formal type has a discriminant part, the actual type must be  a
+type   with   the  same  number  of  discriminants;   the  type  of  a
+discriminant that appears at a given position in the discriminant part
+of the actual type must be the same as the type  of  the  discriminant
+that  appears  at  the  same  position in the discriminant part of the   
+formal type;  and the actual subtype must be unconstrained.   (If,  on
+the  other hand, the formal type has no discriminants, the actual type
+is allowed to have discriminants.) 
+</ul>
+<P>
+Furthermore, consider any occurrence of the name of the formal  type  at  a
+place  where this name is used as an unconstrained subtype indication.  The
+actual subtype must not be an unconstrained array type or an  unconstrained
+type  with  discriminants,  if any of these occurrences is at a place where
+either a constraint or default discriminants would be required for an array
+type or for a type with discriminants (see  <a href="lrm-03-06.html#3.6.1">3.6.1</a>  and  <a href="lrm-03-07.html#3.7.2">3.7.2</a>).   The  same
+restriction  applies  to occurrences of the name of a subtype of the formal
+type, and to occurrences of the  name  of  any  type  or  subtype  derived,
+directly or indirectly, from the formal type. 
+<P>
+If  a  generic  unit  has  a  formal  private  type with discriminants, the
+elaboration of  a  corresponding  generic  instantiation  checks  that  the
+subtype  of each discriminant of the actual type is the same as the subtype
+of the corresponding  discriminant  of  the  formal  type.   The  exception
+CONSTRAINT_ERROR is raised if this check fails. 
+<P>
+<b>References:</b>   <A HREF="lrm-03-06.html#3.6">array  type</A>,
+<A HREF="lrm-03-03.html#3.3">constraint</A>,
+<A HREF="lrm-11-01.html#11.1">constraint_error exception</A>,
+<A HREF="lrm-03-07.html#3.7.1">default expression  for  a  discriminant</A>,
+<A HREF="lrm-03-04.html#3.4">derived  type</A>,
+<A HREF="lrm-03-07.html#3.7.1">discriminant</A>,
+<A HREF="lrm-03-07.html#3.7.1">discriminant  part</A>,
+<A HREF="lrm-03-09.html#3.9">elaboration</A>,
+<A HREF="#12.3">generic actual type</A>,
+<A HREF="lrm-12-02.html#12.2">generic body</A>,
+<A HREF="lrm-12-01.html#12.1.2">generic formal  type</A>,
+<A HREF="#12.3">generic instantiation</A>,
+<A HREF="lrm-12-01.html#12.1">generic  specification</A>,
+<A HREF="lrm-07-04.html#7.4.4">limited  type</A>,
+<A HREF="#12.3">matching generic actual parameter</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-07-04.html#7.4">private type</A>,
+<A HREF="lrm-11.html#11">raising of exceptions</A>,
+<A HREF="lrm-03-03.html#3.3">subtype</A>,
+<A HREF="lrm-03-03.html#3.3.2">subtype indication</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-03-03.html#3.3">type with discriminants</A>,
+<A HREF="lrm-03-06.html#3.6">unconstrained array type</A>,
+<A HREF="lrm-03-03.html#3.3">unconstrained subtype</A>.
+<P>
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-03.html#5.3.3">5.3.3&nbsp;Private Types</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-03.html#8.3.4">8.3.4&nbsp;Using Generic Units for Abstract Data Types</a>
+
+<H3><A NAME="12.3.3">12.3.3</A>.  Matching Rules for Formal Scalar Types    </H3>
+<A HREF="#12.3.2"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#12.3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#12.3.4"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+A  generic  formal  type defined by (<>) is matched by any discrete subtype
+(that is, any enumeration or  integer  subtype).   A  generic  formal  type
+defined  by  range <> is matched by any integer subtype.   A generic formal  
+type defined by digits <> is matched by  any  floating  point  subtype.   A
+generic  formal  type  defined  by  delta  <> is matched by any fixed point
+subtype.  No other matches are possible for these generic formal types. 
+<P>
+<b>References:</b>  <A HREF="lrm-12-01.html#12.1.2">box delimiter</A>,
+<A HREF="lrm-03-05.html#3.5">discrete  type</A>,
+<A HREF="lrm-03-05.html#3.5.1">enumeration  type</A>,
+<A HREF="lrm-03-05.html#3.5.9">fixed  point  type</A>,
+<A HREF="lrm-03-05.html#3.5.7">floating point type</A>,
+<A HREF="#12.3">generic actual type</A>,
+<A HREF="lrm-12-01.html#12.1.2">generic  formal  type</A>,
+<A HREF="lrm-12-01.html#12.1">generic  type  definition</A>,
+<A HREF="lrm-03-05.html#3.5.4">integer type</A>,
+<A HREF="#12.3">matching generic actual parameter</A>,
+<A HREF="lrm-03-05.html#3.5">scalar type</A>.
+
+<H3><A NAME="12.3.4">12.3.4</A>.  Matching Rules for Formal Array Types</H3>
+<A HREF="#12.3.3"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#12.3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#12.3.5"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+A  formal  array  type is matched by an actual array subtype that satisfies
+the following conditions: 
+<ul>
+<li>The formal array type and the actual array type  must  have  the  same
+dimensionality;  the formal type and the actual subtype must be either
+both constrained or both unconstrained.<br><br> 
+<li>For each index position, the index type  must  be  the  same  for  the
+actual array type as for the formal array type.<br><br> 
+<li>The component type must be the same for the actual array type  as  for
+the  formal  array type.  If the component type is other than a scalar
+type, then the component subtypes must be either both  constrained  or
+both unconstrained. 
+</ul>
+<P>
+If  a  generic  unit  has  a  formal  array  type,  the  elaboration  of  a  
+corresponding instantiation checks that the constraints  (if  any)  on  the
+component  type  are  the  same for the actual array type as for the formal
+array type, and likewise that  for  any  given  index  position  the  index
+subtypes  or  the  discrete  ranges  have  the  same bounds.  The exception
+CONSTRAINT_ERROR is raised if this check fails. 
+<P>
+Example: 
+<pre>
+    --  given the generic package 
+
+    generic
+       type ITEM   is private;
+       type INDEX  is (&lt;&gt;);
+       type VECTOR is array (INDEX range &lt;&gt;) of ITEM;
+       type TABLE  is array (INDEX) of ITEM;
+    package P is
+       ...
+    end; 
+
+    --  and the types 
+
+    type MIX    is array (COLOR range &lt;&gt;) of BOOLEAN;
+    type OPTION is array (COLOR) of BOOLEAN; 
+
+    --  then MIX can match VECTOR and OPTION can match TABLE 
+
+    package R is new P(ITEM   =&gt; BOOLEAN, INDEX =&gt; COLOR,
+                       VECTOR =&gt; MIX,     TABLE =&gt; OPTION); 
+
+    --  Note that MIX cannot match TABLE and OPTION cannot match VECTOR
+</pre>
+<P>
+Note:
+<P>
+For the above rules, if any of the index or component types of  the  formal
+array  type  is  itself  a  formal  type, then within the instance its name
+denotes the corresponding actual subtype (see <a href="#12.3d">12.3(d)</a>).  
+<P>
+<b>References:</b>  <A HREF="lrm-03-06.html#3.6">array type</A>,
+<A HREF="lrm-03-06.html#3.6">array type definition</A>,
+<A HREF="lrm-03-06.html#3.6">component  of  an array</A>,
+<A HREF="lrm-03-06.html#3.6">constrained  array  type</A>,
+<A HREF="lrm-03-03.html#3.3">constraint</A>,
+<A HREF="lrm-11-01.html#11.1">constraint_error exception</A>,
+<A HREF="lrm-03-09.html#3.9">elaboration</A>,
+<A HREF="lrm-12-01.html#12.1">formal  type</A>,
+<A HREF="lrm-12-01.html#12.1.2">generic  formal  type</A>,
+<A HREF="#12.3">generic  instantiation</A>,
+<A HREF="lrm-03-06.html#3.6">index</A>,
+<A HREF="lrm-03-06.html#3.6.1">index constraint</A>,
+<A HREF="#12.3">matching generic actual parameter</A>,
+<A HREF="lrm-11-03.html#11.3">raise statement</A>,
+<A HREF="lrm-03-03.html#3.3">subtype</A>,
+<A HREF="lrm-03-06.html#3.6">unconstrained array type</A>.
+<P>
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-02.html#8.2.2">8.2.2&nbsp;Unconstrained Arrays</a>
+
+<H3><A NAME="12.3.5">12.3.5</A>.  Matching Rules for Formal Access Types</H3>
+<A HREF="#12.3.4"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#12.3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#12.3.6"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+A  formal access type is matched by an actual access subtype if the type of
+the designated objects is the same for the actual type as  for  the  formal
+type.   If  the  designated  type  is  other  than  a scalar type, then the
+designated subtypes must be either both constrained or both  unconstrained. 
+<P>
+If  a  generic  unit  has  a  formal  access  type,  the  elaboration  of a
+corresponding instantiation checks that any constraints on  the  designated
+objects are the same for the actual access subtype as for the formal access
+type.  The exception CONSTRAINT_ERROR is raised if this check fails. 
+<P>
+Example: 
+<pre>
+    --  the formal types of the generic package 
+
+    generic
+       type NODE is private;
+       type LINK is access NODE;
+    package P is
+       ...
+    end; 
+
+    --  can be matched by the actual types 
+
+    type CAR;
+    type CAR_NAME is access CAR; 
+
+    type CAR is
+       record
+          PRED, SUCC : CAR_NAME;
+          NUMBER     : LICENSE_NUMBER;
+          OWNER      : PERSON;
+       end record;  
+
+    --  in the following generic instantiation 
+
+    package R is new P(NODE =&gt; CAR, LINK =&gt; CAR_NAME);
+</pre>
+<P>
+Note: 
+<P>
+For  the  above rules, if the designated type is itself a formal type, then
+within the instance its name denotes the corresponding actual subtype  (see
+<a href="#12.3d">12.3(d)</a>). 
+<P>
+<b>References:</b>   <A HREF="lrm-03-08.html#3.8">access  type</A>,
+<A HREF="lrm-03-08.html#3.8">access type definition</A>,
+<A HREF="lrm-03-03.html#3.3">constraint</A>,
+<A HREF="lrm-11-01.html#11.1">constraint_error exception</A>,
+<A HREF="lrm-03-08.html#3.8">designate</A>,
+<A HREF="lrm-03-09.html#3.9">elaboration</A>,
+<A HREF="lrm-12-01.html#12.1.2">generic formal  type</A>,
+<A HREF="#12.3">generic  instantiation</A>,
+<A HREF="#12.3">matching generic actual parameter</A>,
+<A HREF="lrm-03-02.html#3.2">object</A>,
+<A HREF="lrm-11-03.html#11.3">raise statement</A>,
+<A HREF="lrm-03-08.html#3.8">value of access type</A>.
+
+<H3><A NAME="12.3.6">12.3.6</A>.  Matching Rules for Formal Subprograms</H3>
+<A HREF="#12.3.5"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#12.3"><img src="lrm-up.gif" alt="[UP]"></A>
+<P>
+A  formal  subprogram  is  matched  by  an  actual  subprogram, enumeration
+literal, or entry if both have the same parameter and result  type  profile
+(see  <a href="lrm-06-06.html#6.6">6.6</a>);   in  addition,  parameter  modes  must be identical for formal
+parameters that are at the same parameter position. 
+<P>
+If a generic unit has a default subprogram specified by a name,  this  name
+must denote a subprogram, an enumeration literal, or an entry, that matches
+the  formal subprogram (in the above sense).  The evaluation of the default
+name takes place during the elaboration of each instantiation that uses the
+default,  as defined in section <a href="#12.3">12.3</a>. 
+<P>
+If a generic unit has  a  default  subprogram  specified   by  a  box,  the
+corresponding  actual parameter can be omitted if a subprogram, enumeration
+literal, or entry  matching  the  formal  subprogram,  and  with  the  same
+designator  as  the  formal subprogram, is directly visible at the place of
+the generic instantiation;  this subprogram, enumeration literal, or  entry
+is  then used by default (there must be exactly one subprogram, enumeration
+literal, or entry satisfying the previous conditions). 
+<P>
+Example: 
+<pre>
+    --  given the generic function specification 
+
+    generic
+       type ITEM is private;
+       with function "*" (U, V : ITEM) return ITEM is &lt;&gt;;
+    function SQUARING(X : ITEM) return ITEM; 
+
+    --  and the function 
+
+    function MATRIX_PRODUCT(A, B : MATRIX) return MATRIX; 
+
+    --  the following instantiation is possible 
+
+    function SQUARE is new SQUARING(MATRIX, MATRIX_PRODUCT); 
+
+    --  the following instantiations are equivalent 
+
+    function SQUARE is new SQUARING(ITEM =&gt; INTEGER, "*" =&gt; "*");
+    function SQUARE is new SQUARING(INTEGER, "*");
+    function SQUARE is new SQUARING(INTEGER); 
+</pre>
+<P>
+Notes: 
+<P>
+The matching rules for  formal  subprograms  state  requirements  that  are   
+similar  to  those  applying to subprogram renaming declarations (see <a href="lrm-08-05.html#8.5">8.5</a>).
+In particular, the name of a parameter of the formal subprogram need not be
+the same as that of the corresponding parameter of the  actual  subprogram;
+similarly,  for  these parameters, default expressions need not correspond. 
+<P>
+A formal subprogram is matched by an attribute of a type if  the  attribute
+is  a  function with a matching specification.  An enumeration literal of a  
+given type matches a parameterless formal function whose result type is the
+given type. 
+<P>
+<b>References:</b>  <A HREF="lrm-04-01.html#4.1.4">attribute</A>,
+<A HREF="lrm-12-01.html#12.1.2">box delimiter</A>,
+<A HREF="lrm-06-01.html#6.1">designator</A>,
+<A HREF="lrm-09-05.html#9.5">entry</A>,
+<A HREF="lrm-06-05.html#6.5">function</A>,
+<A HREF="#12.3">generic  actual  type</A>,
+<A HREF="lrm-12-01.html#12.1.3">generic formal subprogram</A>,
+<A HREF="lrm-12-01.html#12.1.2">generic formal type</A>,
+<A HREF="#12.3">generic  instantiation</A>,
+<A HREF="#12.3">matching generic  actual parameter</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-06-03.html#6.3">parameter and result type profile</A>,
+<A HREF="lrm-06.html#6">subprogram</A>,
+<A HREF="lrm-06-01.html#6.1">subprogram specification</A>,
+<A HREF="lrm-03-03.html#3.3">subtype</A>,
+<A HREF="lrm-08-03.html#8.3">visibility</A>.
+<P>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

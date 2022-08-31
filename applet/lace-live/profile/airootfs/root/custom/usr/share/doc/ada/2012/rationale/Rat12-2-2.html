@@ -1,0 +1,524 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Aspect specifications</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>2.2 Aspect specifications</H1>
+<div class="Normal">Although in a sense the introduction of aspect specifications 
+is incidental to the main themes of Ada 2012 which are contracts, real-time, 
+and containers, the clarity (and some might say upheaval) brought by 
+aspect specifications merits their description first.</div>
+<div class="Normal" style="margin-bottom: 0.4em">An early proposal to 
+introduce preconditions was by the use of pragmas. Thus to give a precondition 
+<B>not</B> <SPAN Class="swiss">Is_Full</SPAN> to the usual <SPAN Class="swiss">Push</SPAN> 
+procedure acting on a stack <SPAN Class="swiss">S</SPAN> and a corresponding 
+postcondition <B>not</B> <SPAN Class="swiss">Is_Empty</SPAN>, it was 
+proposed that this should be written as</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Precondition(Push,&nbsp;<B>not</B>&nbsp;Is_Full(S));<BR>
+<B>pragma</B>&nbsp;Postcondition(Push,&nbsp;<B>not</B>&nbsp;Is_Empty(S));</div>
+<div class="Normal">But this looks ugly and is verbose since it mentions 
+<SPAN Class="swiss">Push</SPAN> in both pragmas. Moreover, potential 
+problems with overloading means that it has to be clarified to which 
+procedure <SPAN Class="swiss">Push</SPAN> they apply if there happen 
+to be several. As a consequence it was decreed that the pragmas had to 
+apply to the immediately preceding subprogram. Which of course is not 
+the case with pragma <SPAN Class="swiss">Inline</SPAN> which with overloading 
+applies to all subprograms with the given name. Other curiosities include 
+the need to refer to the formal parameters of <SPAN Class="swiss">Push</SPAN> 
+(such as <SPAN Class="swiss">S</SPAN>) so that the expression has to 
+be resolved taking heed of these even though it is detached from the 
+actual specification of <SPAN Class="swiss">Push</SPAN>.</div>
+<div class="Normal">Other pragmas proposed were <SPAN Class="swiss">Inherited_Precondition</SPAN> 
+and <SPAN Class="swiss">Inherited_Postcondition</SPAN> for use with dispatching 
+subprograms.</div>
+<div class="Normal">So it was a mess and an alternative was sought. The 
+solution which evolved was to get away from wretched pragmas in such 
+circumstances. Indeed, the Ada 83 Rationale <A HREF="Rat12-0-3.html#R6">[6]</A> 
+says &quot;In addition, a program text can include elements that have 
+no influence on the meaning of the program but are included as information 
+and guidance for the human reader or for the compiler. These are: Comments; 
+Pragmas...&quot;</div>
+<div class="Normal">So pragmas were meant to have no effect on the meaning 
+of the program. Typical pragmas in Ada 83 were <SPAN Class="swiss">List</SPAN>, 
+<SPAN Class="swiss">Inline</SPAN>, <SPAN Class="swiss">Optimize</SPAN>, 
+and <SPAN Class="swiss">Suppress</SPAN>. But in later versions of Ada, 
+pragmas are used for all sorts of things. The days when pragmas had no 
+effect are long gone!</div>
+<div class="Normal" style="margin-bottom: 0.4em">The basic need was 
+to tie the pre- and postconditions syntactically to the specification 
+of <SPAN Class="swiss">Push</SPAN> so that there could be no doubt as 
+to which subprogram they applied; this would also remove the need to 
+mention the name of the subprogram again. And so, as described in the 
+Introduction (see Section <A HREF="Rat12-1-3-1.html">1.3.1</A>) we now 
+have</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Push(S:&nbsp;<B>in&nbsp;out</B>&nbsp;Stack;&nbsp;X:&nbsp;<B>in</B>&nbsp;Item)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pre&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;Is_Full(S),<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Post&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;Is_Empty(S);</div>
+<div class="Normal">The syntax for aspect specification is <A NAME="I1172"></A></div>
+<div class="SwissExamples">aspect_specification&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;aspect_mark&nbsp;[&nbsp;=&gt;&nbsp;expression]&nbsp;{&nbsp;,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aspect_mark&nbsp;[&nbsp;=&gt;&nbsp;expression]&nbsp;}</div>
+<div class="Normal">and this can be used with a variety of structures, 
+subprogram declaration being the example here.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note especially the 
+use of the reserved word <B>with</B>. Serious attempts were made to think 
+of another word so as to avoid using <B>with</B> again but nothing better 
+was suggested.</div>
+<div class="Normal">It might be thought that it would be confusing to 
+use <B>with</B> which is firmly associated with context clauses. However, 
+recall that <B>with</B> has also been used to introduce generic formal 
+subprogram parameters without causing confusion since 1983. Thus</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;This&nbsp;...<BR>
+<B>procedure</B>&nbsp;That&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">Moreover, Ada 95 introduced 
+the use of <B>with</B> for type extension as in</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Circle&nbsp;<B>is&nbsp;new</B>&nbsp;Object&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Radius:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal">So in Ada 95 there were already many distinct uses 
+of <B>with</B> and another one will surely do no harm. It's a versatile 
+little word.</div>
+<div class="Normal">Any risk of confusion is easily avoided by using 
+a sensible layout. Thus a <B>with</B> clause should start on a new line 
+at the left and aligned with the following unit to which it applies. 
+A formal generic parameter starting with <B>with</B> should be aligned 
+with other formal parameters and indented after the word generic. In 
+the case of type extension, <B>with</B> should be at the end of the line. 
+Finally, in the case of aspect specifications, <B>with</B> should be 
+at the beginning of a line and indented after the entity to which it 
+applies.</div>
+<div class="Normal">Having introduced aspect specifications which are 
+generally so much nicer than pragmas, it was decided to allow aspect 
+specifications for all those situations where pragmas are used and an 
+aspect specification makes sense (typically where is applies to an entity 
+rather than a region of text). And then to make most of the pragmas obsolete.</div>
+<div class="Normal">Before looking at the old pragmas concerned in detail, 
+two general points are worth noting.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The usual linear elaboration 
+rules do not apply to the expression in an aspect specification. It is 
+essentially sorted out at the freezing point of the entity to which the 
+aspect applies. The reason for this was illustrated by an example in 
+the Introduction which was</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Stack&nbsp;<B>is&nbsp;private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Type_Invariant&nbsp;=&gt;&nbsp;Is_Unduplicated(Stack);</div>
+<div class="Normal">The problem here is that the function <SPAN Class="swiss">Is_Unduplicated</SPAN> 
+cannot be declared before that of the type <SPAN Class="swiss">Stack</SPAN> 
+and yet it is needed in the aspect specification of the declaration of 
+<SPAN Class="swiss">Stack</SPAN>. So there is a circularity which is 
+broken by saying that the elaboration of aspect specifications is deferred.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The other general point 
+is that some aspects essentially take a Boolean value. For example the 
+pragma <SPAN Class="swiss">Inline</SPAN> is replaced by the aspect <SPAN Class="swiss">Inline</SPAN> 
+so that rather than writing&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Do_It(&nbsp;...&nbsp;);<BR>
+<B>pragma</B>&nbsp;Inline(Do_It);</div>
+<div class="Normal" style="margin-bottom: 0.4em">we now write</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Do_It(&nbsp;...&nbsp;)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Inline;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The aspect <SPAN Class="swiss">Inline</SPAN> 
+has type <SPAN Class="swiss">Boolean</SPAN> and so we could write</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Do_It(&nbsp;...&nbsp;)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Inline&nbsp;=&gt;&nbsp;True;</div>
+<div class="Normal">To have insisted on this would have been both pedantic 
+and tedious and so in the case of a Boolean aspect there is a rule that 
+says that <SPAN Class="swiss">=&gt; True</SPAN> can be omitted and <SPAN Class="swiss">True</SPAN> 
+is then taken by default. But this does not apply to <SPAN Class="swiss">Default_Value</SPAN> 
+and <SPAN Class="swiss">Default_Component_Value</SPAN> as explained later 
+in Section <A HREF="Rat12-2-6.html">2.6</A> on default initial values.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note however that omitting 
+the whole aspect by just writing</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Do_It(&nbsp;...&nbsp;);</div>
+<div class="Normal">results of course in the <SPAN Class="swiss">Inline</SPAN> 
+aspect of <SPAN Class="swiss">Do_It</SPAN> being <SPAN Class="swiss">False</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A mad programmer could 
+even use defaults for preconditions and postconditions. Thus writing</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Curious(&nbsp;...&nbsp;)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre;</div>
+<div class="Normal">in which by default the precondition is taken to 
+be <SPAN Class="swiss">True</SPAN>, results in the <SPAN Class="swiss">Curious</SPAN> 
+procedure always being callable.</div>
+<div class="Normal">We will now consider the fate of the various pragmas 
+in Ada 2005. Some are replaced by aspect specifications and the pragmas 
+made obsolete (of course, they can still be used, but should be discouraged 
+in new programs). Some are paralleled by aspect specifications and the 
+user left with the choice. Some are unchanged since for various reasons 
+aspect specifications were inappropriate. Some pragmas are new to Ada 
+2012 and born obsolete.<A NAME="I1173"></A></div>
+<div class="Normal">The following are the obsolete pragmas with some 
+examples of corresponding aspect specifications.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The pragmas <SPAN Class="swiss">Inline</SPAN>, 
+<SPAN Class="swiss">No_Return</SPAN>, and <SPAN Class="swiss">Pack</SPAN> 
+are examples having <SPAN Class="swiss">Boolean</SPAN> aspects. We can 
+now write <A NAME="I1174"></A><A NAME="I1175"></A><A NAME="I1176"></A><A NAME="I1177"></A><A NAME="I1178"></A><A NAME="I1179"></A></div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Do_It(&nbsp;...&nbsp;)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Inline;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Fail(&nbsp;...&nbsp;)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;No_Return;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is</B>&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pack;</div>
+<div class="Normal">Some thought was given as to whether the name of 
+the <SPAN Class="swiss">Pack</SPAN> aspect should be <SPAN Class="swiss">Packing</SPAN> 
+rather than <SPAN Class="swiss">Pack</SPAN> because this gave better 
+resonance in English. But the possible confusion in having a different 
+name to that of the pragma overrode the thought of niceties of (human) 
+language.</div>
+<div class="Normal">Curiously enough the old pragmas <SPAN Class="swiss">Inline</SPAN> 
+and <SPAN Class="swiss">No_Return</SPAN> could take several subprograms 
+as arguments but naturally the aspect specification is explicitly given 
+to each one.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If several aspects 
+are given to a procedure then we simply put them together thus</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Kill<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Inline,&nbsp;No_Return;</div>
+<div class="Normal">rather than having to supply several pragmas (which 
+careless program maintenance might have scattered around).</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the case of a procedure 
+without a distinct specification, the aspect specification goes in the 
+procedure body before <B>is</B> thus</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Do_It(&nbsp;...&nbsp;)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Inline&nbsp;<B>is</B>&nbsp;...<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Do_It;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This arrangement is 
+because the aspect specification is very much part of the specification 
+of the subprogram. This will be familiar to users of SPARK where we might 
+have</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Do_It(&nbsp;...&nbsp;)<BR>
+--#&nbsp;<B>global&nbsp;in&nbsp;out</B>&nbsp;Stuff;<BR>
+<B>is</B>&nbsp;...</div>
+<div class="Normal">If a subprogram has a distinct specification then 
+we cannot give a language-defined aspect specification on the body; this 
+avoids problems of conformance. If there is a stub but no specification 
+then any aspect specification goes on the stub but not the body. Thus 
+aspect specifications go on the first of specification, stub, and body 
+but are never repeated. Note also that we can give aspect specifications 
+on other forms of stubs and bodies such as package bodies, task bodies 
+and entry bodies but none are defined by the language.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the case of a stub, 
+abstract subprogram, and null subprogram which never have bodies, the 
+aspect specification goes after <B>is separate</B>, <B>is abstract</B> 
+or <B>is null</B> thus</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Action(D:&nbsp;<B>in</B>&nbsp;Data)&nbsp;<B>is&nbsp;separate</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Convention&nbsp;=&gt;&nbsp;C;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Enqueue(&nbsp;...&nbsp;)&nbsp;<B>is&nbsp;abstract</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Synchronization&nbsp;=&gt;&nbsp;By_Entry;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Nothing&nbsp;<B>is&nbsp;null</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Something;</div>
+<div class="Normal">The above example of the use of <SPAN Class="swiss">Synchronization</SPAN> 
+is from the package <SPAN Class="swiss">Synchronized_Queue_Interfaces</SPAN>, 
+a new child of <SPAN Class="swiss">Ada.Containers</SPAN> as mentioned 
+in the Introduction.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The same style is followed 
+by the newly introduced expression functions thus</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Inc&nbsp;(A:&nbsp;Integer)&nbsp;<B>return</B>&nbsp;Integer&nbsp;<B>is</B>&nbsp;(A&nbsp;+&nbsp;1)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Inline;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Other examples of <SPAN Class="swiss">Boolean</SPAN> 
+aspects are <SPAN Class="swiss">Atomic</SPAN>, <SPAN Class="swiss">Volatile</SPAN>, 
+and <SPAN Class="swiss">Independent</SPAN>. We now write for example 
+<A NAME="I1180"></A><A NAME="I1181"></A><A NAME="I1182"></A><A NAME="I1183"></A><A NAME="I1184"></A><A NAME="I1185"></A></div>
+<div class="SwissExamples">Converged:&nbsp;Boolean&nbsp;:=&nbsp;False<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Atomic;</div>
+<div class="Normal">The aspects <SPAN Class="swiss">Atomic_Components</SPAN>, 
+<SPAN Class="swiss">Volatile_Components</SPAN> and <SPAN Class="swiss">Independent_Components</SPAN> 
+are similar. <A NAME="I1186"></A><A NAME="I1187"></A><A NAME="I1188"></A><A NAME="I1189"></A><A NAME="I1190"></A><A NAME="I1191"></A></div>
+<div class="Normal">The three pragmas <SPAN Class="swiss">Convention</SPAN>, 
+<SPAN Class="swiss">Import</SPAN> and <SPAN Class="swiss">Export</SPAN> 
+are replaced by five aspects, namely <SPAN Class="swiss">Import</SPAN>, 
+<SPAN Class="swiss">Export</SPAN>, <SPAN Class="swiss">Convention</SPAN>, 
+<SPAN Class="swiss">External_Name</SPAN> and<SPAN Class="swiss">Link_Name</SPAN>. 
+<A NAME="I1192"></A><A NAME="I1193"></A><A NAME="I1194"></A><A NAME="I1195"></A><A NAME="I1196"></A><A NAME="I1197"></A><A NAME="I1198"></A><A NAME="I1199"></A><A NAME="I1200"></A><A NAME="I1201"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">For example, rather 
+than, (see <A HREF="Rat12-0-3.html#R7">[7]</A> page 702)</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Response&nbsp;<B>is&nbsp;access&nbsp;procedure</B>&nbsp;(D:&nbsp;<B>in</B>&nbsp;Data);<BR>
+<B>pragma</B>&nbsp;Convention(C,&nbsp;Response);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Set_Click(P:&nbsp;<B>in</B>&nbsp;Response);<BR>
+<B>pragma</B>&nbsp;Import(C,&nbsp;Set_Click);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Action(D:&nbsp;<B>in</B>&nbsp;Data)&nbsp;<B>is&nbsp;separate</B>;<BR>
+<B>pragma</B>&nbsp;Convention(C,&nbsp;Action);</div>
+<div class="Normal" style="margin-bottom: 0.4em">we now more neatly 
+write</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Response&nbsp;<B>is&nbsp;access&nbsp;procedure</B>&nbsp;(D:&nbsp;<B>in</B>&nbsp;Data)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Convention&nbsp;=&gt;&nbsp;C;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Set_Click(P:&nbsp;<B>in</B>&nbsp;Response)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Import,&nbsp;Convention&nbsp;=&gt;&nbsp;C;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Action(D:&nbsp;<B>in</B>&nbsp;Data)&nbsp;<B>is&nbsp;separate</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Convention&nbsp;=&gt;&nbsp;C;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that the aspects 
+can be given in any order whereas in the case of pragmas, the parameters 
+had to be in a particular order. We could have written <B>with</B> <SPAN Class="swiss">Import 
+=&gt; True</SPAN> but that would have been pedantic. As another example 
+(see the <A HREF="http://www.ada-auth.org/standards/12rm/html/RM-7-4.html">RM 
+7.4</A>), instead of</div>
+<div class="SwissExamples">CPU_Identifier:&nbsp;<B>constant</B>&nbsp;String(1&nbsp;..&nbsp;8);<BR>
+<B>pragma</B>&nbsp;Import(Assembler,&nbsp;CPU_Identifier,&nbsp;Link_Name&nbsp;=&gt;&nbsp;&quot;CPU_ID&quot;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">we now have</div>
+<div class="SwissExamples">CPU_Identifier:&nbsp;<B>constant</B>&nbsp;String(1&nbsp;..&nbsp;8)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Import,&nbsp;Convention&nbsp;=&gt;&nbsp;Assembler,&nbsp;Link_Name&nbsp;=&gt;&nbsp;&quot;CPU_ID&quot;;</div>
+<div class="Normal">Observe that we always have to give the aspect name 
+such as <SPAN Class="swiss">Convention</SPAN> whereas with pragmas <SPAN Class="swiss">Import</SPAN> 
+and <SPAN Class="swiss">Export</SPAN>, the parameter name <SPAN Class="swiss">Convention</SPAN> 
+was optional. Clearly it is better to have to give the name.</div>
+<div class="Normal">The pragma <SPAN Class="swiss">Controlled</SPAN> 
+which it may be recalled told the system to keep its filthy garbage collector 
+off my nice access type is plain obsolete and essentially abandoned. 
+It is doubted whether it was ever used. The subclause of the <A HREF="http://www.ada-auth.org/standards/12rm/html/RM-13-11-3.html">RM 
+(13.11.3)</A> relating to this pragma is now used by a new pragma <SPAN Class="swiss">Default_Storage_Pools</SPAN> 
+which will be discussed in Section <A HREF="Rat12-6-4.html">6.4</A> on 
+access types and storage pools. <A NAME="I1202"></A><A NAME="I1203"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">The pragma <SPAN Class="swiss">Unchecked_Union</SPAN> 
+is another example of a pragma replaced by a <SPAN Class="swiss">Boolean</SPAN> 
+aspect. So we now write <A NAME="I1204"></A><A NAME="I1205"></A></div>
+<div class="SwissExamples"><B>type</B>&nbsp;Number(Kind:&nbsp;Precision)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Unchecked_Union;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Many obsolete pragmas 
+apply to tasks. The aspect <SPAN Class="swiss">Storage_Size</SPAN> takes 
+an expression of any integer type. Thus in the case of a task type without 
+a task definition part (and thus without <B>is</B> and matching <B>end</B>) 
+we write <A NAME="I1206"></A><A NAME="I1207"></A></div>
+<div class="SwissExamples"><B>task&nbsp;type</B>&nbsp;T<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Storage_Size&nbsp;=&gt;&nbsp;1000;</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the case of a task 
+type with entries we write</div>
+<div class="SwissExamples"><B>task&nbsp;type</B>&nbsp;T<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Storage_Size&nbsp;=&gt;&nbsp;1000&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;E&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;T;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The interrupt pragmas 
+<SPAN Class="swiss">Attach_Handler</SPAN> and <SPAN Class="swiss">Interrupt_Handler</SPAN> 
+now become <A NAME="I1208"></A><A NAME="I1209"></A><A NAME="I1210"></A><A NAME="I1211"></A></div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(&nbsp;...&nbsp;)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Interrupt_Handler;</div>
+<div class="Normal" style="margin-bottom: 0.4em">which specifies that 
+the protected procedure <SPAN Class="swiss">P</SPAN> can be a handler 
+and</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(&nbsp;...&nbsp;)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Attach_Handler&nbsp;=&gt;&nbsp;Some_Id;</div>
+<div class="Normal">which actually attaches <SPAN Class="swiss">P</SPAN> 
+to the interrupt <SPAN Class="swiss">Some_Id</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The pragmas <SPAN Class="swiss">Priority</SPAN> 
+and <SPAN Class="swiss">Interrupt_Priority</SPAN> are replaced by corresponding 
+aspect specifications for example <A NAME="I1212"></A><A NAME="I1213"></A><A NAME="I1214"></A><A NAME="I1215"></A></div>
+<div class="SwissExamples"><B>task</B>&nbsp;T<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Interrupt_Priority&nbsp;=&gt;&nbsp;31;</div>
+<div class="SwissExamples"><B>protected</B>&nbsp;Object<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Priority&nbsp;=&gt;&nbsp;20&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>ceiling&nbsp;priority</I></SPAN></div>
+<div class="Normal">Note that a protected type or singleton protected 
+object always has <B>is</B> and the aspect specification goes before 
+it.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Similarly, instead 
+of using the pragma <SPAN Class="swiss">Relative_Deadline</SPAN> we can 
+write <A NAME="I1216"></A><A NAME="I1217"></A></div>
+<div class="SwissExamples"><B>task</B>&nbsp;T<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Relative_Deadline&nbsp;=&gt;&nbsp;RD;</div>
+<div class="Normal">The final existing pragma that is now obsolete is 
+the pragma <SPAN Class="swiss">Asynchronous</SPAN> used in the Distributed 
+Systems Annex and which can be applied to a remote procedure or remote 
+access type. It is replaced by the <SPAN Class="swiss">Boolean</SPAN> 
+aspect <SPAN Class="swiss">Asynchronous</SPAN>. <A NAME="I1218"></A><A NAME="I1219"></A></div>
+<div class="Normal">That covers all the existing Ada 2005 pragmas that 
+are now obsolete.</div>
+<div class="Normal">Two new pragmas in Ada 2012 are <SPAN Class="swiss">CPU</SPAN> 
+and <SPAN Class="swiss">Dispatching_Domain</SPAN> but these are born 
+obsolete. Thus we can write either of <A NAME="I1220"></A><A NAME="I1221"></A><A NAME="I1222"></A><A NAME="I1223"></A></div>
+<div class="SwissExamples"><B>task</B>&nbsp;My&nbsp;Task&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;CPU(10);</div>
+<div class="Normal" style="margin-bottom: 0.4em">or</div>
+<div class="SwissExamples"><B>task</B>&nbsp;My_Task<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;CPU&nbsp;=&gt;&nbsp;10&nbsp;<B>is</B></div>
+<div class="Normal" style="margin-bottom: 0.4em">and similarly</div>
+<div class="SwissExamples"><B>task</B>&nbsp;Your_Task&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Dispatching_Domain(Your_Domain);</div>
+<div class="Normal" style="margin-bottom: 0.4em">or</div>
+<div class="SwissExamples"><B>task</B>&nbsp;Your_Task<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Dispatching_Domain&nbsp;=&gt;&nbsp;Your_Domain&nbsp;<B>is</B></div>
+<div class="Normal" style="margin-bottom: 0.4em">The reason for introducing 
+these pragmas is so that existing tasking programs with copious use of 
+pragmas such as <SPAN Class="swiss">Priority</SPAN> can use the new facilities 
+in a similar style. It was considered inelegant to write</div>
+<div class="SwissExamples"><B>task</B>&nbsp;My_Task<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;CPU&nbsp;=&gt;&nbsp;10&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Priority(5);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and a burden to have 
+to change programs to</div>
+<div class="SwissExamples"><B>task</B>&nbsp;My_Task<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;CPU&nbsp;=&gt;&nbsp;10,&nbsp;Priority&nbsp;=&gt;&nbsp;5&nbsp;<B>is</B></div>
+<div class="Normal" style="margin-bottom: 0.4em">So existing programs, 
+can be updated to</div>
+<div class="SwissExamples"><B>task</B>&nbsp;My_Task&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;CPU(10);<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Priority(5);</div>
+<div class="Normal">(One other pragma that was never born at all was 
+<SPAN Class="swiss">Implemented</SPAN> which eventually turned into the 
+aspect <SPAN Class="swiss">Synchronization</SPAN> often used to ensure 
+that an abstract procedure is actually implemented by an entry as illustrated 
+earlier.)</div>
+<div class="Normal">A number of existing pragmas are paralleled by aspect 
+specifications but the pragmas are not made obsolete. Examples are the 
+pragmas relating to packages such as <SPAN Class="swiss">Pure</SPAN>, 
+<SPAN Class="swiss">Preelaborate</SPAN>, <SPAN Class="swiss">Elaborate_Body</SPAN> 
+and so on. <A NAME="I1224"></A><A NAME="I1225"></A><A NAME="I1226"></A><A NAME="I1227"></A><A NAME="I1228"></A><A NAME="I1229"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Thus we can write either 
+of</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Pure(P);<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal" style="margin-bottom: 0.4em">or</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pure&nbsp;<B>is</B><BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal">The author prefers the former but some avant garde 
+programmers might like to use the latter.</div>
+<div class="Normal">Note that <SPAN Class="swiss">Preelaborable_Initialization</SPAN> 
+is unusual in that it cannot be written as an aspect specification for 
+reasons that need not bother us. The inquisitive reader can refer to 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0229-1.TXT">AI-229</A> 
+for the details. <A NAME="I1230"></A><A NAME="I1231"></A></div>
+<div class="Normal">Finally, there are many pragmas that do not relate 
+to any particular entity and so for which an aspect specification would 
+be impossible.</div>
+<div class="Normal">These include <SPAN Class="swiss">Assert</SPAN> and 
+<SPAN Class="swiss">Assertion_Policy</SPAN>, <SPAN Class="swiss">Suppress</SPAN> 
+and <SPAN Class="swiss">Unsuppress</SPAN>, <SPAN Class="swiss">Page</SPAN> 
+and <SPAN Class="swiss">List</SPAN>, <SPAN Class="swiss">Optimize</SPAN> 
+and <SPAN Class="swiss">Restrictions</SPAN>. <A NAME="I1232"></A><A NAME="I1233"></A><A NAME="I1234"></A><A NAME="I1235"></A><A NAME="I1236"></A><A NAME="I1237"></A><A NAME="I1238"></A><A NAME="I1239"></A><A NAME="I1240"></A><A NAME="I1241"></A><A NAME="I1242"></A><A NAME="I1243"></A><A NAME="I1244"></A><A NAME="I1245"></A><A NAME="I1246"></A><A NAME="I1247"></A></div>
+<div class="Normal">As well as replacing pragmas, aspect specifications 
+can be used instead of atrribute definition clauses.</div>
+<div class="Normal" style="margin-bottom: 0.4em">For example rather 
+than</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Byte&nbsp;<B>is&nbsp;range</B>&nbsp;0&nbsp;..&nbsp;255;</div>
+<div class="Normal" style="margin-bottom: 0.4em">followed (perhaps much 
+later) by</div>
+<div class="SwissExamples"><B>for</B>&nbsp;Byte'Size&nbsp;<B>use</B>&nbsp;8;</div>
+<div class="Normal" style="margin-bottom: 0.4em">we can now write</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Byte&nbsp;<B>is&nbsp;range</B>&nbsp;0&nbsp;..&nbsp;255<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Size&nbsp;=&gt;&nbsp;8;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Similarly</div>
+<div class="SwissExamples"><B>type</B>&nbsp;My_Float&nbsp;<B>is&nbsp;digits</B>&nbsp;20<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Alignment&nbsp;=&gt;&nbsp;16;</div>
+<div class="SwissExamples">Loose_Bits:&nbsp;<B>array</B>&nbsp;(1&nbsp;..&nbsp;10)&nbsp;<B>of</B>&nbsp;Boolean<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Component_Size&nbsp;=&gt;&nbsp;4;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Cell_Ptr&nbsp;<B>is&nbsp;access</B>&nbsp;Cell<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Storage_Size&nbsp;=&gt;&nbsp;500&nbsp;*&nbsp;Cell'Size&nbsp;/&nbsp;Storage_Unit,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Storage_Pool&nbsp;=&gt;&nbsp;Cell_Ptr_Pool;</div>
+<div class="SwissExamples">S:&nbsp;Status<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Address&nbsp;=&gt;&nbsp;8#100#;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T<B>&nbsp;is&nbsp;delta&nbsp;</B>0.1&nbsp;<B>range</B>&nbsp;&ndash;1.0&nbsp;..&nbsp;+1.0<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Small&nbsp;=&gt;&nbsp;0.1;</div>
+<div class="Normal" style="margin-bottom: 0.4em">But we cannot use this 
+technique to replace an enumeration representation clause or record representation 
+clause. Thus although we can write</div>
+<div class="SwissExamples"><B>type</B>&nbsp;RR&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Code:&nbsp;Opcode;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R1:&nbsp;Register;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R2:&nbsp;Register;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Alignment&nbsp;=&gt;&nbsp;2,&nbsp;Bit_Order&nbsp;=&gt;&nbsp;High_Order_First;</div>
+<div class="Normal" style="margin-bottom: 0.4em">the layout information 
+has to be done by writing</div>
+<div class="SwissExamples"><B>for</B>&nbsp;RR&nbsp;<B>use</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Code&nbsp;<B>at</B>&nbsp;0&nbsp;<B>range</B>&nbsp;0&nbsp;..&nbsp;7;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R1&nbsp;<B>at</B>&nbsp;1&nbsp;<B>range</B>&nbsp;0&nbsp;..&nbsp;3;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R2&nbsp;<B>at</B>&nbsp;1&nbsp;<B>range</B>&nbsp;4&nbsp;..&nbsp;7;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">It is interesting to 
+note that attribute definition clauses were not made redundant in the 
+way that many pragmas were made redundant. This is because there are 
+things that one can do with attribute definition clauses that cannot 
+be done with aspect specifications. For example a visible type can be 
+declared in a visible part and then details of its representation can 
+be given in a private part. Thus we might have</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is</B>&nbsp;...<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;Secret_Size:&nbsp;<B>constant</B>&nbsp;:=&nbsp;16;<BR>
+&nbsp;&nbsp;&nbsp;<B>for</B>&nbsp;T'Size&nbsp;<B>use</B>&nbsp;Secret_Size;<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal">It's not that convincing because the user can use 
+the attribute <SPAN Class="swiss">T'Size</SPAN> to find the <SPAN Class="swiss">Secret_Size</SPAN> 
+anyway. But some existing programs are structured like that and hence 
+the facility could hardly be made redundant.</div>
+<div class="Normal">The examples above have shown aspect specifications 
+with the following constructions: subprogram declaration, subprogram 
+body, stub, abstract subprogram declaration, null procedure declaration, 
+full type declaration, private type declaration, object declaration, 
+package declaration, task type declaration, single task declaration, 
+and single protected declaration. In addition they can be used with subtype 
+declaration, component declaration, private extension declaration, renaming 
+declaration, protected type declaration, entry declaration, exception 
+declaration, generic declaration, generic instantiation, and generic 
+formal parameter declaration.</div>
+<div class="Normal">The appropriate layout should be obvious. In the 
+case of a large structure such as a package specification and any body, 
+the aspect specification goes before <B>is</B>. But when something is 
+small and all in one piece such as a procedure specification, stub, null 
+procedure, object declaration or generic instantiation any aspect specification 
+goes at the end of the declaration; it is then more visible and less 
+likely to interfere with the layout of the rest of the structure.</div>
+<div class="Normal">In some cases such as exception declarations there 
+are no language defined aspects that apply but implementations might 
+define their own aspects.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

@@ -1,0 +1,321 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 7.2: Informal Introduction to Derived Types</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 7: Derived Types</H2>
+
+<H3><a name="7.2">7.2 Informal Introduction to Derived Types</a></H3>
+
+Given some  useful type,  the derivation mechanism offers a simple way
+of creating  other types  that  are  distinct  copies  of  this  type.
+Consider for example the types:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type SCALAR is digits 8;
+
+type COLOR is (VIOLET, INDIGO, BLUE, GREEN, YELLOW, ORANGE, RED);
+
+package METRIC is
+  type COORDINATE is
+    record
+      X  :  SCALAR  :=  0;
+      Y  :  SCALAR  :=  0;
+      Z  :  SCALAR  :=  0;
+    end record;
+
+  function "+" (LEFT, RIGHT :  COORDINATE) return COORDINATE;
+  function "-" (LEFT, RIGHT :  COORDINATE) return COORDINATE;
+
+  procedure INVERT(A :  in out COORDINATE);
+end METRIC;
+</pre></td></tr></table>
+<p>
+By derivation we can create the following new types:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type MASS   is new SCALAR;
+type LENGTH is new SCALAR;
+type AREA   is new SCALAR;
+
+
+type DYE is new COLOR;
+
+type HUE is new COLOR;
+
+type POINT is new METRIC.COORDINATE;
+type FORCE is new METRIC.COORDINATE;
+type VECTOR is new METRIC.COORDINATE;
+</pre></td></tr></table>
+<p>
+The motivation  for creating  new types  that are  copies of  existing
+types will  be examined  in later  sections. For the time being let us
+review the  properties of such types - obtained by derivation. In each
+case, the  derived type is a copy of its parent type. This has several
+implications concerning  the  type  class,  the  set  of  values,  the
+applicable operations, and overloading.
+
+<H4>Type Class:</H4>
+<p>
+The derived  type belongs  to the  same class as its parent type. Thus
+DYE is  an enumeration  type  since  COLOR  is  an  enumeration  type;
+similarly, POINT is a record type since COORDINATE is a record type.
+<p>
+<H4>Set of Values:</H4>
+<p>
+The set  of values  of the derived type is a copy of the set of values
+of its  parent type.  Thus we  have a set of seven values for the type
+DYE -  exactly as  for the  parent type  COLOR. There  is a one-to-one
+correspondence between  the two sets of values; but these two sets are
+nevertheless distinct:  it would  not be possible to assign a value of
+type DYE to a variable of type COLOR.
+<p>
+<H4>Basic Operations:</H4>
+<p>
+The basic  operations for the derived type are as for the parent type.
+For example,  if component selection is available for the parent type,
+it is  available for the derived type. Thus selection of the component
+Y (by  dot notation)  is available  for the  type POINT  since  it  is
+available for the type COORDINATE; similarly aggregates exist for both
+types and they use the same notation.
+<p>
+<H4>Attributes:</H4>
+<p>
+Attributes are  basic operations,  so the previous rule applies: If an
+attribute is  available for  the parent  type, it is available for the
+derived type.  Thus the attribute FIRST is available for the type MASS
+since it is available for the type SCALAR: the attribute FIRST for the
+type MASS  yields a  value of  type MASS;  the attribute FIRST for the
+type SCALAR yields a value of type SCALAR. The (implicit) declarations
+of these  two attributes  are in  fact as  follows (this  is NOT legal
+Ada):
+<p>
+<table border cellpadding=6><tr><td><pre>
+function SCALAR'FIRST           return SCALAR; -- for the type
+SCALAR
+function MASS'FIRST             return MASS;   -- for the type MASS
+</pre></td></tr></table>
+<p>
+<H4>Implicit Conversions of Numeric Literals:</H4>
+<p>
+Implicit conversions  of numeric  literals are  also basic operations.
+Hence there exists an implicit conversion of any real literal (such as
+1.54) to  the type  MASS since  there exists such a conversion for the
+type SCALAR (the parent type of MASS).
+<p>
+<H4>Enumeration Literals:</H4>
+<p>
+If a  given enumeration literal exists for the parent type, there is a
+corresponding enumeration literal - with the same identifier - for the
+derived type.  Thus there  is the  enumeration literal  INDIGO for the
+type DYE  since there  is an  enumeration literal  INDIGO for the type
+COLOR. The  (implicit) declarations  of these two enumeration literals
+are in fact as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+function INDIGO return COLOR;   -- for the type COLOR
+function INDIGO return DYE; -- for the type DYE
+</pre></td></tr></table>
+<p>
+Thus each literal yields a value of the corresponding type: as we know
+already there  is a  correspondence between  the indigo value of COLOR
+and that  of DYE,  but they  are distinct values belonging to distinct
+types.
+<p>
+<H4>Predefined Operations:</H4>
+<p>
+For  each   predefined  operation  of  the  parent  type  there  is  a
+corresponding predefined operation of the derived type. For example we
+have the addition:
+<p>
+<PRE>    function "+" (LEFT, RIGHT :  SCALAR) return SCALAR;</PRE>
+<p>
+for the  type SCALAR  and hence  the corresponding  additions for  the
+derived types:
+<p>
+<table border cellpadding=6><tr><td><pre>
+function "+" (LEFT, RIGHT :  MASS)        return MASS;   -- for the type MASS
+function "+" (LEFT, RIGHT :  LENGTH)      return LENGTH; -- for the type LENGTH
+function "+" (LEFT, RIGHT :  AREA)        return AREA;   -- for the type AREA
+</pre></td></tr></table>
+<p>
+<H4>Derivable Operations:</H4>
+<p>
+For a  type declared in the visible part of a package, each subprogram
+that has  a parameter or result of the type and is declared within the
+visible  part   of  this   package  is   derivable.  This  means  that
+corresponding operations are derived by the derived type. For example,
+the package METRIC defines an addition, a subtraction, and a procedure
+INVERT  for   the  type   COORDINATE;  and   hence  the  corresponding
+subprograms are derived for the type POINT:
+<p>
+<table border cellpadding=6><tr><td><pre>
+function "+" (LEFT, RIGHT :  POINT) return POINT;
+function "-" (LEFT, RIGHT :  POINT) return POINT;
+procedure INVERT(A :  in out POINT);
+</pre></td></tr></table>
+<p>
+Note  that   these  derived  operations  are  obtained  by  systematic
+substitution of  the name  of the  derived type  for the  name of  the
+parent type.
+<p>
+(We will  say more about the effect of these derived subprograms after
+we have presented explicit conversions.)
+<p>
+<H4>Explicit Conversions:</H4>
+<p>
+The above  description shows that a derived type is very much like its
+parent type.  They are  nevertheless distinct  types.  Thus  with  the
+declarations
+<p>
+<table border cellpadding=6><tr><td><pre>
+C  :  COLOR :=  INDIGO;
+D  :  DYE  :=  VIOLET;
+H  :  HUE  :=  RED;
+</pre></td></tr></table>
+<p>
+assignments such as the following are illegal
+<p>
+<table border cellpadding=6><tr><td><pre>
+D  :=  H;     -- Illegal: a hue value cannot be assigned to a dye
+C  :=  D;     -- Illegal: a dye value cannot be assigned to a color
+</pre></td></tr></table>
+<p>
+These assignments are not allowed because we are dealing with distinct
+types and  distinct sets  of values.  However, there  is a  one-to-one
+correspondence between  these sets of values and, for this reason, the
+language provides  explicit conversions  between corresponding values.
+For example
+<p>
+<PRE>    DYE(H)</PRE>
+<p>
+is an  explicit conversion  of the value of H - of type HUE - into the
+corresponding value  of type  DYE: here it will yield the RED value of
+the type DYE, and so the following assignment is legal
+<p>
+<PRE>    D :=  DYE(H);</PRE>
+<p>
+Type conversions between types that are derived directly or indirectly
+from each  other (or  from a common parent type) usually do not result
+in any  run-time executable  code. Such  conversions are also involved
+(implicitly) in  the derivation of a derivable operation. Consider for
+example the procedure INVERT:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure INVERT(A :  in out COORDINATE) is
+begin
+  A.X :=    - A.X;
+  A.Y :=    - A.Y;
+  A.Z :=    - A.Z;
+end;
+</pre></td></tr></table>
+<p>
+and the derivation of the procedure
+<p>
+<PRE>    procedure INVERT(A :  in out POINT);</PRE>
+<p>
+The effect of this derived operation is obtained by application of the
+parent procedure,  but conversion  of the parameter to the parent type
+is assumed  to take  place before the call, and conversion back to the
+derived type  is assumed  to take  place after  the call.  Thus for  a
+variable P of type POINT, the call
+<p>
+<PRE>    INVERT(P);</PRE>
+<p>
+has the same effect as
+<p>
+<table border cellpadding=6><tr><td><pre>
+declare
+  use METRIC;
+  K :  COORDINATE;
+begin
+  K :=  COORDINATE(P);  -- convert to parent type
+  METRIC.INVERT(K);     -- call parent procedure
+  P :=  POINT(K);       -- convert back to derived type
+end;
+</pre></td></tr></table>
+<p>
+or simply
+<p>
+<PRE>    METRIC.INVERT(METRIC.COORDINATE(K));</PRE>
+<p>
+but this form does not show the conversion back.
+<p>
+Here again  these conversions  usually do  not result  in any run-time
+executable code  but they  are  needed  to  explain  the  use  of  the
+procedure  METRIC.INVERT,   which  is  only  applicable  to  the  type
+METRIC.COORDINATE.
+<p>
+<H4>Overloading considerations:</H4>
+<p>
+A  final   point  to  consider  with  derived  types  is  overloading.
+Derivation creates several overloaded entities. Thus we have
+<ul>
+<li>Overloaded aggregates. For example, for the types METRIC.COORDINATE
+and POINT, the aggregate:  (X =&gt;  1.0, Y =&gt;  2.0, Z =&gt;  1.5)
+<p>
+<li>Overloaded enumeration  literals. For example, for the types COLOR,
+DYE, and  HUE, enumeration  literals such as VIOLET, INDIGO, and so
+on.
+<p>
+<li>Overloaded subprograms.  For example,  the procedure INVERT for the
+types POINT,  FORCE, and METRIC.COORDINATE. Similarly, the operator
+"+" for these types, for the type SCALAR, and for the types derived
+from SCALAR.
+</ul>
+
+As usual,  overloaded entities  are identified  by the  context.  Thus
+there is no ambiguity in the following cases:
+<p>
+<table border cellpadding=6><tr><td><pre>
+C  :=  INDIGO;           -- the INDIGO of the type COLOR
+D  :=  INDIGO;           -- the INDIGO of the type DYE
+</pre></td></tr></table>
+<p>
+Qualification can  be used  when the context is not sufficient for the
+determination of  the meaning  of an overloaded construct. For example
+the  following   comparison  is  ambiguous  (and  admittedly  somewhat
+pathological):
+<p>
+<PRE>    if (X =&gt; A,  Y =&gt; B,  Z =&gt; C)  =  (X =&gt; U,  Y =&gt; V,  Z =&gt; W) then -- ambiguous</pre>
+<p>
+But this  ambiguity can be resolved by qualification of one or of both
+aggregates:
+<p>
+<PRE>    POINT'(X =&gt; A,  Y =&gt; B,  Z =&gt; C)     =  (X =&gt; U,  Y =&gt; V,  Z =&gt; W)</PRE>
+<p>
+or
+<p>
+<PRE>   POINT'(X =&gt; A,  Y =&gt; B,  Z =&gt; C)     =   POINT'(X =&gt; U,  Y =&gt; V,  Z   =&gt; W)</PRE>
+<p>
+or
+<p>
+<PRE>    (X =&gt; A,  Y =&gt; B,  Z =&gt; C)     =   POINT'(X =&gt; U,  Y =&gt; V,  Z   =&gt; W)</PRE>
+<p>
+We next review major classes of use of derived types.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-07-03.html#7.3"><b>NEXT</b></a>
+&#128; <a href="ratl-07-01.html#7.1"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-07.html#7"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

@@ -1,0 +1,175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Exceptions</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-6-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-6-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>6.2 Exceptions</H1>
+<div class="Normal">There are two minor improvements in this area.</div>
+<div class="Normal">One concerns the detection of a null exception occurrence 
+which might be useful in a routine for analysing a log of exceptions. 
+This is tricky because although a constant <SPAN Class="swiss">Null_Occurrence</SPAN> 
+is declared in the package <SPAN Class="swiss">Ada.Exceptions</SPAN>, 
+the type <SPAN Class="swiss">Exception_Occurrence</SPAN> is limited and 
+no equality is provided. So the obvious test cannot be performed.<A NAME="I1229"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">We can however apply 
+the function <SPAN Class="swiss">Exception_Identity</SPAN> to a value 
+of the type <SPAN Class="swiss">Exception_Occurrence</SPAN> and this 
+returns the corresponding <SPAN Class="swiss">Exception_Id</SPAN>. Thus 
+we could check to see whether a particular occurrence <SPAN Class="swiss">X</SPAN> 
+was caused by <SPAN Class="swiss">Program_Error</SPAN> by writing&nbsp;</div>
+<div class="SwissExamples"><B>if</B>&nbsp;Exception_Identity(X)&nbsp;=&nbsp;Program_Error'Identity&nbsp;<B>then</B></div>
+<div class="Normal">However, in Ada 95, applying <SPAN Class="swiss">Exception_Identity</SPAN> 
+to the value <SPAN Class="swiss">Null_Occurrence</SPAN> raises <SPAN Class="swiss">Constraint_Error</SPAN> 
+so we have to resort to a revolting trick such as declaring a function 
+as follows</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Is_Null_Occurrence(X:&nbsp;Exception_Occurrence)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Id:&nbsp;Exception_Id;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Id&nbsp;:=&nbsp;Exception_Identity(X);<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;False;<BR>
+<B>exception</B><BR>
+&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Constraint_Error&nbsp;=&gt;&nbsp;<B>return</B>&nbsp;True;<BR>
+<B>end</B>&nbsp;Is_Null_Occurrence;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can now write some 
+general analysis routine as&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Process_Ex(X:&nbsp;<B>in</B>&nbsp;Exception_Occurrence)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Is_Null_Occurrence(X)&nbsp;<B>then</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>OK&nbsp;in&nbsp;Ada&nbsp;95</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>process&nbsp;the&nbsp;case&nbsp;of&nbsp;a&nbsp;null&nbsp;occurrence</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>process&nbsp;proper&nbsp;occurrences</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end</B>&nbsp;Process_Ex;</div>
+<div class="Normal" style="margin-bottom: 0.4em">But the detection of 
+<SPAN Class="swiss">Constraint_Error</SPAN> in <SPAN Class="swiss">Is_Null_Occurrence</SPAN> 
+is clearly bad practice since it would be all too easy to mask some other 
+error by mistake. Accordingly, in Ada 2005, the behaviour of <SPAN Class="swiss">Exception_Identity</SPAN> 
+is changed to return <SPAN Class="swiss">Null_Id</SPAN> when applied 
+to <SPAN Class="swiss">Null_Occurrence</SPAN>. So we can now dispense 
+with the dodgy function <SPAN Class="swiss">Is_Null_Occurrence</SPAN> 
+and just write<A NAME="I1230"></A>&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Process_Ex(X:&nbsp;<B>in</B>&nbsp;Exception_Occurrence)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Exception_Identity(X)&nbsp;=&nbsp;Null_Id&nbsp;<B>then</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>OK&nbsp;in&nbsp;Ada&nbsp;2005</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>process&nbsp;the&nbsp;case&nbsp;of&nbsp;a&nbsp;null&nbsp;occurrence</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>process&nbsp;proper&nbsp;occurrences</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end</B>&nbsp;Process_Ex;</div>
+<div class="Normal">Beware that, technically, we now have an incompatibility 
+between Ada 95 and Ada 2005 since the nasty function <SPAN Class="swiss">Is_Null_Occurrence</SPAN> 
+will always return <SPAN Class="swiss">False</SPAN> in Ada 2005.</div>
+<div class="Normal">Observe that <SPAN Class="swiss">Constraint_Error</SPAN> 
+is also raised if any of the three functions <SPAN Class="swiss">Exception_Name</SPAN>, 
+<SPAN Class="swiss">Exception_Message</SPAN>, or <SPAN Class="swiss">Exception_Information</SPAN> 
+are applied to the value <SPAN Class="swiss">Null_Occurrence</SPAN> so 
+the similar behaviour with <SPAN Class="swiss">Exception_Identity</SPAN> 
+in Ada 95 is perhaps understandable at first sight. However, it is believed 
+that it was not the intention of the language designers but got in by 
+mistake. Actually the change described here was later deemed to apply 
+to Ada 95 as well (see Section <A HREF="Rat-9-2.html">9.2</A> which covers 
+a number of retrospective changes to Ada 95).</div>
+<div class="Normal" style="margin-bottom: 0.4em">The other change in 
+the exception area concerns the raise statement. It is now possible (optionally 
+of course) to supply a message thus<A NAME="I1231"></A>&nbsp;</div>
+<div class="SwissExamples"><B>raise</B>&nbsp;An_Error&nbsp;<B>with</B>&nbsp;&quot;A&nbsp;message&quot;;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is purely for 
+convenience and is identical to writing&nbsp;</div>
+<div class="SwissExamples">Raise_Exception(An_Error'Identity,&nbsp;&quot;A&nbsp;message&quot;);</div>
+<div class="Normal">There is no change to the form of raise statement 
+without an exception which simply reraises an existing occurrence.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note the difference 
+between&nbsp;</div>
+<div class="SwissExamples"><B>raise</B>&nbsp;An_Error;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>message&nbsp;is&nbsp;implementation&nbsp;defined</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">and&nbsp;</div>
+<div class="SwissExamples"><B>raise</B>&nbsp;An_Error&nbsp;<B>with</B>&nbsp;&quot;&quot;;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>message&nbsp;is&nbsp;null</I></SPAN></div>
+<div class="Normal">In the first case a subsequent call of <SPAN Class="swiss">Exception_Message</SPAN> 
+returns implementation defined information about the error whereas in 
+the second case it simply returns the given message which in this example 
+is a null string.</div>
+<div class="Normal">A minor change to the procedure <SPAN Class="swiss">Raise_Exception</SPAN> 
+is that it now raises Constraint_Error if the identity parameter is <SPAN Class="swiss">Null_Id</SPAN>. 
+This is explained further in Section <A HREF="Rat-6-4.html">6.4</A> below.</div>
+<div class="Normal">There are also additional functions in the package 
+<SPAN Class="swiss">Ada.Exceptions</SPAN> to return the name of an exception 
+as a <SPAN Class="swiss">Wide_String</SPAN> or <SPAN Class="swiss">Wide_Wide_String</SPAN>. 
+They have identifiers <SPAN Class="swiss">Wide_Exception_Name</SPAN> 
+and <SPAN Class="swiss">Wide_Wide_Exception_Name&nbsp;</SPAN>and are overloaded 
+to take a parameter of type <SPAN Class="swiss">Exception_Id</SPAN> or 
+<SPAN Class="swiss">Exception_Occurrence</SPAN>. The lower bound of the 
+strings returned by these functions and by the existing functions <SPAN Class="swiss">Exception_Name</SPAN>, 
+<SPAN Class="swiss">Exception_Message</SPAN> and <SPAN Class="swiss">Exception_Information</SPAN> 
+is <SPAN Class="swiss">1</SPAN> (Ada 95 forgot to state this for the 
+existing functions). The reader will recall that similar additional functions 
+(and forgetfulness) in the package <SPAN Class="swiss">Ada.Tags</SPAN> 
+were mentioned in Section <A HREF="Rat-2-6.html">2.6</A> of the chapter 
+on the object-oriented model.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-6-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-6-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

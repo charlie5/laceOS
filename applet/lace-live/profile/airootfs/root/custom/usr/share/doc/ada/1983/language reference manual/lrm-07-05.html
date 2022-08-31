@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 7.5: Example of a Table Management Package</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="7.5">7.5</A>.  Example of a Table Management Package  </H2>
+<A HREF="lrm-07-04.html#7.4"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-07.html#7"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-07-06.html#7.6"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The  following  example  illustrates  the use of packages in providing high
+level procedures with a simple interface to the user. 
+<P>
+The problem is to define a  table  management  package  for  inserting  and
+retrieving  items.   The  items  are  inserted  into  the table as they are
+supplied.  Each inserted item has an order number.  The items are retrieved
+according to their order number, where  the  item  with  the  lowest  order
+number is retrieved first. 
+<P>
+From  the  user's  point  of view, the package is quite simple.  There is a
+type called ITEM designating table items, a procedure INSERT for  inserting
+items,  and  a  procedure  RETRIEVE  for obtaining the item with the lowest
+order number.  There is a special item NULL_ITEM that is returned when  the
+table  is  empty,  and an exception TABLE_FULL which is raised by INSERT if
+the table is already full. 
+<P>
+A sketch of such a package is given below.  Only the specification  of  the
+package is exposed to the user. 
+<pre>
+    package TABLE_MANAGER is 
+
+       type ITEM is
+          record
+             ORDER_NUM : INTEGER;
+             ITEM_CODE : INTEGER;
+             QUANTITY  : INTEGER;
+             ITEM_TYPE : CHARACTER;
+          end record; 
+
+       NULL_ITEM : constant ITEM :=
+          (ORDER_NUM | ITEM_CODE | QUANTITY =&gt; 0, ITEM_TYPE =&gt; ' ');   
+
+       procedure INSERT  (NEW_ITEM   : in  ITEM);
+       procedure RETRIEVE(FIRST_ITEM : out ITEM); 
+
+       TABLE_FULL : exception;  --  raised by INSERT when table full
+    end;                                                                              
+</pre>
+<P>
+The  details  of  implementing such packages can be quite complex;  in this
+case they involve a two-way  linked  table  of  internal  items.   A  local  
+housekeeping  procedure  EXCHANGE  is used to move an internal item between
+the busy and the free lists.  The initial table linkages are established by
+the initialization part.  The package body need not be shown to  the  users
+of the package. 
+<pre>
+    package body TABLE_MANAGER is
+       SIZE : constant := 2000;
+       subtype INDEX is INTEGER range 0 .. SIZE; 
+
+       type INTERNAL_ITEM is
+          record
+             CONTENT : ITEM;
+             SUCC    : INDEX;
+             PRED    : INDEX;
+          end record; 
+
+       TABLE : array (INDEX) of INTERNAL_ITEM;
+       FIRST_BUSY_ITEM : INDEX := 0;
+       FIRST_FREE_ITEM : INDEX := 1; 
+
+       function FREE_LIST_EMPTY return BOOLEAN is ... end;
+       function BUSY_LIST_EMPTY return BOOLEAN is ... end;
+       procedure EXCHANGE (FROM : in INDEX; TO : in INDEX) is ... end; 
+
+       procedure INSERT (NEW_ITEM : in ITEM) is
+       begin
+          if FREE_LIST_EMPTY then
+             raise TABLE_FULL;
+          end if;
+          --  remaining code for INSERT
+       end INSERT; 
+
+       procedure RETRIEVE (FIRST_ITEM : out ITEM) is ... end; 
+
+    begin
+       --  initialization of the table linkages
+    end TABLE_MANAGER;   
+</pre>
+<P>
+
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

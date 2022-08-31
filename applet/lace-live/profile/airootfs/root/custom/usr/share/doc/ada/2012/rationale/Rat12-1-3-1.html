@@ -1,0 +1,407 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Overview: Contracts</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-1-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-1-3-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>1.3.1 Overview: Contracts</H1>
+<div class="Normal">One of the important issues highlighted by WG9 for 
+the Amendment was the introduction of material for enforcing contracts 
+such as preconditions and postconditions. As a simple example consider 
+a stack with procedures <SPAN Class="swiss">Push</SPAN> and <SPAN Class="swiss">Pop</SPAN>. 
+An obvious precondition for <SPAN Class="swiss">Pop</SPAN> is that the 
+stack must not be empty. If we have a function <SPAN Class="swiss">Is_Empty</SPAN> 
+for testing the state of the stack then a call of <SPAN Class="swiss">Is_Empty</SPAN> 
+would provide the basis for an appropriate precondition. <A NAME="I1022"></A><A NAME="I1023"></A><A NAME="I1024"></A></div>
+<div class="Normal">The question now is to find a good way to associate 
+the expression <SPAN Class="swiss"><B>not</B> Is_Empty</SPAN> with the 
+specification of the procedure <SPAN Class="swiss">Pop</SPAN>. Note that 
+it is the specification that matters since it is the specification that 
+provides the essence of the contract between the caller of the procedure 
+<SPAN Class="swiss">Pop</SPAN> and the writer of its body. The contract 
+provided by a traditional Ada subprogram specification is rather weak 
+&ndash; essentially it just provides enough information for the compiler 
+to generate the correct code for the calls but says nothing about the 
+semantic behaviour of the associated body.</div>
+<div class="Normal">The traditional way to add information of this kind 
+in Ada is via a pragma or by giving some kind of aspect clause. However, 
+there were problems with these approaches. One is that there is no convenient 
+way to distinguish between several overloaded subprograms and another 
+is that such information is given later on because of interactions with 
+freezing and linear elaboration rules.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Accordingly, it was 
+decided that a radical new approach should be devised and this led to 
+the introduction of aspect specifications which are given with the item 
+to which they relate using the reserved word <B>with</B>.</div>
+<div class="Normal">In the case of preconditions and postconditions, 
+Ada 2012 introduces aspects <SPAN Class="swiss">Pre</SPAN> and <SPAN Class="swiss">Post</SPAN>. 
+So to give the precondition for <SPAN Class="swiss">Pop</SPAN> we augment 
+the specification of <SPAN Class="swiss">Pop</SPAN> by writing <A NAME="I1025"></A><A NAME="I1026"></A><A NAME="I1027"></A><A NAME="I1028"></A></div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Pop(S:&nbsp;<B>in&nbsp;out</B>&nbsp;Stack;&nbsp;X:&nbsp;<B>out</B>&nbsp;Item)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;Is_Empty(S);</div>
+<div class="Normal" style="margin-bottom: 0.4em">In a similar way we 
+might give a postcondition as well which might be that the stack is not 
+full. So altogether the specification of a generic package for stacks 
+might be</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Item&nbsp;<B>is&nbsp;private</B>;<BR>
+<B>package</B>&nbsp;Stacks&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Stack&nbsp;<B>is&nbsp;private</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Is_Empty(S:&nbsp;Stack)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Is_Full(S:&nbsp;Stack)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Push(S:<B>&nbsp;in&nbsp;out</B>&nbsp;Stack;&nbsp;X:&nbsp;<B>in</B>&nbsp;Item)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pre&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;Is_Full(S),<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Post&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;Is_Empty(S);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Pop(S:&nbsp;<B>in&nbsp;out&nbsp;</B>Stack;&nbsp;X:&nbsp;<B>out</B>&nbsp;Item)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pre&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;Is_Empty(S),<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Post&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;Is_Full(S);</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Stacks;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note how the individual 
+aspects <SPAN Class="swiss">Pre</SPAN> and <SPAN Class="swiss">Post</SPAN> 
+take the form of</div>
+<div class="SwissExamples">aspect_mark&nbsp;=&gt;&nbsp;expression</div>
+<div class="Normal" style="margin-bottom: 0.4em">and that if there are 
+several then they are separated by commas. The final semicolon is of 
+course the semicolon at the end of the subprogram declaration as a whole. 
+Thus the overall syntax is now</div>
+<div class="SwissExamples">subprogram_declaration&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;[overriding_indicator]<BR>
+&nbsp;&nbsp;&nbsp;subprogram_specification<BR>
+&nbsp;&nbsp;&nbsp;[aspect_specification]&nbsp;;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and in general</div>
+<div class="SwissExamples">aspect_specification&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;aspect_mark&nbsp;[&nbsp;=&gt;&nbsp;expression]&nbsp;{&nbsp;,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aspect_mark&nbsp;[&nbsp;=&gt;&nbsp;expression]&nbsp;}</div>
+<div class="Normal" style="margin-bottom: 0.4em">Pre- and postconditions 
+are controlled by the same mechanism as assertions using the pragma <SPAN Class="swiss">Assert</SPAN>. 
+It will be recalled that these can be switched on and off by the pragma 
+<SPAN Class="swiss">Assertion_Policy</SPAN>.<A NAME="I1029"></A> <A NAME="I1030"></A>Thus 
+if we write</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Assertion_Policy(Check);</div>
+<div class="Normal">then assertions are enabled whereas if the parameter 
+of the pragma is <SPAN Class="swiss">Ignore</SPAN> then all assertions 
+are ignored.</div>
+<div class="Normal">In the case of a precondition, whenever a subprogram 
+with a precondition is called, if the policy is <SPAN Class="swiss">Check</SPAN> 
+then the precondition is evaluated and if it is <SPAN Class="swiss">False</SPAN> 
+then <SPAN Class="swiss">Assertion_Error</SPAN> is raised and the subprogram 
+is not entered. Similarly, on return from a subprogram with a postcondition, 
+if the policy is <SPAN Class="swiss">Check</SPAN> then the postcondition 
+is evaluated and if it is <SPAN Class="swiss">False</SPAN> then <SPAN Class="swiss">Assertion_Error</SPAN> 
+is raised.</div>
+<div class="Normal">So if the policy is <SPAN Class="swiss">Check</SPAN> 
+and <SPAN Class="swiss">Pop</SPAN> is called when the stack is empty 
+then <SPAN Class="swiss">Assertion_Error</SPAN> is raised whereas if 
+the policy is <SPAN Class="swiss">Ignore</SPAN> then the predefined exception 
+<SPAN Class="swiss">Constraint_Error</SPAN> would probably be raised 
+(depending upon how the stack had been implemented).</div>
+<div class="Normal">Note that, unlike the pragma <SPAN Class="swiss">Assert</SPAN>, 
+it is not possible to associate a specific message with the raising of 
+<SPAN Class="swiss">Assertion_Error</SPAN> by a pre- or postcondition. 
+The main reason is that it might be confusing with multiple conditions 
+(which can arise with inheritance) and in any event it is expected that 
+the implementation will give adequate information about which condition 
+has been violated.</div>
+<div class="Normal">Note that it is not permitted to give the aspects 
+<SPAN Class="swiss">Pre</SPAN> or <SPAN Class="swiss">Post</SPAN> for 
+a null procedure; this is because all null procedures are meant to be 
+interchangeable.</div>
+<div class="Normal">There are also aspects <SPAN Class="swiss">Pre'Class</SPAN> 
+and <SPAN Class="swiss">Post'Class</SPAN> for use with tagged types (and 
+they can be given with null procedures). The subtle topic of multiple 
+inheritance of pre- and postconditions will be discussed in detail in 
+Section <A HREF="Rat12-2-3.html">2.3</A>. <A NAME="I1031"></A><A NAME="I1032"></A><A NAME="I1033"></A><A NAME="I1034"></A></div>
+<div class="Normal">Two new attributes are useful in postconditions. 
+<SPAN Class="swiss">X'Old</SPAN> denotes the value of <SPAN Class="swiss">X</SPAN> 
+on entry to the subprogram whereas <SPAN Class="swiss">X</SPAN> denotes 
+the value on exit. And in the case of a function <SPAN Class="swiss">F</SPAN>, 
+the value returned by the function can be denoted by <SPAN Class="swiss">F'Result</SPAN> 
+in a postcondition for <SPAN Class="swiss">F</SPAN>.<A NAME="I1035"></A><A NAME="I1036"></A> 
+<A NAME="I1037"></A><A NAME="I1038"></A></div>
+<div class="Normal">As a general rule, the new aspect specifications 
+can be used instead of aspect clauses and pragmas for giving information 
+regarding entities such as types and subprograms.</div>
+<div class="Normal" style="margin-bottom: 0.4em">For example rather 
+than</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Bit_Vector&nbsp;<B>is&nbsp;array</B>&nbsp;(0&nbsp;..&nbsp;15)&nbsp;<B>of</B>&nbsp;Boolean;</div>
+<div class="Normal" style="margin-bottom: 0.4em">followed later by</div>
+<div class="SwissExamples"><B>for</B>&nbsp;Bit_Vector'Component_Size&nbsp;<B>use</B>&nbsp;1;</div>
+<div class="Normal" style="margin-bottom: 0.4em">we can more conveniently 
+write</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Bit_Vector&nbsp;<B>is&nbsp;array</B>&nbsp;(0&nbsp;..&nbsp;15)&nbsp;<B>of</B>&nbsp;Boolean<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Component_Size&nbsp;=&gt;&nbsp;1;</div>
+<div class="Normal">However, certain aspects such as record representation 
+and enumeration representations cannot be given in this way because of 
+the special syntax involved.</div>
+<div class="Normal">In cases where aspect specifications can now be used, 
+the existing pragmas are mostly considered obsolescent and condemned 
+to Annex J.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It should be noted 
+that pragmas are still preferred for stating properties of program units 
+such as <SPAN Class="swiss">Pure</SPAN>, <SPAN Class="swiss">Preelaborable</SPAN> 
+and so on. However, we now talk about the pure property as being an aspect 
+of a package. It is a general rule that the new aspect specifications 
+are preferred with types and subprograms but pragmas continue to be preferred 
+for program units. Nevertheless, the enthusiast for the new notation 
+could write</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada_Twin<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pure&nbsp;<B>is</B><BR>
+<B>end</B>&nbsp;Ada_Twin;</div>
+<div class="Normal">which illustrates that in some cases no value is 
+required for the aspect (by default it is <SPAN Class="swiss">True</SPAN>).</div>
+<div class="Normal">A notable curiosity is that <SPAN Class="swiss">Preelaborable_Initialization</SPAN> 
+still has to be specified by a pragma (this is because of problems with 
+different views of the type).</div>
+<div class="Normal">Note incidentally that to avoid confusion with some 
+other uses of the reserved word <B>with</B>, in the case of aspect specifications 
+<B>with</B> is typically written at the beginning of the line.</div>
+<div class="Normal">There are two other new facilities of a contractual 
+nature concerning types and subtypes. One is known as type invariants 
+and these describe properties of a type that remain true and can be relied 
+upon. The other is known as subtype predicates which extend the idea 
+of constraints. The distinction can be confusing at first sight and the 
+following extract from one of the Ada Issues might be helpful.<A NAME="I1039"></A><A NAME="I1040"></A> 
+<A NAME="I1041"></A><A NAME="I1042"></A></div>
+<div class="Normal">&ldquo;Note that type invariants are not the same 
+thing as constraints, as invariants apply to all values of a type, while 
+constraints are generally used to identify a subset of the values of 
+a type. Invariants are only meaningful on private types, where there 
+is a clear boundary (the enclosing package) that separates where the 
+invariant applies (outside) and where it need not be satisfied (inside). 
+In some ways, an invariant is more like the range of values specified 
+when declaring a new integer type, as opposed to the constraint specified 
+when defining an integer subtype. The specified range of an integer type 
+can be violated (to some degree) in the middle of an arithmetic computation, 
+but must be satisfied by the time the value is stored back into an object 
+of the type.&rdquo;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Type invariants are 
+useful if we want to ensure that some relationship between the components 
+of a private type always holds. Thus suppose we have a stack and wish 
+to ensure that no value is placed on the stack equal to an existing value 
+on the stack. We can modify the earlier example to</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Stacks&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Stack&nbsp;<B>is&nbsp;private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Type_Invariant&nbsp;=&gt;&nbsp;Is_Unduplicated(Stack);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Is_Empty(S:&nbsp;Stack)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Is_Full(S:&nbsp;Stack)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Is_Unduplicated(S:&nbsp;Stack)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Push(S:<B>&nbsp;in&nbsp;out</B>&nbsp;Stack;&nbsp;X:&nbsp;<B>in</B>&nbsp;Item)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pre&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;Is_Full(S),<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Post&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;Is_Empty(S);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>and&nbsp;so&nbsp;on</I></SPAN></div>
+<div class="Normal">The function <SPAN Class="swiss">Is_Unduplicated</SPAN> 
+then has to be written (in the package body as usual) to check that all 
+values of the stack are different.</div>
+<div class="Normal">Note that we have mentioned <SPAN Class="swiss">Is_Unduplicated</SPAN> 
+in the type invariant before its specification. This violates the usual 
+&quot;linear order of elaboration&quot;. However, there is a general 
+rule that all aspect specifications are only elaborated when the entity 
+they refer to is frozen. Recall that one of the reasons for the introduction 
+of aspect specifications was to overcome this problem with the existing 
+mechanisms which caused information to become separated from the entities 
+to which it relates.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The invariant on a 
+private type <SPAN Class="swiss">T</SPAN> is checked when the value can 
+be changed from the point of view of the outside user. That is primarily</div>
+<div class="Bulleted">after default initialization of an object of type 
+<SPAN Class="swiss">T</SPAN>,</div>
+<div class="Bulleted">after a conversion to type <SPAN Class="swiss">T</SPAN>,</div>
+<div class="Bulleted">after a call that returns a result of a type <SPAN Class="swiss">T</SPAN> 
+or has an <B>out</B> or <B>in out</B> or access parameter of type <SPAN Class="swiss">T</SPAN>. 
+</div>
+<div class="Normal">The checks also apply to subprograms with parameters 
+or results whose components are of the type <SPAN Class="swiss">T</SPAN>.</div>
+<div class="Normal">In the case of the stack, the invariant <SPAN Class="swiss">Is_Unduplicated</SPAN> 
+will be checked when we declare a new object of type <SPAN Class="swiss">Stack</SPAN> 
+and each time we call <SPAN Class="swiss">Push</SPAN> and <SPAN Class="swiss">Pop</SPAN>.</div>
+<div class="Normal">Note that any subprograms internal to the package 
+and not visible to the user can do what they like. It is only when a 
+value of the type <SPAN Class="swiss">Stack</SPAN> emerges into the outside 
+world that the invariant is checked.</div>
+<div class="Normal">The type invariant could be given on the full type 
+in the private part rather than on the visible declaration of the private 
+type (but not on both). Thus the user need not know that an invariant 
+applies to the type.</div>
+<div class="Normal">Type invariants, like pre- and postconditions, are 
+controlled by the pragma <SPAN Class="swiss">Assertion_Policy</SPAN> 
+and only checked if the policy is <SPAN Class="swiss">Check</SPAN>. If 
+an invariant fails to be true then <SPAN Class="swiss">Assertion_Error</SPAN> 
+is raised at the appropriate point. <A NAME="I1043"></A></div>
+<div class="Normal">There is also an aspect <SPAN Class="swiss">Type_Invariant'Class</SPAN> 
+for use with tagged types. <A NAME="I1044"></A><A NAME="I1045"></A></div>
+<div class="Normal">The subtype feature of Ada is very valuable and enables 
+the early detection of errors that linger in many programs in other languages 
+and cause disaster later. However, although valuable, the subtype mechanism 
+is somewhat limited. We can only specify a contiguous range of values 
+in the case of integer and enumeration types.</div>
+<div class="Normal">Accordingly, Ada 2012 introduces subtype predicates 
+as an aspect that can be applied to type and subtype declarations. The 
+requirements proved awkward to satisfy with a single feature so in fact 
+there are two aspects: <SPAN Class="swiss">Static_Predicate</SPAN> and 
+<SPAN Class="swiss">Dynamic_Predicate</SPAN>. They both take a <SPAN Class="swiss">Boolean</SPAN> 
+expression and the key difference is that the static predicate is restricted 
+to certain types of expressions so that it can be used in more contexts. 
+<A NAME="I1046"></A><A NAME="I1047"></A><A NAME="I1048"></A><A NAME="I1049"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Suppose we are concerned 
+with seasons and that we have a type <SPAN Class="swiss">Month</SPAN> 
+thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Month&nbsp;<B>is</B><BR>
+&nbsp;(Jan,&nbsp;Feb,&nbsp;Mar,&nbsp;Apr,&nbsp;May,&nbsp;...,&nbsp;Nov,&nbsp;Dec);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose we wish 
+to declare subtypes for the seasons. For most people winter is December, 
+January, February. (From the point of view of solstices and equinoxes, 
+winter is from December 21 until March 21 or thereabouts, but March seems 
+to me generally more like spring rather than winter and December feels 
+more like winter than autumn.) So we would like to declare a subtype 
+embracing <SPAN Class="swiss">Dec</SPAN>, <SPAN Class="swiss">Jan</SPAN> 
+and <SPAN Class="swiss">Feb</SPAN>. We cannot do this with a constraint 
+but we can use a static predicate by writing</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Winter&nbsp;<B>is</B>&nbsp;Month<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;&nbsp;Winter&nbsp;<B>in</B>&nbsp;Dec&nbsp;|&nbsp;Jan&nbsp;|&nbsp;Feb;</div>
+<div class="Normal">and then we are assured that objects of subtype <SPAN Class="swiss">Winter</SPAN> 
+can only be <SPAN Class="swiss">Dec</SPAN>, <SPAN Class="swiss">Jan</SPAN> 
+or <SPAN Class="swiss">Feb</SPAN> (provided once more that the <SPAN Class="swiss">Assertion_Policy</SPAN> 
+pragma has set the <SPAN Class="swiss">Policy</SPAN> to <SPAN Class="swiss">Check</SPAN>). 
+Note the use of the subtype name (<SPAN Class="swiss">Winter</SPAN>) 
+in the expression where it stands for the current instance of the subtype.</div>
+<div class="Normal">The aspect is checked whenever an object is default 
+initialized, on assignments, on conversions, on parameter passing and 
+so on. If a check fails then <SPAN Class="swiss">Assertion_Error</SPAN> 
+is raised.</div>
+<div class="Normal">The observant reader will note also that the membership 
+test takes a more flexible form in Ada 2012 as explained in the next 
+section.</div>
+<div class="Normal">If we want the expression to be dynamic then we have 
+to use <SPAN Class="swiss">Dynamic_Predicate</SPAN> thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is</B><BR>
+&nbsp;...&nbsp;;<BR>
+<B>function</B>&nbsp;Is_Good(X:&nbsp;T)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>subtype</B>&nbsp;Good_T&nbsp;<B>is</B>&nbsp;T<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Dynamic_Predicate&nbsp;=&gt;&nbsp;Is_Good(Good_T);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that a subtype 
+with predicates cannot be used in some contexts such as index constraints. 
+This is to avoid having arrays with holes and similar nasty things. However, 
+static predicates are allowed in a for loop meaning to try every value. 
+So we could write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;M&nbsp;<B>in</B>&nbsp;Winter&nbsp;<B>loop</B>...</div>
+<div class="Normal">Beware that the loop uses values for <SPAN Class="swiss">M</SPAN> 
+in the order, <SPAN Class="swiss">Jan</SPAN>, <SPAN Class="swiss">Feb</SPAN>, 
+<SPAN Class="swiss">Dec</SPAN> and not <SPAN Class="swiss">Dec</SPAN>, 
+<SPAN Class="swiss">Jan</SPAN>, <SPAN Class="swiss">Feb</SPAN> as the 
+user might have wanted.</div>
+<div class="Normal" style="margin-bottom: 0.4em">As another example, 
+suppose we wish to specify that an integer is even. We might expect to 
+be able to write</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Even&nbsp;<B>is</B>&nbsp;Integer<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;&nbsp;Even&nbsp;<B>mod</B>&nbsp;2&nbsp;=&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">Sadly, this is illegal 
+because the expression in a static predicate is restricted and cannot 
+use some operations such as <B>mod</B>. We have to use a dynamic predicate 
+thus</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Even&nbsp;<B>is</B>&nbsp;Integer<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Dynamic_Predicate&nbsp;=&gt;&nbsp;Even&nbsp;<B>mod</B>&nbsp;2&nbsp;=&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>OK</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">and then we cannot 
+write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;X&nbsp;<B>in</B>&nbsp;Even&nbsp;<B>loop</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">but have to spell it 
+out in detail such as</div>
+<div class="SwissExamples"><B>for</B>&nbsp;X&nbsp;<B>in</B>&nbsp;Integer&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;X&nbsp;<B>mod</B>&nbsp;2&nbsp;=&nbsp;0&nbsp;<B>then</B>&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>or&nbsp;if&nbsp;X&nbsp;in&nbsp;Even&nbsp;then</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>body&nbsp;of&nbsp;loop</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The assurance given 
+by type invariants and subtype predicates can depend upon the object 
+having a sensible initial value. There is a school of thought that giving 
+default initial values (such as zero) is bad since it can obscure flow 
+errors. However, it is strange that Ada does allow default initial values 
+to be given for components of records but not for scalar types or array 
+types. This is rectified in Ada 2012 by aspects <SPAN Class="swiss">Default_Value</SPAN> 
+and <SPAN Class="swiss">Default_Component_Value</SPAN>. We can write 
+<A NAME="I1050"></A><A NAME="I1051"></A><A NAME="I1052"></A><A NAME="I1053"></A></div>
+<div class="SwissExamples"><B>type</B>&nbsp;Signal&nbsp;<B>is</B><BR>
+&nbsp;(Red,&nbsp;Amber,&nbsp;Green)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Default_Value&nbsp;=&gt;&nbsp;Red;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Text&nbsp;<B>is&nbsp;new&nbsp;</B>String<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Default_Component_Value&nbsp;=&gt;&nbsp;Ada.Characters.Latin_1.Space;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Day&nbsp;<B>is</B><BR>
+&nbsp;<B>range</B>&nbsp;1&nbsp;..&nbsp;31<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Default_Value&nbsp;=&gt;&nbsp;1;</div>
+<div class="Normal">Note that, unlike default initial values for record 
+components, these have to be static.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Finally, two new attributes 
+are introduced to aid in the writing of preconditions. Sometimes it is 
+necessary to check that two objects do not occupy the same storage in 
+whole or in part. This can be done with two attributes thus <A NAME="I1054"></A><A NAME="I1055"></A><A NAME="I1056"></A><A NAME="I1057"></A></div>
+<div class="SwissExamples">X'Has_Same_Storage(Y)<BR>
+X'Overlaps_Storage(Y)</div>
+<div class="Normal" style="margin-bottom: 0.4em">As an example we might 
+have a procedure <SPAN Class="swiss">Exchange</SPAN> and wish to ensure 
+that the parameters do not overlap in any way. We can write</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Exchange(X,&nbsp;Y:&nbsp;<B>in&nbsp;out</B>&nbsp;T)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;X'Overlaps_Storage(Y);</div>
+<div class="Normal">Attributes are used rather than predefined functions 
+since this enables the semantics to be written in a manner that permits 
+<SPAN Class="swiss">X</SPAN> and <SPAN Class="swiss">Y</SPAN> to be of 
+any type and moreover does not imply that <SPAN Class="swiss">X</SPAN> 
+or <SPAN Class="swiss">Y</SPAN> are read.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-1-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-1-3-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

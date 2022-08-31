@@ -1,0 +1,544 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Rationale, Sec 9.3: Technical Issues</TITLE>
+</HEAD>
+
+<BODY>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 9: Packages</H2>
+
+<H3><a name="9.3">9.3 Technical Issues</a></H3>
+
+The design  of packages  involves nearly  all aspects of the language.
+The most significant in this context are
+<ul>
+<li>Visibility control and information hiding
+
+<li>Relation to separate compilation
+
+<li> Initialization of packages
+
+<li> Availability of the properties of types defined within packages
+
+<li> Initialization of objects of private types.
+
+<li> Private types with discriminants
+</ul>
+
+Other aspects  will be  discussed in the chapters on program structure
+and visibility, tasking, separate compilation, and generic units.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<br><br>
+<a href="#9.3.1">9.3.1  Visibility Control and Information Hiding</a><BR>
+<a href="#9.3.2">9.3.2  Guaranteeing Software Components</a><BR>
+<a href="#9.3.3">9.3.3  Influence of Separate Compilation on the Design of Packages</a><BR>
+<a href="#9.3.4">9.3.4  Initialization of Packages</a><BR>
+<a href="#9.3.5">9.3.5  Note on Visibility</a><BR>
+<a href="#9.3.6">9.3.6  Availability of the Properties of Types Defined Within Packages</a><BR>
+<a href="#9.3.7">9.3.7  Initialization of Objects of Private Types</a><BR>
+<a href="#9.3.8">9.3.8  Private Types with Discriminants</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="9.3.1">9.3.1 Visibility Control and Information Hiding</a></H3>
+
+The visibility  rules of  <a href="ratl-BIB.html#languages">Algol 60</a>, as embodied in its so-called block
+structure, are  quite natural  for programs  of moderate size and have
+been  adopted   by  most  subsequent  languages,  including  Ada:  any
+declaration is  visible throughout  the block  for which  it is given,
+including nested  inner blocks, unless hidden by declarations local to
+those blocks.  However this  simple structure  is insufficient for the
+reliable construction  of large  programs since  more precise  control
+over the  visibility of declarations is then needed. For example, with
+the above rule, a variable that is used by several subprograms must be
+declared outside  their bodies,  although it has no relevance to other
+parts of  the program. This variable will then be visible to all users
+of these  subprograms, and  unprotected from  accidental or  malicious
+access.
+<p>
+Packages give the programmer precisely the kind of control needed. The
+details of the visibility rules are discussed in <a href="ratl-11.html#11">chapter 11</a> on program
+structure; in  this chapter we concentrate on characteristics that are
+essential for visibility control and information hiding.
+<p>
+In the  definition  of  a  package,  the  visible  part  states  which
+declarations  are  potentially  visible  outside  the  package.  (This
+identifies the window in the above-mentioned wall.) It is possible for
+other program  units to  see whatever is in the visible part; but they
+do  not  see  it  automatically.  Within  these  program  units,  this
+visibility is  achieved either  by use  clauses or  by expanded  names
+written in the form known as dot notation.
+<p>
+Thus visibility  of the  identifiers declared  in the  visible part is
+controlled by  the user.  Names declared  in the  visible  part  of  a
+package do  not spontaneously  invade (and  pollute) the name space of
+the rest of the program. Visibility of the identifiers declared in the
+package body  is even  more tightly  controlled: they are visible only
+within the  package body  - in  particular, within  the  body  of  any
+subprogram declared in the visible part.
+<p>
+The other  essential characteristic  of packages in Ada is the textual
+separation of  the interface - those declarations that are relevant to
+users of  the package  - from  the implementation.  In an Ada package,
+these declarations  are textually separated from the rest of the text:
+they form what is called the visible part of the package. This textual
+separation  is   a  significant  advantage  for  readability  and  for
+information hiding.
+<p>
+Other languages  such as  <a href="ratl-BIB.html#languages">Euclid</a> and  <a href="ratl-BIB.html#languages">Modula</a> have  used a  formulation
+based on  an export list that mentions all identifiers that constitute
+the interface.  This means  that in  order to  know the  properties of
+these identifiers,  the human reader must scan through the entire text
+of the  module to  find the  declarations of  entities listed  in  the
+export list.  This is  a tedious  operation and is, as we shall see, a
+breach of  information hiding  principles, since  it involves  reading
+parts of the text that should be of no concern (and should not even be
+available) to the user.
+<p>
+There are  good reasons for hiding the text of a package body from its
+users.  An   obvious  one  is  confidentiality:  a  software  producer
+supplying the  services of  a given  package may  want to  protect his
+investment by not showing the package implementation (at least, not in
+source form).  Another reason  to hide the text of a package body from
+its users  is to  establish the  normal producer-consumer  contractual
+relationship that  exists for  other commercial  products. It  is  the
+package specification  that  should  be  considered  as  the  contract
+between  the   producer  and   the  users.   The  included   procedure
+specifications already  form a (minimal) syntactic contract, but these
+may be  supplemented by  some explanation of their intended effect. In
+the present  state of  the art such explanation must perforce take the
+form of  comments.  In  the  future,  however,  it  could  consist  of
+statements of  some more  formal specification  language such  as Anna
+<a href="ratl-BIB.html">[KBL 80]</a>.
+<p>
+Letting a user read the implementation would create the danger that he
+might derive  some additional implicit assumptions from an analysis of
+the current  implementation: assumptions  that are not explicit in the
+contract. The producer of a package is bound only by the contract, and
+is therefore  free to deliver later releases of the package that might
+not satisfy any such implicit assumptions of the user.
+<p>
+The textual  separation between  the  package  specification  and  the
+package implementation  provides an easy solution to this problem. The
+user  will   be  provided   with  the   source  text  of  the  package
+specification, and no more.
+
+<H3><BR><a name="9.3.2">9.3.2 Guaranteeing Software Components</a></H3>
+
+In an  industry of  software components,  users are  likely to request
+some  guarantee  against  malfunction,  as  is  usual  for  buyers  of
+components in  other  industries.  The  problem  of  proving  software
+components is certainly not an easy one; but we can show that packages
+lead to  a reduction  in its  difficulty. Consider,  for example,  the
+above table  management package  and the  steps that  would have to be
+taken to  convince oneself  that it  was operating correctly. To begin
+with we  have to  define a  consistent  state  for  the  package:  for
+example, we  can define  the table to be consistent if it contains all
+the items  that have  been inserted  but not  yet retrieved,  and only
+these. We  first have  to show that the table is consistent initially:
+that is,  after execution  of the  initialization statements.  Then we
+have to show that if the table is consistent before the use of any one
+of the  services offered (the three procedures promised in the visible
+part), it  will still  be  consistent  after  the  execution  of  that
+procedure.
+<p>
+In order  to do  this, our analysis need only consider the text of the
+corresponding procedure:  the table  cannot be  updated directly  from
+outside the package since it is not visible there.
+<p>
+Without packages,  the table would have to be global and we would have
+no protection against direct update of the table by users (whether the
+update is  intentional  or  by  accident).  The  previous  consistency
+argument would  then be  considerably more  complex since  it would be
+necessary to  inspect the  text of  all programs  that use  any of the
+three procedures  and check that these programs do not directly update
+the value  of the  table: The amount of text to be checked could be an
+order of magnitude larger than the text of the package itself.
+<p>
+With the  package concept  - with the separation between the interface
+and the  implementation; and  with the protection of whatever is local
+to the package body - servicing software components becomes similar to
+servicing  components  in  other  industries:  If  a  user  reports  a
+malfunction of  the operations of a package, we know that we have only
+to check  within the package to establish the reality and cause of any
+malfunction  (and  to  make  repairs  as  needed).  The  package  body
+effectively acts as a sealed container.
+
+<H3><BR><a name="9.3.3">9.3.3 Influence of Separate Compilation on the Design of Packages</a></H3>
+
+The essential role of packages is for logical modularity. In addition,
+they also  play an  important role for the physical modularity that is
+achieved  by  separate  compilation.  These  two  aspects  of  program
+modularization lead  to slightly  different (although not conflicting)
+requirements.
+<p>
+For logical  modularity the interface defined by the visible part of a
+package  is  sufficient.  This  information  is  needed  for  physical
+modularity  too,   but  the   physical  interface  also  requires  the
+availability of  the additional  information that  is contained in the
+private part.
+<p>
+This extra  information is  needed by  compilers for  the treatment of
+variables that  are declared in one compilation unit but whose type is
+a  private   type  declared  in  a  different  compilation  unit.  The
+difference essentially  concerns storage  allocation: knowledge of the
+amount of storage needed for such variables is necessary for selecting
+the machine  instructions used  for operations  on the variables; this
+code selection  is not  a decision  that could  be postponed until the
+program is complete (that is, until linkage editing time).
+<p>
+The reasons  for this  are found  in the  architectures of our current
+computing machines. These generally provide code abstractions that are
+bound at  execution time,  in the  form of  subprograms invoked by the
+call instruction. It is therefore possible to defer the binding of the
+bodies of  such abstractions  until link time, or even later. However,
+current machines  do not  provide  similar  data  abstractions:  every
+instruction  that   operates  on   a  datum   must  be  aware  of  its
+representation, and that representation must therefore have been bound
+at the  moment the  instruction was generated; that is, at compilation
+time. A  more flexible  architecture -  evolved perhaps  from  today's
+tagged architectures  - would indeed allow data representation choices
+to be deferred until link time, or even later.
+<p>
+The declaration of a private type therefore does not in itself provide
+enough information  for storage  allocation and  other operations. The
+full declaration  of the  type is needed, and so is any representation
+clause that  the user wants: storage allocation will therefore require
+the information  provided by  the private part. Note that placing this
+information in  the package  body would  not be  satisfactory since it
+would create  unnecessary dependences  of other  compilation units  on
+this body,  with  the  consequence  that  changes  in  the  algorithms
+provided in  the body  would  require  recompilation  of  these  other
+compilation units,  even in  the absence  of change  to the  full type
+declaration.
+<p>
+The one  case where full type information can indeed be deferred until
+the package  body is the case where the private type is implemented as
+an access type:
+<table border cellpadding=6><tr><td><pre>
+package MINIMAL is
+  type OPAQUE is private;
+private
+  type HIDDEN;                     -- nothing more required
+  type OPAQUE is access HIDDEN;
+end MINIMAL;
+</pre></td></tr></table>
+<p>
+In the  above example,  the full  definition of  HIDDEN can  indeed be
+deferred until the package body. The reason, of course, is that nearly
+all current  machines have  a uniform addressing structure, so that an
+access  value   always  looks  the  same  regardless  of  what  it  is
+designating.  (The   language  <a href="ratl-BIB.html#languages">Modula-2</a>   provides  opaque   types  in
+essentially the form of this example.)
+<p>
+To summarize,  the logical  interface corresponds to the visible part;
+the  physical   interface  corresponds   to   the   complete   package
+specification, that is, to both the visible part and the private part.
+<p>
+As long  as a  package specification  is not changed, the package body
+that implements  it can  be defined  and redefined  without  affecting
+other units  that use  this  specification  as  an  interface  to  the
+package. Hence  it is  possible to  compile a  package body separately
+from its package specification.
+
+<H3><BR><a name="9.3.4">9.3.4 Initialization of Packages</a></H3>
+
+Each package  declaration results in a single package which is created
+when the declaration is elaborated. At that time, the space needed for
+any  object   declared  in   the  package   is  allocated,   and   any
+initialization specified in such an object declaration is performed.
+<p>
+More elaborate  initializations can  be included  in the  sequence  of
+statements following the (optional) reserved word begin in the package
+body, in  particular, initializations  that require  the execution  of
+statements and  not  just  expressions  in  object  declarations.  The
+execution of  this (optional)  sequence of  statements  completes  the
+elaboration of  the package. Any exception handler provided at the end
+of  these   statements  applies  to  exceptions  raised  during  their
+execution.
+<p>
+When several  copies of a given package are needed, the solution is to
+use instead  a related  form of  program unit called a generic package
+(see <a href="ratl-13.html#13">Chapter  13</a>). In  this case  the specification includes a generic
+formal part  and individual  packages (instances  of the generic unit)
+are created by generic instantiation.
+
+<H3><BR><a name="9.3.5">9.3.5 Note on Visibility</a></H3>
+
+If a  use clause  is provided within a given program unit, it opens up
+the visibility  of the  visible part  of each package mentioned by the
+clause.     However     this     effect     is     not     transitive.
+<p>
+Thus, if the clause
+<PRE>    use FIRST_LAYER;</PRE>
+<p>
+is given  in the  visible part  of a package SECOND_LAYER, it does not
+mean that units containing the clause
+<PRE>    use SECOND_LAYER;</PRE>
+<p>
+will also  see FIRST_LAYER.  If we  want the  above use clause also to
+provide visibility  of certain  entities declared in FIRST_LAYER, then
+this can  often be  achieved  explicitly,  by  renaming  declarations.
+Consider for example
+<table border cellpadding=6><tr><td><pre>
+package FIRST_LAYER is
+  type T is private;
+  procedure P(X :  T);
+  ...
+  E :  exception;
+end FIRST_LAYER;
+</pre></td></tr></table>
+<p>
+Suppose  now   that  the   package  SECOND_LAYER   defines  additional
+operations for  the type  T in  terms of  the operations  supplied  by
+FIRST_LAYER, and  that we  want to  make T,  P, and E available to all
+users of  the package SECOND_LAYER without an explicit use FIRST_LAYER
+clause. This can be achieved as follows:
+<table border cellpadding=6><tr><td><pre>
+package SECOND_LAYER is
+  subtype T is FIRST_LAYER.T;
+  procedure P(X :  T) renames FIRST_LAYER.P;
+  -- additional operations defined by SECOND_LAYER
+  ...
+  E :  exception renames FIRST_LAYER.E;
+end SECOND_LAYER;
+</pre></td></tr></table>
+<p>
+Note that  a similar effect can be achieved by making T a derived type
+instead of a subtype:
+<PRE>    type T is new FIRST_LAYER.T;</PRE>
+<p>
+This latter  form could  be used  if we  wanted to  prevent operations
+defined by  another package  for objects  of type  FIRST_LAYER.T  from
+being  used  at  the  same  time  as  those  defined  by  the  package
+SECOND_LAYER: the  only operations  that may be applied to the derived
+type are  those  inherited  from  FIRST_LAYER  and  those  defined  in
+SECOND_LAYER.
+
+<H3><BR><a name="9.3.6">9.3.6 Availability of the Properties of Types Defined Within Packages</a></H3>
+
+It is  important to  define which of the properties of a type declared
+in the  visible part  of a  package can  be made available outside the
+package (for  example, within  another program  unit that mentions the
+package in  a use clause). In Ada the answer to this question is quite
+simple: the  only available  properties  are  those  declared  in  the
+visible part.
+<p>
+In the  first place,  consider the  declaration of a type other than a
+private type, say a record type. If such a declaration is given in the
+visible part  of a  package,  then  the  record  type  is  potentially
+available -  without  restriction  -  to  outside  program  units.  In
+particular,  such   units  can  declare  variables  and  invoke  basic
+operations of  this type  (such as component selection and aggregates)
+in full knowledge of the data structure specified by the type.
+<p>
+For a  type declared  as private,  on the other hand, the visible part
+provides only  the type name, and the specification of the subprograms
+applicable to  objects of  this type  - these  are the only operations
+applicable  to   objects  of  the  type,  apart  from  assignment  and
+comparison for equality and inequality (which are available unless the
+private type  is limited),  and attributes  such as 'SIZE and 'ADDRESS
+(which are always available).
+<p>
+Within a  package body  the characteristics  of  a  private  type  are
+available as if the type were not private. For example, if the type is
+a record  type, its components can be denoted with the usual syntax of
+selected components.  Some precautions  must be  taken when one of the
+visible operations  of the  type is  defined in  terms of  an existing
+operation with  the same  name. As an example consider the skeleton of
+the package KEY_MANAGER given in the <a href="http://archive.adaic.com/standards/83lrm/html/lrm-07-04.html#7.4.2">Reference Manual (section 7.4.2)</a>:
+<table border cellpadding=6><tr><td><pre>
+package KEY_MANAGER is
+  type KEY is private;
+  ...
+  function "&lt;" (X,Y :  KEY) return BOOLEAN;
+private
+  type KEY is new NATURAL;          -- full type definition of KEY
+  ...
+end;
+
+package body KEY_MANAGER is
+  ...
+  function "&lt;" (X,Y :  KEY) return BOOLEAN is
+  begin
+    return INTEGER(X) &lt; INTEGER(Y);
+  end "&lt;";
+end KEY_MANAGER;
+</pre></td></tr></table>
+<p>
+Within the package body, the full definition of the type KEY is known.
+The operation  "&lt;" declared in the visible part is a (perfectly legal)
+redeclaration of  the operation  "&lt;" that  is predefined  for the type
+INTEGER (the base type of NATURAL). Thus, with the declarations
+<PRE>    U, V :  KEY;</PRE>
+<p>
+within the body of the package, the relation
+<PRE>    U = V</PRE>
+<p>
+refers to  the predefined  operation "="  of the type INTEGER, whereas
+the relation
+<PRE>    U &lt; V</PRE>
+<p>
+refers to the operation "&lt;" defined within the package itself (in this
+case, of  course, it  does  not  matter  since  this  redefinition  is
+equivalent to the inherited operation). It should be noted that within
+the body of the function "&lt;" itself, the relation
+<PRE>    X &lt; Y</PRE>
+<p>
+would be  a recursive  call of the function "&lt;". Hence conversion must
+be used to invoke the operation "&lt;" defined on integers, as shown:
+<PRE>    INTEGER(X) &lt; INTEGER(Y)</PRE>
+<p>
+To summarize,  the availability  of properties  of types declared in a
+package can  be deduced  from purely  textual considerations:  outside
+units see  only  the  visible  part  and  consequently  can  use  only
+properties defined  there; on the other hand, the package body can use
+all properties,  including those  defined by the full type declaration
+for a private type.
+
+<H3><BR><a name="9.3.7">9.3.7 Initialization of Objects of Private Types</a></H3>
+
+The elaboration of an object declaration results in the reservation of
+space for  the corresponding object, whether the type of the object is
+private or  not. The  initialization of  an object  whose  type  is  a
+private type  could be  achieved in  the object  declaration itself by
+assigning to it the value of a deferred constant or the value returned
+by a  function; for  a limited private type, it could only be achieved
+by a  procedure call  statement - hence not in the object declaration.
+However, there  are cases  where we  want the  components of an object
+whose type  is private to satisfy some invariant as soon as the object
+is created,  although initialization  of other  components may  not be
+needed.  This  is  achieved  by  means  of  initialization  of  record
+components. Consider the following package declaration:
+<table border cellpadding=6><tr><td><pre>
+package ALL_ABOUT_STACKS is
+  type STACK is limited private;
+
+  procedure PUSH (E :  in  ELEMENT;  S :  in out STACK);
+  procedure POP  (E :  out ELEMENT;  S :  in out STACK);
+private
+  type INDEX is range 0 .. 1000;
+  type STACK is
+    record
+      TOP    :  INDEX :=  INDEX'FIRST;
+      SPACE :  array (INDEX) of ELEMENT;
+    end record;
+end ALL_ABOUT_STACKS;
+</pre></td></tr></table>
+<p>
+For any  declaration of  an object of type STACK, the component TOP is
+initialized to the minimum INDEX value. Thus, the stack invariants are
+satisfied as  soon as  the declaration  of a  stack  object  has  been
+elaborated (another example was shown in <a href="ratl-09-02.html#9.2.3">section 9.2.3</a> above, with the
+initialization of file names in the package SAFE_INPUT_OUTPUT).
+
+<H3><BR><a name="9.3.8">9.3.8 Private Types with Discriminants</a></H3>
+
+A final  facility provided  by Ada  combines the  concepts of  private
+types and  types with  discriminants. This  is the ability to define a
+private  type  with  discriminants.  Here  is  an  example:  it  is  a
+formulation of  the familiar  dimensioned units problem inspired by an
+earlier formulation due to Paul Hilfinger.
+<p>
+The package DIMENSIONED_UNITS defines a private type that represents a
+set of numerical values with physical dimensions. These dimensions are
+appropriate powers  of mass,  length, and  time; so  each object has a
+value and  a set  of indices  giving its  dimensionality. Objects  may
+change their  values, but  they must  not change their dimensionality.
+One possible solution (presented elsewhere) is to use derived types to
+separate objects  of different  dimensionality; this  however does not
+permit general  expressions involving  mixed dimensions to be written,
+such as
+<PRE>    E = M &#42; (C&#42;&#42;2)</PRE>
+<p>
+Another solution is to use a private type with discriminants:
+<table border cellpadding=6><tr><td><pre>
+package DIMENSIONED_UNITS is
+
+  type UNIT(M, L, T :  INTEGER) is private;
+
+  subtype MASS  is UNIT(M =&gt; 1,  L =&gt; 0,  T =&gt; 0);
+  subtype LENGTH is UNIT(M =&gt; 0,  L =&gt; 1,  T =&gt; 0);
+  subtype TIME  is UNIT(M =&gt; 0,  L =&gt; 0,  T =&gt; 1);
+  subtype SCALAR is UNIT(0, 0, 0);
+
+  KILO    : constant MASS;
+  METER   : constant LENGTH;
+  SECOND  : constant TIME;
+
+  function "&#42;"   (LEFT :  FLOAT;  RIGHT :  UNIT) return UNIT;
+  function "&#42;"   (LEFT, RIGHT :  UNIT) return UNIT;
+  function "/"   (LEFT, RIGHT :  UNIT) return UNIT;
+  ...
+  DIMENSION_ERROR :  exception;
+private
+  type UNIT(M, L, T :  INTEGER :=  0) is
+    record
+      V :  FLOAT;
+    end record;
+  KILO     : constant MASS :=  (M =&gt; 1,  L =&gt; 0,  T =&gt; 0,  V =&gt; 1.0);
+  METER    : constant LENGTH    :=  (M =&gt; 0,  L =&gt; 1,  T =&gt; 0,  V =&gt; 1.0);
+  SECOND   : constant TIME :=  (M =&gt; 0,  L =&gt; 0,  T =&gt; 1,  V =&gt; 1.0);
+end DIMENSIONED_UNITS;
+</pre></td></tr></table>
+<p>
+The user of this package may then declare entities such as:
+<table border cellpadding=6><tr><td><pre>
+subtype VELOCITY is UNIT(M =&gt; 0,  L =&gt; 1,  T =&gt; -1);
+subtype ENERGY is UNIT(M =&gt; 1,  L =&gt; 2,  T =&gt; -2);
+
+C :  constant VELOCITY :=  300_000_000.0 &#42; (METER/SECOND);
+
+function REST_ENERGY(M :  MASS) return ENERGY is
+begin
+  return M&#42;C&#42;C;
+end;
+</pre></td></tr></table>
+<p>
+The implementation  of the package will contain subprogram bodies such
+as:
+<table border cellpadding=6><tr><td><pre>
+function "&#42;" (LEFT, RIGHT :  UNIT) return UNIT is
+begin
+  return   (M       =&gt; LEFT.M   + RIGHT.M,
+         L =&gt; LEFT.L  + RIGHT.L,
+         T =&gt; LEFT.T  + RIGHT.T,
+         V =&gt; LEFT.V  &#42; RIGHT.V);
+end;
+</pre></td></tr></table>
+<p>
+The dimensions  must be  visible because  the user,  when declaring an
+object, must  be able to specify its dimensionality. But the type must
+be private  because the  operations must  check the  dimensionality of
+their  operands,  and  so  must  all  be  controlled  by  the  package
+DIMENSIONED_UNITS.
+
+<center>
+<hr width=60%>
+&#164; <a href="ratl-09-04.html#9.4"><b>NEXT</b></a>
+&#164; <a href="ratl-09-02.html#9.2"><b>PREVIOUS</b></a>
+&#164; <a href="ratl-09.html#9"><b>UP</b></a>
+&#164; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#164; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#164;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+</BODY></HTML>

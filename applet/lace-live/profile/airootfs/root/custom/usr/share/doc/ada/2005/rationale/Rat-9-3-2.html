@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Partial generic instantiation</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-9-3-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-9-3-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>9.3.2 Partial generic instantiation</H1>
+<div class="Normal" style="margin-bottom: 0.4em">Certain attempts to 
+use signature packages lead to circularities. The AI (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-30359.TXT">AI-359</A>) 
+outlines the following example&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element<B>&nbsp;is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Set&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Union(L,&nbsp;R:&nbsp;Set)&nbsp;<B>return</B>&nbsp;Set&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Intersection(L,&nbsp;R:&nbsp;Set)&nbsp;<B>return</B>&nbsp;Set&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>and&nbsp;so&nbsp;on</I></SPAN><BR>
+<B>package</B>&nbsp;Set_Signature&nbsp;<B>is&nbsp;end</B>;</div>
+<div class="Normal">Remember that a signature is a generic package consisting 
+only of a specification. When we instantiate it, the effect is to assert 
+that the actual parameters are consistent and the instantiation provides 
+a name to refer to them as a group.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we now attempt to 
+write&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Elem&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function&nbsp;</B>Hash(E:&nbsp;Elem)&nbsp;<B>return</B>&nbsp;Integer;<BR>
+<B>package</B>&nbsp;Hashed_Sets&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Set&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Union(L,&nbsp;R:&nbsp;Set)&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Intersection(L,&nbsp;R:&nbsp;Set)&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;Signature&nbsp;<B>is&nbsp;new</B>&nbsp;Set_Signature(Elem,&nbsp;Set);<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Set&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+<B>end</B>&nbsp;Hashed_Sets;</div>
+<div class="Normal">then we are in trouble. The problem is that the instantiation 
+of <SPAN Class="swiss">&nbsp;Set_Signature</SPAN> tries to freeze the type 
+<SPAN Class="swiss">Set</SPAN> prematurely.</div>
+<div class="Normal">Other similar examples concern the use of access 
+types with private types. The essence of the problem is that we want 
+to instantiate a package with a private type before the full declaration 
+of that type.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The solution proposed 
+was to split an instantiation into two parts, a partial instantiation 
+and a full (that is, normal) instantiation. The partial instantiation 
+might take the form&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is&nbsp;new</B>&nbsp;G(Private_Type)&nbsp;<B>with&nbsp;private</B>;</div>
+<div class="Normal">and this can be done with the partial view of the 
+type. The full instantiation can then be given after the full declaration 
+of the type.</div>
+<div class="Normal">This fell by the wayside at the last minute largely 
+because of fears that awkward situations might be introduced inadvertently.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-9-3-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-9-3-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

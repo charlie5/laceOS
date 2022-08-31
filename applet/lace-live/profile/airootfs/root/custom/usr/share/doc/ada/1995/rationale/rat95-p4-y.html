@@ -1,0 +1,287 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Four - Chapter Y
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p4-x.html> Previous </a> |
+<a href=rat95-p4-z.html> Next </a>
+<hr>
+
+
+<h1>
+Appendix Y   Revisions To Drafts
+</h1>
+
+<p>
+The final International Standard for Ada 95 incorporates a number of
+changes to the Committee Draft [CD 93] of September 1993 (version 4.0 of
+RM9X) and the Draft International Standard [DIS 94] of June 1994 (version
+5.0).  These were made in response to formal comments made by the ISO
+members as part of the ballots on these drafts and to informal comments
+made by individual reviewers.
+</p>
+<p>
+   Although many of the changes are of an editorial nature several are of
+significance to the normal user.  The more important changes are outlined
+in this appendix for the convenience of readers familiar with the drafts.
+Unless otherwise mentioned changes are with respect to the CD; if a
+change has occurred since the DIS then this is explicitly mentioned.  A
+reference to that section of the rationale containing further discussion
+of the topic is given where appropriate.
+</p>
+<p>
+   The organization of the standard has been rearranged into a more
+logical order.  The most significant to users familiar with Ada 83 is
+that chapter 14 on input-output has been moved into the annex on the
+predefined environment where it logically belongs.  The annexes have
+themselves been reordered so that the mandatory annexes on the predefined
+environment and interfacing to other languages come first, followed by
+the six specialized needs annexes, the obsolescent features and then
+finally the non-normative annexes summarizing attributes and so on.
+</p>
+
+<h2>
+<a name=1>
+Y.1  Core Language
+</a>
+</h2>
+
+<dl>
+<dt>  
+Trailing underlines
+<dd>
+<p>     
+Trailing underlines are not allowed in identifiers whereas they were in
+the Committee Draft.  Reversion to the Ada 83 rule was deemed appropriate
+because allowing just trailing underlines did not achieve the flexibility
+desired for wide compatibility with other languages such as C.
+Permitting leading underlines and multiple embedded underlines would have
+given greater compatibility but was considered unacceptable given the
+strength of concern for readability of program text.  (2.1)
+</p>
+<dt>
+Modular types
+<dd>
+<p>     
+Modular types are no longer described in terms of principal values and
+secondary values; they just have a value.  A consequence is that
+conversion to and from integer types always preserves the numerical value
+or raises Constraint_Error.  Wraparound on conversion no longer occurs.
+(3.3.2)
+</p>
+<dt>
+Extension aggregates
+<dd>
+<p>     
+The ancestor part can now be a subtype name as an alternative to an
+expression.  This enables an extension aggregate to be written even when
+the ancestor is abstract such as in the case of controlled types.
+(3.6.1, 7.4)
+</p>
+<dt>
+Controlled types
+<dd>
+<p>     
+The package Ada.Finalization is restructured.  The types Controlled and
+Limited_Controlled are no longer derived from types in the package
+System.Implementation (which no longer exists) but are simply abstract
+private types.  The previous problem with writing aggregates for types
+derived from abstract types is now overcome by the new form of extension
+aggregate mentioned above.
+</p>
+<p>
+   The procedure Split is now called Adjust.  The procedures Adjust and
+Finalize are no longer abstract but have null bodies like Initialize.
+(7.4)
+</p>
+<dt>
+Task storage size
+<dd>
+<p>     
+The new pragma Storage_Size permits setting the storage size for
+individual tasks of a task type.  This pragma is placed in the task
+specification and could thus depend on the value of a task discriminant.
+It replaces the use of an attribute definition clause for setting
+Storage_Size which gave the same attribute value to all tasks of the
+type.  (9.6)
+</p>
+<dt>
+Children of generic units
+<dd>
+<p>     
+It is no longer necessary for a child of a generic unit to be
+instantiated as a child of an instantiation of its parent.  This
+requirement of the CD and DIS caused problems for many applications and a
+child can now be instantiated anywhere provided the generic child is
+visible.  (10.1.3)
+</p>
+<dt>
+Exception occurrences
+<dd>
+<p>     
+The package Ada.Exceptions is significantly restructured.  The generic
+child Ada.Exceptions.Messages has been deleted.  The ability to attach a
+user message to the raising of an exception can now be done more flexibly
+using the procedure Raise_Occurrence and the new attribute Identity.  A
+major advantage is that exceptions so raised do not all have the same
+name Exception_With_Message.
+</p>
+<p>
+   The type Exception_Occurrence is now limited so that occurrences
+cannot be directly assigned.  Exceptions can now be saved by a procedure
+and function Save_Occurrence.  This approach overcomes implementation
+problems associated with the size of saved information.  (11.2)
+</p>
+<dt>
+Access in generic bodies
+<dd>
+<p>     
+The Access attribute can now be applied to objects in generic bodies when
+the access type is external.  The associated accessibility check is
+dynamic and raises Program_Error if it fails.  This gives greater
+flexibility in the use of generics.  Note that the Access attribute still
+cannot be applied to subprograms in generic bodies when the access type
+is external.  (12.3)
+</p>
+<dt>
+Alignment and Size attributes
+<dd>
+<p>
+     The rules regarding these attributes have been somewhat changed.  They
+can now only be applied to first subtypes (and objects) and not to all
+subtypes.  Furthermore the Address must be a multiple of the Alignment.
+(13.1)
+</p>
+</dl>
+
+<h2>
+<a name=2>
+Y.2  Predefined Environment
+</a>
+</h2>
+
+<dl>
+<dt>
+Package Characters
+<dd>
+<p>     
+This has been slightly restructured.  The classification and conversion
+functions are now in a child package Characters.Handling and the package
+Characters is itself empty (other than the pragma Pure).  The reason for
+this change is so that the child Characters.Latin_1 can be used without
+introducing any unnecessary executable code from its parent.  A related
+change is that the package Standard.ASCII is now obsolescent; programmers
+are expected to use Characters.Latin_1 instead.  (A.1)
+</p>
+<dt>
+Import and Export
+<dd>
+<p>     
+The pragmas Import and Export now have a fourth parameter.  The third
+parameter now gives the name of the entity in the other language and the
+fourth parameter gives the link name.  (B.1)
+</p>
+<dt>
+Text_IO
+<dd>
+<p>
+A number of improvements have been made to Text_IO.
+</p>
+<p>
+   The concept of an error output stream has been added in line with
+facilities in many operating systems.  Subprograms enable the error
+stream to be manipulated in a manner similar to the default output
+stream.
+</p>
+<p>
+   The functions Current_Input, Current_Output and Current_Error are
+overloaded with versions returning an access value.  This enables the
+current stream to be preserved for later use in a more flexible manner.
+</p>
+<p>
+   The procedure Get_Immediate provides immediate non-buffered and non-
+blocking input; this is useful for interactive applications.
+</p>
+<p>
+   The procedure Look_Ahead returns the next character without removing
+it; this enables the user to write procedures which behave in a similar
+manner to the predefined procedures Get for integer and real types.
+</p>
+<p>
+   The procedure Get for real types will now accept a literal in more
+liberal formats; leading and trailing digits around the radix point are
+not required and indeed the point itself may be omitted.  This enables
+data produced by programs written in languages such as Fortran to be
+processed directly.
+</p>
+<p>
+   The procedure Flush is added; this outputs the contents of the current
+buffer.
+</p>
+<p>
+   Nongeneric packages equivalent to instantiations of Integer_IO and
+Float_IO with the predefined types have been added since the DIS.  These
+will be found of considerable benefit for teaching Ada since simple
+input-output of numbers can now be performed without the introduction of
+genericity.  (A.4)
+</p>
+<dt>
+Command line
+<dd>
+<p>     
+The package Ada.Command_Line enables a program to access the commands and
+parameters of the command line interpreter if any.  It also enables a
+program to set its result status.  (A.5)
+</p>
+<dt>
+Random number generator
+<dd>
+<p>
+The package Ada.Numerics.Random_Numbers has been considerably
+restructured and renamed as Ada.Numerics.Float_Random.  The additional
+generic package Ada.Numerics.Discrete_Random produces streams of random
+discrete values.  (A.3)
+</p>
+</dl>
+
+<h2>
+<a name=3>
+Y.3  Specialized Needs Annexes
+</a>
+</h2>
+
+<dl>
+<dt>
+Edited output
+<dd>
+<p>
+     The package Ada.Text_IO.Pictures is now called Ada.Text_IO.Editing.  The
+description has been recast to avoid dependence on the COBOL standard.
+(F.2)
+</p>
+</dl>
+
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p4-x.html> Previous </a> |
+<a href=rat95-p4-z.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

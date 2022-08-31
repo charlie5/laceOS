@@ -1,0 +1,315 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 16.5: Text Files</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 16: Input-Output</H2>
+
+<H3><a name="16.5">16.5 Text Files</a></H3>
+
+As  stated   earlier,  in  the  case  of  TEXT_IO  the  external  file
+essentially comprises a sequence of characters. We require, therefore,
+a number  of subprograms  that can map the various different Ada types
+onto the  type character.  In addition,  there is a need to be able to
+specify the  format of  the externally  held item  - in the case of an
+integer it  could be in decimal or some other base, it might be padded
+with leading  blanks to  fit a  fixed field,  and so  on. Furthermore,
+there are  many circumstances  in which it is convenient to be able to
+use default  formats, in  order to avoid having to supply the detailed
+format on each individual call.
+
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#16.5.1">16.5.1 Overloading PUT and GET</a><BR>
+<a href="#16.5.2">16.5.2 Generic Treatment of Numeric and Enumeration Types</a><BR>
+<a href="#16.5.3">16.5.3 Use of Default Parameters for Formatting</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="16.5.1">16.5.1 Overloading PUT and GET</a></H3>
+
+The use of PUT and GET for all types (and all formats) is an excellent
+example of  the usefulness  of overloading. Without overloading (as is
+the situation  with <a href="ratl-BIB.html#languages">Algol  60</a>), we  would need  to declare differently
+named procedures for each type and formatting style:
+<p>
+<table border cellpadding=6><tr><td><pre>
+PUT_CHARACTER
+PUT_STRING
+PUT_INTEGER
+PUT_FLOAT
+...
+PUT_INTEGER_FORMATTED
+...
+</pre></td></tr></table>
+<p>
+Thus in Algol 60 we had to write something like
+<p>
+<table border cellpadding=6><tr><td><pre>
+integer I;
+real X;
+...
+PUTSTRING("results are:  ");  PUTINT(I);  PUTREAL(X);
+</pre></td></tr></table>
+<p>
+whereas in Ada we can much more neatly write
+<p>
+<table border cellpadding=6><tr><td><pre>
+I :  INTEGER;
+X :  REAL;
+...
+PUT("results are:  ");  PUT(I);  PUT(X);
+</pre></td></tr></table>
+<p>
+Moreover, without overloading it would be almost impossible to provide
+facilities for  arbitrary user-defined  numeric and enumeration types.
+With overloading  we are  able to  use PUT for the output of all types
+and all formats; identification of the proper procedure is resolved by
+the normal rules, and no particular problems arise.
+<p>
+However, even  with overloading,  there are  two  limitations  of  the
+strict procedural  approach. First  the language  does  not  have  any
+concept equivalent  to the straightening of Algol 68. If straightening
+were provided,  a procedure such as PUT (which is defined for the type
+INTEGER) would  be automatically  extended (by iteration) to arrays of
+integers.  Similarly  if  PUT  were  defined  for  the  types  of  the
+components of  a record,  it would also be defined for the record type
+itself.  The   second  limitation  concerns  parameter  lists.  It  is
+traditional  to  perform  several  output  operations  with  a  single
+statement but  this is  not permitted  by a  strictly procedural form.
+Conceivably one  could use  another separator  (say  //  )  to  permit
+multiple argument lists for a procedure:
+<p>
+<PRE>    PUT("results are:  " //  I  // X);           -- not in Ada</PRE>
+<p>
+For simplicity neither straightening nor multiple parameter lists have
+been introduced.  The choice  of short  identifiers such  as PUT  much
+reduces the inconvenience of the procedural form.
+
+<H3><BR><a name="16.5.2">16.5.2 Generic Treatment of Numeric and Enumeration Types</a></H3>
+
+It would  be possible  to provide  procedures  PUT  and  GET  for  the
+predefined numeric  types: INTEGER,  LONG_INTEGER, FLOAT,  LONG_FLOAT,
+and so  on. However, this would not be in the style of Ada, which, for
+the sake  of abstraction  and  portability,  encourages  the  user  to
+declare application-specific numeric types such as:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type REAL is digits 10;
+R :  REAL;
+</pre></td></tr></table>
+<p>
+It is desirable to be able to write
+<p>
+<PRE>    PUT(R);</PRE>
+<p>
+where the  particular PUT has formatting and other properties relevant
+to the type R, rather than, say,
+<p>
+<PRE>    PUT(FLOAT(R));</PRE>
+<p>
+which introduces  portability problems because the default format will
+depend upon the properties of the predefined type FLOAT, and this will
+of course vary with the implementation.
+<p>
+A convenient  solution  is  provided  by  generic  packages  that  are
+declared within TEXT_IO and are visible outside of this package. There
+are four  of these,  covering integer  types,  floating  types,  fixed
+types, and  enumeration types.  Each of these packages has one generic
+parameter that  determines the  particular type.  Thus in  the case of
+floating types the package has the form:
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type NUM is digits &lt;&gt;;
+package FLOAT_IO is
+  ...
+  procedure PUT(ITEM :  in NUM;   ...  );
+  ...
+end FLOAT_IO;
+</pre></td></tr></table>
+<p>
+The user  can then  instantiate this generic package in the usual way,
+and thereby obtain the desired effect:
+<p>
+<table border cellpadding=6><tr><td><pre>
+declare
+  use TEXT_IO;
+  package REAL_IO is new FLOAT_IO(NUM =&gt;  REAL);
+  use REAL_IO;
+begin
+  PUT(R);                       -- calls REAL_IO.PUT
+  ...
+end;
+</pre></td></tr></table>
+
+<H3><BR><a name="16.5.3">16.5.3 Use of Default Parameters for Formatting</a></H3>
+
+It is  important for  the user to have good control over the format of
+output items. This applies particularly to the numeric types, and to a
+lesser extent  to enumeration  types. On  the other  hand, it is often
+convenient to  use some  default format  in order to avoid the tedious
+repetition of  standard parameters.  The ability  to  provide  default
+expressions for  in parameters  enables such facilities to be provided
+in a  convenient manner.  We will  illustrate the  techniques with the
+packages for  integer and enumeration types; the same principles apply
+to the real types.
+<p>
+The specification of INTEGER_IO is
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type NUM is range &lt;&gt;;
+package INTEGER_IO is
+
+  DEFAULT_WIDTH :  FIELD  :=  NUM'WIDTH;
+  DEFAULT_BASE   :  NUMBER_BASE  :=  10;
+  ...
+  procedure PUT      (ITEM :    in NUM;
+               WIDTH :     in FIELD  :=  DEFAULT_WIDTH;
+               BASE  :     in NUMBER_BASE  :=  DEFAULT_BASE);
+  ...
+end INTEGER_IO;
+</pre></td></tr></table>
+<p>
+For simplicity  we have  just shown  the procedure  PUT that takes the
+default output file; there is another procedure PUT with an additional
+and leading  parameter that gives the file explicitly, as discussed in
+<a href="ratl-16-03.html#16.3.2">16.3.2</a>.
+<p>
+The parameters of PUT are as follows:
+<p>
+
+<center><table border cellpadding=6>
+<tr><th align=left>ITEM</th><td>
+The numeric value to be output.
+</td></tr>
+<tr><th align=left>WIDTH</th><td>
+The width  of the  field in  which the  value is to be  placed.
+The type  mark FIELD is just a suitable subtype of INTEGER. The
+value is  right justified  in the  field, with  padding leading
+spaces and  a minus  sign if  appropriate. If  the field is not
+wide enough, then it is expanded as necessary.
+</td></tr>
+<tr><th align=left>BASE</th><td>
+The number  base to  be used. If this is 10 then normal decimal
+notation is used, otherwise the syntax of based literal is used
+(with  any  letters  in  upper  case).  Again,  the  type  mark
+NUMBER_BASE, is a suitable subtype of INTEGER.
+</td></tr></table></center>
+<p>
+
+The default  expressions for  the format  parameters should  be noted.
+They are  the values  of the  variables DEFAULT_WIDTH and DEFAULT_BASE
+which are  also declared  in the  visible part  of the generic package
+INTEGER_IO. The  initial  value  of  DEFAULT_WIDTH  is  the  attribute
+NUM'WIDTH - this gives a field just large enough to hold all values of
+the type,  including a prefixed minus sign or space. The initial value
+of DEFAULT_BASE is 10.
+<p>
+We now  have the desired behavior. The format can be specified on each
+call, or,  alternatively, one  or both  parameters can  be omitted, in
+which case the relevant defaults will be obtained.
+<p>
+The fact that default expressions for parameters are evaluated on each
+use is  very important.  It means  that  the  current  values  of  the
+variables DEFAULT_WIDTH and DEFAULT_BASE are always used, and not just
+their initial  values. As  a consequence,  the default  values can  be
+changed dynamically.  Moreover, since  the variables DEFAULT_WIDTH and
+DEFAULT_BASE  are   declared  in  the  visible  part  of  the  package
+INTEGER_IO, the  user can  change them  by direct assignment. The user
+can now write
+<p>
+<table border cellpadding=6><tr><td><pre>
+declare
+  type INDEX is range 0 .. 511;
+  package INDEX_IO is new INTEGER_IO(NUM =&gt;  INDEX);
+  use INDEX_IO;
+  ...
+  I :  INDEX;
+begin
+  I :=  471;
+
+  PUT(I);                       --  b471
+  PUT(I, 6);                    --  bbb471
+  PUT(I, BASE =&gt;  8);           --  8#727#
+
+  INDEX_IO.DEFAULT_WIDTH :=  7;
+  INDEX_IO.DEFAULT_BASE   :=  8;
+
+  PUT(I);                       --  b8#727#
+  ...
+end;
+</pre></td></tr></table>
+<p>
+(The letter b in the above comments stands for one blank space.)
+<p>
+Note that  INDEX'WIDTH (the  initial DEFAULT_WIDTH)  is 4; this allows
+for three digits plus a leading space. It is important to realize that
+the WIDTH  attribute is  a property of the subtype and not of the base
+type - this is very appropriate, because the base type will be derived
+from one  of the  predefined types,  and  could  indeed  be  the  type INTEGER; it  could not  be appropriate  to use the WIDTH pertaining to
+this, since it would vary with the implementation.
+<p>
+Observe also that the package name has been used when assigning to the
+defaults. This  will be  necessary if  a number  of instances of these
+generic packages have been declared.
+<p>
+In the case of ENUMERATION_IO we have
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type ENUM is (&lt;&gt;);
+package ENUMERATION_IO is
+
+  DEFAULT_WIDTH    :  FIELD  :=  0;
+  DEFAULT_SETTING  :  TYPE_SET  :=  UPPER_CASE;
+  ...
+  procedure PUT      (ITEM :    in ENUM;
+               WIDTH :     in FIELD  :=  DEFAULT_WIDTH;
+               SET   :     in TYPE_SET  :=  DEFAULT_SETTING);
+  ...
+end ENUMERATION_IO;
+</pre></td></tr></table>
+<p>
+Here the  format parameters  control the  field width  and the case of
+characters (lower  case or  upper case,  with upper  being the  norm).
+TYPE_SET is itself an enumeration type declared in TEXT_IO as follows:
+<p>
+<PRE>    type TYPE_SET is (LOWER_CASE, UPPER_CASE);</PRE>
+<p>
+The behavior is as expected. Values are by default output in a minimal
+field -  since the  default  width  is  zero  -  and  in  upper  case.
+Furthermore, the  user can provide an explicit format, and also change
+the default. Padding is by trailing blanks.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-16-06.html#16.6"><b>NEXT</b></a>
+&#128; <a href="ratl-16-04.html#16.4"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-16.html#16"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>

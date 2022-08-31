@@ -1,0 +1,343 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Indefinite containers</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-8-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-8-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>8.5 Indefinite containers</H1>
+<div class="Normal">There are versions of the six container packages 
+we have just been discussing for indefinite types.<A NAME="I1413"></A></div>
+<div class="Normal">As mentioned in Section <A HREF="Rat-8-1.html">8.1</A>, 
+an indefinite (sub)type is one for which we cannot declare an object 
+without giving a constraint (either explicitly or though an initial value). 
+Moreover we cannot have an array of an indefinite subtype. The type <SPAN Class="swiss">String</SPAN> 
+is a good example. Thus we cannot declare an array of the type <SPAN Class="swiss">String</SPAN> 
+because the components might not all be the same size and indexing would 
+be a pain. Class wide types are also indefinite.<A NAME="I1414"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">The specification of 
+the indefinite container for lists starts&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type(&lt;&gt;)&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;<B>function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Ada.Containers.Indefinite_Doubly_Linked_Lists&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Indefinite_Doubly_Linked_Lists);</div>
+<div class="Normal" style="margin-bottom: 0.4em">where we see that the 
+formal type <SPAN Class="swiss">Element_Type</SPAN> has unknown discriminants 
+and so permits the actual type to be any indefinite type (and indeed 
+a definite type as well). So if we want to manipulate lists of strings 
+where the individual strings can be of any length then we declare&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;String_Lists&nbsp;<B>is&nbsp;new</B>&nbsp;&nbsp;Ada.Containers.Indefinite_Doubly_Linked_Lists(String);</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the case of ordered 
+maps we have&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Key_Type(&lt;&gt;)&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type(&lt;&gt;)&nbsp;&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;&lt;&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Ada.Containers.Indefinite_Ordered_Maps&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Indefinite_Ordered_Maps);</div>
+<div class="Normal">showing that both <SPAN Class="swiss">Element_Type</SPAN> 
+and <SPAN Class="swiss">Key_Type</SPAN> can be indefinite.</div>
+<div class="Normal">There are two other differences from the definite 
+versions which should be noted.</div>
+<div class="Normal">One is that the <SPAN Class="swiss">Insert</SPAN> 
+procedures for <SPAN Class="swiss">Vectors</SPAN>, <SPAN Class="swiss">Lists</SPAN> 
+and <SPAN Class="swiss">Maps</SPAN> which insert an element with its 
+default value are omitted (because there is no way to create a default 
+initialized object of an indefinite type anyway).</div>
+<div class="Normal">The other is that the parameter <SPAN Class="swiss">Element</SPAN> 
+of the access procedure <SPAN Class="swiss">Process</SPAN> of <SPAN Class="swiss">Update_Element</SPAN> 
+(or the garrulous <SPAN Class="swiss">Update_Element_Preserving_Key</SPAN> 
+in the case of sets) can be constrained even if the type <SPAN Class="swiss">Element_Type</SPAN> 
+is unconstrained.</div>
+<div class="Normal" style="margin-bottom: 0.4em">As an example of the 
+use of an indefinite container consider the problem of creating an index. 
+For each word in a text file we need a list of its occurrences. The individual 
+words can be represented as just objects of the type <SPAN Class="swiss">String</SPAN>. 
+It is perhaps convenient to consider strings to be the same irrespective 
+of the case of characters and so we define&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Same_Strings(S,&nbsp;T:&nbsp;String)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;To_Lower(S)&nbsp;=&nbsp;To_Lower(T);<BR>
+<B>end</B>&nbsp;Same_Strings;</div>
+<div class="Normal">where the function <SPAN Class="swiss">To_Lower</SPAN> 
+is from the package <SPAN Class="swiss">Ada.Characters.Handling</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can suppose that 
+the positions of the words are described by a type <SPAN Class="swiss">Place</SPAN> 
+thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Place&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Page:&nbsp;Text_IO.Positive_Count;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Line:&nbsp;Text_IO.Positive_Count;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Col:&nbsp;Text_IO.Positive_Count;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The index is essentially 
+a map from the type <SPAN Class="swiss">String</SPAN> to a list of values 
+of type <SPAN Class="swiss">Place</SPAN>. We first create a definite 
+list container for handling the lists thus&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Places&nbsp;<B>is&nbsp;new</B>&nbsp;Doubly_Linked_Lists(Place);</div>
+<div class="Normal" style="margin-bottom: 0.4em">We then create an indefinite 
+map container from the type <SPAN Class="swiss">String</SPAN> to the 
+type <SPAN Class="swiss">List</SPAN> thus&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Indexes&nbsp;<B>is&nbsp;new</B>&nbsp;Indefinite_Hashed_Maps(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key_Type&nbsp;=&gt;&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type&nbsp;=&gt;&nbsp;Places.List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hash&nbsp;=&gt;&nbsp;Ada.Strings.Hash;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Equivalent_Keys&nbsp;=&gt;&nbsp;Same_Strings;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;=&quot;&nbsp;=&gt;&nbsp;Places.&quot;=&quot;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The index is then declared 
+by writing&nbsp;</div>
+<div class="SwissExamples">The_Index:&nbsp;Indexes.Map;</div>
+<div class="Normal">Note that this example illustrates the use of nested 
+containers since the elements in the map are themselves containers (lists).</div>
+<div class="Normal" style="margin-bottom: 0.4em">It might be helpful 
+for the index to contain information saying which file it refers to. 
+We can extend the type <SPAN Class="swiss">Map</SPAN> thus (remember 
+that container types are tagged)&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Text_Map&nbsp;<B>is&nbsp;new</B>&nbsp;Indexes.Map&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;File_Ref:&nbsp;Text_IO.File_Access;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and now we can more 
+usefully declare&nbsp;</div>
+<div class="SwissExamples">My_Index:&nbsp;Text_Map&nbsp;:=&nbsp;(Indexes.Empty_Map&nbsp;<B>with</B>&nbsp;My_File'Access);</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can now declare 
+various subprograms to manipulate our map. For example to add a new item 
+we have first to see whether the word is already in the index &ndash; 
+if it is not then we add the new word to the map and set its list to 
+a single element whereas if it is already in the index then we add the 
+new place entry to the corresponding list. Thus&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Add_Entry(Index:&nbsp;<B>in&nbsp;out</B>&nbsp;Text_Map;&nbsp;Word:&nbsp;String;&nbsp;P:&nbsp;Place)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;M_Cursor:&nbsp;Indexes.Cursor;<BR>
+&nbsp;&nbsp;&nbsp;A_List:&nbsp;Places.List;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>empty&nbsp;list&nbsp;of&nbsp;places</I></SPAN><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;M_Cursor&nbsp;:=&nbsp;Index.Find(Word);<BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;M_Cursor&nbsp;=&nbsp;Indexes.No_Element&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>it's&nbsp;a&nbsp;new&nbsp;word</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A_List.Append(P);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index.Insert(Word,&nbsp;A_List);<BR>
+&nbsp;&nbsp;&nbsp;<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>it's&nbsp;an&nbsp;old&nbsp;word</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A_List&nbsp;:=&nbsp;Element(M_Cursor);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>get&nbsp;old&nbsp;list</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A_List.Append(P);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>add&nbsp;to&nbsp;it</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index.Replace_Element(M_Cursor,&nbsp;A_List);<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end</B>&nbsp;Add_Entry;</div>
+<div class="Normal">A number of points should be observed. The type <SPAN Class="swiss">Text_Map</SPAN> 
+being derived from <SPAN Class="swiss">Indexes.Map</SPAN> inherits all 
+the map operations and so we can write <SPAN Class="swiss">Index.Find(Word)</SPAN> 
+which uses the prefixed notation (or we can write <SPAN Class="swiss">Indexes.Find(Index, 
+Word)</SPAN>). On the other hand auxiliary entities such as the type 
+<SPAN Class="swiss">Cursor</SPAN> and the constant <SPAN Class="swiss">No_Element</SPAN> 
+are of course in the package <SPAN Class="swiss">Indexes</SPAN> and have 
+to be referred to as <SPAN Class="swiss">Indexes.Cursor</SPAN> and so 
+on.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A big problem with 
+the procedure as written however is that it uses <SPAN Class="swiss">Element</SPAN> 
+and <SPAN Class="swiss">Replace_Element</SPAN> rather than <SPAN Class="swiss">Update_Element</SPAN>. 
+This means that it copies the whole of the existing list, adds the new 
+item to it, and then copies it back. Here is an alternative version&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Add_Entry(Index:&nbsp;<B>in&nbsp;out</B>&nbsp;Text_Map;&nbsp;Word:&nbsp;String;&nbsp;P:&nbsp;Place)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;M_Cursor:&nbsp;Indexes.Cursor;<BR>
+&nbsp;&nbsp;&nbsp;A_List:&nbsp;Places.List;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>empty&nbsp;list&nbsp;of&nbsp;places</I></SPAN><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;M_Cursor&nbsp;:=&nbsp;Index.Find(Word);<BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;M_Cursor&nbsp;=&nbsp;Indexes.No_Element&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>it's&nbsp;a&nbsp;new&nbsp;word</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A_List.Append(P);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index.Insert(Word,&nbsp;A_List);<BR>
+&nbsp;&nbsp;&nbsp;<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>it's&nbsp;an&nbsp;old&nbsp;word</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>this&nbsp;procedure&nbsp;adds&nbsp;to&nbsp;the&nbsp;list&nbsp;in&nbsp;situ</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Add_It(The_Key:&nbsp;<B>in</B>&nbsp;String;&nbsp;The_List:&nbsp;<B>in&nbsp;out</B>&nbsp;Places.List)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The_List.Append(P);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Add_It;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>and&nbsp;here&nbsp;we&nbsp;call&nbsp;it&nbsp;via&nbsp;Update_Element</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index.Update_Element(M_Cursor,&nbsp;Add_It'Access);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end</B>&nbsp;Add_Entry;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is still somewhat 
+untidy. In the case of a new word we might as well make the new map entry 
+with an empty list and then update it thereby sharing the calls of <SPAN Class="swiss">Append</SPAN>. 
+We get&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Add_Entry(Index:&nbsp;<B>in&nbsp;out</B>&nbsp;Text_Map;&nbsp;Word:&nbsp;String;&nbsp;P:&nbsp;Place)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;M_Cursor:&nbsp;Indexes.Cursor&nbsp;:=&nbsp;Index.Find(Word);<BR>
+&nbsp;&nbsp;&nbsp;OK:&nbsp;Boolean;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;M_Cursor&nbsp;=&nbsp;Indexes.No_Element&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>it's&nbsp;a&nbsp;new&nbsp;word</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index.Insert(Word,&nbsp;Places.Empty_List,&nbsp;M_Cursor,&nbsp;OK);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>M_Cursor&nbsp;now&nbsp;refers&nbsp;to&nbsp;new&nbsp;position</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>and&nbsp;OK&nbsp;will&nbsp;be&nbsp;True</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if;</B><BR>
+&nbsp;&nbsp;&nbsp;<B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>this&nbsp;procedure&nbsp;adds&nbsp;to&nbsp;the&nbsp;list&nbsp;in&nbsp;situ</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Add_It(The_Key:&nbsp;<B>in</B>&nbsp;String;&nbsp;The_List:&nbsp;<B>in&nbsp;out</B>&nbsp;Places.List)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The_List.Append(P);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Add_It;<BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>and&nbsp;here&nbsp;we&nbsp;call&nbsp;it&nbsp;via&nbsp;Update_Element</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index.Update_Element(M_Cursor,&nbsp;Add_It'Access);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>;<BR>
+<B>end</B>&nbsp;Add_Entry;</div>
+<div class="Normal">It will be recalled that there are various versions 
+of <SPAN Class="swiss">Insert</SPAN>. We have used that which has two 
+out parameters being the position where the node was inserted and a Boolean 
+parameter indicating whether a new node was inserted or not. In this 
+case we know that it will be inserted and so the final parameter is a 
+nuisance (but sadly we cannot default out parameters). Note also that 
+we need not give the parameter <SPAN Class="swiss">Places.Empty_List</SPAN> 
+because another version of <SPAN Class="swiss">Insert</SPAN> will do 
+that automatically since that is the default value of a list anyway.</div>
+<div class="Normal">Yet another approach is not to use <SPAN Class="swiss">Find</SPAN> 
+but just call <SPAN Class="swiss">Insert</SPAN>. We can even use the 
+defaulted version &ndash; if the word is present then the node is not 
+changed and the position parameter indicates where it is, if the word 
+is not present then a new node is made with an empty list and again the 
+position parameter indicates where it is.</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Add_Entry(Index:&nbsp;<B>in&nbsp;out</B>&nbsp;Text_Map;&nbsp;Word:&nbsp;String;&nbsp;P:&nbsp;Place)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;M_Cursor:&nbsp;Indexes.Cursor;<BR>
+&nbsp;&nbsp;&nbsp;Inserted:&nbsp;Boolean;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Index.Insert(Word,&nbsp;M_Cursor,&nbsp;Inserted);<BR>
+&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>M_Cursor&nbsp;now&nbsp;refers&nbsp;to&nbsp;position&nbsp;of&nbsp;node</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>and&nbsp;Inserted&nbsp;indicates&nbsp;whether&nbsp;it&nbsp;was&nbsp;added</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>this&nbsp;procedure&nbsp;adds&nbsp;to&nbsp;the&nbsp;list&nbsp;in&nbsp;situ</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Add_It(The_Key:&nbsp;<B>in</B>&nbsp;String;&nbsp;The_List:&nbsp;<B>in&nbsp;out</B>&nbsp;Places.List)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The_List.Append(P);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Add_It;<BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>and&nbsp;here&nbsp;we&nbsp;call&nbsp;it&nbsp;via&nbsp;Update_Element</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index.Update_Element(M_Cursor,&nbsp;Add_It'Access);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>;<BR>
+<B>end</B>&nbsp;Add_Entry;</div>
+<div class="Normal">Curiously enough we do not need to use the value 
+of <SPAN Class="swiss">Inserted</SPAN>. We leave the reader to decide 
+which of the various approaches is best.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can now do some 
+queries on the index. For example we might want to know how many different 
+four-lettered words there are in the text. We can either use <SPAN Class="swiss">Iterate</SPAN> 
+or do it ourselves with <SPAN Class="swiss">Next</SPAN> as follows&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Four_Letters(Index:&nbsp;Text_Map)&nbsp;<B>return</B>&nbsp;Integer&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Count:&nbsp;Integer&nbsp;:=&nbsp;0;<BR>
+&nbsp;&nbsp;&nbsp;C:&nbsp;Indexes.Cursor&nbsp;:=&nbsp;Index.First;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Key(C)'Length&nbsp;=&nbsp;4&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;:=&nbsp;Count&nbsp;+&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Indexes.Next(C);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>exit&nbsp;when</B>&nbsp;C&nbsp;=&nbsp;Indexes.No_Element;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;loop</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Count;<BR>
+<B>end</B>&nbsp;Four_Letters;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We might finally wish 
+to know how many four-lettered words there are on a particular page. 
+(This is just an exercise &ndash; it would clearly be simplest to search 
+the original text!) We use <SPAN Class="swiss">Iterate</SPAN> this time 
+both to scan the map for the words and then to scan each list for the 
+page number&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Four_Letters_On_Page(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index:&nbsp;Text_Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Page:&nbsp;Text_IO.Positive_Count)&nbsp;<B>return</B>&nbsp;Integer&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Count:&nbsp;Integer&nbsp;:=&nbsp;0;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Do_It_Map(C:&nbsp;Indexes.Cursor)&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Do_It_List(C:&nbsp;Places.Cursor)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Element(C).Page&nbsp;=&nbsp;Page&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;:=&nbsp;Count&nbsp;+&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Do_It_LIst;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Action(K:&nbsp;String;&nbsp;E:&nbsp;Places.List)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;K'Length&nbsp;=&nbsp;4&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>now&nbsp;scan&nbsp;list&nbsp;for&nbsp;instances&nbsp;of&nbsp;Page</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E.Iterate(Do_It_List'Access);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Action;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Indexes.Query_Element(C,&nbsp;Action'Access);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Do_It_Map;</div>
+<div class="SwissExamples"><B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Index.Iterate(Do_It_Map'Access);<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Count;<BR>
+<B>end</B>&nbsp;Four_Letters_On_Page;</div>
+<div class="Normal">We could of course have used <SPAN Class="swiss">First</SPAN> 
+and <SPAN Class="swiss">Next</SPAN> to search the list. But in any event 
+the important point is that by using <SPAN Class="swiss">Query_Element</SPAN> 
+we do not have to copy the list in order to scan it.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-8-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-8-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

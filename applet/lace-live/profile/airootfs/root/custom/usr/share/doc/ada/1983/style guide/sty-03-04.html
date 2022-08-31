@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 3.4: Using Types
+</TITLE>
+</HEAD><BODY bgcolor=#ffffff>
+<a href="/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+Software Productivity Consortium, Inc., Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 3: Readability</H2>
+<H3><a name="3.4">3.4     Using Types</a></H3>
+Strong typing promotes reliability in software. The type definition of an 
+object defines all legal values and operations and allows the compiler to 
+check for and identify potential errors during compilation. In addition, the 
+rules of type allow the compiler to generate code to check for violations of 
+type constraints at execution time. Using these Ada compiler's features 
+facilitates earlier and more complete error detection than that which is 
+available with less strongly typed languages.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><br>
+<a href="#3.4.1">3.4.1   Declaring Types</a><BR>
+<a href="#3.4.2">3.4.2   Enumeration Types</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-03-05.html#3.5.4"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="3.4.1">3.4.1   Declaring Types</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Limit the range of scalar types as much as possible. 
+<li>Seek information about possible values from the application. 
+<li>Do not overload any of the type names in package Standard. 
+<li>Use subtype declarations to improve program readability (Booch 1987). 
+<li>Use derived types and subtypes in concert (see <a href="sty-05-03.html#5.3.1">Guideline 5.3.1</a>). 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>subtype Card_Image is String (1 .. 80);
+
+Input_Line : Card_Image := (others =&gt; ' ');
+
+-- restricted integer type: 
+type    Day_Of_Leap_Year     is                  range 1 .. 366; 
+subtype Day_Of_Non_Leap_Year is Day_Of_Leap_Year range 1 .. 365;</pre></td></tr></table>
+<P>
+By the following declaration, the programmer means, &quot;I haven't the foggiest 
+idea how many,&quot; but the actual range will show up buried in the code or as a  system parameter:<P>
+<IMG SRC="indent.gif"><CODE>Employee_Count : Integer;</CODE>
+
+<H4>rationale</H4>
+Eliminating meaningless values from the legal range improves the compiler's  
+ability to detect errors when an object is set to an invalid value. This also  
+improves program readability. In addition, it forces you to carefully think  
+about each use of objects declared to be of the subtype.<P>
+Different implementations provide different sets of values for most of the  
+predefined types. A reader cannot determine the intended range from the  
+predefined names. This situation is aggravated when the predefined names are  
+overloaded.<P>
+The names of an object and its subtype can clarify their intended use and  
+document low-level design decisions. The example above documents a design 
+decision to restrict the software to devices whose physical parameters are  
+derived from the characteristics of punch cards. This information is easy to  
+find for any later changes, thus enhancing program maintainability.<P>
+<a href="http://archive.adaic.com/standards/83lrm/html/lrm-08-05.html#8.5">Section 8.5 of the Ada Language Reference Manual</a> says that declaring a subtype  
+without a constraint is one method for renaming a type.<P>
+Types can have highly constrained sets of values without eliminating useful  
+values. Usage as described in <a href="sty-05-03.html#5.3.1">Guideline 5.3.1</a> eliminates many flag variables and  
+type conversions within executable statements. This renders the program more  
+readable while allowing the compiler to enforce strong typing constraints.
+
+<H4>note</H4>
+Subtype declarations do not define new types, only constraints for existing  
+types.<P>
+Recognize that any deviation from this guideline detracts from the advantages  
+of the strong typing facilities of the Ada language.<P>
+<b>Language Ref Manual references:</b> 
+        <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-03.html#3.3">3.3&nbsp;Types and Subtypes</A>, 
+        <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-04.html#3.4">3.4&nbsp;Derived Types</A>, 
+        <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5">3.5&nbsp;Scalar Types</A>, 
+        <a href="http://archive.adaic.com/standards/83lrm/html/lrm-08-05.html#8.5">8.5&nbsp;Renaming Declarations</A>, 
+        <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-C.html#C">C.&nbsp;Predefined Language Environment</A>
+
+
+<H3><BR><a name="3.4.2">3.4.2   Enumeration Types</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use enumeration types instead of numeric codes.  
+<li>Use representation clauses to match requirements of external devices. 
+</UL>
+
+<H4>example</H4>
+Use
+<table border cellpadding=6><tr><td><pre>type Color is (Blue, Red, Green, Yellow);</pre></td></tr></table>
+<P>
+rather than
+<table border cellpadding=6><tr><td><pre>Blue   : constant := 1; 
+Red    : constant := 2; 
+Green  : constant := 3; 
+Yellow : constant := 4;</pre></td></tr></table>
+<P>
+and add the following if necessary.
+<table border cellpadding=6><tr><td><pre>for Color use (Blue   =&gt; 1, 
+               Red    =&gt; 2, 
+               Green  =&gt; 3, 
+               Yellow =&gt; 4);</pre></td></tr></table>
+
+
+<H4>rationale</H4>
+Enumerations are more robust than numeric codes; they leave less potential for  
+errors resulting from incorrect interpretation and from additions to and  
+deletions from the set of values during maintenance. Numeric codes are  
+holdovers from languages that have no user-defined types.<P>
+In addition, Ada provides a number of attributes (<CODE>'Pos</CODE>, <CODE>'Val</CODE>, <CODE>'Succ</CODE>, <CODE>'Pred</CODE>,  
+<CODE>'Image</CODE>, and <CODE>'Value</CODE>) for enumeration types which, when used, are more reliable  
+than user-written operations on encodings.<P>
+A numeric code may at first seem appropriate to match external values.   
+Instead, these situations call for a representation clause on the enumeration  
+type. The representation clause documents the &quot;encoding.&quot; If the program is 
+properly structured to isolate and encapsulate hardware dependencies (see  
+<a href="sty-07-01.html#7.1.5">Guideline 7.1.5</a>), the numeric code ends up in an interface package where it can be  
+easily found and replaced should the requirements change.<P>
+<b>Language Ref Manual references:</b> 
+        <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.1">3.5.1&nbsp;Enumeration Types</A>, 
+        <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-13-03.html#13.3">13.3&nbsp;Enumeration Representation Clauses</A>, 
+        <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-A.html#A">A.&nbsp;Predefined Language Attributes</A>
+
+
+<hr>
+<A HREF="index.html">Back to document index</A><P>
+
+<EM>This file was converted with TextToHTML - (c) Logic n.v.</EM></BODY>
+</HTML>
+

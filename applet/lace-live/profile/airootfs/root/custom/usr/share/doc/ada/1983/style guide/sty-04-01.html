@@ -1,0 +1,392 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 4.1: High-Level Structure
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 4: Program Structure</H2>
+
+<H3><a name="4.1">4.1     High-Level Structure</a></H3>
+Well-structured programs are easily understood, enhanced, and maintained. 
+Poorly structured programs are frequently restructured during maintenance just  
+to make the job easier. Many of the guidelines listed below are often given as  
+general program design guidelines.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><br>
+<img src="indent.gif"><a href="#4.1.1">4.1.1   Separate Compilation Capabilities</a><BR>
+<img src="indent.gif"><a href="#4.1.2">4.1.2   Subprograms</a><BR>
+<img src="indent.gif"><a href="#4.1.3">4.1.3   Functions</a><BR>
+<img src="indent.gif"><a href="#4.1.4">4.1.4   Packages</a><BR>
+<img src="indent.gif"><a href="#4.1.5">4.1.5   Cohesion</a><BR>
+<img src="indent.gif"><a href="#4.1.6">4.1.6   Data Coupling</a><BR>
+<img src="indent.gif"><a href="#4.1.7">4.1.7   Tasks</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-04-04.html#4.4.1"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="4.1.1">4.1.1   Separate Compilation Capabilities</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Place the specification of each library unit package in a separate 
+file from its body. 
+<li>Create an explicit specification, in a separate file, for each library  unit subprogram. 
+<li>Use subunits for the bodies of large units which are nested in other units. 
+<li>Place each subunit in a separate file. 
+<li>Use a consistent file naming convention. 
+</UL>
+
+<H4>example</H4>
+The file names below illustrate one possible file organization and associated  
+consistent naming convention. The library unit name is used for the body. A  
+trailing underscore indicates the specification, and any files containing  
+subunits use names constructed by separating the body name from the subunit  
+name with two underscores.
+<table border cellpadding=6><tr><td><pre>text_io_.ada                 -- the specification 
+text_io.ada                  -- the body 
+text_io__integer_io.ada      -- a subunit 
+text_io__fixed_io.ada        -- a subunit 
+text_io__float_io.ada        -- a subunit 
+text_io__enumeration_io.ada  -- a subunit</pre></td></tr></table>
+
+<H4>rationale</H4>
+The main reason for the emphasis on separate files in this guideline is to 
+minimize the amount of recompilation required after each change. Typically, 
+during software development, bodies of units are updated far more often than 
+specifications. If the body and specification reside in the same file, then 
+the specification will be compiled each time the body is compiled, even though 
+the specification has not changed. Because the specification defines the 
+interface between the unit and all of its users, this recompilation of the 
+specification typically makes recompilation of all users necessary, in order 
+to verify compliance with the specification. If the specifications and bodies 
+of the users also reside together, then any users of these units will also 
+have to be recompiled, and so on. The ripple effect can force a huge number of 
+compilations which could have been avoided, severely slowing the development 
+and test phase of a project. This is why we suggest placing specifications of 
+all library units (nonnested units) in separate files from their bodies.<P>
+For the same reason, use subunits for large nested bodies, and put each 
+subunit in its own file. This makes it possible to modify the body of the one 
+nested unit without having to recompile any of the other units in the body. 
+This is recommended for large units because changes are more likely to occur 
+in large units than in small ones.<P>
+An additional benefit of using multiple separate files is that it allows 
+different implementers to modify different parts of the system at the same 
+time with conventional editors which do not allow multiple concurrent updates 
+to a single file.<P>
+Finally, keeping bodies and specifications separate makes it possible to have 
+multiple bodies for the same specification, or multiple specifications for the 
+same body. Although Ada requires that there be exactly one specification per 
+body in a system at any given time, it can still be useful to maintain 
+multiple bodies or multiple specifications for use in different builds of a 
+system. For example, a single specification may have multiple bodies, each of 
+which implements the same functionality with a different tradeoff of time 
+versus space efficiency. Or, for machine-dependent code, there may be one body 
+for each target machine. Maintaining multiple package specifications can also 
+be useful during development and test. You may develop one specification for 
+delivery to your customer and another for unit testing. The first one would 
+export only those subprograms intended to be called from outside of the 
+package during normal operation of the system. The second one would export all 
+subprograms of the package so that each of them could be independently tested.<P>
+A consistent file naming convention is recommended to make it easier to manage  
+the large number of files which may result from following this guideline.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-01.html#6.1">6.1&nbsp;Subprogram Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-02.html#7.2">7.2&nbsp;Package Specifications and Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-03.html#7.3">7.3&nbsp;Package Bodies</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-10-01.html#10.1">10.1&nbsp;Compilation Units - Library Units</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-10-02.html#10.2">10.2&nbsp;Subunits of Compilation Units</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-10.html#10">10&nbsp;Program Structure and Compilation Issues</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-F.html#F">F&nbsp;Implementation-Dependent Characteristics</A>
+
+
+<H3><BR><a name="4.1.2">4.1.2   Subprograms</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use subprograms to enhance abstraction. 
+<li>Restrict each subprogram to the performance of a single action. 
+</UL>
+
+<H4>example</H4>
+Your program is required to output text to many types of devices. Because the  
+devices would accept a variety of character sets, the proper way to do this is  
+to write a subprogram to convert to the required character set. This way, the  
+output subprogram has one purpose and the conversions are described elsewhere.
+<table border cellpadding=6><tr><td><pre>... 
+---------------------------------------------------------------------- 
+procedure Dispatch_To_Device 
+      (Output : in     Text; 
+       Device      : in     Device_Name; 
+       Status      :    out Error_Codes) is
+       
+   Upper_Case_Output : Text (1 .. Output'Length); 
+   ...
+   
+begin  -- Dispatch_To_Device
+
+   ... 
+   case Device.Character_Set is
+   
+      when Limited_ASCII =&gt; 
+         Convert_To_Upper_Case(Original   =&gt; Output, 
+                               Upper_Case =&gt; Upper_Case_Output); 
+         ...
+         
+      when Extended_ASCII =&gt; 
+         ...
+         
+      when EBCDIC =&gt; 
+         ...
+         
+   end case;  -- Device_Type.Character_Set
+   
+   ...
+   
+end Dispatch_To_Device; 
+----------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+Subprograms are an extremely effective and well-understood abstraction 
+technique. Subprograms increase program readability by hiding the details of a  
+particular activity. It is not necessary that a subprogram be called more than  
+once to justify its existence.
+
+<H4>note</H4>
+Dealing with the overhead of subroutine calls is discussed in <a href="sty-09-01.html#9.1.1">Guideline 9.1.1</a>.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06.html#6">6&nbsp;Subprograms</A>
+
+
+<H3><BR><a name="4.1.3">4.1.3   Functions</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use a function when the subprogram's primary purpose is to provide a  
+single value. 
+<li>Minimize the side effect of a function. 
+</UL>
+
+<H4>example</H4>
+Although reading a character from a file will change what character is read  
+next, this is accepted as a minor side effect compared to the primary purpose  
+of the following function:
+<table border cellpadding=6><tr><td><pre>function Next_Character return Character is separate;</pre></td></tr></table>
+<P>
+However, the use of a function like this should could lead to a subtle 
+problem.  Any time the order of evaluation is undefined, the order of the 
+values returned by the function will effectively be undefined.  In this 
+example, the order of the characters placed in Word and the order that the 
+following two characters are given to the Suffix parameters is unknown.  No 
+implementation of the <CODE>Next_Character</CODE> function can guarantee which character 
+will go where:
+<table border cellpadding=6><tr><td><pre>   Word : constant String := String'(1 .. 5 =&gt; Next_Character);
+
+begin  -- Start_Parsing
+
+   Parse(Keyword =&gt; Word, 
+         Suffix1 =&gt; Next_Character, 
+         Suffix2 =&gt; Next_Character); 
+end Start_Parsing;</pre></td></tr></table>
+<p>
+Of course, if the order is unimportant (as in a random number generator), then  
+the order of evaluation is unimportant.
+
+<H4>rationale</H4>
+A side effect is a change to any variable that is not local to the subprogram. 
+This includes changes to variables by other subprograms and entries during 
+calls from the function if the changes persist after the function returns. 
+Side effects are discouraged because they are difficult to understand and 
+maintain.  Additionally, the Ada language does not define the order in which 
+functions are evaluated when they occur in expressions or as actual parameters 
+to subprograms. Therefore, a program which depends on the order in which side 
+effects of functions occur is erroneous. Avoid using side effects anywhere.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-04.html#6.4">6.4&nbsp;Subprogram Calls</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-05.html#6.5">6.5&nbsp;Function Subprograms</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-03.html#8.3">8.3&nbsp;Visibility</A>
+
+
+<H3><BR><a name="4.1.4">4.1.4   Packages</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use packages for information hiding. 
+<li>Use packages with private types for abstract data types. 
+<li>Use packages to model abstract entities appropriate to the problem  
+domain. 
+<li>Use packages to group together related type and object declarations  
+(e.g., common declarations for two or more library units). 
+<li>Use packages to group together related program units for configuration  
+control or visibility reasons (NASA 1987). 
+<li>Encapsulate machine dependencies in packages. Place a software  
+interface to a particular device in a package to facilitate a change to a  
+different device. 
+<li>Place low-level implementation decisions or interfaces in subprograms 
+within packages. 
+<li>Use packages and subprograms to encapsulate and hide program details  
+that may change (Nissen and Wallis 1984). 
+</UL>
+
+<H4>example</H4>
+A package called <CODE>Backing_Storage_Interface</CODE> could contain type and subprogram  
+declarations to support a generalized view of an external memory system (such  
+as a disk or drum). Its internals may, in turn, depend on other packages more  
+specific to the hardware or operating system.
+
+<H4>rationale</H4>
+Packages are the principal structuring facility in Ada. They are intended to 
+be used as direct support for abstraction, information hiding, and 
+modularization.  For example, they are useful for encapsulating machine 
+dependencies as an aid to portability. A single specification can have 
+multiple bodies isolating implementation-specific information so other parts 
+of the code do not need to change.<P>
+Encapsulating areas of potential change helps to minimize the effort required 
+to implement that change by preventing unnecessary dependencies among 
+unrelated parts of the system.
+
+<H4>note</H4>
+The most prevalent objection to this guideline usually involves performance  
+penalties.  See <a href="sty-09-01.html#9.1.1">Guideline 9.1.1</a> for a discussion about subprogram overhead.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03.html#3">3&nbsp;Declarations and Types</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-01.html#6.1">6.1&nbsp;Subprogram Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07.html#7">7&nbsp;Packages</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-03.html#8.3">8.3&nbsp;Visibility</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-13.html#13">13&nbsp;Representation Clauses and Implementation-Dependent Features</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-B.html#B">B&nbsp;Predefined Language Pragmas</A>
+
+
+<H3><BR><a name="4.1.5">4.1.5   Cohesion</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Make each package serve a single purpose. 
+<li>Use packages to group related data, types, and subprograms. 
+<li>Avoid collections of unrelated objects and subprograms (NASA 1987 and  
+Nissen and Wallis 1984). 
+</UL>
+
+<H4>example</H4>
+As a bad example, a package named <CODE>Project_Definitions</CODE> is obviously a &quot;catch 
+all&quot; for a particular project and is likely to be a jumbled mess. It probably  
+has this form to permit project members to incorporate a single with clause  
+into their software.<P>
+Better examples are packages called <CODE>Display_Format_Definitions</CODE>, containing all  
+the types and constants needed by some specific display in a specific format,  
+and <CODE>Cartridge_Tape_Handler</CODE>, containing all the types, constants, and  
+subprograms which provide an interface to a special purpose device.
+
+<H4>rationale</H4>
+See also <a href="sty-05-04.html#5.4.1">Guideline 5.4.1</a> on Heterogeneous Data.<P>
+The degree to which the entities in a package are related has a direct impact  
+on the ease of understanding packages and programs made up of packages. There  
+are different criteria for grouping, and some criteria are less effective than  
+others. Grouping the class of data or activity (e.g., initialization modules)  
+or grouping data or activities based on their timing characteristics is less  
+effective than grouping based on function or need to communicate through data  
+(Charette 1986 paraphrased).
+
+<H4>note</H4>
+Traditional subroutine libraries often group functionally unrelated 
+subroutines. Even such libraries should be broken into a collection of 
+packages each containing a logically cohesive set of subprograms.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-02.html#3.2">3.2&nbsp;Objects and Named Numbers</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-03.html#3.3">3.3&nbsp;Types and Subtypes</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-01.html#6.1">6.1&nbsp;Subprogram Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07.html#7">7&nbsp;Packages</A>
+
+
+<H3><BR><a name="4.1.6">4.1.6   Data Coupling</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Avoid declaring variables in package specifications. 
+</UL>
+
+<H4>example</H4>
+This is part of a compiler. Both the package handling error messages and the  
+package containing the code generator need to know the current line number.  
+Rather than storing this in a shared variable of type Natural, the information  
+is stored in a package that hides the details of how such information is  
+represented, and makes it available with access routines.
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------- 
+package Compilation_Status is 
+   type Line_Range is range 1 .. 2_500_000; 
+   function Source_Line_Number return Line_Range; 
+end Compilation_Status;
+
+-------------------------------------------------------------------------
+
+with Compilation_Status; 
+package Error_Message_Processing is 
+   -- Handle compile-time diagnostic. 
+end Error_Message_Processing;
+
+-------------------------------------------------------------------------
+
+with Compilation_Status;
+
+package Code_Generation is 
+   -- Operations for code generation. 
+end Code_Generation; 
+-------------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+Strongly coupled program units can be difficult to debug and very difficult to 
+maintain. By protecting shared data with access functions, the coupling is 
+lessened. This prevents dependence on the data structure and access to the 
+data can be controlled.
+
+<H4>note</H4>
+The most prevalent objection to this guideline usually involves performance 
+penalties.  When a variable is moved to the package body, subprograms to 
+access the variable must be provided and the overhead involved during each 
+call to those subprograms is introduced.  See <a href="sty-09-01.html#9.1.1">Guideline 9.1.1</a> for a discussion about 
+subprogram overhead.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-02.html#3.2.1">3.2.1&nbsp;Object Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-02.html#7.2">7.2&nbsp;Package Specifications and Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-02.html#8.2">8.2&nbsp;Scope of Declarations</A>
+
+
+<H3><BR><a name="4.1.7">4.1.7   Tasks</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use tasks to model abstract, asynchronous entities within the problem  
+domain. 
+<li>Use tasks to control or synchronize access to tasks or other  
+asynchronous entities (e.g., asynchronous I/O, peripheral devices, interrupts). 
+<li>Use tasks to define concurrent algorithms for multiprocessor  
+architectures. 
+<li>Use tasks to perform concurrent, cyclic, or prioritized activities  
+(NASA 1987). 
+</UL>
+
+<H4>rationale</H4>
+The rationale for this guideline is given under <a href="sty-06-01.html#6.1.1">Guideline 6.1.1</a>. <a href="sty-06.html">Chapter 6</a> 
+discusses tasking in more detail.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09.html#9">9&nbsp;Tasks</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-13-05.html#13.5.1">13.5.1&nbsp;Interrupts</A>
+
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

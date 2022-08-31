@@ -1,0 +1,553 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Bounded-Length String Handling</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.CodeIndented {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 5.2em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    UL.CodeIndentedBulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 7.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-4-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-4-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>A.4.4 Bounded-Length String Handling</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal">The language-defined package Strings.Bounded provides 
+a generic package each of whose instances yields a private type Bounded_String 
+and a set of operations. An object of a particular Bounded_String type 
+represents a String whose low bound is 1 and whose length can vary conceptually 
+between 0 and a maximum size established at the generic instantiation. 
+The subprograms for fixed-length string handling are either overloaded 
+directly for Bounded_String, or are modified as needed to reflect the 
+variability in length. Additionally, since the Bounded_String type is 
+private, appropriate constructor and selector operations are provided. 
+</DIV>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The library package 
+Strings.Bounded has the following declaration:&nbsp;</DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Examples"><B>with</B>&nbsp;Ada.Strings.Maps;<BR>
+<A NAME="I5216"></A><B>package</B>&nbsp;Ada.Strings.Bounded&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Bounded);</DIV>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Max&nbsp;&nbsp;&nbsp;:&nbsp;Positive;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;Maximum&nbsp;length&nbsp;of&nbsp;a&nbsp;Bounded_String</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;<A NAME="I5217"></A>Generic_Bounded_Length&nbsp;<B>is</B></DIV>
+<DIV Class="paranum">5</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I5218"></A>Max_Length&nbsp;:&nbsp;<B>constant</B>&nbsp;Positive&nbsp;:=&nbsp;Max;</DIV>
+<DIV Class="paranum">6</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I5219"></A>Bounded_String&nbsp;<B>is</B>&nbsp;<B>private</B>;</DIV>
+<DIV Class="paranum">7</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I5220"></A>Null_Bounded_String&nbsp;:&nbsp;<B>constant</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">8</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;<A NAME="I5221"></A>Length_Range&nbsp;<B>is</B>&nbsp;Natural&nbsp;<B>range</B>&nbsp;0&nbsp;..&nbsp;Max_Length;</DIV>
+<DIV Class="paranum">9</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5222"></A>Length&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)&nbsp;<B>return</B>&nbsp;Length_Range;</DIV>
+<DIV Class="paranum">10</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;Conversion,&nbsp;Concatenation,&nbsp;and&nbsp;Selection&nbsp;functions</I></SPAN></DIV>
+<DIV Class="paranum">11</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5223"></A>To_Bounded_String&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">12</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5224"></A>To_String&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)&nbsp;<B>return</B>&nbsp;String;</DIV>
+<DIV Class="paranum">12.1/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5225"></A>Set_Bounded_String<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Target&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Truncation&nbsp;:=&nbsp;Error);</DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5226"></A>Append&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;&nbsp;:=&nbsp;Error)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">14</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5227"></A>Append&nbsp;(Left&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">15</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5228"></A>Append&nbsp;(Left&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">16</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5229"></A>Append&nbsp;(Left&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Character;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">17</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5230"></A>Append&nbsp;(Left&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Character;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">18</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5231"></A>Append&nbsp;(Source&nbsp;&nbsp;&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;&nbsp;:=&nbsp;Error);</DIV>
+<DIV Class="paranum">19</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5232"></A>Append&nbsp;(Source&nbsp;&nbsp;&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;&nbsp;:=&nbsp;Error);</DIV>
+<DIV Class="paranum">20</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5233"></A>Append&nbsp;(Source&nbsp;&nbsp;&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;:&nbsp;<B>in</B>&nbsp;Character;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;&nbsp;:=&nbsp;Error);</DIV>
+<DIV Class="paranum">21</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">22</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">23</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left&nbsp;:&nbsp;<B>in</B>&nbsp;String;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">24</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Character)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">25</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left&nbsp;:&nbsp;<B>in</B>&nbsp;Character;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">26</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5234"></A>Element&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Character;</DIV>
+<DIV Class="paranum">27</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5235"></A>Replace_Element&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Character);</DIV>
+<DIV Class="paranum">28</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5236"></A>Slice&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Low&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;High&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Natural)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;String;</DIV>
+<DIV Class="paranum">28.1/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5237"></A>Bounded_Slice<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Low&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;High&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Natural)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">28.2/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5238"></A>Bounded_Slice<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Target&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Low&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;High&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Natural);</DIV>
+<DIV Class="paranum">29</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;=&quot;&nbsp;&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;=&quot;&nbsp;&nbsp;(Left&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">30</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;=&quot;&nbsp;&nbsp;(Left&nbsp;:&nbsp;<B>in</B>&nbsp;String;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">31</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&lt;&quot;&nbsp;&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">32</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&lt;&quot;&nbsp;&nbsp;(Left&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">33</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&lt;&quot;&nbsp;&nbsp;(Left&nbsp;:&nbsp;<B>in</B>&nbsp;String;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">34</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&lt;=&quot;&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">35</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&lt;=&quot;&nbsp;&nbsp;(Left&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">36</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&lt;=&quot;&nbsp;&nbsp;(Left&nbsp;:&nbsp;<B>in</B>&nbsp;String;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">37</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&gt;&quot;&nbsp;&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">38</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&gt;&quot;&nbsp;&nbsp;(Left&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">39</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&gt;&quot;&nbsp;&nbsp;(Left&nbsp;:&nbsp;<B>in</B>&nbsp;String;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">40</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&gt;=&quot;&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">41</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&gt;=&quot;&nbsp;&nbsp;(Left&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">42</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&gt;=&quot;&nbsp;&nbsp;(Left&nbsp;:&nbsp;<B>in</B>&nbsp;String;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">43/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;Search&nbsp;subprograms</I></SPAN></DIV>
+<DIV Class="paranum">43.1/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5239"></A>Index&nbsp;(Source&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pattern&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Going&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Direction&nbsp;:=&nbsp;Forward;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mapping&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Mapping&nbsp;:=&nbsp;Maps.Identity)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">43.2/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5240"></A>Index&nbsp;(Source&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pattern&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Going&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Direction&nbsp;:=&nbsp;Forward;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mapping&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Mapping_Function)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">44</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5241"></A>Index&nbsp;(Source&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pattern&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Going&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Direction&nbsp;:=&nbsp;Forward;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mapping&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Mapping<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;Maps.Identity)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">45</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5242"></A>Index&nbsp;(Source&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pattern&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Going&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Direction&nbsp;:=&nbsp;Forward;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mapping&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Mapping_Function)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">45.1/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5243"></A>Index&nbsp;(Source&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Set;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Test&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Membership&nbsp;:=&nbsp;Inside;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Going&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Direction&nbsp;:=&nbsp;Forward)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">46</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5244"></A>Index&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Set;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Test&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Membership&nbsp;:=&nbsp;Inside;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Going&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Direction&nbsp;&nbsp;:=&nbsp;Forward)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">46.1/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5245"></A>Index_Non_Blank&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Going&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Direction&nbsp;:=&nbsp;Forward)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">47</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5246"></A>Index_Non_Blank&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Going&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Direction&nbsp;:=&nbsp;Forward)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">48</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5247"></A>Count&nbsp;(Source&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pattern&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mapping&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Mapping<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;Maps.Identity)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">49</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5248"></A>Count&nbsp;(Source&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pattern&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mapping&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Mapping_Function)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">50</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5249"></A>Count&nbsp;(Source&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Set)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">51</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5250"></A>Find_Token&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Set;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Test&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Membership;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Natural);</DIV>
+<DIV Class="paranum">52</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;String&nbsp;translation&nbsp;subprograms</I></SPAN></DIV>
+<DIV Class="paranum">53</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5251"></A>Translate&nbsp;(Source&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mapping&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Mapping)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">54</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5252"></A>Translate&nbsp;(Source&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mapping&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Mapping);</DIV>
+<DIV Class="paranum">55</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5253"></A>Translate&nbsp;(Source&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mapping&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Mapping_Function)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">56</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5254"></A>Translate&nbsp;(Source&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mapping&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Mapping_Function);</DIV>
+<DIV Class="paranum">57</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;String&nbsp;transformation&nbsp;subprograms</I></SPAN></DIV>
+<DIV Class="paranum">58</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5255"></A>Replace_Slice&nbsp;(Source&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Low&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;High&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Natural;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">59</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5256"></A>Replace_Slice&nbsp;(Source&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Low&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;High&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Natural;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error);</DIV>
+<DIV Class="paranum">60</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5257"></A>Insert&nbsp;(Source&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">61</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5258"></A>Insert&nbsp;(Source&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error);</DIV>
+<DIV Class="paranum">62</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5259"></A>Overwrite&nbsp;(Source&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">63</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5260"></A>Overwrite&nbsp;(Source&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error);</DIV>
+<DIV Class="paranum">64</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5261"></A>Delete&nbsp;(Source&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Through&nbsp;:&nbsp;<B>in</B>&nbsp;Natural)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">65</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5262"></A>Delete&nbsp;(Source&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Through&nbsp;:&nbsp;<B>in</B>&nbsp;Natural);</DIV>
+<DIV Class="paranum">66</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>String&nbsp;selector&nbsp;subprograms</I></SPAN></DIV>
+<DIV Class="paranum">67</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5263"></A>Trim&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Side&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Trim_End)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5264"></A>Trim&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Side&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Trim_End);</DIV>
+<DIV Class="paranum">68</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5265"></A>Trim&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Left&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Set;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Set)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">69</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5266"></A>Trim&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Left&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Set;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Maps.Character_Set);</DIV>
+<DIV Class="paranum">70</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5267"></A>Head&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Natural;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pad&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Character&nbsp;&nbsp;:=&nbsp;Space;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">71</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5268"></A>Head&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Natural;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pad&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Character&nbsp;&nbsp;:=&nbsp;Space;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error);</DIV>
+<DIV Class="paranum">72</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5269"></A>Tail&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Natural;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pad&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Character&nbsp;&nbsp;:=&nbsp;Space;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">73</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5270"></A>Tail&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Natural;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pad&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Character&nbsp;&nbsp;:=&nbsp;Space;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error);</DIV>
+<DIV Class="paranum">74</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>String&nbsp;constructor&nbsp;subprograms</I></SPAN></DIV>
+<DIV Class="paranum">75</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;*&quot;&nbsp;(Left&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Natural;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Character)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">76</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;*&quot;&nbsp;(Left&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Natural;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">77</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;*&quot;&nbsp;(Left&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Natural;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">78</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5271"></A>Replicate&nbsp;(Count&nbsp;:&nbsp;<B>in</B>&nbsp;Natural;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Character;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">79</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5272"></A>Replicate&nbsp;(Count&nbsp;:&nbsp;<B>in</B>&nbsp;Natural;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">80</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5273"></A>Replicate&nbsp;(Count&nbsp;:&nbsp;<B>in</B>&nbsp;Natural;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">81</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Generic_Bounded_Length;</DIV>
+<DIV Class="paranum">82</DIV>
+<DIV Class="Examples"><B>end</B>&nbsp;Ada.Strings.Bounded;</DIV>
+<DIV Class="paranum">83</DIV>
+<DIV Class="Normal">Null_Bounded_String represents the null string. If 
+an object of type Bounded_String is not otherwise initialized, it will 
+be initialized to the same value as Null_Bounded_String.&nbsp;</DIV>
+<DIV Class="paranum">84</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Length&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)&nbsp;<B>return</B>&nbsp;Length_Range;</DIV>
+<DIV Class="paranum">85</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">The Length function 
+returns the length of the string represented by Source.</DIV>
+<DIV Class="paranum">86</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;To_Bounded_String&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error)<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">87</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.4em">If Source'Length 
+&lt;= Max_Length then this function returns a Bounded_String that represents 
+Source. Otherwise the effect depends on the value of Drop:&nbsp;</DIV>
+<DIV Class="paranum">88</DIV>
+<UL Class="CodeIndentedBulleted"><LI TYPE=DISC>If Drop=Left, then the 
+result is a Bounded_String that represents the string comprising the 
+rightmost Max_Length characters of Source.</LI></UL>
+<DIV Class="paranum">89</DIV>
+<UL Class="CodeIndentedBulleted"><LI TYPE=DISC>If Drop=Right, then the 
+result is a Bounded_String that represents the string comprising the 
+leftmost Max_Length characters of Source.</LI></UL>
+<DIV Class="paranum">90</DIV>
+<UL Class="CodeIndentedBulleted" Style="margin-bottom: 0.7em"><LI TYPE=DISC>If 
+Drop=Error, then Strings.Length_Error is propagated.&nbsp;</LI></UL>
+<DIV Class="paranum">91</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;To_String&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String)&nbsp;<B>return</B>&nbsp;String;</DIV>
+<DIV Class="paranum">92</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">To_String returns 
+the String value with lower bound 1 represented by Source. If B is a 
+Bounded_String, then B = To_Bounded_String(To_String(B)).</DIV>
+<DIV Class="paranum">92.1/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Set_Bounded_String<BR>
+&nbsp;&nbsp;&nbsp;(Target&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Source&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Drop&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Truncation&nbsp;:=&nbsp;Error);</DIV>
+<DIV Class="paranum">92.2/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Target := To_Bounded_String (Source, Drop);</DIV>
+<DIV Class="paranum">93</DIV>
+<DIV Class="Normal">Each of the Append functions returns a Bounded_String 
+obtained by concatenating the string or character given or represented 
+by one of the parameters, with the string or character given or represented 
+by the other parameter, and applying To_Bounded_String to the concatenation 
+result string, with Drop as provided to the Append function.</DIV>
+<DIV Class="paranum">94</DIV>
+<DIV Class="Normal">Each of the procedures Append(Source, New_Item, Drop) 
+has the same effect as the corresponding assignment Source := Append(Source, 
+New_Item, Drop).</DIV>
+<DIV Class="paranum">95</DIV>
+<DIV Class="Normal">Each of the &quot;&amp;&quot; functions has the same 
+effect as the corresponding Append function, with Error as the Drop parameter. 
+</DIV>
+<DIV Class="paranum">96</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Element&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive)<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Character;</DIV>
+<DIV Class="paranum">97</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns the character 
+at position Index in the string represented by Source; propagates Index_Error 
+if Index &gt; Length(Source).</DIV>
+<DIV Class="paranum">98</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Replace_Element&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Character);</DIV>
+<DIV Class="paranum">99</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Updates Source 
+such that the character at position Index in the string represented by 
+Source is By; propagates Index_Error if Index &gt; Length(Source).</DIV>
+<DIV Class="paranum">100</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Slice&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Low&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;High&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Natural)<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;String;</DIV>
+<DIV Class="paranum">101/1</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns the slice 
+at positions Low through High in the string represented by Source; propagates 
+Index_Error if Low &gt; Length(Source)+1 or High &gt; Length(Source). 
+The bounds of the returned string are Low and High..</DIV>
+<DIV Class="paranum">101.1/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Bounded_Slice<BR>
+&nbsp;&nbsp;&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Low&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;High&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Natural)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Bounded_String;</DIV>
+<DIV Class="paranum">101.2/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns the slice 
+at positions Low through High in the string represented by Source as 
+a bounded string; propagates Index_Error if Low &gt; Length(Source)+1 
+or High &gt; Length(Source).</DIV>
+<DIV Class="paranum">101.3/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Bounded_Slice<BR>
+&nbsp;&nbsp;&nbsp;(Source&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Target&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Low&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Positive;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;High&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Natural);</DIV>
+<DIV Class="paranum">101.4/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Target := Bounded_Slice (Source, Low, High);</DIV>
+<DIV Class="paranum">102</DIV>
+<DIV Class="Normal">Each of the functions &quot;=&quot;, &quot;&lt;&quot;, 
+&quot;&gt;&quot;, &quot;&lt;=&quot;, and &quot;&gt;=&quot; returns the 
+same result as the corresponding String operation applied to the String 
+values given or represented by the two parameters.</DIV>
+<DIV Class="paranum">103</DIV>
+<DIV Class="Normal">Each of the search subprograms (Index, Index_Non_Blank, 
+Count, Find_Token) has the same effect as the corresponding subprogram 
+in Strings.Fixed applied to the string represented by the Bounded_String 
+parameter.</DIV>
+<DIV Class="paranum">104</DIV>
+<DIV Class="Normal">Each of the Translate subprograms, when applied to 
+a Bounded_String, has an analogous effect to the corresponding subprogram 
+in Strings.Fixed. For the Translate function, the translation is applied 
+to the string represented by the Bounded_String parameter, and the result 
+is converted (via To_Bounded_String) to a Bounded_String. For the Translate 
+procedure, the string represented by the Bounded_String parameter after 
+the translation is given by the Translate function for fixed-length strings 
+applied to the string represented by the original value of the parameter.</DIV>
+<DIV Class="paranum">105/1</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;Each of the transformation subprograms (Replace_Slice, 
+Insert, Overwrite, Delete), selector subprograms (Trim, Head, Tail), 
+and constructor functions (&quot;*&quot;) has an effect based on its 
+corresponding subprogram in Strings.Fixed, and Replicate is based on 
+Fixed.&quot;*&quot;. In the case of a function, the corresponding fixed-length 
+string subprogram is applied to the string represented by the Bounded_String 
+parameter. To_Bounded_String is applied the result string, with Drop 
+(or Error in the case of Generic_Bounded_Length.&quot;*&quot;) determining 
+the effect when the string length exceeds Max_Length. In the case of 
+a procedure, the corresponding function in Strings.Bounded.Generic_Bounded_Length 
+is applied, with the result assigned into the Source parameter.&nbsp;</DIV>
+
+<H4 Class="centered">Implementation Advice</H4>
+<DIV Class="paranum">106</DIV>
+<DIV Class="Normal">Bounded string objects should not be implemented 
+by implicit pointers and dynamic allocation.&nbsp;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-4-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-4-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

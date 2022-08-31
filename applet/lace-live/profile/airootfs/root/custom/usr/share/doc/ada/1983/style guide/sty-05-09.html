@@ -1,0 +1,364 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 5.9: Erroneous Execution
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://www.software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 5: Programming Practices</H2>
+
+<H3><a name="5.9">5.9     Erroneous Execution</a></H3>
+An Ada program is erroneous when it violates or extends the rules of the 
+language governing program behavior. Neither compilers nor run-time 
+environments are able to detect erroneous behavior in all circumstances and 
+contexts. As stated in <a href="http://archive.adaic.com/standards/83lrm/html/lrm-01-06.html">Section 1.6 of Department of Defense (1983)</a>, &quot;The 
+effects of erroneous execution are unpredictable.&quot;  If the compiler does 
+detect an instance of an erroneous program, its options are to indicate a 
+compile time error, to insert the code to raise <CODE>Program_Error</CODE>, possibly to 
+write a message to that effect, or to do nothing at all.<P>
+Erroneousness is not a concept unique to Ada. The guidelines below describe or  
+explain the specific instances of erroneousness defined in the Ada Language  
+Reference Manual.  Although Incorrect Order Dependencies is not, strictly  
+speaking, a case of erroneous execution, the rationale for avoiding such  
+dependencies is the same.  Consequently, the guideline is included in this  
+section.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-01-06.html#1.6">1.6&nbsp;Classification of Errors</A>
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><br>
+<a href="#5.9.1">5.9.1   Unchecked Conversion</a><BR>
+<a href="#5.9.2">5.9.2   Unchecked Deallocation</a><BR>
+<a href="#5.9.3">5.9.3   Dependence on Parameter Passing Mechanism</a><BR>
+<a href="#5.9.4">5.9.4   Multiple Address Clauses</a><BR>
+<a href="#5.9.5">5.9.5   Suppression of Exception Check</a><BR>
+<a href="#5.9.6">5.9.6   Initialization</a><BR>
+<a href="#5.9.7">5.9.7   <CODE>Direct_IO</CODE> and <CODE>Sequential_IO</CODE></a><BR>
+<a href="#5.9.8">5.9.8   Incorrect Order Dependencies</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-05-10.html#5.10.9"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="5.9.1">5.9.1   Unchecked Conversion</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use <CODE>Unchecked_Conversion</CODE> only with the utmost care <a href="http://archive.adaic.com/standards/83lrm/html/lrm-13-10.html#13.10.2">(Department of  
+Defense 1983, section 13.10.2)</a>.  
+<li>Ensure the value resulting from <CODE>Unchecked_Conversion</CODE> is in range. 
+<li>Isolate the use of <CODE>Unchecked_Conversion</CODE> in package bodies. 
+</UL>
+
+<H4>example</H4>
+The following example may run without exception, depending on the  
+implementation:
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------ 
+with Unchecked_Conversion; 
+with Text_IO;
+
+procedure Test is
+
+   type Color is (Red, Yellow, Blue);
+   
+   function Integer_To_Color is 
+      new Unchecked_Conversion (Source =&gt; Integer, 
+                                Target =&gt; Color);
+                                
+   A_Color : Color; 
+   List    : array (Color) of Boolean;
+   
+   Data : Boolean;
+   
+begin  -- Test
+
+   A_Color := Integer_To_Color(15); 
+   Data    := List(A_Color); 
+   Text_IO.Put_Line(Color'Image(A_Color));
+   
+end Test; 
+------------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+An unchecked conversion is a bit-for-bit copy without regard to the meanings 
+attached to those bits and bit positions by either the source or the  
+destination type. The source bit pattern can easily be meaningless in the  
+context of the destination type. Unchecked conversions can create values that  
+violate type constraints on subsequent operations. Unchecked conversion of  
+objects mismatched in size has implementation-dependent results.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-06.html#4.6">4.6&nbsp;Type Conversions</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-03.html#7.3">7.3&nbsp;Package Bodies</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-13-10.html#13.10.2">13.10.2&nbsp;Unchecked Type Conversions</A>
+
+
+<H3><BR><a name="5.9.2">5.9.2   Unchecked Deallocation</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Isolate the use of <CODE>Unchecked_Deallocation</CODE> in package bodies. 
+</UL>
+
+<H4>rationale</H4>
+Most of the reasons for using <CODE>Unchecked_Deallocation</CODE> with caution have been 
+given in <a href="sty-05-04.html#5.4.3">Guideline 5.4.3</a>. When this feature is used, there is no checking that 
+there is only one access path to the storage being deallocated. Thus, any 
+other access paths are not made <CODE>null</CODE>. Depending on such a check is erroneous.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-08.html#3.8">3.8&nbsp;Access Types</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-13-10.html#13.10.1">13.10.1&nbsp;Unchecked Storage Deallocation</A>
+
+
+<H3><BR><a name="5.9.3">5.9.3   Dependence on Parameter Passing Mechanism</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Do not write code whose correct execution depends on the particular  
+parameter passing mechanism used by an implementation (Department of Defense  
+1983 and Cohen 1986). 
+</UL>
+
+<H4>example</H4>
+The output of this program depends on the particular parameter passing  
+mechanism that was used:
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------ 
+with Text_IO;
+
+procedure Outer is
+
+   type Coordinates is 
+      record 
+         X : Integer := 0; 
+         Y : Integer := 0; 
+      end record;
+      
+   Outer_Point : Coordinates;
+   
+   package Integer_IO is 
+      new Text_IO.Integer_IO (Num =&gt; Integer);
+      
+   --------------------------------------------------------------------- 
+   procedure Inner (Inner_Point : in out Coordinates) is 
+   begin 
+      Inner_Point.X := 5;
+      
+      -- The following line causes the output of the program to 
+      -- depend on the parameter passing mechanism. 
+      Integer_IO.Put(Outer_Point.X); 
+   end Inner; 
+   ---------------------------------------------------------------------
+   
+begin  -- Outer 
+   Integer_IO.Put(Outer_Point.X); 
+   Inner         (Outer_Point); 
+   Integer_IO.Put(Outer_Point.X); 
+end Outer; 
+------------------------------------------------------------------------</pre></td></tr></table>
+
+If the parameter passing mechanism is by copy, the results on the standard <BR>
+output file are:<P>
+<IMG SRC="indent.gif"><CODE>0 0 5</CODE><P>
+If the parameter passing mechanism is by reference, the results are:<P>
+<IMG SRC="indent.gif"><CODE>0 5 5</CODE>
+
+<H4>rationale</H4>
+The language definition specifies that a parameter whose type is an array,  
+record, or task type can be passed by copy or reference. It is erroneous to  
+assume that either mechanism is used in a particular case.
+
+<H4>exceptions</H4>
+Frequently, when interfacing Ada to foreign code, dependence on parameter  
+passing mechanisms used by a particular implementation is unavoidable. In this  
+case, isolate the calls to the foreign code in an interface package that  
+exports operations that do not depend on the parameter-passing mechanism.<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-06.html#3.6">3.6&nbsp;Array Types</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-07.html#3.7">3.7&nbsp;Record Types</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-02.html#6.2">6.2&nbsp;Formal Parameter Modes</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-04.html#6.4">6.4&nbsp;Subprogram Calls</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-13-09.html#13.9">13.9&nbsp;Interface to Other Languages</A>
+
+
+<H3><BR><a name="5.9.4">5.9.4   Multiple Address Clauses</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li> Use address clauses to map variables and entries to the hardware 
+device or memory, not to model the FORTRAN &quot;equivalence&quot; feature. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>Single_Address : constant ...
+
+Interrupt_Vector_Table : Hardware_Array; 
+for Interrupt_Vector_Table use at Single_Address;</pre></td></tr></table>
+
+<H4>rationale</H4>
+The result of specifying a single address for multiple objects or program 
+units is undefined, as is specifying multiple addresses for a single object or 
+program unit. Specifying multiple address clauses for an interrupt entry is 
+also undefined. It does not necessarily overlay objects or program units, or 
+associate a single entry with more than one interrupt.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-05.html#9.5">9.5&nbsp;Entries, Entry Calls, and Accept Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-13-05.html#13.5">13.5&nbsp;Address Clauses</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-13-05.html#13.5.1">13.5.1&nbsp;Interrupts</A>
+
+
+<H3><BR><a name="5.9.5">5.9.5   Suppression of Exception Check</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Do not suppress exception checks during development. 
+<li>Minimize suppression of exception checks during operation. 
+<li>If necessary, introduce blocks that encompass the smallest range of  
+statements that can safely have exception checking removed. 
+</UL>
+
+<H4>rationale</H4>
+If you disable exception checks and program execution results in a condition 
+in which an exception would otherwise occur, the program execution is 
+erroneous.  The results are unpredictable. Further, you must still be prepared 
+to deal with the suppressed exceptions if they are raised in and propagated 
+from the bodies of subprograms, tasks, and packages you call.<P>
+By minimizing the code which has exception checking removed, you increase the 
+reliability of the program.  There is a rule of thumb which suggests that 20 
+percent of the code is responsible for 80 percent of the CPU time.  So once 
+you have identified the code that actually needs exception checking removed, 
+it is wise to isolate it in a block (with appropriate comments) and leave the 
+surrounding code with exception checking in effect.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-07.html#11.7">11.7&nbsp;Suppressing Checks</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-B.html#B">B&nbsp;Predefined Language Pragmas</A>
+
+
+<H3><BR><a name="5.9.6">5.9.6   Initialization</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Initialize all objects prior to use. 
+<li>Ensure elaboration of an entity before using it. 
+<li>Use function calls in declarations cautiously. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------ 
+package Robot_Controller is
+
+   ... 
+   function Sense return Position; 
+   ...
+   
+end Robot_Controller;
+
+------------------------------------------------------------------------ 
+package body Robot_Controller is
+
+   ... 
+   Goal : Position := Sense;       -- This raises Program_Error 
+   ...
+   
+   --------------------------------------------------------------------- 
+   function Sense return Position is 
+   begin 
+      ... 
+   end Sense; 
+   ---------------------------------------------------------------------
+   
+begin  -- Robot_Controller 
+   Goal := Sense;                  -- The function has been elaborated.
+   
+   ... 
+end Robot_Controller; 
+------------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+Ada does not define an initial default value for objects of any type other 
+than access types. Using the value of an object before it has been assigned a 
+value causes unpredictable behavior, possibly raising an exception. Objects 
+can be initialized implicitly by declaration or explicitly by assignment 
+statements.  Initialization at the point of declaration is safest as well as 
+easiest for maintainers. You can also specify default values for components of 
+records as part of the type declarations for those records.<P>
+Ensuring initialization does not imply initialization at the declaration. In  
+the example above, Goal must be initialized via a function call. This cannot  
+occur at the declaration, because the function <CODE>Sense</CODE> has not yet been  
+elaborated, but can occur later as part of the sequence of statements of the  
+body of the enclosing package.<P>
+An unelaborated function called within a declaration (initialization) raises 
+the exception, <CODE>Program_Error</CODE>, that must be handled outside of the unit 
+containing the declarations. This is true for any exception the function 
+raises even if it has been elaborated.<P>
+If an exception is raised by a function call in a declaration, it is not  
+handled in that immediate scope. It is raised to the enclosing scope. This can  
+be controlled by nesting blocks.
+
+<H4>note</H4>
+Sometimes, elaboration order can be dictated with pragma <CODE>Elaborate</CODE>. Pragma <BR>
+<CODE>Elaborate</CODE> only applies to library units. <P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-02.html#3.2.1">3.2.1&nbsp;Object Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-09.html#3.9">3.9&nbsp;Declarative Parts</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-05.html#6.5">6.5&nbsp;Function Subprograms</A>
+
+
+<H3><BR><a name="5.9.7">5.9.7   <CODE>Direct_IO</CODE> and <CODE>Sequential_IO</CODE></a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Ensure that values obtained from <CODE>Direct_IO</CODE> and <CODE>Sequential_IO</CODE> are in  
+range. 
+</UL>
+
+<H4>rationale</H4>
+As with <CODE>Unchecked_Conversion</CODE>, there is no check on the value obtained from the  
+read operations found in <CODE>Direct_IO</CODE> and <CODE>Sequential_IO</CODE>.  See <a href="#5.9.1">Guideline 5.9.1</a> for  
+an example.
+
+<H4>note</H4>
+It is sometimes difficult to force an optimizing compiler to perform the  
+necessary checks on a value that the compiler believes is in range.  Most  
+compiler vendors allow the option of suppressing optimization which can be  
+helpful.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-14-02.html#14.2.2">14.2.2&nbsp;Sequential Input-Output</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-14-02.html#14.2.4">14.2.4&nbsp;Direct Input-Output</A>
+
+
+<H3><BR><a name="5.9.8">5.9.8   Incorrect Order Dependencies</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Avoid depending on the order in which certain constructs in Ada are  
+evaluated (see Department of Defense 1983, I-17). 
+</UL>
+
+<H4>rationale</H4>
+As stated in the <a href="http://archive.adaic.com/standards/83lrm/html/">Ada Language Reference Manual</a>, an incorrect order dependency  
+may arise whenever &quot;. . . different parts of a given construct are to be 
+executed in some order that is not defined by the language. . . .  The  
+construct is incorrect if execution of these parts in a different order would  
+have a different effect.&quot;  (<a href="http://archive.adaic.com/standards/83lrm/html/lrm-01-06.html#1.6">Department of Defense 1983, section 1.6</a>).<P>
+While an incorrect order dependency may not adversely affect the program on a 
+certain implementation, the code might not execute correctly when it is 
+ported.  Avoid incorrect order dependencies, but also recognize that even an 
+unintentional error of this kind could prohibit portability.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-04.html#6.4.1">6.4.1&nbsp;Parameter Associations</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

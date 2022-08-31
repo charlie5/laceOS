@@ -1,0 +1,115 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 8.4: Function Subprograms</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 8: Subprograms</H2>
+
+<H3><a name="8.4">8.4 Function Subprograms</a></H3>
+
+The purpose  of a  function is  to calculate  a  value.  This  is  the
+conventional mathematical  meaning of  a function.  Small functions to
+access complex  data structures are an essential feature of structured
+programming: Not  only do  they hide  irrelevant  parts  of  the  data
+structure but they provide a cleaner interface to the outside world.
+<p>
+Although the mathematical origin of the function concept is clear, its
+incorporation  into   a  programming  language  can  lead  to  several
+different formulations  depending on  what operations  are allowed  on
+variables. Different  levels of restriction can be considered, leading
+to different concepts of function:
+<ol>
+<li>Reading global variables is not allowed.
+
+<li>Reading global variables is allowed but updating them is not.
+
+<li>Reading and updating global variables is allowed.
+</ol>
+
+The first  level corresponds  to the  mathematical notion of function;
+there are no implicit parameters in the guise of global variables, and
+two function  calls with  the same  arguments always  deliver the same
+result. However the class of cases in which such functions can be used
+is rather limited.
+<p>
+The second  level has  interesting mathematical properties that can be
+used for  code optimization. For example, if F is such a function then
+for evaluation of an expression such as
+<p>
+<PRE>    F + F</PRE>
+<p>
+the function  need only  be called once. However this kind of function
+would not  be allowed  to perform  input-output (since this is a side-
+effect), and  instrumentation (by update of a global counter upon each
+call) would not be possible.
+<p>
+The third  level allows  functions such as random number generators or
+memo functions, which modify the global environment. Such functions do
+not have  the aforementioned properties. If for example RANDOM is such
+a function, then 2&#42;RANDOM is not necessarily equal to RANDOM + RANDOM.
+<p>
+In an  earlier version  of Ada  - <a href="ratl-BIB.html#languages">the Green language</a> - we attempted to
+provide a  formulation of  functions that  corresponds to  the  second
+level, but  experimenting with  this concept has shown that this would
+exclude many  benevolent side-effects.  For example,  it  led  to  the
+imposition of limitations on access variables (since the invocation of
+an allocator  is a  kind of  side-effect). Furthermore,  checking  for
+functionality could  require reconsideration of the text of separately
+compiled compilation units.
+<p>
+These conceptual  and implementation  difficulties led  to the present
+more pragmatic definition, which corresponds to the third level.
+<p>
+The only  limitation imposed  in Ada  on functions is that the mode of
+all parameters  must be in: it would not be logical to allow in out or
+out parameters  for functions  in  a  language  that  excludes  nested
+assignments within an expression.
+<p>
+This means  that optimization  of expressions  such as  F +  F will be
+achieved only  when the  compiler can conclude that there are no side-
+effects that matter.
+<p>
+For multiple  calls of  functions within an expression, Ada follows an
+approach of collaterality as described in <a href="ratl-03-08.html#3.8">section 3.8</a>. This means that
+the language  does not define in which order to call F, G, and H in an
+expression such as
+<p>
+<PRE>    F + G + H</PRE>
+<p>
+The language  rules state  that this  evaluation must  be done in some
+order -  that is,  not in  parallel - but this order is not defined by
+the language,  so that  the meaning  of a program for which this order
+matters is not defined.
+<p>
+This  semantics  reflects  a  pragmatic  view  of  side-effects,  once
+expressed by Brian Higman <a href="ratl-BIB.html">[Hi 63]</a>:
+<p>
+The plain  fact of  the matter  is (1) that side-effects are sometimes
+necessary,  and  (2)  programmers  who  are  irresponsible  enough  to
+introduce side-effects  unnecessarily will soon lose the confidence of
+their colleagues, and rightly so.
+<center>
+<hr width=60%>
+&#128; <a href="ratl-09.html#9"><b>NEXT</b></a>
+&#128; <a href="ratl-08-03.html#8.3"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-08.html#8"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

@@ -1,0 +1,557 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Mutually dependent types</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-4-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-4-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>4.2 Mutually dependent types</H1>
+<div class="Normal">For many programmers the solution of the problem 
+of mutually dependent types will be the single most important improvement 
+introduced in Ada 2005.<A NAME="I1122"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">This topic was discussed 
+in the Introduction using an example of two mutually dependent types, 
+<SPAN Class="swiss">Point</SPAN> and <SPAN Class="swiss">Line</SPAN>. 
+Each type needed to refer to the other in its declaration and of course 
+the solution to this problem is to use incomplete types. In Ada 95 there 
+are three stages. We first declare the incomplete types&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Point;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>incomplete&nbsp;types</I></SPAN><BR>
+<B>type</B>&nbsp;Line;</div>
+<div class="Normal">Suppose for simplicity that we wish to study patterns 
+of points and lines such that each point has exactly three lines through 
+it and that each line has exactly three points on it. (This is not so 
+stupid. The two most fundamental theorems of projective geometry, those 
+of Pappus and Desargues, concern such structures and so does the simplest 
+of finite geometries, the Fano plane.)</div>
+<div class="Normal" style="margin-bottom: 0.4em">Using the incomplete 
+types we can then declare&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Point_Ptr&nbsp;<B>is&nbsp;access</B>&nbsp;Point;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>use&nbsp;incomplete&nbsp;types</I></SPAN><BR>
+<B>type</B>&nbsp;Line_Ptr&nbsp;<B>is&nbsp;access</B>&nbsp;Line;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and finally we can 
+complete the type declarations thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Point&nbsp;<B>is</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>complete&nbsp;the&nbsp;types</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;L,&nbsp;M,&nbsp;N:&nbsp;Line_Ptr;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Line&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;P,&nbsp;Q,&nbsp;R:&nbsp;Point_Ptr;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Of course, in Ada 2005, 
+as discussed in the previous chapter (see <A HREF="Rat-3-3.html">3.3</A>), 
+we can use anonymous access types more freely so that the second stage 
+can be omitted in this example. As a consequence the complete declarations 
+are simply&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Point&nbsp;<B>is</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>complete&nbsp;the&nbsp;types</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;L,&nbsp;M,&nbsp;N:&nbsp;<B>access</B>&nbsp;Line;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Line&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;P,&nbsp;Q,&nbsp;R:&nbsp;<B>access</B>&nbsp;Point;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal">This has the important advantage that we do not have 
+to invent irritating identifiers such as <SPAN Class="swiss">Point_Ptr</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">But we will stick to 
+Ada 95 for the moment. In Ada 95 there are two rules<A NAME="I1123"></A> 
+</div>
+<div class="Bulleted">the incomplete type can only be used in the definition 
+of access types;</div>
+<div class="Bulleted">the complete type declaration must be in the same 
+declarative region as the incomplete type.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The first rule does 
+actually permit&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T;<BR>
+<B>type</B>&nbsp;A&nbsp;<B>is&nbsp;access&nbsp;procedure&nbsp;</B>(X:&nbsp;<B>in&nbsp;out</B>&nbsp;T);</div>
+<div class="Normal">Note that we are here using the incomplete type <SPAN Class="swiss">T</SPAN> 
+for a parameter. This is not normally allowed, but in this case the procedure 
+itself is being used in an access type. The additional level of indirection 
+means that the fact that the parameter mechanism for <SPAN Class="swiss">T</SPAN> 
+is not known yet does not matter.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Apart from this, it 
+is not possible to use an incomplete type for a parameter in a subprogram 
+in Ada 95 except in the case of an access parameter. Thus we cannot have 
+</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Is_Point_On_Line(P:&nbsp;Point;&nbsp;L:&nbsp;Line)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="Normal">before the complete type declarations.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It is also worth pointing 
+out that the problem of mutually dependent types (within a single unit) 
+can often be solved by using private types thus&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Point&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Point_Ptr&nbsp;<B>is&nbsp;access</B>&nbsp;Point;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Line<B>&nbsp;is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Line_Ptr<B>&nbsp;is&nbsp;access</B>&nbsp;Line;<BR>
+<B>private</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Point&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;L,&nbsp;M,&nbsp;N:&nbsp;Line_Ptr;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Line&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;P,&nbsp;Q,&nbsp;R:&nbsp;Point_Ptr;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal">But we need to use incomplete types if we want the 
+user to see the full view of a type so the situation is somewhat different.</div>
+<div class="Normal">As an aside, remember that if an incomplete type 
+is declared in a private part then the complete type can be deferred 
+to the body (this is the so-called Taft Amendment in Ada 83). In this 
+case neither the user nor indeed the compiler can see the complete type 
+and this is the main reason why we cannot have parameters of incomplete 
+types whereas we can for private types.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We will now introduce 
+what has become a canonical example for discussing this topic. This concerns 
+employees and the departments of the organization in which they work. 
+The information about employees needs to refer to the departments and 
+the departments need to refer to the employees. We assume that the material 
+regarding employees and departments is quite large so that we naturally 
+wish to declare the two types in distinct packages <SPAN Class="swiss">Employees</SPAN> 
+and <SPAN Class="swiss">Departments</SPAN>. So we would like to say&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Departments;&nbsp;<B>use</B>&nbsp;Departments;<BR>
+<B>package</B>&nbsp;Employees&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Employee&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Assign_Employee(E:&nbsp;<B>in&nbsp;out</B>&nbsp;Employee;&nbsp;D:&nbsp;<B>in&nbsp;out</B>&nbsp;Department);<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Dept_Ptr&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Department;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Current_Department(E:&nbsp;Employee)&nbsp;<B>return</B>&nbsp;Dept_Ptr;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Employees;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Employees;&nbsp;<B>use</B>&nbsp;Employees;<BR>
+<B>package</B>&nbsp;Departments&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Department&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Choose_Manager(D:<B>&nbsp;in&nbsp;out</B>&nbsp;Department;&nbsp;M:&nbsp;<B>in&nbsp;out</B>&nbsp;Employee);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Departments;</div>
+<div class="Normal">We cannot write this because each package has a with 
+clause for the other and they cannot both be declared (or entered into 
+the library) first.</div>
+<div class="Normal">We assume of course that the type <SPAN Class="swiss">Employee</SPAN> 
+includes information about the <SPAN Class="swiss">Department</SPAN> 
+for whom the <SPAN Class="swiss">Employee</SPAN> works and the type <SPAN Class="swiss">Department</SPAN> 
+contains information regarding the manager of the department and presumably 
+a list of the other employees as well &ndash; note that the manager is 
+naturally also an <SPAN Class="swiss">Employee</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So in Ada 95 we are 
+forced to put everything into one package thus&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Workplace&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Employee&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Department&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Assign_Employee(E:&nbsp;<B>in&nbsp;out</B>&nbsp;Employee;&nbsp;D:&nbsp;<B>in&nbsp;out</B>&nbsp;Department);<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Dept_Ptr&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Department;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Current_Department(E:&nbsp;Employee)&nbsp;<B>return</B>&nbsp;Dept_Ptr;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Choose_Manager(D:<B>&nbsp;in&nbsp;out</B>&nbsp;Department;&nbsp;M:&nbsp;<B>in&nbsp;out</B>&nbsp;Employee);<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Workplace;</div>
+<div class="Normal">Not only does this give rise to huge cumbersome packages 
+but it also prevents us from using the proper abstractions. Thus the 
+types <SPAN Class="swiss">Employee</SPAN> and <SPAN Class="swiss">Department</SPAN> 
+have to be declared in the same private part and so are not protected 
+from each other's operations.</div>
+<div class="Normal">Ada 2005 solves this by introducing a variation of 
+the with clause &ndash; the limited with clause. A limited with clause 
+enables a library unit to have an incomplete view of all the visible 
+types in another<A NAME="I1124"></A> package. We can now write<A NAME="I1125"></A><A NAME="I1126"></A> 
+</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;Departments;<BR>
+<B>package</B>&nbsp;Employees&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Employee&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Assign_Employee(E:&nbsp;<B>in&nbsp;out</B>&nbsp;Employee;&nbsp;D:&nbsp;<B>access</B>&nbsp;Departments.Department);<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Dept_Ptr&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Departments.Department;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Current_Department(E:&nbsp;Employee)&nbsp;<B>return</B>&nbsp;Dept_Ptr;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Employees;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;Employees;<BR>
+<B>package</B>&nbsp;Departments&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Department&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Choose_Manager(D:<B>&nbsp;in&nbsp;out</B>&nbsp;Department;&nbsp;M:&nbsp;<B>access</B>&nbsp;Employees.Employee);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Departments;</div>
+<div class="Normal">It is important to understand that a limited with 
+clause does not impose a dependence. Thus if a package <SPAN Class="swiss">A</SPAN> 
+has a limited with clause for <SPAN Class="swiss">B</SPAN>, then <SPAN Class="swiss">A</SPAN> 
+does not depend on <SPAN Class="swiss">B</SPAN> as it would with a normal 
+with clause, and so <SPAN Class="swiss">B</SPAN> does not have to be 
+compiled before <SPAN Class="swiss">A</SPAN> or placed into the library 
+before <SPAN Class="swiss">A</SPAN>.</div>
+<div class="Normal">If we have a cycle of packages we only have to put 
+<B>limited with</B> on one package since that is sufficient to break 
+the cycle of dependences. However, for symmetry, in this example we have 
+made them both have a limited view of each other.</div>
+<div class="Normal">Note the terminology: we say that we have a limited 
+view of a package if the view is provided through a limited with clause. 
+So a limited view of a package provides an incomplete view of its visible 
+types. And by an incomplete view we mean as if they were incomplete types.<A NAME="I1127"></A></div>
+<div class="Normal">In the example, because an incomplete view of a type 
+cannot generally be used as a parameter, we have had to change one parameter 
+of each of <SPAN Class="swiss">Assign_Employee</SPAN> and <SPAN Class="swiss">Choose_Manager</SPAN> 
+to be an access parameter.</div>
+<div class="Normal">Having broken the circularity we can then put normal 
+with clauses for each other on the two package bodies.</div>
+<div class="Normal">There are a number of rules necessary to avoid problems. 
+A natural one is that we cannot have both a limited with clause and a 
+normal with clause for the same package in the same context clause (a 
+normal with clause is now officially referred to as a nonlimited with 
+clause). An important and perhaps unexpected rule is that we cannot have 
+a use package clause with a limited view because severe surprises might 
+happen.<A NAME="I1128"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">To understand how this 
+could be possible it is important to realise that a limited with clause 
+provides a very restricted view of a package. It just makes visible&nbsp;</div>
+<div class="Bulleted">the name of the package and packages nested within,</div>
+<div class="Bulleted">an incomplete view of the types declared in the 
+visible parts of the packages.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Nothing else is visible 
+at all. Now consider&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;A&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;X:&nbsp;Integer&nbsp;:=&nbsp;99;<BR>
+<B>end</B>&nbsp;A;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;B&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;X:&nbsp;Integer&nbsp;:=&nbsp;111;<BR>
+<B>end</B>&nbsp;B;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;A,&nbsp;B;<BR>
+<B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>neither&nbsp;X&nbsp;visible&nbsp;here</I></SPAN><BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Within package <SPAN Class="swiss">P</SPAN> 
+we cannot access <SPAN Class="swiss">A.X</SPAN> or <SPAN Class="swiss">B.X</SPAN> 
+because they are not types but objects. But we could declare a child 
+package with its own with clause thus&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;A;<BR>
+<B>package</B>&nbsp;P.C&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Y:&nbsp;Integer&nbsp;:=&nbsp;A.X;<BR>
+<B>end</B>&nbsp;P.C;</div>
+<div class="Normal">The nonlimited with clause on the child &quot;overrides&quot; 
+the limited with clause on the parent so that <SPAN Class="swiss">A.X 
+</SPAN>is visible.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose we were 
+allowed to add a use package clause to the parent package; since a use 
+clause on a parent applies to a child this means that we could refer 
+to <SPAN Class="swiss">A.X</SPAN> as just <SPAN Class="swiss">X</SPAN> 
+within the child so we would have&nbsp;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;A,&nbsp;B;<BR>
+<B>use</B>&nbsp;A,&nbsp;B;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+<B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>neither&nbsp;X&nbsp;visible&nbsp;here</I></SPAN><BR>
+<B>end</B>&nbsp;P;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;A;<BR>
+<B>package</B>&nbsp;P.C&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Y:&nbsp;Integer&nbsp;:=&nbsp;X;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>A.X&nbsp;now&nbsp;visible&nbsp;as&nbsp;just&nbsp;X</I></SPAN><BR>
+<B>end</B>&nbsp;P.C;</div>
+<div class="Normal">If we were now to change the with clause on the child 
+to refer to <SPAN Class="swiss">B</SPAN> instead of <SPAN Class="swiss">A</SPAN>, 
+then <SPAN Class="swiss">X</SPAN> would refer to <SPAN Class="swiss">B.X</SPAN> 
+rather than <SPAN Class="swiss">A.X</SPAN>. This would not be at all 
+obvious because the use clause that permits this is on the parent and 
+we are not changing the context clause of the parent at all. This would 
+clearly be unacceptable and so use package clauses are forbidden if we 
+only have a limited view of the package.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Here is a reasonably 
+complete list of the rules designed to prevent misadventure when using 
+limited with clauses&nbsp;</div>
+<div class="Bulleted" style="margin-bottom: 0.3em">a use package clause 
+cannot refer to a package with a limited view as illustrated above,&nbsp;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;P;&nbsp;<B>use</B>&nbsp;P;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+<B>package</B>&nbsp;Q&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Bulleted-NoPrefix" style="margin-bottom: 0.3em">the rule 
+also prevents&nbsp;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;P;<BR>
+<B>package</B>&nbsp;Q&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>use</B>&nbsp;P;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Bulleted" style="margin-bottom: 0.3em">a limited with clause 
+can only appear on a specification &ndash; it cannot appear on a body 
+or a subunit,&nbsp;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;P;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+<B>package&nbsp;body</B>&nbsp;Q&nbsp;<B>is&nbsp;</B>...</div>
+<div class="Bulleted" style="margin-bottom: 0.3em">a limited with clause 
+and a nonlimited with clause for the same package may not appear in the 
+same context clause,&nbsp;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;P;&nbsp;<B>with</B>&nbsp;P;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Bulleted" style="margin-bottom: 0.3em">a limited with clause 
+and a use clause for the same package or one of its children may not 
+appear in the same context clause,&nbsp;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;P;&nbsp;<B>use</B>&nbsp;P.C;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Bulleted" style="margin-bottom: 0.3em">a limited with clause 
+may not appear in the context clause applying to itself,&nbsp;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;P;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+<B>package</B>&nbsp;P&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Bulleted" style="margin-bottom: 0.3em">a limited with clause 
+may not appear on a child unit if a nonlimited with clause for the same 
+package applies to its parent or grandparent etc,&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Q;<BR>
+<B>package</B>&nbsp;P&nbsp;<B>is</B>&nbsp;...</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;Q;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+<B>package</B>&nbsp;P.C&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Bulleted-NoPrefix" style="margin-bottom: 0.3em">but note 
+that the reverse is allowed as mentioned above</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;Q;<BR>
+<B>package</B>&nbsp;P&nbsp;<B>is</B>&nbsp;...</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Q;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>OK</I></SPAN><BR>
+<B>package</B>&nbsp;P.C&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Bulleted" style="margin-bottom: 0.3em">a limited with clause 
+may not appear in the scope of a use clause which names the unit or one 
+of its children,</div>
+<div class="SwissExamples"><B>with</B>&nbsp;A;<BR>
+<B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;R&nbsp;<B>renames</B>&nbsp;A;<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;P;<BR>
+<B>package</B>&nbsp;Q&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>use</B>&nbsp;P.R;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>applies&nbsp;to&nbsp;A</I></SPAN><BR>
+<B>end</B>&nbsp;Q;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;A;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+<B>package</B>&nbsp;Q.C&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Bulleted-NoPrefix">without this specific rule, the use clause 
+in <SPAN Class="swiss">Q</SPAN> which actually refers to <SPAN Class="swiss">A</SPAN> 
+would clash with the limited with clause for <SPAN Class="swiss">A</SPAN>. 
+</div>
+<div class="Normal">Finally note that a limited with clause can only 
+refer to a package declaration and not to a subprogram, generic declaration 
+or instantiation, or to a package renaming.</div>
+<div class="Normal">We will now return to the rules for incomplete types. 
+As noted above the rules for incomplete types are quite strict in Ada 
+95 and apart from the curious case of an access to subprogram type it 
+is not possible to use an incomplete type for a parameter other than 
+in an access parameter.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 2005 enables some 
+relaxation of these rules by introducing tagged incomplete types. We 
+can write<A NAME="I1129"></A>&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is&nbsp;tagged</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then the complete 
+type must be a tagged type. Of course the reverse does not hold. If we 
+have just&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T;</div>
+<div class="Normal">then the complete type <SPAN Class="swiss">T</SPAN> 
+might be tagged or not.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A curious feature of 
+Ada 95 was mentioned in the Introduction. In Ada 95 we can write&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T;<BR>
+...<BR>
+<B>type</B>&nbsp;T_Ptr&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;T'Class;</div>
+<div class="Normal" style="margin-bottom: 0.4em">By using the attribute 
+<SPAN Class="swiss">Class</SPAN>, this promises in a rather sly way that 
+the complete type <SPAN Class="swiss">T</SPAN> will be tagged. This is 
+strictly obsolescent in Ada 2005 and moved to <A HREF="http://www.adaic.org/resources/add_content/standards/05rm/html/RM-J-11.html">Annex 
+J</A>. In Ada 2005 we should write&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is&nbsp;tagged</B>;<BR>
+...<BR>
+<B>type</B>&nbsp;T_Ptr&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;T'Class;</div>
+<div class="Normal">The big advantage of introducing tagged incomplete 
+types is that we know that tagged types are always passed by reference 
+and so we are allowed to use tagged incomplete types for parameters.</div>
+<div class="Normal">This advantage extends to the incomplete view obtained 
+from a limited with clause. If a type in a package is visibly tagged 
+then the incomplete view obtained is tagged incomplete and so the type 
+can then be used for parameters.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Returning to the packages 
+<SPAN Class="swiss">Employees</SPAN> and <SPAN Class="swiss">Departments</SPAN> 
+it probably makes sense to make both types tagged since it is likely 
+that the types <SPAN Class="swiss">Employee</SPAN> and <SPAN Class="swiss">Department</SPAN> 
+form a hierarchy. So we can write&nbsp;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;Departments;<BR>
+<B>package</B>&nbsp;Employees&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Employee&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Assign_Employee(E:&nbsp;<B>in&nbsp;out</B>&nbsp;Employee;&nbsp;D:&nbsp;<B>in&nbsp;out</B>&nbsp;Departments.Department'Class);<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Dept_Ptr&nbsp;<B>is</B>&nbsp;<B>access&nbsp;all</B>&nbsp;Departments.Department'Class;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Current_Department(E:&nbsp;Employee)&nbsp;<B>return</B>&nbsp;Dept_Ptr;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Employees;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;Employees;<BR>
+<B>package</B>&nbsp;Departments&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Department&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Choose_Manager(D:<B>&nbsp;in&nbsp;out</B>&nbsp;Department;&nbsp;M:&nbsp;<B>in&nbsp;out</B>&nbsp;Employees.Employee'Class);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Departments;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The text is a bit cumbersome 
+now with <SPAN Class="swiss">Class</SPAN> sprinkled liberally around 
+but we can introduce some subtypes in order to shorten the names. We 
+can also avoid the introduction of the type <SPAN Class="swiss">Dept_Ptr</SPAN> 
+since we can use an anonymous access type for the function result as 
+mentioned in the previous chapter (see <A HREF="Rat-3-3.html">3.3</A>). 
+So we get&nbsp;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;Departments;<BR>
+<B>package</B>&nbsp;Employees&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Employee&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;Dept&nbsp;<B>is</B>&nbsp;Departments.Department;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Assign_Employee(E:&nbsp;<B>in&nbsp;out</B>&nbsp;Employee;&nbsp;D:&nbsp;<B>in&nbsp;out</B>&nbsp;Dept'Class);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Current_Department(E:&nbsp;Employee)&nbsp;<B>return</B>&nbsp;<B>access</B>&nbsp;Dept'Class;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Employees;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;Employees;<BR>
+<B>package</B>&nbsp;Departments&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Department&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;Empl&nbsp;<B>is</B>&nbsp;Employees.Employee;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Choose_Manager(D:<B>&nbsp;in&nbsp;out</B>&nbsp;Department;&nbsp;M:&nbsp;<B>in&nbsp;out</B>&nbsp;Empl'Class);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Departments;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Observe that in Ada 
+2005 we can use a simple subtype as an abbreviation for an incomplete 
+type thus&nbsp;</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Dept&nbsp;<B>is</B>&nbsp;Departments.Department;</div>
+<div class="Normal">but such a subtype cannot have a constraint or a 
+null exclusion. In essence it is just a renaming. Remember that we cannot 
+have a use clause with a limited view. Moreover, many projects forbid 
+use clauses anyway but permit renamings and subtypes for local abbreviations. 
+It would be a pain if such abbreviations were not also available when 
+using a limited with clause.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It's a pity we cannot 
+also write&nbsp;</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;A_Dept&nbsp;<B>is</B>&nbsp;Departments.Department'Class;</div>
+<div class="Normal">but then you cannot have everything in life.</div>
+<div class="Normal">A similar situation arises with the names of nested 
+packages. They can be renamed in order to provide an abbreviation.</div>
+<div class="Normal">The mechanism for breaking cycles of dependences 
+by introducing limited with clauses does not mean that the implementation 
+does not check everything thoroughly in a rigorous Ada way. It is just 
+that some checks might have to be deferred. The details depend upon the 
+implementation.</div>
+<div class="Normal">For the human reader it is very helpful that use 
+clauses are not allowed in conjunction with limited with clauses since 
+it eliminates any doubt about the location of types involved. It probably 
+helps the poor compilers as well.</div>
+<div class="Normal">Readers might be interested to know that this topic 
+was one of the most difficult to solve satisfactorily in the design of 
+Ada 2005. Altogether seven different versions of <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-50217.TXT">AI-217</A> 
+were developed. This chosen solution is on reflection by far the best 
+and was in fact number 6.</div>
+<div class="Normal">A number of loopholes in Ada 95 regarding incomplete 
+types are also closed in Ada 2005.</div>
+<div class="Normal" style="margin-bottom: 0.4em">One such loophole is 
+illustrated by the following (this is Ada 95)&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>an&nbsp;incomplete&nbsp;type</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;ATC&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;T'Class;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>it&nbsp;must&nbsp;be&nbsp;tagged</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;X:&nbsp;ATC;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(X:&nbsp;<B>access</B>&nbsp;T);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>primitive&nbsp;operation</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal">The incomplete type <SPAN Class="swiss">T</SPAN> 
+is declared in the private part of the package <SPAN Class="swiss">P</SPAN>. 
+The access type <SPAN Class="swiss">ACT</SPAN> is then declared and since 
+it is class wide this implies that the type <SPAN Class="swiss">T</SPAN> 
+must be tagged (the reader will recall from the discussion above that 
+this odd feature is banished to <A HREF="http://www.adaic.org/resources/add_content/standards/05rm/html/RM-J-11.html">Annex 
+J</A> in Ada 2005). The full type <SPAN Class="swiss">T</SPAN> is then 
+declared in the body. We also declare a primitive operation <SPAN Class="swiss">Op</SPAN> 
+of the type <SPAN Class="swiss">T</SPAN> in the private part.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, before the 
+body of <SPAN Class="swiss">P</SPAN> is declared, nothing in Ada 95 prevents 
+us from writing a private child thus&nbsp;</div>
+<div class="SwissExamples"><B>private&nbsp;package</B>&nbsp;P.C&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Naughty;<BR>
+<B>end</B>&nbsp;P.C;</div>
+<div class="SwissExamples"><B>package&nbsp;body</B>&nbsp;P.C&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Naughty&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Op(X);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>a&nbsp;dispatching&nbsp;call</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Naughty;<BR>
+<B>end</B>&nbsp;P.C;</div>
+<div class="Normal">and the procedure <SPAN Class="swiss">Naughty</SPAN> 
+can call the dispatching operation <SPAN Class="swiss">Op</SPAN>. The 
+problem is that we are required to be able to compile this call before 
+the type <SPAN Class="swiss">T</SPAN> is completed and thus before the 
+location of its tag is known.</div>
+<div class="Normal">This problem is prevented in Ada 2005 by a rule that 
+if an incomplete type declared in a private part has primitive operations 
+then the completion cannot be deferred to the body.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Similar problems arise 
+with access to subprogram types. Thus, as mentioned above, Ada 95 permits 
+</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T;<BR>
+<B>type</B>&nbsp;A&nbsp;<B>is&nbsp;access&nbsp;procedure&nbsp;</B>(X:&nbsp;<B>in&nbsp;out</B>&nbsp;T);</div>
+<div class="Normal">In Ada 2005, the completion of <SPAN Class="swiss">T</SPAN> 
+cannot be deferred to a body. Nor can we declare such an access to subprogram 
+type if we only have an incomplete view of <SPAN Class="swiss">T</SPAN> 
+arising from a limited with clause.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another change in Ada 
+2005 can be illustrated by the <SPAN Class="swiss">Departments</SPAN> 
+and <SPAN Class="swiss">Employees</SPAN> example. We can write&nbsp;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;Departments;<BR>
+<B>package</B>&nbsp;Employees&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Employee&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Assign_Employee(E:&nbsp;<B>in&nbsp;out</B>&nbsp;Employee;&nbsp;D:&nbsp;<B>in&nbsp;out</B>&nbsp;Departments.Department'Class);<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Dept_Ptr&nbsp;<B>is</B>&nbsp;<B>access&nbsp;all</B>&nbsp;Departments.Department'Class;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Employees;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Employees;&nbsp;<B>use</B>&nbsp;Employees;<BR>
+<B>procedure</B>&nbsp;Recruit(D:&nbsp;Dept_Ptr;&nbsp;E:&nbsp;<B>in&nbsp;out</B>&nbsp;Employee)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Assign_Employee(E,&nbsp;D.<B>all</B>);<BR>
+<B>end</B>&nbsp;Recruit;</div>
+<div class="Normal">Ada 95 has a rule that says &quot;thou shalt not 
+dereference an incomplete type&quot;. This would prevent the call of 
+<SPAN Class="swiss">Assign_Employee</SPAN> which is clearly harmless. 
+It would be odd to require <SPAN Class="swiss">Recruit</SPAN> to have 
+a nonlimited with clause for <SPAN Class="swiss">Departments</SPAN> to 
+allow the call of <SPAN Class="swiss">Assign_Employee</SPAN>. Accordingly 
+the rule is changed in Ada 2005 so that dereferencing an incomplete view 
+is only forbidden when used as a prefix as, for example, in <SPAN Class="swiss">D'Size</SPAN>.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-4-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-4-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

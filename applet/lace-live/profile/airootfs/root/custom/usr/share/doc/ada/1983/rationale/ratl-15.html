@@ -1,0 +1,100 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Ch 15: Representation Clauses and Machine Dependences</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2><a name="15">CHAPTER 15: Representation Clauses and Machine Dependences</a></H2>
+
+There is  an inherent  dilemma in  the design of a high-order language
+with a  systems programming  capability. On the one hand we are trying
+to achieve  reliability by  raising the  level of  the  language.  For
+example, we provide data types and encourage the taking of an abstract
+view of objects, in which they are known only by the set of operations
+applicable to  them: controlling  the  applicable  operations  enables
+incorrect use to be detected.
+<p>
+On the  other hand,  systems applications  require the ability to stay
+rather close  to the  machine, and not only for reasons of efficiency.
+For example,  defining a  hardware descriptor must be done in terms of
+the physical  properties, the  bit positions,  and so  on.  A  mapping
+different from  that prescribed  by the  hardware would  not merely be
+inefficient -  it would  be incorrect  and would  not work  at all. To
+produce a  correct program  in such cases we are forced to abandon the
+abstract view  and to  work in  terms of  the physical representation.
+This contradiction  cannot be  avoided. The  language must  deal  with
+objects at  two different  levels, the  logical and the representation
+level <a href="ratl-BIB.html">[Wo 72]</a>.
+<p>
+Clearly, dealing with physical representation is inherently dangerous.
+However, some control can still be achieved if the language enforces a
+clear  separation  of  the  logical  properties  from  their  physical
+representation.
+<p>
+This separation  principle is  discussed below, along with the problem
+of changing representation and an analysis of the issues raised by the
+different forms  of representation  clause available  in the language.
+This chapter also covers the ways to specify the parameters of a given
+configuration, and  conversely how  to ascertain  them by  environment
+enquiries. Finally we present the means available for interfacing with
+other languages.
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this chapter...</font>
+<p>
+<a href="ratl-15-01.html#15.1">15.1   The Separation Principle</a><BR>
+<a href="ratl-15-02.html#15.2">15.2   Types and Data Representation</a><BR>
+<a href="ratl-15-03.html#15.3">15.3   Multiple Representations and Change of Representation</a><BR>
+<img src="indent.gif"><a href="ratl-15-03.html#15.3.1">15.3.1 A Canonical Example of Changes of Representation</a><BR>
+<img src="indent.gif"><a href="ratl-15-03.html#15.3.2">15.3.2 One Type - One Representation Principle</a><BR>
+<img src="indent.gif"><a href="ratl-15-03.html#15.3.3">15.3.3 Explicit Type Conversion and Change of Representation</a><BR>
+<img src="indent.gif"><a href="ratl-15-03.html#15.3.4">15.3.4 Implementation of Representation Changes</a><BR>
+<a href="ratl-15-04.html#15.4">15.4   Presentation of the Data Representation Facility</a><BR>
+<img src="indent.gif"><a href="ratl-15-04.html#15.4.1">15.4.1 Representation Pragmas</a><BR>
+<img src="indent.gif"><a href="ratl-15-04.html#15.4.2">15.4.2 Length Clauses</a><BR>
+<img src="indent.gif"><a href="ratl-15-04.html#15.4.3">15.4.3 Record Representation Clauses</a><BR>
+<img src="indent.gif"><a href="ratl-15-04.html#15.4.4">15.4.4 Address Clauses</a><BR>
+<img src="indent.gif"><a href="ratl-15-04.html#15.4.5">15.4.5 Enumeration Representation Clauses</a><BR>
+<a href="ratl-15-05.html#15.5">15.5   Enumeration Types with Noncontiguous Representations</a><BR>
+<img src="indent.gif"><a href="ratl-15-05.html#15.5.1">15.5.1 Assignment and Comparison with Noncontiguous Enumeration Types</a><BR>
+<img src="indent.gif"><a href="ratl-15-05.html#15.5.2">15.5.2 Indexing and Case Statements with Noncontiguous Enumeration Types</a><BR>
+<img src="indent.gif"><a href="ratl-15-05.html#15.5.3">15.5.3 Iteration Over Noncontiguous Enumeration Types</a><BR>
+<img src="indent.gif"><a href="ratl-15-05.html#15.5.4">15.5.4 Character Types</a><BR>
+<a href="ratl-15-06.html#15.6">15.6   Configuration Specification and Environment Enquiries</a><BR>
+<img src="indent.gif"><a href="ratl-15-06.html#15.6.1">15.6.1 The Package SYSTEM</a><BR>
+<img src="indent.gif"><a href="ratl-15-06.html#15.6.2">15.6.2 Pragmas for Configuration Specification</a><BR>
+<img src="indent.gif"><a href="ratl-15-06.html#15.6.3">15.6.3 Representation Attributes</a><BR>
+<img src="indent.gif"><a href="ratl-15-06.html#15.6.4">15.6.4 Configuration Specification and Conditional Compilation</a><BR>
+<a href="ratl-15-07.html#15.7">15.7   Interface with Other Languages</a><BR>
+<a href="ratl-15-08.html#15.8">15.8   Unchecked Conversions</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-15-01.html#15.1"><b>NEXT</b></a>
+&#128; <a href="ratl-14-05.html#14.5"><b>PREVIOUS</b></a>
+&#128; <a href="Welcome.html"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>

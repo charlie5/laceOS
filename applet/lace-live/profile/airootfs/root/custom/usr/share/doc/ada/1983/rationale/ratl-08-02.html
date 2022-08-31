@@ -1,0 +1,576 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 8.2: Parameter Modes</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 8: Subprograms</H2>
+
+<H3><a name="8.2">8.2 Parameter Modes</a></H3>
+
+In a  subprogram call,  each formal  parameter is  associated  with  a
+corresponding actual  parameter. Actions  performed by  the subprogram
+body on  a formal  parameter will  result at  the place of the call in
+actions on  the associated  actual parameter:  Thus a formal parameter
+may permit  reading the  value of  the  associated  actual  parameter,
+updating this  value, or  both. Such  reading and  updating rights are
+specified by the mode of the formal parameter.
+<p>
+Three parameter  modes are  provided in Ada: they are the modes in, in
+out, and  out. The  properties of  formal parameters  of each of these
+modes are  summarized in  the table  given below.  The  second  column
+indicates the  nature of  the formal  parameter: constant or variable.
+The third column indicates the reading and updating rights:
+<p>
+
+<p>
+<center><table border cellpadding=6><tr><th align=left>Mode</th><th align=left>Nature</th><th align=left>Rights</th></tr>
+<tr><td>
+<table><tr><td><pre>
+in
+in out
+out
+</pre></td></tr></table>
+</td><td>
+<table><tr><td>
+<pre>
+Constant
+Variable
+Variable
+</pre></td></tr></table>
+</td><td>
+<table><tr><td>
+<pre>
+Only Reading
+Both Reading and Updating
+Only Updating
+</pre></td></tr></table></tr></table></center>
+<p>
+This  definition  of  parameter  modes  offers  an  abstract  view  of
+parameter passing.  It can  be expressed  as a  contract regarding the
+data flow between the caller and the subprogram:
+<p>
+
+<p>
+<center><table border cellpadding=6><tr><th align=left>Mode</th><th align=left>Requirement</th></tr>
+<tr><td>
+<table><tr><td><pre>
+in
+
+in out 
+
+
+out
+</pre></td></tr></table>
+</td><td>
+<table><tr><td>
+<pre>
+The caller must supply a value
+
+The caller must supply a value
+The subprogram must return a value
+
+The subprogram must return a value
+</pre></td></tr></table>
+</td></tr></table></tr></table></center>
+<p>
+In principle,  two different  mechanisms can be used to implement this
+abstract view of parameter passing.
+<p>
+The first  possibility is  parameter passing  by copy. At the start of
+each call,  copy the value of the actual parameter into the associated
+formal parameter,  if the  mode is  in or  in out.  Then, after normal
+completion of  the subprogram  body, copy  the  value  of  the  formal
+parameter back into the associated actual parameter, if the mode is in
+out or out.
+<p>
+The second  possibility, called  parameter passing by reference, is to
+arrange that,  throughout the  execution of  the subprogram call, each
+reading or  updating of  the formal parameter is treated as reading or
+updating of the associated actual parameter.
+<p>
+The problems  associated with  each of  these mechanisms  are reviewed
+first, and then the Ada solution is presented.
+
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#8.2.1">8.2.1  Efficiency Issues of Parameter Passing Mechanisms</a><BR>
+<a href="#8.2.2">8.2.2  The Effect of Parameter Passing Mechanisms for Access Types</a><BR>
+<a href="#8.2.3">8.2.3  The Effect of Parameter Passing Mechanisms for Composite Types</a><BR>
+<a href="#8.2.4">8.2.4  The Ada Solution for Parameter Passing</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="8.2.1">8.2.1 Efficiency Issues of Parameter Passing Mechanisms</a></H3>
+
+Which of  the two  mechanisms of parameter passing (by reference or by
+copy) is  more efficient  depends on  the case  considered. For  large
+objects, the  by-reference mechanism  is often  more efficient. On the
+other hand, for objects that are smaller than the storage units of the
+target machine,  copy will usually be more efficient. Furthermore copy
+may be the only possible mechanism between different addressing spaces
+in distributed systems.
+<p>
+The problem  of reference to small objects is indeed severe and may be
+illustrated by the problem of reading and updating parameters that are
+boolean components  of records. Although such components have the same
+type (BOOLEAN) there is no guarantee that they will always be found in
+the same bit position within a record.
+<p>
+Achieving parameter passing by reference would then require that, with
+each boolean  formal parameter,  there be  an implicit  subprogram  (a
+thunk) for  reading the  value of  the corresponding actual parameter;
+and similarly,  another thunk  for updating.  This is somewhat complex
+and inefficient.
+<p>
+Some languages,  such as  <a href="ratl-BIB.html#languages">Pascal</a>, have  tried to  avoid the problem by
+forbidding the  association of  a formal  reference parameter  with an
+actual that  is a  component of  a packed  record  or  array;  and  by
+adopting otherwise  a unique  default  representation  for  all  small
+objects: one  addressable storage  unit per  small  object  (even  for
+boolean components).  The problem  with this solution is that, for all
+practical purposes,  it would  force programmers to use representation
+clauses in  too many  cases: the  default representation chosen by the
+compiler would  often be  too costly,  except on  machines with  small
+storage units. Moreover, this restriction would mean that the legality
+of a program would depend on the presence or absence of representation
+clauses or packing pragmas, which Ada avoids (see <a href="ratl-15.html#15">Chapter 15</a>).
+<p>
+A further  problem arises  with parameter  passing by  reference  with
+respect to  the checking  of constraints.  To illustrate  the  problem
+consider the following declarations:
+<p>
+<table border cellpadding=6><tr><td><pre>
+subtype NATURAL is INTEGER range 0 .. INTEGER'LAST;  -- predefined
+SUM :  NATURAL  :=  200;
+...
+procedure REDUCE(AMOUNT :  in out INTEGER) is
+  DECREMENT :  NATURAL;
+begin
+  -- compute DECREMENT
+  ...
+  AMOUNT :=  AMOUNT - DECREMENT;  -- (1)
+  if AMOUNT &lt; 0 then
+    AMOUNT :=  0;
+  end if;
+end;
+</pre></td></tr></table>
+<p>
+Now consider the procedure call statement
+<p>
+<PRE>    REDUCE(SUM);</PRE>
+<p>
+If parameter  passing were  by reference,  it would not be possible to
+complete the  assignment at  (1)  in  the  case  where  AMOUNT  became
+negative, since  it would  violate the  constraint on  SUM; hence  the
+exception CONSTRAINT_ERROR  would have to be raised by this statement.
+This, however, would require passing range constraint information as a
+run-time descriptor  for such procedure calls, in order to allow these
+constraint checks  within the  procedure body.  Alternatively,  if  we
+assume that  the constraint applicable to the formal parameter is that
+specified by the subtype of the formal parameter, then by-reference is
+not possible and all parameter passing must be by copy.
+
+<H3><BR><a name="8.2.2">8.2.2 The Effect of Parameter Passing Mechanisms for Access Types</a></H3>
+
+A difficulty  of a  different nature  arises for  parameter passing by
+reference in  the  case  of  access  types.  Consider  for  example  a
+procedure to delete a given element from a list (see <a href="ratl-06-03.html#6.3.6">section 6.3.6</a>):
+<p>
+<table border cellpadding=6><tr><td><pre>
+type PLACE;
+type LIST is access PLACE;
+
+type PLACE is
+  record
+    SUCC     :  LIST;
+    PRED     :  LIST;
+    CONTENT  :  ITEM;
+  end record;
+...
+
+E :  LIST;
+procedure DELETE(L :  in LIST) is
+begin
+  L.SUCC.PRED    :=  L.PRED;
+  L.PRED.SUCC    :=  L.SUCC;
+  L.SUCC     :=  null;
+  L.PRED     :=  null;
+end;
+</pre></td></tr></table>
+<p>
+This is  the conventional  way of  deleting an  element from a doubly-
+linked list, and a call such as
+<p>
+<PRE>    DELETE(X);</PRE>
+<p>
+will work  regardless of  whether parameter  passing  is  achieved  by
+reference or by copy. Consider however the procedure call
+<p>
+<PRE>    DELETE(E.PRED);</PRE>
+<p>
+where we assume the list to be in the following state before the call:
+<p><pre>
+   place:          A     B     C     D     E     F
+   successor:      B     C     D     E     F     ...
+   predecessor:    ...   A     B     C     D     E
+</pre><p>
+If parameter  passing is  by copy,  we achieve  the desired  effect of
+deleting D (the predecessor of E) and we obtain the state
+<p><pre>
+   place:          A     B     C     D     E     F
+   successor:      B     C     E     null  F     ...
+   predecessor:    ...   A     B     null  C     E
+</pre><p>
+If parameter passing is by reference, then the formal parameter L will
+refer to  the object  E.PRED.  The  first  assignment  will  have  the
+expected effect  of establishing  E.PRED =  C. But this means that the
+remaining statements  will operate  on C  (rather than D) and will not
+achieve what  we want:  the second assignment will achieve B.SUCC = D;
+and the  last two  assignments will  unlink C (rather than D), leaving
+the list in a state of chaos:
+<p><pre>
+   place:          A     B     C     D     E     F
+   successor:      B     D     null  E     F     ...
+   predecessor:    ...   A     null  C     C     E
+</pre><p>
+One possible  reaction to  this example  is to consider that parameter
+passing by  reference is  legitimate for access types, and that we are
+just confronted  with an incorrect program. Our preferred viewpoint is
+rather to  consider that  access types  are already unique in that the
+programmer  is  permitted  explicitly  to  manipulate  references  and
+construct aliases:  This  is  the  purpose  of  access  types,  and  a
+programmer using  such types  is asserting  that  he  wishes  to  take
+control of  all references  and aliases.  Accordingly,  the  parameter
+passing should  not generate extra references and aliases of which the
+programmer is  unaware; therefore,  all parameter  passing for  access
+types should be by copy.
+<p>
+A final  problem with  parameter passing  by reference  is  that  this
+mechanism will  be almost  impossible to  achieve (or  at least,  very
+costly) on  distributed systems and whenever we deal with systems with
+multiple address spaces.
+
+<H3><BR><a name="8.2.3">8.2.3 The Effect of Parameter Passing Mechanisms for Composite Types</a></H3>
+
+In normal  situations the  effect of  a program  does  not  depend  on
+whether parameter  passing for  array and record types is by reference
+or by  copy. The  only situations where there might be a difference in
+effect correspond to:
+<ul>
+<li>Certain cases  in which  the execution of a subprogram is abandoned
+   as a result of an exception.
+<p>
+<li>Certain cases  in which  there are multiple access paths to a given
+   variable.
+</ul>
+
+These situations  are reviewed  below. The  subject of multiple access
+paths  is   further  subdivided  into  a  discussion  of  aliasing  in
+sequential programs,  and a discussion of shared variables in parallel
+programs.
+<p>
+<H4>Exceptions</H4>
+<p>
+If the  execution of  a subprogram  is abandoned  as the  result of an
+exception not  handled locally,  then the  final value  of  an  actual
+parameter that  is associated  with a  formal parameter of mode in out
+may depend  on the  parameter passing mechanism: If by copy, the final
+value will  still  be  the  initial  value  before  the  call.  If  by
+reference, the  final value  may be  this initial  value, or any value
+assigned  to   the  formal  parameter  during  the  execution  of  the
+subprogram (before  the exception  was raised).  In either  case,  the
+final value is guaranteed to have the subtype of the actual parameter.
+<p>
+At the  cost of  more elaborate  run-time treatment  of exceptions, it
+would certainly be possible to copy back current values in the case of
+termination by  an exception.  But this  complication is not worth the
+effort. Consider for example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure P(X :  in out COMPOSITE_TYPE) is
+begin
+  ...               -- (1)
+  X :=  ... ;
+  ...               -- (2)
+end ;
+  ...
+P(A);
+</pre></td></tr></table>
+<p>
+If the  execution of  P is abandoned as a result of an exception, then
+the caller may obtain information about the nature of the exception by
+means of appropriate handlers:
+<p>
+<table border cellpadding=6><tr><td><pre>
+begin
+  P(A);
+exception
+  when ERROR =&gt;
+    -- the exception raised was ERROR
+  when CONSTRAINT_ERROR =&gt;
+    -- the exception raised was CONSTRAINT_ERROR
+  when others =&gt;
+    -- the exception raised is other than the above two
+end;
+</pre></td></tr></table>
+<p>
+On the  other hand,  the caller  does not  usually  know  whether  the
+exception was  raised during  (1) or (2) or even during the assignment
+to the  formal parameter X. Consequently the difference resulting from
+choosing a reference rather than a copy mechanism is of the same order
+as the uncertainty that already exists about the exact point where the
+exception is  raised. In  addition, when  a user writes P(A) where the
+parameter mode  is in  out (and even more so if the mode is out), then
+he expects the value of A to be changed. So it does not matter much if
+this value  is changed during the call or only at the end. If the user
+wants to  reuse the  previous value  of  A  in  the  case  that  P  is
+terminated by an exception, the only logical way to do so is to assign
+its value to another variable before the call.
+<p>
+Note finally  that if  it is  important to  guarantee that the initial
+value is  not modified  if an  exception is  raised, then this is best
+achieved by  the procedure  body itself. One possibility is to compute
+first whatever  needs to be changed but perform the change itself only
+at the  end of the procedure, so that no change occurs if an exception
+is raised  before the  end. Another possible style involves the use of
+exception handlers for expressing last wishes:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure P(X :  in out COMPOSITE_TYPE) is
+begin
+  ...
+exception
+  when others =&gt;
+    -- restore initial value of X
+    raise;
+end;
+</pre></td></tr></table>
+<p>
+<H4>Aliasing</H4>
+<p>
+If aliasing  is used  then the  results may  differ between  reference
+implementations and copy implementations. For example consider
+<p>
+<table border cellpadding=6><tr><td><pre>
+A  :  STRING(1 .. 8)  :=  "AAAAVVVV";
+B  :  STRING(1 .. 12) :=  "111122223333";
+
+procedure MODIFY(S :  in out STRING) is
+begin
+  if S'LENGTH &gt;=  8 then
+    S(S'FIRST .. S'FIRST + 3) :=  "-&#42;&#42;-";
+    S(S'FIRST + 4 .. S'FIRST + 7) :=  A(1 .. 4);
+  end if;
+end;
+...
+MODIFY(B);      -- leaves B =  "-&#42;&#42;-AAAA3333"
+MODIFY(A);
+</pre></td></tr></table>
+<p>
+The call  of MODIFY for the string B will deliver the expected result.
+Consider however  what happens  when A  is passed as actual parameter.
+Since A is referred to directly within the body of MODIFY, we now have
+two possible  access paths  to A,  the second  being  via  the  formal
+parameter S. In this case of aliasing the effect of the procedure will
+depend on the mechanism used for parameter passing: the final value of
+A will be "-&#42;&#42;-AAAA" by value, and "-&#42;&#42;--&#42;&#42;-" by reference.
+<p>
+The same  trick could actually be used (facetiously) to discover which
+mechanism is used for parameter passing:
+<p>
+<table border cellpadding=6><tr><td><pre>
+MODE :  STRING(1 .. 4)  :=  "COPY";
+procedure FIND_MECHANISM(S :  in out STRING) is
+begin
+  MODE :=  "REF  ";
+  if S =  "COPY" then
+    PUT("MECHANISM IS COPY");
+  else
+    PUT("MECHANISM IS REFERENCE");
+  end if;
+end;
+...
+FIND_MECHANISM(MODE);
+</pre></td></tr></table>
+<p>
+although an implementation is in fact free to use different mechanisms
+for different calls.
+<p>
+In both  examples,  the  effect  obtained  by  reference  is  somewhat
+pathological: In  the first  example, normally we would like the first
+assignment to S not to affect A and the subsequent assignment to S. So
+whereas for  efficiency reasons  we might  prefer an implementation by
+reference, the  copy mechanism  provides us  with a  simpler model for
+understanding programs and therefore for developing reliable programs.
+<p>
+Whereas aliasing  between a formal parameter and a global variable may
+reasonably be assumed to be unintentional, aliasing is not necessarily
+undesirable. In  particular, aliasing between formal parameters may in
+many cases  be deliberate. Consider for example a procedure for vector
+addition
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure ADD(A :  in out VECTOR;  B :  in VECTOR) is
+begin
+  if A'FIRST =  B'FIRST and A'LAST = B'LAST then
+    for N in A'RANGE loop
+      A(N) :=  A(N) + B(N);
+    end loop;
+  end if;
+end;
+...
+V :  VECTOR(1 .. 100)  :=  ...;
+</pre></td></tr></table>
+<p>
+Then for a call such as
+<p>
+<PRE>    ADD(V, V);</PRE>
+<p>
+although we  have a  case of aliasing between formal parameters within
+the body  of ADD,  since both  A and  B refer  to V, the effect of the
+procedure does not depend on whether reference or copy is used for the
+implementation of parameter passing.
+<p>
+To conclude the discussion on this subject it appears that for certain
+cases of  aliasing, different  effects will  be obtained for parameter
+passing by reference and by copy. These cases, however, represent poor
+programming practice,  and do  not provide  a sound basis for deciding
+language semantics.
+<p>
+<H4>Shared Variables</H4>
+<p>
+The language  rules state that the execution of a program is erroneous
+if a  shared variable  that is  updated by  a given  task between  two
+synchronization points is also read or updated by another task between
+these two synchronization points (hence asynchronously). The effect of
+such erroneous  execution is unpredictable. This indeterminacy will be
+further revealed  by differences  in the  parameter passing mechanism.
+Consider for example
+<p>
+<table border cellpadding=6><tr><td><pre>
+SHARED :  COMPOSITE_TYPE; -- a shared variable
+...
+procedure LIST(X :  in COMPOSITE_TYPE);
+...
+LIST(SHARED);
+</pre></td></tr></table>
+<p>
+The code  of the  procedure LIST will rely on the fact that the formal
+parameter is  constant:  in  particular  this  means  that  reading  a
+component of the formal parameter at different times and places within
+this procedure  must always  yield the  same value.  This is obviously
+achieved (whether the actual parameter is a shared variable or not) if
+parameter passing  is by  copy. If  however parameter  passing  is  by
+reference,  and   the  actual   parameter   is   a   shared   variable
+asynchronously updated  by another task, then this invariability is no
+longer guaranteed.
+<p>
+Here again,  the indeterminacy  is inherent in the asynchronous access
+to the  shared variable:  it is  further revealed  by  differences  in
+parameter passing mechanism, but these differences are not the primary
+cause.
+
+<H3><BR><a name="8.2.4">8.2.4 The Ada Solution for Parameter Passing</a></H3>
+
+Before describing the parameter passing mechanisms, consider first the
+interpretation of the subtype that is declared for a formal parameter.
+<ul>
+<li>In the  case of  a scalar  type, the  constraint applicable  to the
+   formal parameter  is always  that imposed  by the  subtype  of  the
+   formal parameter.
+<p>
+<li>In the  case of  an array  or record  type, the  constraint on  the
+   formal  parameter   is  inherited  from  the  corresponding  actual
+   parameter (if the declaration of the formal specifies a constraint,
+   then the actual constraint must be the same).
+</ul>
+In implementation  terms, the above subdivision reflects the fact that
+run-time descriptors  for constraints  are never passed to subprograms
+in the case of scalar types (see the example AMOUNT in <a href="ratl-08-02.html#8.2.1">section 8.2.1</a>).
+On the  other hand  the constraint information is always passed in the
+case of composite types:
+<ul>
+<li>For arrays,  the bounds  are passed  and can be interrogated within
+   subprograms by means of array attributes.
+<p>
+<li>For records  with discriminants,  the discriminants are part of the
+   value. Furthermore,  the value  of  the  CONSTRAINED  attribute  is
+   passed.
+</ul>
+
+The allowed mechanisms follow from the above considerations.
+<ol type=a>
+<li>For scalar  types, and  for all  modes, all parameter
+   passing must  be achieved  by copy.  The same  treatment applies to
+   access types, for the reasons given in the previous section.
+<p>
+<li>For record  and array  types, the  language does  not
+   specify whether  parameter passing  is achieved  by reference or by
+   copy. Furthermore,  the execution  of a program is erroneous if its
+   effect  depends   on   which   mechanism   is   selected   by   the
+   implementation.
+</ul>
+
+In normal  situations the  semantics of a program will not be affected
+by whether  parameter passing  for composite  types is  implemented by
+reference or by copying: We have seen that the indeterminacy resulting
+from the  parameter passing  mechanism only  matters  where  there  is
+already  a  higher  degree  of  indeterminacy  (shared  variables  and
+exceptions) and  where aliasing is used to achieve dubious effects: In
+both cases  the language  rules therefore  state that the execution of
+the program is erroneous.
+<p>
+For private types parameter passing is as for the type declared by the
+corresponding full  type  declaration.  Finally  for  task  types  the
+mechanism never  matters, since  a task  object always  designates the
+same task.
+<p>
+During this  design we  considered, and rejected, several alternatives
+to this  abstract formulation  of the  parameter  passing  modes.  For
+example, an  implementation-oriented formulation  of  modes  could  be
+defined in  terms of  the  mechanisms  involved:  copy  or  reference.
+However, if  the same capabilities are to be offered this leads to yet
+more modes  (constant by copy, constant by reference, variable by copy
+before and  after, variable  by reference,  result by  copy, result by
+reference). Although  only a  subset of  them might be provided, it is
+critical for reliability and efficiency to be able to pass an array by
+reference and  nevertheless deny  the right  to modify its components.
+Apart  from  its  complexity,  such  a  formulation  would  force  the
+programmer to  think in  terms of (and be aware of) the representation
+of objects, and would therefore compromise portability.
+<p>
+We consider the formulation of the parameter passing modes in, in out,
+and out  in terms  of their  abstract behavior  to be much simpler and
+therefore preferable.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-08-03.html#8.3"><b>NEXT</b></a>
+&#128; <a href="ratl-08-01.html#8.1"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-08.html#8"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

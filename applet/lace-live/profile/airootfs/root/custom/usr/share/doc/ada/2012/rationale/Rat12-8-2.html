@@ -1,0 +1,316 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Bounded and unbounded containers</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>8.2 Bounded and unbounded containers</H1>
+<div class="Normal">It is perhaps worth starting this discussion by summarizing 
+the containers introduced in Ada 2005. First, there is a parent package 
+<SPAN Class="swiss">Ada.Containers</SPAN> which simply declares the types 
+<SPAN Class="swiss">Hash_Type</SPAN> and <SPAN Class="swiss">Count_Type</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Then there are six 
+containers for definite objects, namely (abbreviating the prefix <SPAN Class="swiss">Ada.Containers</SPAN> 
+to just <SPAN Class="swiss">A.C</SPAN>)</div>
+<div class="SwissExamples">A.C.Vectors<BR>
+A.C.Doubly_Linked_Lists<BR>
+A.C.Hashed_Maps<BR>
+A.C.Ordered_Maps<BR>
+A.C.Hashed_Sets<BR>
+A.C.Ordered_Sets</div>
+<div class="Normal" style="margin-bottom: 0.4em">The declarations of 
+these six containers all start with</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type<B>&nbsp;is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>package</B>&nbsp;Ada.Containers.XXX...</div>
+<div class="Normal" style="margin-bottom: 0.4em">and we see that the 
+type <SPAN Class="swiss">Element_Type</SPAN> has to be definite. There 
+are also containers for the manipulation of indefinite types whose names 
+are</div>
+<div class="SwissExamples">A.C.Indefinite_Vectors<BR>
+A.C.Indefinite_Doubly_Linked_Lists<BR>
+A.C.Indefinite_Hashed_Maps<BR>
+A.C.Indefinite_Ordered_Maps<BR>
+A.C.Indefinite_Hashed_Sets<BR>
+A.C.Indefinite_Ordered_Sets</div>
+<div class="Normal" style="margin-bottom: 0.4em">and these are very 
+similar to the definite containers except that the formal type <SPAN Class="swiss">Element_Type</SPAN> 
+is now declared as</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type(&lt;&gt;)&nbsp;<B>is&nbsp;private</B>;</div>
+<div class="Normal">so that the actual type can be indefinite such as 
+<SPAN Class="swiss">String</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Finally, there are 
+two generic packages for sorting arrays namely</div>
+<div class="SwissExamples">A.C.Generic_Array_Sort<BR>
+A.C.Generic_Constrained_Array_Sort</div>
+<div class="Normal">which apply to unconstrained and constrained arrays 
+respectively.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The first change in 
+Ada 2012 is that the parent package <SPAN Class="swiss">Ada.Containers</SPAN> 
+now includes the declaration of the exception <SPAN Class="swiss">Capacity_Error</SPAN> 
+so that it becomes</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Containers&nbsp;<B>is</B><A NAME="I1606"></A><A NAME="I1607"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Pure(Containers);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Hash_Type&nbsp;<B>is&nbsp;mod</B>&nbsp;<I>implementation-defined</I>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Count_Type&nbsp;<B>is</B>&nbsp;<B>range</B>&nbsp;0&nbsp;..&nbsp;<I>implementation-defined</I>;<BR>
+&nbsp;&nbsp;&nbsp;Capacity_Error:&nbsp;<B>exception</B>;<A NAME="I1608"></A></div>
+<div class="SwissExamples"><B>end</B>&nbsp;Ada.Containers;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The names of the new 
+containers with bounded storage capacity are</div>
+<div class="SwissExamples">A.C.Bounded_Vectors<A NAME="I1609"></A><A NAME="I1610"></A><BR>
+A.C.Bounded_Doubly_Linked_Lists<A NAME="I1611"></A><A NAME="I1612"></A><BR>
+A.C.Bounded_Hashed_Maps<A NAME="I1613"></A><A NAME="I1614"></A><BR>
+A.C.Bounded_Ordered_Maps<A NAME="I1615"></A><A NAME="I1616"></A><BR>
+A.C.Bounded_Hashed_Sets<A NAME="I1617"></A><A NAME="I1618"></A><BR>
+A.C.Bounded_Ordered_Sets<A NAME="I1619"></A><A NAME="I1620"></A></div>
+<div class="Normal">The facilities of the bounded containers are almost 
+identical to those of the original unbounded ones so that converting 
+a program using one form to the other is relatively straightforward. 
+The key point of the bounded ones is that storage management is guaranteed 
+(implementation advice really) not to use features such as pointers or 
+dynamic allocation and therefore can be used in high-integrity or safety-critical 
+applications.<A NAME="I1621"></A><A NAME="I1622"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">The major differences 
+between the packages naturally concern their capacity. In the case of 
+the bounded packages the types such as <SPAN Class="swiss">Vector</SPAN> 
+have discriminants thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Vector(Capacity:&nbsp;Count_Type)&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">whereas in the original 
+packages the type <SPAN Class="swiss">Vector</SPAN> is simply</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Vector&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The other types in 
+the bounded packages are</div>
+<div class="SwissExamples"><B>type</B>&nbsp;List(Capacity:&nbsp;Count_Type)&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Map&nbsp;(Capacity:&nbsp;Count_Type;&nbsp;Modulus:&nbsp;Hash_Type)&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Map(Capacity:&nbsp;Count_Type)&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Set&nbsp;(Capacity:&nbsp;Count_Type;&nbsp;Modulus:&nbsp;Hash_Type)&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Set(Capacity:&nbsp;Count_Type)&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;</div>
+<div class="Normal">Note that the types for hashed maps and sets have 
+an extra discriminant to set the modulus; this will be explained in a 
+moment.</div>
+<div class="Normal">Remember that the types <SPAN Class="swiss">Count_Type</SPAN> 
+and <SPAN Class="swiss">Hash_Type</SPAN> are declared in the parent package 
+<SPAN Class="swiss">Ada.Containers</SPAN> shown above.</div>
+<div class="Normal">When a bounded container is declared, its capacity 
+is set once and for all by the discriminant and cannot be changed. If 
+we subsequently add more elements to the container than it can hold then 
+the exception <SPAN Class="swiss">Capacity_Error</SPAN> is raised.<A NAME="I1623"></A></div>
+<div class="Normal">If we are using a bounded container and want to make 
+it larger then we cannot. But what we can do is create another bounded 
+container with a larger capacity and copy the values from the old container 
+to the new one. Remember that we can check the number of items in a container 
+by calling the function <SPAN Class="swiss">Length</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So we might have a 
+sequence such as</div>
+<div class="SwissExamples">My_List:&nbsp;List(100);<BR>
+...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>use&nbsp;my&nbsp;list</I></SPAN><BR>
+<B>if</B>&nbsp;Length(My_List)&nbsp;&gt;&nbsp;90&nbsp;<B>then</B>&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;Gosh,&nbsp;nearly&nbsp;full</I></SPAN><BR>
+...<BR>
+&nbsp;&nbsp;&nbsp;<B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;My_Big_List:&nbsp;List&nbsp;:=&nbsp;Copy(My_List,&nbsp;200);<BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">The specification of 
+the function <SPAN Class="swiss">Copy</SPAN> is</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Copy<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Source:&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Capacity:&nbsp;Count_Type&nbsp;:=&nbsp;0)&nbsp;<B>return</B>&nbsp;List;</div>
+<div class="Normal">If the parameter <SPAN Class="swiss">Capacity</SPAN> 
+is not specified (or is given as zero) then the capacity of the copied 
+list is the same as the length of <SPAN Class="swiss">Source</SPAN>.</div>
+<div class="Normal">If the given value of <SPAN Class="swiss">Capacity</SPAN> 
+is larger than (or equal to) the length of the <SPAN Class="swiss">Source</SPAN> 
+(as in our example) then the returned list has this capacity and the 
+various elements are copied. If we foolishly supply a value which is 
+less than the length of <SPAN Class="swiss">Source</SPAN> then <SPAN Class="swiss">Capacity_Error</SPAN> 
+is naturally raised. Remember that a discriminant can be set by an initial 
+value.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that if we write</div>
+<div class="SwissExamples"><B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;My_Copied_List:&nbsp;List&nbsp;:=&nbsp;My_List;<BR>
+<B>begin</B></div>
+<div class="Normal">then <SPAN Class="swiss">My_Copied_List</SPAN> will 
+have the same capacity as <SPAN Class="swiss">My_List</SPAN> because 
+discriminants are copied as well as the contents.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In order to make it 
+easier to move from the bounded form to the unbounded form, a function 
+<SPAN Class="swiss">Copy</SPAN> is added to the unbounded containers 
+as well although it does not need a parameter <SPAN Class="swiss">Capacity</SPAN> 
+in the case of lists and ordered maps and sets. So in the case of the 
+list container it is simply</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Copy(Source:&nbsp;List)&nbsp;<B>return</B>&nbsp;List;&nbsp;&nbsp;--<SPAN Class="roman"><I>unbounded</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">Similar unification 
+between bounded and unbounded forms occurs with assignment. In Ada 2005, 
+if we have two lists <SPAN Class="swiss">L</SPAN> and <SPAN Class="swiss">M</SPAN>, 
+then we can simply write</div>
+<div class="SwissExamples">L&nbsp;:=&nbsp;M;</div>
+<div class="Normal">and the whole structure is copied (including all 
+its management stuff). Note that this will almost certainly require that 
+the value of <SPAN Class="swiss">L</SPAN> be finalized which might be 
+a nuisance. Such an assignment with discriminated types needs to check 
+the discriminants as well (and raises <SPAN Class="swiss">Constraint_Error</SPAN> 
+if they are different). This is a nuisance because although the capacities 
+might not be the same, the destination <SPAN Class="swiss">L</SPAN> might 
+have plenty of room for the actual elements in the source <SPAN Class="swiss">M</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is all rather 
+bothersome and so procedures <SPAN Class="swiss">Assign</SPAN> are added 
+to both unbounded and bounded containers which simply copy the element 
+values. Thus in both case we have</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Assign(Target:&nbsp;<B>in&nbsp;out</B>&nbsp;List;&nbsp;Source:&nbsp;<B>in</B>&nbsp;List);</div>
+<div class="Normal">In the bounded case, if the length of <SPAN Class="swiss">Source</SPAN> 
+is greater than the capacity of <SPAN Class="swiss">Target</SPAN>, then 
+<SPAN Class="swiss">Capacity_Error</SPAN> is raised. In the unbounded 
+case, the structure is automatically extended.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It might be recalled 
+that in Ada 2005, lists and ordered maps and sets do not explicitly have 
+a notion of capacity. It is in their very nature that they automatically 
+extend as required. However, in the case of vectors and hashed maps and 
+sets (which have a notion of indexing) taking a purely automatic approach 
+could lead to lots of extensions and copying so the notion of capacity 
+was introduced. The capacity can be set by calling</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Reserve_Capacity<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Capacity:&nbsp;<B>in</B>&nbsp;Count_Type);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and the current value 
+of the capacity can be ascertained by calling</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Capacity(Container:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Count_Type;</div>
+<div class="Normal">which naturally returns the current capacity. Note 
+that <SPAN Class="swiss">Length(V)</SPAN> cannot exceed <SPAN Class="swiss">Capacity(V)</SPAN> 
+but might be much less.</div>
+<div class="Normal">If we add items to a vector whose length and capacity 
+are the same then no harm is done. The capacity will be expanded automatically 
+by effectively calling <SPAN Class="swiss">Reserve_Capacity</SPAN> internally. 
+So the user does not need to set the capacity although not doing so might 
+result in poorer performance.</div>
+<div class="Normal">The above refers to the existing unbounded forms 
+and is unchanged in Ada 2012. For uniformity the new bounded forms for 
+vectors and hashed maps and sets also declare a procedure <SPAN Class="swiss">Reserve_Capacity</SPAN>. 
+However, since the capacity cannot be changed for the bounded forms it 
+simply checks that the value of the parameter <SPAN Class="swiss">Capacity</SPAN> 
+does not exceed the actual capacity of the container; if it does then 
+<SPAN Class="swiss">Capacity_Error</SPAN> is raised and otherwise it 
+does nothing. There is of course also a function <SPAN Class="swiss">Capacity</SPAN> 
+for bounded vectors and hashed maps and sets which simply returns the 
+fixed value of the capacity.</div>
+<div class="Normal">Many operations add elements to a container. For 
+unbounded containers, they are automatically extended as necessary as 
+just explained. For the bounded containers, if an operation would cause 
+the capacity to be exceeded then <SPAN Class="swiss">Capacity_Error</SPAN> 
+is raised.</div>
+<div class="Normal">There are a number of other differences between the 
+unbounded and bounded containers. The original unbounded containers have 
+pragma <SPAN Class="swiss">Preelaborate</SPAN> whereas the new bounded 
+containers have pragma <SPAN Class="swiss">Pure</SPAN>.</div>
+<div class="Normal">The bounded containers for hashed maps and hashed 
+sets are treated somewhat differently to those for the corresponding 
+unbounded containers regarding hashing.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the case of unbounded 
+containers, the hashing function to be used is left to the user and is 
+provided as an actual generic parameter. For example, in the case of 
+hashed sets, the package specification begins</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Hash(Element:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Hash_Type;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Equivalent_Elements(Left,&nbsp;Right:&nbsp;Element_Type)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Ada.Containers.Hashed_Sets&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Hashed_Sets);</div>
+<div class="Normal">What the implementation actually does with the hash 
+function is entirely up to the implementation The value returned is in 
+the range of <SPAN Class="swiss">Hash_Type</SPAN> which is a modular 
+type declared in the root package <SPAN Class="swiss">Ada.Containers</SPAN>. 
+The implementation will typically then map this value onto the current 
+range of the capacity in some way. If the unbounded container becomes 
+nearly full then the capacity will be automatically extended and a new 
+mapping will be required; this in turn is likely to require the existing 
+contents to be rehashed. None of this is visible to the user.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the case of the 
+new bounded containers, these problems do not arise since the capacity 
+is fixed. Moreover, the modulus to be used for the mapping is given when 
+the container is declared since the type has discriminants thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Set(Capacity:&nbsp;Count_Type;&nbsp;Modulus:&nbsp;Hash_Type)&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The user can then choose 
+the modulus explicitly or alternatively can use the additional function 
+<SPAN Class="swiss">Default_Modulus</SPAN> whose specification is</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Default_Modulus(Capacity:&nbsp;Count_Type)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Hash_Type;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This returns an implementation 
+defined value for the number of distinct hash values to be used for the 
+given capacity. Thus we can write</div>
+<div class="SwissExamples">My_Set:&nbsp;Set(Capacity&nbsp;=&gt;&nbsp;My_Cap,&nbsp;Modulus&nbsp;=&gt;&nbsp;Default_Modulus(My_Cap));</div>
+<div class="Normal" style="margin-bottom: 0.4em">Moreover, for these 
+bounded hashed maps and sets, the function <SPAN Class="swiss">Copy</SPAN> 
+has an extra parameter thus</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Copy<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Source:&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Capacity:&nbsp;Count_Type&nbsp;:=&nbsp;0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Modulus:&nbsp;Hash_Type&nbsp;:=&nbsp;0)&nbsp;<B>return</B>&nbsp;Set;</div>
+<div class="Normal">If the capacity is given as zero then the newly returned 
+set has the same capacity as the length of <SPAN Class="swiss">Source</SPAN> 
+as mentioned above. If the modulus is given as zero then the value to 
+be used is obtained by applying <SPAN Class="swiss">Default_Modulus</SPAN> 
+to the new capacity.</div>
+<div class="Normal">As mentioned in Section <A HREF="Rat12-7-5.html">7.5</A> 
+on hashing and comparison, Ada 2012 introduces additional functions for 
+hashing strings (fixed, bounded and unbounded) to provide for case insensitive, 
+wide and wide wide situations.</div>
+<div class="Normal">Finally, note that there are no bounded containers 
+for indefinite types. This is because the size of an object of an indefinite 
+type (such as <SPAN Class="swiss">String</SPAN>) is generally not known 
+and so indefinite types need some dynamic storage management. However, 
+the whole point of introducing bounded containers was to avoid such management.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

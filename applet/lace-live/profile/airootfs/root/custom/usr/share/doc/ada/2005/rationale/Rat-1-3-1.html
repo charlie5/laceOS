@@ -1,0 +1,350 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Overview: The object oriented model</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>1.3.1 Overview: The object oriented model</H1>
+<div class="Normal" style="margin-bottom: 0.4em">The Ada 95 object oriented 
+model has been criticized as not following the true spirit of the OO 
+paradigm in that the notation for applying subprograms to objects is 
+still dominated by the subprogram and not by the object concerned. It 
+is claimed that real OO people always give the object first and then 
+the method (subprogram). Thus given</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;tagged</B>&nbsp;...&nbsp;;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(X:&nbsp;T;&nbsp;...&nbsp;);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then assuming that 
+some variable <SPAN Class="swiss">Y</SPAN> is declared of type <SPAN Class="swiss">T</SPAN>, 
+in Ada 95 we have to write&nbsp;</div>
+<div class="SwissExamples">P.Op(Y,&nbsp;...&nbsp;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">in order to apply the 
+procedure <SPAN Class="swiss">Op</SPAN> to the object <SPAN Class="swiss">Y</SPAN> 
+whereas a real OO person would expect to write something like&nbsp;</div>
+<div class="SwissExamples">Y.Op(&nbsp;...&nbsp;);</div>
+<div class="Normal">where the object <SPAN Class="swiss">Y</SPAN> comes 
+first and only any auxiliary parameters are given in the parentheses.</div>
+<div class="Normal">A real irritation with the Ada 95 style is that the 
+package <SPAN Class="swiss">P</SPAN> containing the declaration of <SPAN Class="swiss">Op</SPAN> 
+has to be mentioned as well. (This assumes that use clauses are not being 
+employed as is often the case.) However, given an object, from its type 
+we can find its primitive operations and it is illogical to require the 
+mention of the package <SPAN Class="swiss">P</SPAN>. Moreover, in some 
+cases involving a complicated type hierarchy, it is not always obvious 
+to the programmer just which package contains the relevant operation.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The prefixed notation<A NAME="I1003"></A> 
+giving the object first is now permitted in Ada 2005. The essential rules 
+are that a subprogram call of the form <SPAN Class="swiss">P.Op(Y, ... 
+);</SPAN> can be replaced by <SPAN Class="swiss">Y.Op( ... );</SPAN> 
+provided that&nbsp;</div>
+<div class="Bulleted"><SPAN Class="swiss">T</SPAN> is a tagged type,</div>
+<div class="Bulleted"><SPAN Class="swiss">Op</SPAN> is a primitive (dispatching) 
+or class wide operation of <SPAN Class="swiss">T</SPAN>,</div>
+<div class="Bulleted"><SPAN Class="swiss">Y</SPAN> is the first parameter 
+of <SPAN Class="swiss">Op</SPAN>.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The new prefixed notation 
+has other advantages in unifying the notation for calling a function 
+and reading a component of a tagged type. Thus consider the following 
+geometrical example which is based on that in a (hopefully familiar) 
+textbook <A HREF="Rat-0-2.html#R6">[6]</A>&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Geometry&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Object&nbsp;<B>is&nbsp;abstract&nbsp;tagged</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X_Coord:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y_Coord:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Area(O:&nbsp;Object)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is&nbsp;abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;MI(O:&nbsp;Object)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is&nbsp;abstract</B>;<BR>
+<B>end</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The type <SPAN Class="swiss">Object</SPAN> 
+has two components and two primitive operations <SPAN Class="swiss">Area</SPAN> 
+and <SPAN Class="swiss">MI</SPAN> (<SPAN Class="swiss">Area</SPAN> is 
+the area of an object and <SPAN Class="swiss">MI</SPAN> is its moment 
+of inertia but the fine details of Newtonian mechanics need not concern 
+us). The key point is that with the new notation we can access the coordinates 
+and the area in a unified way. For example, suppose we derive a concrete 
+type <SPAN Class="swiss">Circle</SPAN> thus</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Geometry.Circle&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Circle&nbsp;<B>is&nbsp;new</B>&nbsp;Object&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Radius:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Area(C:&nbsp;Circle)&nbsp;<B>return</B>&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;MI(C:&nbsp;Circle)&nbsp;<B>return</B>&nbsp;Float;<BR>
+<B>end</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">where we have provided 
+concrete operations for <SPAN Class="swiss">Area</SPAN> and <SPAN Class="swiss">MI</SPAN>. 
+Then in Ada 2005 we can access both the coordinates and area in the same 
+way</div>
+<div class="SwissExamples">X:=&nbsp;A_Circle.X_Coord;<BR>
+A:=&nbsp;A_Circle.Area;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>call&nbsp;of&nbsp;function&nbsp;Area</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that since <SPAN Class="swiss">Area</SPAN> 
+just has one parameter (<SPAN Class="swiss">A_Circle</SPAN>) there are 
+no parentheses required in the call. This uniformity is well illustrated 
+by the body of <SPAN Class="swiss">MI</SPAN> which can be written as</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;MI(C:&nbsp;Circle)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;0.5&nbsp;*&nbsp;C.Area&nbsp;*&nbsp;C.Radius**2;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;MI;</div>
+<div class="Normal">whereas in Ada 95 we had to write&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;0.5&nbsp;*&nbsp;Area(C)&nbsp;*&nbsp;C.Radius**2;</div>
+<div class="Normal">which is perhaps a bit untidy.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A related advantage 
+concerns dereferencing. If we have an access type such as&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Pointer&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Object'Class;<BR>
+...<BR>
+This_One:&nbsp;Pointer&nbsp;:=&nbsp;A_Circle'Access;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and suppose we wish 
+to print out the coordinates and area then in Ada 2005 we can uniformly 
+write&nbsp;</div>
+<div class="SwissExamples">Put(This_One.X_Coord);&nbsp;...<BR>
+Put(This_One.Y_Coord);&nbsp;...<BR>
+Put(This_One.Area);&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Ada&nbsp;2005</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">whereas in Ada 95 we 
+have to write&nbsp;</div>
+<div class="SwissExamples">Put(This_One.X_Coord);&nbsp;...<BR>
+Put(This_One.Y_Coord);&nbsp;...<BR>
+Put(Area(This_One.<B>all</B>));&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Ada&nbsp;95</I></SPAN></div>
+<div class="Normal">In Ada 2005 the dereferencing is all implicit whereas 
+in Ada 95 some dereferencing has to be explicit which is ugly.</div>
+<div class="Normal">The reader might feel that this is all syntactic 
+sugar for the novice and of no help to real macho programmers. So we 
+shall turn to the topic of multiple inheritance. In Ada 95, multiple 
+inheritance is hard. It can sometimes be done using generics and/or access 
+discriminants (not my favourite topic) but it is hard work and often 
+not possible at all. So it is a great pleasure to be able to say that 
+Ada 2005 introduces real multiple inheritance in the style of Java.<A NAME="I1004"></A></div>
+<div class="Normal">The problem with multiple inheritance in the most 
+general case is clashes between the parents. Assuming just two parents, 
+what happens if both parents have the same component (possibly inherited 
+from a common ancestor)? Do we get two copies? And what happens if both 
+parents have the same operation but with different implementations? These 
+and related problems are overcome by placing firm restrictions on the 
+possible properties of parents. This is done by introducing the notion 
+of an interface.<A NAME="I1005"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">An interface can be 
+thought of as an abstract type with no components &ndash; but it can 
+of course have abstract operations. It has also proved useful to introduce 
+the idea of a null procedure as an operation of a tagged type; we don't 
+have to provide an actual body for such a null procedure (and indeed 
+cannot) but it behaves as if it has a body consisting of just a null 
+statement. So we might have&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P1&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Int1&nbsp;<B>is&nbsp;interface</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op1(X:&nbsp;Int1)&nbsp;<B>is&nbsp;abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;N(X:&nbsp;Int1)&nbsp;<B>is&nbsp;null</B>;<BR>
+end&nbsp;P1;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note carefully that 
+<B>interface</B> is a new reserved word.<A NAME="I1006"></A> We could 
+now derive a concrete type from the interface <SPAN Class="swiss">Int1</SPAN> 
+by&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;DT&nbsp;<B>is&nbsp;new</B>&nbsp;Int1&nbsp;<B>with&nbsp;record</B>&nbsp;...&nbsp;<B>end&nbsp;record</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op1(NX:&nbsp;DT);</div>
+<div class="Normal">We can provide some components for <SPAN Class="swiss">DT</SPAN> 
+as shown (although this is optional). We must provide a concrete procedure 
+for <SPAN Class="swiss">Op1</SPAN> (we wouldn't if we had declared <SPAN Class="swiss">DT</SPAN> 
+itself as abstract). But we do not have to provide an overriding of <SPAN Class="swiss">N</SPAN> 
+since it behaves as if it has a concrete null body anyway (but we could 
+override <SPAN Class="swiss">N</SPAN> if we wanted to).</div>
+<div class="Normal">We can in fact derive a type from several interfaces 
+plus possibly one conventional tagged type. In other words we can derive 
+a tagged type from several other types (the ancestor types) but only 
+one of these can be a normal tagged type (it has to be written first). 
+We refer to the first as the parent (so the parent can be an interface 
+or a normal tagged type) and any others as progenitors (and these have 
+to be interfaces).</div>
+<div class="Normal" style="margin-bottom: 0.4em">So assuming that <SPAN Class="swiss">Int2</SPAN> 
+is another interface type and that <SPAN Class="swiss">T1</SPAN> is a 
+normal tagged type then all of the following are permitted&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;DT1&nbsp;<B>is&nbsp;new</B>&nbsp;T1&nbsp;<B>and</B>&nbsp;Int1&nbsp;<B>with&nbsp;null&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;DT2&nbsp;<B>is&nbsp;new</B>&nbsp;Int1&nbsp;<B>and</B>&nbsp;Int2&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B>&nbsp;...&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;DT3&nbsp;<B>is&nbsp;new</B>&nbsp;T1&nbsp;<B>and</B>&nbsp;Int1&nbsp;<B>and</B>&nbsp;Int2&nbsp;<B>with</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">It is also possible 
+to compose interfaces to create further interfaces thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Int3&nbsp;<B>is&nbsp;interface&nbsp;and</B>&nbsp;Int1;<BR>
+...<BR>
+<B>type</B>&nbsp;Int4&nbsp;<B>is&nbsp;interface&nbsp;and</B>&nbsp;Int1&nbsp;<B>and</B>&nbsp;Int2&nbsp;<B>and</B>&nbsp;Int3;</div>
+<div class="Normal">Note carefully that <B>new</B> is not used in this 
+construction. Such composed interfaces have all the operations of all 
+their ancestors and further operations can be added in the usual way 
+but of course these must be abstract or null.</div>
+<div class="Normal">There are a number of simple rules to resolve what 
+happens if two ancestor interfaces have the same operation. Thus a null 
+procedure overrides an abstract one but otherwise repeated operations 
+have to have the same profile.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Interfaces can also 
+be marked as limited.&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;LI&nbsp;<B>is&nbsp;limited&nbsp;interface</B>;</div>
+<div class="Normal">An important rule is that a descendant of a nonlimited 
+interface must be nonlimited. But the reverse is not true.</div>
+<div class="Normal">Some more extensive examples of the use of interfaces 
+will be found in Section <A HREF="Rat-2-4.html">2.4</A>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Incidentally, the newly 
+introduced null procedures are not just for interfaces. We can give a 
+null procedure as a specification whatever its profile and no body is 
+then required or allowed. But they are clearly of most value with tagged 
+types and inheritance. Note in particular that the package <SPAN Class="swiss">Ada.Finalization</SPAN> 
+in Ada 2005 is<A NAME="I1007"></A><A NAME="I1008"></A>&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Finalization&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Finalization);<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Remote_Types(Finalization);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Controlled&nbsp;<B>is&nbsp;abstract&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preeleborable_Initialization(Controlled);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Initialize(Object:&nbsp;<B>in&nbsp;out</B>&nbsp;Controlled)&nbsp;<B>is&nbsp;null</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Adjust(Object:&nbsp;<B>in&nbsp;out</B>&nbsp;Controlled)&nbsp;<B>is&nbsp;null</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Finalize(Object:&nbsp;<B>in&nbsp;out</B>&nbsp;Controlled)&nbsp;<B>is&nbsp;null</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>similarly&nbsp;for&nbsp;Limited_Controlled</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Ada.Finalization;</div>
+<div class="Normal">The procedures <SPAN Class="swiss">Initialize</SPAN>, 
+<SPAN Class="swiss">Adjust</SPAN>, and <SPAN Class="swiss">Finalize</SPAN> 
+are now explicitly given as null procedures. This is only a cosmetic 
+change since the Ada 95 RM states that the default implementations have 
+no effect. However, this neatly clarifies the situation and removes ad 
+hoc semantic rules. (The pragma <SPAN Class="swiss">Preelaborable_Initialization</SPAN> 
+is explained in Section <A HREF="Rat-6-4.html">6.4</A>.)</div>
+<div class="Normal">Another important change is the ability to do type 
+extension at a level more nested than that of the parent type. This means 
+that controlled types can now be declared at any level whereas in Ada 
+95, since the package <SPAN Class="swiss">Ada.Finalization</SPAN> is 
+at the library level, controlled types could only be declared at the 
+library level. There are similar advantages in generics since currently 
+many generics can only be instantiated at the library level.</div>
+<div class="Normal">The final change in the OO area to be described here 
+is the ability to (optionally) state explicitly whether a new operation 
+overrides an existing one or not.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 95, small careless 
+errors in subprogram profiles can result in unfortunate consequences 
+whose cause is often difficult to determine. This is very much against 
+the design goal of Ada to encourage the writing of correct programs and 
+to detect errors at compilation time whenever possible. Consider&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Finalization;&nbsp;<B>use</B>&nbsp;Ada.Finalization;<BR>
+<B>package</B>&nbsp;Root&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;new</B>&nbsp;Controlled&nbsp;<B>with</B>&nbsp;...&nbsp;;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(Obj:&nbsp;<B>in&nbsp;out</B>&nbsp;T;&nbsp;Data:&nbsp;<B>in</B>&nbsp;Integer);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Finalise(Obj:&nbsp;<B>in&nbsp;out</B>&nbsp;T);<BR>
+<B>end</B>&nbsp;Root;</div>
+<div class="Normal">Here we have a controlled type plus an operation 
+<SPAN Class="swiss">Op</SPAN> of that type. Moreover, we intended to 
+override the automatically inherited null procedure <SPAN Class="swiss">Finalize</SPAN> 
+of <SPAN Class="swiss">Controlled</SPAN> but, being foolish, we have 
+spelt it <SPAN Class="swiss">Finalise</SPAN>. So our new procedure does 
+not override <SPAN Class="swiss">Finalize</SPAN> at all but merely provides 
+another operation. Assuming that we wrote <SPAN Class="swiss">Finalise</SPAN> 
+to do something useful then we will find that nothing happens when an 
+object of the type <SPAN Class="swiss">T</SPAN> is automatically finalized 
+at the end of a block because the inherited null procedure is called 
+rather than our own code. This sort of error can be very difficult to 
+track down.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 2005 we can 
+protect against such errors since it is possible to mark overriding operations 
+as such thus&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Finalize(Obj:&nbsp;in&nbsp;out&nbsp;T);</div>
+<div class="Normal">And now if we spell <SPAN Class="swiss">Finalize</SPAN> 
+incorrectly then the compiler will detect the error. Note that <B>overriding</B> 
+is another new reserved word. However, partly for reasons of compatibility, 
+the use of overriding indicators is optional; there are also deeper reasons 
+concerning private types and generics which are discussed in Section 
+<A HREF="Rat-2-7.html">2.7</A>.<A NAME="I1009"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Similar problems can 
+arise if we get the profile wrong. Suppose we derive a new type from 
+<SPAN Class="swiss">T</SPAN> and attempt to override <SPAN Class="swiss">Op</SPAN> 
+thus&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Root.Leaf&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;NT&nbsp;<B>is&nbsp;new</B>&nbsp;T&nbsp;<B>with&nbsp;null&nbsp;record</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(Obj:&nbsp;<B>in&nbsp;out</B>&nbsp;NT;&nbsp;Data:&nbsp;<B>in</B>&nbsp;String);<BR>
+<B>end</B>&nbsp;Root.Leaf;</div>
+<div class="Normal" style="margin-bottom: 0.4em">In this case we have 
+given the identifier <SPAN Class="swiss">Op</SPAN> correctly but the 
+profile is different because the parameter <SPAN Class="swiss">Data</SPAN> 
+has inadvertently been declared as of type <SPAN Class="swiss">String</SPAN> 
+rather than <SPAN Class="swiss">Integer</SPAN>. So this new version of 
+<SPAN Class="swiss">Op</SPAN> will simply be an overloading rather than 
+an overriding. Again we can guard against this sort of error by writing 
+</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(Obj:&nbsp;<B>in&nbsp;out</B>&nbsp;NT;&nbsp;Data:&nbsp;<B>in</B>&nbsp;Integer);</div>
+<div class="Normal" style="margin-bottom: 0.4em">On the other hand maybe 
+we truly did want to provide a new operation. In this case we can write 
+<B>not overriding</B> and the compiler will then ensure that the new 
+operation is indeed not an overriding of an existing one thus&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>not&nbsp;overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(Obj:&nbsp;<B>in&nbsp;out</B>&nbsp;NT;&nbsp;Data:&nbsp;<B>in</B>&nbsp;String);</div>
+<div class="Normal">The use of these overriding indicators prevents errors 
+during maintenance. Thus if later we add a further parameter to <SPAN Class="swiss">Op</SPAN> 
+for the root type <SPAN Class="swiss">T</SPAN> then the use of the indicators 
+will ensure that we modify all the derived types appropriately.<A NAME="I1010"></A></div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

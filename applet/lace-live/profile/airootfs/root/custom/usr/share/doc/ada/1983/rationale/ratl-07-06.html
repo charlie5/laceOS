@@ -1,0 +1,145 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 7.6: The Construction of Private Types</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 7: Derived Types</H2>
+
+<H3><a name="7.6">7.6 The Construction of Private Types</a></H3>
+
+For the  construction of  private types, derived types provide an easy
+and unambiguous  way of  distinguishing the  operations of the private
+type from  those of the type used for its representation (that is, the
+type declared by the full type declaration). The relevant aspects are:
+(1) the  fact that the parent and the derived type are distinct types;
+(2) the fact that explicit conversions between the two types exist.
+<p>
+Consider for  example the  case where  an operation  specified  for  a
+private type  is implemented in terms of an operation of the type that
+is used for representing the private type:
+<p>
+<table border cellpadding=6><tr><td><pre>
+package LOCKSMITH is
+  type KEY is private;
+  procedure GET_KEY(K :  out KEY);
+  ...
+  function "&lt;" (X, Y :  KEY) return BOOLEAN;
+private
+  type KEY is new CHARACTER;
+  ...
+end;
+</pre></td></tr></table>
+<p>
+The user need not know that keys are implemented as characters, but he
+is provided  with the  operator "&lt;"  to order  keys. This  operator is
+implemented as the comparison of the corresponding characters:
+<p>
+<table border cellpadding=6><tr><td><pre>
+package body LOCKSMITH is
+  ...
+  function "&lt;" (X, Y :  KEY) return BOOLEAN is
+  begin
+    return CHARACTER(X) &lt; CHARACTER(Y);
+  end;
+  ...
+end LOCKSMITH;
+</pre></td></tr></table>
+<p>
+The function first converts the parameters X and Y into characters and
+then compares  them using character comparison. (Note that X &lt; Y would
+not work: it would be a recursive call.)
+<p>
+A more  general example  of this  problem is provided by the following
+schema
+<p>
+<table border cellpadding=6><tr><td><pre>
+package P is
+  type T is private;
+  function F(X :  T) return T;
+private
+  type T is new REP;
+  <HR> there exists a function F operating on REP
+end P;
+</pre></td></tr></table>
+<p>
+In order  to implement  the function F on T by means of that on REP we
+first convert  the parameter  to the type REP; then convert the result
+back to type T.
+<p>
+<table border cellpadding=6><tr><td><pre>
+package body P is
+  ...
+  function F(X :  T) return T is
+  begin
+    return T(F(REP(X)));
+  end;
+  ...
+end;
+</pre></td></tr></table>
+<p>
+Without derivation,  a solution  can be  developed using one-component
+records:
+<p>
+<table border cellpadding=6><tr><td><pre>
+package P is
+  type T is private;
+  function F(X :  T) return T;
+private
+  type T is
+    record
+      VALUE :  REP;
+    end record;
+end;
+
+package body P is
+  ...
+  function F(X :  T) return T is
+  begin
+    return T'(VALUE =&gt;  F(X.VALUE));
+  end;
+  ...
+end;
+</pre></td></tr></table>
+<p>
+The function  F is  applied to  the single component of the parameter;
+then a one-component aggregate is returned as the function result. The
+drawback of this solution is its lack of symmetry. Thus, compare
+<p>
+<PRE>    return T(F(REP(X)));</PRE>
+<p>
+with
+<p>
+<PRE>    return T'(VALUE =&gt;  F(X.VALUE));</PRE>
+<p>
+Instead of the succession of two conversions - to REP and then back to
+T - we have now the succession of component selection (X.VALUE) and of
+aggregate construction T'(VALUE =&gt; ...  ). Note that there are already
+cases where  the language requires one-component records (for implicit
+initializations). For  the remaining cases, however, the solution with
+derived types is more elegant.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-07-07.html#7.7"><b>NEXT</b></a>
+&#128; <a href="ratl-07-05.html#7.5"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-07.html#7"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

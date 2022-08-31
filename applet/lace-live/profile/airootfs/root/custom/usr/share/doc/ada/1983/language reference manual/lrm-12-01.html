@@ -1,0 +1,461 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 12.1: Generic Declarations</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="12.1">12.1</A>.  Generic Declarations  </H2>
+<A HREF="lrm-12.html#12"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-12-02.html#12.2"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+A generic declaration declares a generic unit, which is  either  a  generic
+subprogram  or a generic package.  A generic declaration includes a generic
+formal part declaring any generic  formal  parameters.   A  generic  formal
+parameter  can  be  an  object;   alternatively  (unlike  a  parameter of a
+subprogram), it can be a type or a subprogram. 
+<pre>
+    generic_declaration ::= generic_specification; 
+
+    generic_specification ::=
+         generic_formal_part subprogram_specification
+       | generic_formal_part package_specification 
+
+    generic_formal_part ::= generic {generic_parameter_declaration} 
+
+    generic_parameter_declaration ::=
+         identifier_list : [in [out]] type_mark [:= expression];  
+       | type identifier is generic_type_definition;
+       | private_type_declaration
+       | with subprogram_specification [is name];
+       | with subprogram_specification [is &lt;&gt;]; 
+
+    generic_type_definition ::=
+         (&lt;&gt;) | range &lt;&gt; | digits &lt;&gt; | delta &lt;&gt;
+       | array_type_definition | access_type_definition                           
+</pre>
+<P>
+The terms generic formal object (or simply, formal object), generic  formal
+type  (or  simply,  formal type), and generic formal subprogram (or simply,
+formal subprogram) are  used  to  refer  to  corresponding  generic  formal
+parameters. 
+<P>
+The only form of subtype indication allowed within a generic formal part is
+a  type  mark (that is, the subtype indication must not include an explicit
+constraint).  The designator of a generic subprogram must be an identifier. 
+<P>
+Outside the specification and body of a generic  unit,  the  name  of  this
+program unit denotes the generic unit.  In contrast, within the declarative
+region  associated with a generic subprogram, the name of this program unit
+denotes the subprogram obtained by the current instantiation of the generic
+unit.  Similarly, within the declarative region associated with  a  generic
+package,  the name of this program unit denotes the package obtained by the
+current instantiation. 
+<P>
+The elaboration of a generic declaration has no other effect. 
+<P>
+Examples of generic formal parts: 
+<pre>
+    generic     --  parameterless 
+
+    generic
+       SIZE : NATURAL;  --  formal object 
+
+    generic
+       LENGTH : INTEGER := 200;          -- formal object with a default
+                                            expression
+       AREA   : INTEGER := LENGTH*LENGTH; -- formal object with a default
+                                             expression
+
+    generic
+       type ITEM  is private;                       -- formal type
+       type INDEX is (&lt;&gt;);                          -- formal type
+       type ROW   is array(INDEX range &lt;&gt;) of ITEM; -- formal type
+       with function "&lt;"(X, Y : ITEM) return BOOLEAN;    -- formal subprogram 
+</pre>
+<P>
+Examples of generic declarations declaring generic subprograms: 
+<pre>
+    generic
+       type ELEM is private;
+    procedure EXCHANGE(U, V : in out ELEM); 
+    generic
+       type ITEM is private;
+       with function "*"(U, V : ITEM) return ITEM is &lt;&gt;;
+    function SQUARING(X : ITEM) return ITEM; 
+</pre>
+<P>
+Example of a generic declaration declaring a generic package: 
+<pre>
+    generic
+       type ITEM   is private;
+       type VECTOR is array (POSITIVE range &lt;&gt;) of ITEM;
+       with function SUM(X, Y : ITEM) return ITEM;
+    package ON_VECTORS is
+       function SUM  (A, B : VECTOR) return VECTOR;  
+       function SIGMA(A    : VECTOR) return ITEM;
+       LENGTH_ERROR : exception;
+       end;                                                                      
+</pre>
+<P>
+Notes: 
+<P>
+Within a generic subprogram, the name of this program unit acts as the name 
+of a subprogram.  Hence this name can be overloaded, and it can appear in a
+recursive call of the current instantiation.  For  the  same  reason,  this
+name  cannot  appear  after  the reserved word new in a (recursive) generic
+instantiation. 
+<P>
+An expression that occurs in a generic formal part is  either  the  default
+expression  for  a generic formal object of mode in, or a constituent of an
+entry name given as default name for a formal subprogram,  or  the  default
+expression for a parameter of a formal subprogram.  Default expressions for
+generic  formal  objects  and default names for formal subprograms are only
+evaluated for generic  instantiations  that  use  such  defaults.   Default
+expressions  for  parameters  of  formal subprograms are only evaluated for
+calls of the  formal  subprograms  that  use  such  defaults.   (The  usual
+visibility  rules  apply  to  any  name  used in a default expression:  the
+denoted entity must therefore be visible at the place of  the  expression.) 
+<P>
+Neither   generic  formal  parameters  nor  their  attributes  are  allowed
+constituents of static expressions (see <a href="lrm-04-09.html#4.9">4.9</a>). 
+<P>
+<b>References:</b>   <A HREF="lrm-03-08.html#3.8">access  type  definition</A>,
+<A HREF="lrm-03-06.html#3.6">array  type  definition</A>,
+<A HREF="lrm-04-01.html#4.1.4">attribute</A>,
+<A HREF="lrm-03-03.html#3.3">constraint</A>,
+<A HREF="lrm-03-01.html#3.1">declaration</A>,
+<A HREF="lrm-06-01.html#6.1">designator</A>,
+<A HREF="lrm-03-01.html#3.1">elaboration has no other effect</A>,
+<A HREF="lrm-03-01.html#3.1">entity</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="lrm-06-05.html#6.5">function</A>,
+<A HREF="lrm-12-03.html#12.3">generic  instantiation</A>,
+<A HREF="lrm-02-03.html#2.3">identifier</A>,
+<A HREF="lrm-03-02.html#3.2">identifier list</A>,
+<A HREF="lrm-12-03.html#12.3">instance</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-03-02.html#3.2">object</A>,
+<A HREF="lrm-06-06.html#6.6">overloading</A>,
+ and <A HREF="lrm-08-07.html#8.7">8.7</A>,
+<A HREF="lrm-07-01.html#7.1">package specification</A>,
+<A HREF="lrm-06-02.html#6.2">parameter of a subprogram</A>,
+<A HREF="lrm-07-04.html#7.4">private type definition</A>,
+<A HREF="lrm-06-01.html#6.1">procedure</A>,
+<A HREF="lrm-02-09.html#2.9">reserved word</A>,
+<A HREF="lrm-04-09.html#4.9">static expression</A>,
+<A HREF="lrm-06.html#6">subprogram</A>,
+<A HREF="lrm-06-01.html#6.1">subprogram specification</A>,
+<A HREF="lrm-03-03.html#3.3.2">subtype indication</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-03-03.html#3.3.2">type mark</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-12-02.html#12.2.1">12.2.1&nbsp;Generic Formal Parts</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-12-02.html#12.2.3">12.2.3&nbsp;Private Types as Generic Formal Types</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-12-02.html#12.2.4">12.2.4&nbsp;Other Forms of Generic Formal Types</a>
+<p>
+
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-02-01.html#2.1.2">2.1.2&nbsp;Indentation</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-03-02.html#3.2.4">3.2.4&nbsp;Program Unit Names</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-04-02.html#4.2.2">4.2.2&nbsp;Nested Packages</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-01.html#8.1.1">8.1.1&nbsp;Application-Independent Naming</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-01.html#8.1.2">8.1.2&nbsp;Abbreviations</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-01.html#8.1.3">8.1.3&nbsp;Generic Formal Parameters</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-03.html#8.3.1">8.3.1&nbsp;Complete Functionality</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-03.html#8.3.2">8.3.2&nbsp;Generic Units</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-03.html#8.3.3">8.3.3&nbsp;Using Generic Units to Encapsulate Algorithms</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-03.html#8.3.4">8.3.4&nbsp;Using Generic Units for Abstract Data Types</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-03.html#8.3.5">8.3.5&nbsp;Iterators</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-04.html#8.4.1">8.4.1&nbsp;Using Generic Parameters to Reduce Coupling</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-04.html#8.4.3">8.4.3&nbsp;Part Families</a>
+<p>
+<b>Sub-topics:</b>
+<ul>
+<li><A HREF="#12.1.1">12.1.1</A> Generic Formal Objects  
+<li><A HREF="#12.1.2">12.1.2</A> Generic Formal Types   
+<li><A HREF="#12.1.3">12.1.3</A> Generic Formal Subprograms  
+</ul>
+
+<H3><A NAME="12.1.1">12.1.1</A>.  Generic Formal Objects  </H3>
+<A HREF="#12.1"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#12.1.2"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The first form of generic parameter  declaration  declares  generic  formal
+objects.   The type of a generic formal object is the base type of the type  
+denoted by the type mark given in the  generic  parameter  declaration.   A
+generic  parameter  declaration with several identifiers is equivalent to a
+sequence of single generic parameter declarations, as explained in  section
+<a href="lrm-03-02.html#3.2">3.2</a>. 
+<P>
+A  generic  formal  object  has a mode that is either in or in out.  In the
+absence of an explicit mode indication in a generic parameter  declaration,
+the  mode  in  is  assumed;  otherwise the mode is the one indicated.  If a
+generic parameter declaration ends with an expression,  the  expression  is
+the  default  expression  of  the  generic  formal  parameter.   A  default
+expression is only allowed  if  the  mode  is  in  (whether  this  mode  is
+indicated explicitly or implicitly).  The type of a default expression must
+be that of the corresponding generic formal parameter.                        
+<P>
+A  generic  formal object of mode in is a constant whose value is a copy of
+the value supplied as the matching generic actual parameter  in  a  generic
+instantiation,  as described in section <a href="lrm-12-03.html#12.3">12.3</a>.  The type of a generic formal
+object of mode in must not be a  limited  type;   the  subtype  of  such  a
+generic  formal object is the subtype denoted by the type mark given in the
+generic parameter declaration. 
+<P>
+A generic formal object of mode in out is a variable and denotes the object
+supplied  as  the  matching  generic  actual   parameter   in   a   generic
+instantiation, as described in section <a href="lrm-12-03.html#12.3">12.3</a>.  The constraints that apply to
+the  generic  formal  object  are those of the corresponding generic actual
+parameter.                                                                       
+<P>
+Note:
+<P>
+The constraints that apply to a generic formal object of mode  in  out  are
+those  of  the corresponding generic actual parameter (not those implied by
+the type mark that appears in the generic parameter declaration).  Whenever
+possible (to avoid confusion) it is recommended that the  name  of  a  base
+type be used for the declaration of such a formal object.  If, however, the
+base  type is anonymous, it is recommended that the subtype name defined by
+the type declaration for the base type be used. 
+<P>
+<b>References:</b>  <A HREF="lrm-03-03.html#3.3.1">anonymous type</A>,
+<A HREF="lrm-05-02.html#5.2">assignment</A>,
+<A HREF="lrm-03-03.html#3.3">base type</A>,
+<A HREF="lrm-03-02.html#3.2">constant declaration</A>,
+<A HREF="lrm-03-03.html#3.3">constraint</A>,
+<A HREF="lrm-03-01.html#3.1">declaration</A>,
+<A HREF="lrm-12-03.html#12.3">generic actual parameter</A>,
+<A HREF="#12.1">generic formal object</A>,
+<A HREF="#12.1">generic formal  parameter</A>,
+<A HREF="lrm-12-03.html#12.3">generic instantiation</A>,
+<A HREF="#12.1">generic  parameter  declaration</A>,
+<A HREF="lrm-02-03.html#2.3">identifier</A>,
+<A HREF="lrm-07-04.html#7.4.4">limited type</A>,
+<A HREF="lrm-12-03.html#12.3">matching generic actual parameter</A>,
+<A HREF="lrm-06-01.html#6.1">mode</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-03-02.html#3.2">object</A>,
+<A HREF="lrm-04-01.html#4.1">simple name</A>,
+<A HREF="lrm-03-03.html#3.3">subtype</A>,
+<A HREF="lrm-03-03.html#3.3">type declaration</A>,
+<A HREF="lrm-03-03.html#3.3.2">type mark</A>,
+<A HREF="lrm-03-02.html#3.2.1">variable</A>.
+<P>
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-02.html#8.2.4">8.2.4&nbsp;Subtypes in Generic Specifications</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-02.html#8.2.6">8.2.6&nbsp;Hidden Tasks</a>
+
+  
+<H3><A NAME="12.1.2">12.1.2</A>.  Generic Formal Types   </H3>
+<A HREF="#12.1.1"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#12.1"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#12.1.3"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+A generic parameter declaration that includes a generic type definition  or
+a  private  type  declaration  declares  a  generic formal type.  A generic
+formal type denotes  the  subtype  supplied  as  the  corresponding  actual
+parameter  in  a  generic instantiation, as described in <a href="lrm-12-03.html#12.3d">12.3(d)</a>.  However,
+within a generic unit,  a  generic  formal  type  is  considered  as  being
+distinct  from  all  other  (formal  or  nonformal)  types.   The  form  of
+constraint applicable to a formal type in a subtype indication  depends  on
+the class of the type as for a nonformal type. 
+<P>
+The only form of discrete range that is allowed within the declaration of a
+generic formal (constrained) array type is a type mark. 
+<P>
+The  discriminant  part of a generic formal private type must not include a
+default expression for a discriminant.  (Consequently, a variable  that  is
+declared  by  an  object  declaration  must be constrained if its type is a
+generic formal type with discriminants.) 
+<P>
+Within the declaration and body of a generic unit, the operations available
+for values of a generic formal type (apart from  any  additional  operation
+specified  by  a  generic  formal subprogram) are determined by the generic
+parameter declaration for the formal type: 
+<ol>
+<li>For a private type declaration, the  available  operations  are  those
+defined  in  section  <a href="lrm-07-04.html#7.4.2">7.4.2</a>  (in particular, assignment, equality, and
+inequality are available for a private type unless it is limited).<br><br>                                                                                                                                                                                                                                                 
+<li>For an array type  definition,  the  available  operations  are  those
+defined  in  section <a href="lrm-03-06.html#3.6.2">3.6.2</a> (for example, they include the formation of
+indexed components and slices).<br><br>    
+<li>For an access type definition,  the  available  operations  are  those
+defined in section <a href="lrm-03-08.html#3.8.2">3.8.2</a> (for example, allocators can be used). 
+</ol>
+The  four forms of generic type definition in which a box appears (that is,
+the compound delimiter &lt;&gt;) correspond  to  the  following  major  forms  of
+scalar type: 
+<ol>
+<li>Discrete types:  (&lt;&gt;)<br> 
+The  available operations are the operations common to enumeration and
+integer types; these are defined in section <a href="lrm-03-05.html#3.5.5">3.5.5</a>.<br><br>                                              
+<li>Integer types:  range &lt;&gt;<br> 
+The available operations are the operations of integer  types  defined
+in section <a href="lrm-03-05.html#3.5.5">3.5.5</a>.<br><br> 
+<li>Floating point types:  digits &lt;&gt;<br> 
+The available operations are those defined in section <a href="lrm-03-05.html#3.5.8">3.5.8</a>.<br><br> 
+<li>Fixed point types:  delta &lt;&gt;<br>  
+The available operations are those defined in section <a href="lrm-03-05.html#3.5.10">3.5.10</a>.  
+</ol>
+In  all  of  the  above  cases  (a)  through (f), each operation implicitly
+associated with a formal type (that is, other than an  operation  specified
+by  a  formal  subprogram)  is  implicitly  declared  at  the  place of the
+declaration of the formal type.  The same holds for a  formal  fixed  point
+type,  except  for  the  multiplying operators that deliver a result of the
+type  universal_fixed  (see  <a href="lrm-04-05.html#4.5.5">4.5.5</a>),  since  these  special  operators  are
+declared in the package STANDARD. 
+<P>
+For  an  instantiation of the generic unit, each of these operations is the
+corresponding basic operation or predefined operator of the matching actual
+type.  For an operator, this rule applies even if  the  operator  has  been
+redefined  for  the actual type or for some parent type of the actual type.  
+<P>
+Examples of generic formal types: 
+<pre>
+    type ITEM is private;
+    type BUFFER(LENGTH : NATURAL) is limited private; 
+
+    type ENUM  is (&lt;&gt;);
+    type INT   is range &lt;&gt;;
+    type ANGLE is delta &lt;&gt;;
+    type MASS  is digits &lt;&gt;; 
+
+    type TABLE is array (ENUM) of ITEM;  
+</pre>
+<P>
+Example of a generic formal part declaring a formal integer type: 
+<pre>
+    generic
+       type RANK is range &lt;&gt;;
+       FIRST  : RANK := RANK'FIRST;
+       SECOND : RANK := FIRST + 1;  --  the operator "+" of the type RANK  
+</pre>
+<P>
+<b>References:</b>   <A HREF="lrm-03-08.html#3.8">access  type  definition</A>,
+<A HREF="lrm-04-08.html#4.8">allocator</A>,
+<A HREF="lrm-03-06.html#3.6">array   type definition</A>,
+<A HREF="lrm-05-02.html#5.2">assignment</A>,
+<A HREF="lrm-12-02.html#12.2">body of a generic unit</A>,
+<A HREF="lrm-03-03.html#3.3">class of type</A>,
+<A HREF="lrm-03-03.html#3.3">constraint</A>,
+<A HREF="lrm-03-01.html#3.1">declaration</A>,
+<A HREF="#12.1">declaration of a generic  unit</A>,
+<A HREF="lrm-03-06.html#3.6">discrete range</A>,
+<A HREF="lrm-03-05.html#3.5">discrete type</A>,
+<A HREF="lrm-03-07.html#3.7.1">discriminant part</A>,
+<A HREF="lrm-03-05.html#3.5.1">enumeration type</A>,
+<A HREF="lrm-04-05.html#4.5.2">equality</A>,
+<A HREF="lrm-03-05.html#3.5.9">fixed point type</A>,
+<A HREF="lrm-03-05.html#3.5.7">floating point type</A>,
+<A HREF="lrm-12-03.html#12.3">generic actual type</A>,
+<A HREF="#12.1">generic formal part</A>,
+<A HREF="#12.1.3">generic  formal   subprogram</A>,
+<A HREF="#12.1">generic formal type</A>,
+<A HREF="#12.1">generic parameter declaration</A>,
+<A HREF="#12.1">generic type definition</A>,
+<A HREF="lrm-04-01.html#4.1.1">indexed  component</A>,
+<A HREF="lrm-04-05.html#4.5.2">inequality</A>,
+<A HREF="lrm-12-03.html#12.3">instantiation</A>,
+<A HREF="lrm-03-05.html#3.5.4">integer type</A>,
+<A HREF="lrm-07-04.html#7.4.4">limited private type</A>,
+<A HREF="lrm-12-03.html#12.3.2">matching generic actual  type</A>,
+ and <A HREF="lrm-12-03.html#12.3.3">12.3.3</A>,
+ and <A HREF="lrm-12-03.html#12.3.4">12.3.4</A>,
+ and <A HREF="lrm-12-03.html#12.3.5">12.3.5</A>,
+<A HREF="lrm-04-05.html#4.5">multiplying operator</A>,
+ and <A HREF="lrm-04-05.html#4.5.5">4.5.5</A>,
+<A HREF="lrm-03-03.html#3.3">operation</A>,
+<A HREF="lrm-04-05.html#4.5">operator</A>,
+<A HREF="lrm-03-04.html#3.4">parent type</A>,
+<A HREF="lrm-C.html#C">8.6</A>,
+<A HREF="lrm-03-03.html#3.3.2">subtype indication</A>,
+<A HREF="lrm-03-03.html#3.3.2">type mark</A>,
+<A HREF="lrm-03-05.html#3.5.9">universal_fixed</A>.
+<P>
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-02.html#8.2.2">8.2.2&nbsp;Unconstrained Arrays</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-03.html#8.3.3">8.3.3&nbsp;Using Generic Units to Encapsulate Algorithms</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-03.html#8.3.4">8.3.4&nbsp;Using Generic Units for Abstract Data Types</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-03.html#8.3.6">8.3.6&nbsp;Private and Limited Private Types</a>
+
+  
+<H3><A NAME="12.1.3">12.1.3</A>.  Generic Formal Subprograms  </H3>
+<A HREF="#12.1.2"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#12.1"><img src="lrm-up.gif" alt="[UP]"></A>
+<P>
+A  generic  parameter  declaration that includes a subprogram specification
+declares a generic formal subprogram. 
+<P>
+Two alternative forms of defaults can be specified in the declaration of  a
+generic formal subprogram.  In these forms, the subprogram specification is
+followed  by  the  reserved  word  is  and  either  a  box or the name of a
+subprogram or entry.  The matching rules for these defaults  are  explained
+in section <a href="lrm-12-03.html#12.3.6">12.3.6</a>. 
+<P>
+A generic formal subprogram denotes the subprogram, enumeration literal, or
+entry  supplied  as the corresponding generic actual parameter in a generic
+instantiation, as described in section <a href="lrm-12-03.html#12.3f">12.3(f)</a>. 
+<P>
+Examples of generic formal subprograms: 
+<pre>
+    with function INCREASE(X : INTEGER) return INTEGER;
+    with function SUM(X, Y : ITEM) return ITEM; 
+
+    with function "+"(X, Y : ITEM) return ITEM is &lt;&gt;;
+    with function IMAGE(X : ENUM) return STRING is ENUM'IMAGE; 
+
+    with procedure UPDATE is DEFAULT_UPDATE; 
+</pre>
+<P>
+Notes: 
+<P>
+The constraints that apply to a parameter of a formal subprogram are  those   
+of  the corresponding parameter in the specification of the matching actual
+subprogram (not those  implied  by  the  corresponding  type  mark  in  the
+specification  of  the formal subprogram).  A similar remark applies to the
+result of a function.   Whenever  possible  (to  avoid  confusion),  it  is
+recommended  that the name of a base type be used rather than the name of a
+subtype in any declaration of a formal subprogram.  If, however,  the  base
+type  is  anonymous, it is recommended that the subtype name defined by the
+type declaration be used. 
+<P>
+The type specified for a formal parameter of a  generic  formal  subprogram
+can  be  any  visible  type,  including  a  generic formal type of the same
+generic formal part. 
+<P>
+<b>References:</b>  <A HREF="lrm-03-03.html#3.3.1">anonymous type</A>,
+<A HREF="lrm-03-03.html#3.3">base type</A>,
+<A HREF="#12.1.2">box  delimiter</A>,
+<A HREF="lrm-03-03.html#3.3">constraint</A>,
+<A HREF="lrm-06-01.html#6.1">designator</A>,
+<A HREF="lrm-12-03.html#12.3">generic  actual parameter</A>,
+<A HREF="#12.1">generic formal function</A>,
+<A HREF="#12.1">generic formal subprogram</A>,
+<A HREF="lrm-12-03.html#12.3">generic instantiation</A>,
+<A HREF="#12.1">generic parameter declaration</A>,
+<A HREF="lrm-02-03.html#2.3">identifier</A>,
+<A HREF="lrm-12-03.html#12.3.6">matching  generic actual  subprogram</A>,
+<A HREF="lrm-06-01.html#6.1">operator symbol</A>,
+<A HREF="lrm-06-02.html#6.2">parameter of a subprogram</A>,
+<A HREF="lrm-08-05.html#8.5">renaming declaration</A>,
+<A HREF="lrm-02-09.html#2.9">reserved word</A>,
+<A HREF="lrm-08-02.html#8.2">scope</A>,
+<A HREF="lrm-06.html#6">subprogram</A>,
+<A HREF="lrm-06-01.html#6.1">subprogram specification</A>,
+<A HREF="lrm-03-03.html#3.3.2">subtype</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-03-03.html#3.3.2">type mark</A>.
+<P>
+
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-03.html#8.3.6">8.3.6&nbsp;Private and Limited Private Types</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

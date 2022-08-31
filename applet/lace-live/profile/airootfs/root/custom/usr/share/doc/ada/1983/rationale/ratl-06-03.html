@@ -1,0 +1,506 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 6.3: Presentation of Access Types</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 6: Access Types</H2>
+
+<H3><a name="6.3">6.3 Presentation of Access Types</a></H3>
+
+The presentation  of the properties of access types in Ada. will cover
+the following topics:
+<ul>
+<li>How to declare access types
+
+<li>The collection  of dynamically  allocated objects  implied  by  the
+declaration of an access type
+
+<li>How to declare access variables and constants
+
+<li>How to allocate a dynamically allocated record object
+
+<li>Component and value assignments
+
+<li>Recursive access types
+
+<li>Subprograms with parameters belonging to an access type
+
+<li>Storage  management  for  a  collection  of  dynamically  allocated
+objects
+</ul>
+
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#6.3.1">6.3.1  Declaration of Access Types and Subtypes</a><BR>
+<a href="#6.3.2">6.3.2  Collections of Dynamically Allocated Objects</a><BR>
+<a href="#6.3.3">6.3.3  Access Variables, Allocators, and Access Constants</a><BR>
+<a href="#6.3.4">6.3.4  Component Selection, Indexed Components, and Value Assignments</a><BR>
+<a href="#6.3.5">6.3.5  Recursive Access Types</a><BR>
+<a href="#6.3.6">6.3.6  Access Objects as Parameters</a><BR>
+<a href="#6.3.7">6.3.7  Storage Management for Access Types</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="6.3.1">6.3.1 Declaration of Access Types and Subtypes</a></H3>
+
+An access  variable, like any other variable in Ada, has a type, which
+is in  this case an access type. The example below shows a declaration
+of a record type followed by the declaration of an access type:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type PERSON(SEX :  GENDER :=  F) is
+  record
+    AGE :  INTEGER range 0 .. 123;
+    ...
+  end record;
+
+type PERSON_NAME is access PERSON;
+</pre></td></tr></table>
+<p>
+In this  example, PERSON  is declared  as a  record type,  and  static
+variables of  this type  can be  declared as  usual. The  access  type
+PERSON_NAME is  declared as  a type  whose values  provide  access  to
+dynamically allocated record objects of type PERSON.
+<p>
+It is  of course possible to copy the value of a dynamically allocated
+PERSON into  a static  variable of  this type  and vice  versa.  Note,
+however, that  there  is  no  way  for  an  access  variable  of  type
+PERSON_NAME to designate a static variable of type PERSON.
+<p>
+The type  of the  dynamically allocated  objects can  be any type. For
+example it can be an array type, as in
+<p>
+<PRE>    type ALPHA is access STRING;</PRE>
+<p>
+It is  possible to  declare a subtype of an access type, and this will
+mean that  the constraints  defined by  the  subtype  declaration  are
+imposed  on  the  dynamically  allocated  objects.  Thus  the  subtype
+ALPHA_LINE defined  below corresponds to dynamically allocated strings
+of 80 characters:
+<p>
+<PRE>    subtype ALPHA_LINE is ALPHA(1 .. 80);</PRE>
+
+<H3><BR><a name="6.3.2">6.3.2 Collections of Dynamically Allocated Objects</a></H3>
+
+Conceptually  it  is  important  to  realize  that  each  access  type
+declaration implicitly  defines a collection for dynamically allocated
+objects. The  actual collection will be built during program execution
+as allocators are executed. Its lifetime cannot be longer than that of
+the program unit in which the access type definition is provided.
+<p>
+Collections in  Ada are  implicit and cannot be named (unlike those in
+<a href="ratl-BIB.html#languages">Lis</a> and  <a href="ratl-BIB.html#languages">Euclid</a>). The  collections associated  with  different  access
+types are  always disjoint,  so  that  dynamically  allocated  objects
+designated by  access variables  that do  not have  the same  type are
+guaranteed to be in different collections.
+
+<H3><BR><a name="6.3.3">6.3.3 Access Variables, Allocators, and Access Constants</a></H3>
+
+Access variables  are declared in the usual way and may be initialized
+in their  declaration, for  instance with  the  value  of  some  other
+previously declared  access variable  or with  the special  value null
+representing no  internal name.  For safety  reasons, access variables
+that are  not explicitly  initialized are  implicitly initialized with
+this null  value. Hence  all variables  declared in  the example below
+have this initial value:
+<p>
+<table border cellpadding=6><tr><td><pre>
+YOU, HIM, HER :  PERSON_NAME;   -- implicit initialization to null
+SOMEONE :  PERSON_NAME  :=  null;    -- explicit initialization to null
+</pre></td></tr></table>
+<p>
+An allocator  creates a  dynamically allocated  object and assigns its
+internal name to an access variable:
+<p>
+<PRE>    YOU :=   new  PERSON'(SEX =&gt;  F, AGE  =&gt; 30,  ... );  --  all components, as usual</PRE>
+<p>
+The above  allocator includes  a qualified aggregate, with the name of
+the  type   of  the  dynamically  allocated  object  -  the  so-called
+designated type - and with the aggregate defining the initial value of
+this object.
+<p>
+The constraints  applicable to  a  dynamically  allocated  object  are
+established when  the allocator  is evaluated  and cannot  be modified
+during the  lifetime of  the dynamically allocated object. In the case
+of a  dynamically allocated  array, this means that the bounds of such
+an array cannot be modified. Consider
+<p>
+<PRE>    MESSAGE :  ALPHA  :=  new STRING'(1 .. 45 =&gt; ' ');</PRE>
+<p>
+It is  certainly possible to modify the character values of the string
+designated by MESSAGE, but the bounds of this string remain those that
+are set at allocation time (here 1 and 45). Similarly, for a type with
+discriminants, the  discriminant values established at allocation time
+cannot be modified:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type TEXT(SIZE :  LENGTH) is
+  record
+    POS    :  LENGTH  :=  0;
+    DATA :  STRING(1 .. SIZE);
+  end record;
+
+type TEXT_NAME is access TEXT;
+
+BUFFER :  TEXT_NAME;
+...
+BUFFER :=  new TEXT'(SIZE =&gt; 50, POS =&gt; 0, DATA =&gt; (1 .. 50 =&gt; '&#42;'));
+</pre></td></tr></table>
+<p>
+The discriminant  SIZE, once  initialized by  the allocator, cannot be
+changed thereafter  (not even  by a  whole record  assignment  to  the
+dynamically allocated  record object). As a consequence, only the size
+actually  required   by  the  dynamically  allocated  object  need  be
+allocated.
+<p>
+Another possibility  is to  provide  a  constraint  in  the  allocator
+without otherwise initializing the dynamically allocated object. For a
+discriminant   constraint,   the   corresponding   discriminants   are
+initialized. Examples of such allocators are given below:
+<p>
+<table border cellpadding=6><tr><td><pre>
+MESSAGE  :=  new STRING(1 .. 90);    -- index constraint
+HIM      :=  new PERSON(SEX =&gt; M);   -- discriminant constraint
+BUFFER   :=  new TEXT(SIZE =&gt; 40);   -- discriminant constraint
+</pre></td></tr></table>
+<p>
+Declarations of  access constants  are given  in the  usual  way.  The
+access value (an internal name) contained by an access constant cannot
+be changed. Consider, for example, the constant declarations:
+<p>
+<table border cellpadding=6><tr><td><pre>
+YOU_NOW    :  constant PERSON_NAME  :=  YOU;
+
+DAY_NAME  : constant array (1 .. 7) of ALPHA :=
+            (new STRING'("MONDAY"),
+             new STRING'("TUESDAY"),
+             new STRING'("WEDNESDAY"),
+             new STRING'("THURSDAY"),
+             new STRING'("FRIDAY"),
+             new STRING'("SATURDAY"),
+             new STRING'("SUNDAY")  );
+</pre></td></tr></table>
+<p>
+The constant  YOU_NOW contains  the internal  name of  the dynamically
+allocated record  designated by YOU at the time of the initialization.
+It means  that YOU_NOW  will always  contain this access value even if
+YOU is  updated at  a later time. On the other hand, components of the
+person designated  by this  constant can  be modified  (aside from the
+discriminant) by assignments such as
+<p>
+<table border cellpadding=6><tr><td><pre>
+YOU_NOW.AGE :=  31;             -- or indirectly by
+YOU.AGE :=  31;
+</pre></td></tr></table>
+<p>
+Similarly,  the   array  DAY_NAME  is  a  constant  array,  hence  its
+components are  constant access  values obtained  from allocators. But
+this does  not mean that the strings designated by these constants are
+themselves constant,  and it  would not  be possible for a compiler to
+perform the string allocations statically (at compilation time) unless
+their invariability  can be  deduced on other grounds: for example, if
+this array  were local to a package body in which it is read but never
+updated.
+
+<H3><BR><a name="6.3.4">6.3.4 Component Selection, Indexed Components, and Value</H3> Assignments</a>
+
+In the previous example, the contents of YOU is the internal name of a
+dynamically allocated  record object.  The usual  syntax of  component
+selection is used, as if YOU were the record object itself (this means
+that dereferencing is implicit for component selection):
+<p>
+<table border cellpadding=6><tr><td><pre>
+YOU.AGE     -- a component that has the type INTEGER
+YOU.SEX     -- a component that has the type GENDER
+</pre></td></tr></table>
+<p>
+Similarly, we  can use  the normal  selection syntax  to designate the
+entire (dynamically  allocated) record  object.  Thus  YOU.all  is  an
+object of type PERSON such that the following conditions are true:
+<p>
+<table border cellpadding=6><tr><td><pre>
+YOU.all.SEX = YOU.SEX
+YOU.all.AGE = YOU.AGE
+...
+</pre></td></tr></table>
+<p>
+This notation  can also  appear in  an allocator, as in the assignment
+statement
+<p>
+<PRE>    HER :=  new PERSON'(YOU.all);</PRE>
+<p>
+Finally the  same notation may be used for value assignments. Remember
+that if  YOU and  HER contain  internal names of dynamically allocated
+record objects, then after the assignment
+<p>
+<PRE>    YOU :=  HER;</PRE>
+<p>
+the two  access variables contain the same internal name. In contrast,
+the  value  assignment  for  copying  the  value  of  the  dynamically
+allocated record  designated by  HER into  the  dynamically  allocated
+record designated  by YOU  - without  necessarily altering  the access
+values - is written
+<p>
+<PRE>    YOU.all :=  HER.all;</PRE>
+<p>
+Such  value   assignments  are  always  possible  between  dynamically
+allocated record  objects without  variants. With  variants, they  are
+legal only  if the  discriminants of  the objects  are identical. This
+must be  checked  (usually  at  execution  time),  and  the  exception
+CONSTRAINT_ERROR is raised if the check fails.
+<p>
+Indexed components  for arrays  denoted by  access types  are  written
+exactly as  in the  case of statically denoted arrays (this means that
+dereferencing is also implicit for indexing). Thus we can write
+<p>
+<table border cellpadding=6><tr><td><pre>
+MESSAGE(1) :=  '&#42;';
+MESSAGE(11 .. 16) :=  DAY_NAME(1)(1..6);
+MESSAGE(21 .. 27) :=  "MORNING";
+</pre></td></tr></table>
+<p>
+Note, finally,  that the  notation  X.all,  denoting  the  dynamically
+allocated object  designated by  X, can  be used  for all  dynamically
+allocated objects,  whether they are records, arrays, scalars, or task
+objects.
+
+<H3><BR><a name="6.3.5">6.3.5 Recursive Access Types</a></H3>
+
+The type  of a  record component  can be an access type. This opens up
+the  possibility  of  recursive  access  types,  where  a  dynamically
+allocated object  in a  given collection  has  components  designating
+other dynamically  allocated  objects  in  the  same  collection.  The
+declaration  of   recursive  access  types  will  usually  involve  an
+incomplete type  declaration. As  an example,  consider the  following
+variation of the type PERSON_NAME:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type PERSON(SEX :  GENDER :=  F);  -- Incomplete declaration of
+                                   -- PERSON              (1)
+type PERSON_NAME is access PERSON; -- Access type declaration (2)
+type PERSON(SEX :  GENDER :=  F) is     -- Full declaration of PERSON              (3)
+  record
+    AGE      :  INTEGER range 0 .. 123;
+    FATHER   :  PERSON_NAME(SEX =&gt;  M);     -- Component declaration                (4)
+    MOTHER   :  PERSON_NAME(SEX =&gt;  F);     -- Component declaration                (5)
+    SPOUSE   :  PERSON_NAME;         -- Component declaration (6)
+    ...
+  end record;
+</pre></td></tr></table>
+<p>
+The incomplete  declaration allows a linear reading of the example: We
+first learn  about the  existence of  a type called PERSON, so that at
+(2) we  can understand  what "access PERSON" means. We then learn what
+the type  PERSON is  in full.  Without the incomplete declaration (1),
+the access  type declaration (2) would be illegal. Similarly, we could
+not reverse  the order  of declarations  (2) and  (3) because then (3)
+would be  illegal: we  need to  know what a PERSON_NAME is in order to
+understand the component declarations at (4), (5), and (6).
+<p>
+Having declared  objects of  this type,  we  can  establish  relations
+between them, and these relations can evolve dynamically. For example
+<p>
+<table border cellpadding=6><tr><td><pre>
+HENRY_VIII     :  PERSON_NAME(M)     :=  new PERSON(SEX =&gt;  M);
+ANNE_BOLEYN    :  PERSON_NAME(F)     :=  new PERSON(SEX =&gt;  F);
+JANE_SEYMOUR   :  PERSON_NAME(F)     :=  new PERSON(SEX =&gt;  F);
+...
+HENRY_VIII.SPOUSE   :=  ANNE_BOLEYN;
+ANNE_BOLEYN.SPOUSE  :=  HENRY_VIII;
+...
+HENRY_VIII.SPOUSE    :=  JANE_SEYMOUR;
+JANE_SEYMOUR.SPOUSE  :=  HENRY_VIII;
+</pre></td></tr></table>
+<p>
+Note in  particular that such recursive structures may include cycles:
+for example
+<p>
+<PRE>    HENRY_VIII.SPOUSE.SPOUSE</PRE>
+<p>
+designates the same object as the access variable
+<p>
+<PRE>    HENRY_VIII</PRE>
+<p>
+itself.
+<p>
+This kind  of recursion  in access  type declarations may involve more
+than one  access type.  In such  cases it  is necessary  to provide an
+incomplete declaration  for each  type whose  name is mentioned before
+the occurrence of its full declaration. This is shown by the following
+pair of access types:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type CAR;                       -- Incomplete declaration of CAR
+
+type PERSON(SEX :  GENDER  :=  F);   -- Incomplete  declaration  of PERSON
+
+type CAR_NAME      is access CAR;
+type PERSON_NAME   is access PERSON;
+
+type CAR is
+  record
+    OWNER :  PERSON_NAME;
+    SERIAL_NUMBER :  POSITIVE;
+  end record;
+
+type PERSON(SEX :  GENDER  :=  F) is
+  record
+    ...
+    VEHICLE :  CAR_NAME;
+    ...
+  end record;
+</pre></td></tr></table>
+
+<H3><BR><a name="6.3.6">6.3.6 Access Objects as Parameters</a></H3>
+
+Like other  variables, access  variables can  be passed as parameters,
+and the  parameter modes  have their usual meaning. For functions, the
+parameters must be in parameters (as must all parameters of functions)
+but this  does not  prevent assignment  to local access objects. As an
+example consider  the declarations  for the  lists of  <a href="ratl-06-02.html#6.2.2">section  6.2.2</a>, above.
+<p>
+<table border cellpadding=6><tr><td><pre>
+type PLACE;
+type LIST is access PLACE;
+
+type PLACE is
+  record
+    SUCC, PRED :  LIST;
+    CONTENT    :  ITEM;
+  end record;
+</pre></td></tr></table>
+<p>
+A function  CARDINAL that counts the elements in a given circular list
+can be written as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+function CARDINAL(HEAD :  LIST) return NATURAL is
+  -- The head is not counted as a list element
+  -- For an empty list, HEAD.SUCC = HEAD.PRED = HEAD
+
+  NEXT   :  ITEM :=  HEAD.SUCC;
+  COUNT  :  NATURAL :=  0;
+begin
+  while NEXT /= HEAD loop
+    NEXT   :=  NEXT.SUCC;
+    COUNT  :=  COUNT +1;
+  end loop;
+  return COUNT;
+end;
+</pre></td></tr></table>
+<p>
+Moreover, assignment  to the  object designated by an in parameter, or
+to a component of that object, is also permitted.
+<p>
+As an example, consider the procedure given below:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure DIVORCE(P : in PERSON_NAME) is
+begin
+  P.SPOUSE.SPOUSE :=  null;
+  P.SPOUSE :=  null;
+end;
+</pre></td></tr></table>
+<p>
+Although P is an in parameter, assignment to P.SPOUSE is permitted.
+
+<H3><BR><a name="6.3.7">6.3.7 Storage Management for Access Types</a></H3>
+
+Unless specified  otherwise, the  collection of  dynamically allocated
+objects associated  with an  access type will be allocated in a global
+heap and  may be  garbage-collected in some implementations. For time-
+critical applications,  however, it  is possible  to provide  a length
+clause that  specifies an  upper bound  for the  space needed  by  the
+collection of  a given  access type.  This space  can then be reserved
+globally when  the length  clause is  elaborated.  Subsequently,  when
+leaving the  innermost block,  subprogram, or  task that  encloses the
+access type  declaration, the  space occupied by the collection may be
+reclaimed since the contained objects cannot any longer be accessible.
+<p>
+<table border cellpadding=6><tr><td><pre>
+for CAR_NAME'STORAGE_SIZE use    -- no more than 2000 cars
+  (2000&#42;CAR'SIZE) / SYSTEM.STORAGE_UNIT;
+</pre></td></tr></table>
+<p>
+The expression  provided after  the reserved  word use  is the size in
+storage units of the storage area to be reserved for the collection of
+dynamically allocated  cars designated by values of the type CAR_NAME.
+Given an  estimate of the maximum number of cars to be allocated (here
+2000), the  size in bits is obtained by multiplying this number by the
+value of  the attribute  CAR'SIZE; the  size in  storage units is then
+obtained by  dividing the result by the size in bits of a storage unit
+(SYSTEM.STORAGE_UNIT). Note  that this storage area does not limit the
+storage for  persons designated  by values of the type PERSON_NAME, in
+spite of the fact that each CAR has a component of this type.
+<p>
+A collection  for which  such a  length clause  has been given behaves
+like a  static array  as far  as storage  allocation is concerned. The
+objects are  allocated within  this static storage area by allocators;
+and the  whole collection  can be  reclaimed globally  under the  same
+conditions as  for an  array declared  at the place of the access type
+declaration. The  exception  STORAGE_ERROR  is  raised  if  the  space
+reserved is insufficient for an allocation.
+<p>
+If we want to ensure that garbage collection is never performed by the
+run-time system, the following pragma must be used
+<p>
+<PRE>    pragma CONTROLLED(CAR_NAME);</PRE>
+<p>
+Such collections  may be allocated either on the stack or on the heap.
+They have several advantages. In terms of storage management they have
+a cost  comparable to  that of arrays. In addition they offer both the
+notational  advantages   and  the   addressing  efficiency  of  access
+variables. Finally,  if  an  application  wants  to  perform  its  own
+deallocation, it  can do  so by  means of a generic instantiation of a
+predefined generic library procedure, as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure FREE is
+  new UNCHECKED_DEALLOCATION(OBJECT =&gt; CAR,  NAME =&gt; CAR_NAME);
+</pre></td></tr></table>
+<p>
+The resulting  procedure FREE has a parameter profile corresponding to
+the following specification:
+<p>
+<PRE>    procedure FREE(X :  in out CAR_NAME);</PRE>
+<p>
+The execution  of a  call such  as FREE(MY_CAR);  will assign the null
+value to MY_CAR, and establish that the storage occupied by the object
+designated by  MY_CAR can  be reclaimed.  This form of deallocation is
+said to  be unchecked  since no check will then be done to ensure that
+there are  no dangling  accesses to  the same  object. The use of this
+form of  deallocation may therefore be justified by efficiency, but it
+presents some danger, and so programs that use it must be written with
+great care.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-07.html#7"><b>NEXT</b></a>
+&#128; <a href="ratl-06-02.html#6.2"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-06.html#6"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

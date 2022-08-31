@@ -1,0 +1,225 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 5.8: Using Exceptions
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://www.software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 5: Programming Practices</H2>
+
+<H3><a name="5.8">5.8     Using Exceptions</a></H3>
+Ada exceptions are a reliability-enhancing language feature designed to help 
+specify program behavior in the presence of errors or unexpected events.  
+Exceptions are not intended to provide a general purpose control construct.  
+Further, liberal use of exceptions should not be considered sufficient for  
+providing full software fault tolerance (Melliar-Smith and Randall 1987).<P>
+This section addresses the issues of how and when to avoid raising exceptions, 
+how and where to handle them, and whether to propagate them. Information on 
+how to use exceptions as part of the interface to a unit include what 
+exceptions to declare and raise and under what conditions to raise them. 
+Other issues are addressed in Guidelines <a href="sty-04-03.html#4.3">4.3</a> and <a href="sty-07-05.html#7.5">7.5</a>.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11.html#11">11&nbsp;Exceptions</A>
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><br>
+<a href="#5.8.1">5.8.1   Handling Versus Avoiding Exceptions</a><BR>
+<a href="#5.8.2">5.8.2   Handlers for <CODE>others</CODE></a><BR>
+<a href="#5.8.3">5.8.3   Propagation</a><BR>
+<a href="#5.8.4">5.8.4   Localizing the Cause of an Exception</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-05-10.html#5.10.8"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="5.8.1">5.8.1   Handling Versus Avoiding Exceptions</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Avoid causing exceptions to be raised when it is easy and efficient to  do so. 
+<li>Provide handlers for exceptions which cannot be avoided. 
+<li>Use exception handlers to enhance readability by separating fault  
+handling from normal execution. 
+<li>Do not use exceptions and exception handlers as goto statements. 
+</UL>
+
+<H4>rationale</H4>
+In many cases, it is possible to detect easily and efficiently that an 
+operation you are about to perform would raise an exception. In such a case, 
+it is a good idea to check rather than allowing the exception to be raised and 
+handling it with an exception handler. For example, check each pointer for 
+<CODE>NULL</CODE> when traversing a linked list of records connected by pointers. Also, 
+test an integer for zero before dividing by it, and call an interrogative 
+function <CODE>Stack_Is_Empty</CODE> before invoking the <CODE>POP</CODE> procedure of a stack package. 
+Such tests are appropriate when they can be performed easily and efficiently, 
+as a natural part of the algorithm being implemented.<P>
+However, error detection in advance is not always so simple. There are cases 
+where such a test is too expensive or too unreliable. In such cases, it is 
+better to attempt the operation within the scope of an exception handler so 
+that the exception is handled if it is raised. For example, in the case of a 
+linked list implementation of a list, it is very inefficient to call a 
+function <CODE>Entry_Exists</CODE> before each call to the procedure <CODE>Modify_Entry</CODE> simply to 
+avoid raising the exception <CODE>Entry_Not_Found</CODE>. It takes as much time to search 
+the list to avoid the exception as it takes to search the list to perform the 
+update.  Similarly, it is much easier to attempt a division by a real number 
+within the scope of an exception handler to handle numeric overflow than to 
+test in advance whether the dividend is too large or the divisor too small for 
+the quotient to be representable on the machine.<P>
+In concurrent situations, tests done in advance can also be unreliable. For 
+example, if you want to modify an existing file on a multi-user system, it is 
+safer to attempt to do so within the scope of an exception handler than to 
+test in advance whether the file exists, whether it is protected, whether 
+there is room in the file system for the file to be enlarged, etc. Even if you 
+tested for all possible errors conditions, there is no guarantee that nothing 
+would change after the test and before the modification operation. You still 
+need the exception handlers, so the advance testing serves no purpose.<P>
+Whenever such a case does not apply, normal and predictable events should be  
+handled by the code without the abnormal transfer of control represented by an  
+exception. When fault handling and only fault handling code is included in  
+exception handlers, the separation makes the code easier to read. The reader  
+can skip all the exception handlers and still understand the normal flow of  
+control of the code. For this reason, exceptions should never be raised and  
+handled within the same unit, as a form of a goto statement to exit from a  
+loop, if, case, or block statement.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-09.html#5.9">5.9&nbsp;Goto Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-02.html#11.2">11.2&nbsp;Exception Handlers</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-04.html#11.4">11.4&nbsp;Exception Handling</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-04.html#11.4.1">11.4.1&nbsp;Exceptions Raised During the Execution of Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-04.html#11.4.2">11.4.2&nbsp;Exceptions Raised During the Elaboration of Declarations</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-05.html#11.5">11.5&nbsp;Exceptions Raised During Task Communication</A>
+
+
+<H3><BR><a name="5.8.2">5.8.2   Handlers for <CODE>others</CODE></a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use caution when programming handlers for <CODE>others</CODE>. 
+<li>Provide a handler for <CODE>others</CODE> in suitable frames to protect against  
+unexpected exceptions being propagated without bound, especially in safety  
+critical systems. 
+<li>Use <CODE>others</CODE> only to catch exceptions you cannot enumerate explicitly,  
+preferably only to flag a potential abort. 
+<li>Avoid using <CODE>others</CODE> during development. 
+</UL>
+
+<H4>rationale</H4>
+Providing a handler for <CODE>others</CODE> allows you to follow the other guidelines in 
+this section. It affords a place to catch and convert truly unexpected 
+exceptions that were not caught by the explicit handlers. While it may be 
+possible to provide &quot;fire walls&quot; against unexpected exceptions being 
+propagated without providing handlers in every block, you can convert the 
+unexpected exceptions as soon as they arise. The <CODE>others</CODE> handler cannot 
+discriminate between different exceptions, and, as a result, any such handler 
+must treat the exception as a disaster. Even such a disaster can still be 
+converted into a user-defined exception at that point. Since a handler for 
+<CODE>others</CODE> catches any exception not otherwise handled explicitly, one placed in 
+the frame of a task or of the main subprogram affords the opportunity to 
+perform final clean-up and to shut down cleanly.<P>
+Programming a handler for <CODE>others</CODE> requires caution because it cannot  
+discriminate either which exception was actually raised or precisely where it  
+was raised. Thus, the handler cannot make any assumptions about what can be or  
+even what needs to be &quot;fixed.&quot;<P>
+The use of handlers for <CODE>others</CODE> during development, when exception occurrences  
+can be expected to be frequent, can hinder debugging. It is much more  
+informative to the developer to see a traceback with the actual exception  
+listed than the converted exception. Furthermore, many tracebacks do not list  
+the point where the original exception was raised if it was caught by a  
+handler.
+
+<H4>note</H4>
+The arguments in the preceding paragraph apply only to development time, when  
+traceback listings are useful. They are not useful to users and can be  
+dangerous. The handler should be included in comment form at the outset of  
+development and the double dash removed before delivery.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-02.html#11.2">11.2&nbsp;Exception Handlers</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-04.html#11.4">11.4&nbsp;Exception Handling</A>
+
+
+<H3><BR><a name="5.8.3">5.8.3   Propagation</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Handle all exceptions, both user and predefined. 
+<li> For every exception that might be raised, provide a handler in 
+suitable frames to protect against undesired propagation outside the 
+abstraction. 
+</UL>
+
+<H4>rationale</H4>
+The statement that &quot;it can never happen&quot; is not an acceptable programming 
+approach. You must assume it can happen and be in control when it does. You  
+should provide defensive code routines for the &quot;cannot get here&quot; conditions.<P>
+Some existing advice calls for catching and propagating any exception to the  
+calling unit. This advice can stop a program. You should catch the exception  
+and propagate it, or a substitute, only if your handler is at the wrong  
+abstraction level to effect recovery. Effecting recovery can be difficult, but  
+the alternative is a program that does not meet its specification.<P>
+Making an explicit request for termination implies that your code is in 
+control of the situation and has determined that to be the only safe course of 
+action.  Being in control affords opportunities to shut down in a controlled 
+manner (clean up loose ends, close files, release surfaces to manual control, 
+sound alarms), and implies that all available programmed attempts at recovery 
+have been made.<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-02.html#11.2">11.2&nbsp;Exception Handlers</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-04.html#11.4">11.4&nbsp;Exception Handling</A>
+
+
+<H3><BR><a name="5.8.4">5.8.4   Localizing the Cause of an Exception</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Do not rely on being able to identify the fault raising predefined or  
+implementation-defined exceptions. 
+<li>Use blocks to associate localized sections of code with their own  
+exception handlers. 
+</UL>
+
+<H4>example</H4>
+See <a href="sty-05-06.html#5.6.9">Guideline 5.6.9</a>.
+
+<H4>rationale</H4>
+It is very difficult to determine in an exception handler exactly which  
+statement and which operation within that statement raised an exception,  
+particularly the predefined and implementation-defined exceptions. The 
+predefined and implementation-defined exceptions are candidates for conversion 
+and propagation to higher abstraction levels for handling there. User-defined 
+exceptions, being more closely associated with the application, are better  
+candidates for recovery within handlers.<P>
+User-defined exceptions can also be difficult to localize. Associating 
+handlers with small blocks of code helps to narrow the possibilities, making 
+it easier to program recovery actions. The placement of handlers in small 
+blocks within a subprogram or task body also allows resumption of the 
+subprogram or task after the recovery actions. If you do not handle exceptions 
+within blocks, the only action available to the handlers is to shut down the 
+task or subprogram as prescribed in <a href="#5.8.3">Guideline 5.8.3</a>.
+
+<H4>note</H4>
+The optimal size for the sections of code you choose to protect by a block and  
+its exception handlers is very application-dependent. Too small a granularity 
+forces you to expend much more effort in programming for abnormal actions than  
+for the normal algorithm. Too large a granularity reintroduces the problems of  
+determining what went wrong and of resuming normal flow.<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-06.html#5.6">5.6&nbsp;Block Statements</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-02.html#11.2">11.2&nbsp;Exception Handlers</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-04.html#11.4">11.4&nbsp;Exception Handling</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

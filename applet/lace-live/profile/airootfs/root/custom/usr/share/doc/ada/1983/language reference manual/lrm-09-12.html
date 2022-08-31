@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 9.12: Example of Tasking</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="9.12">9.12</A>.  Example of Tasking  </H2>
+<A HREF="lrm-09-11.html#9.11"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-09.html#9"><img src="lrm-up.gif" alt="[UP]"></A>
+<P>
+The following example defines a buffering task to smooth variations between
+the  speed  of  output  of  a producing task and the speed of input of some
+consuming  task.   For  instance,  the  producing  task  may  contain   the
+statements 
+<pre>
+    loop
+       --  produce the next character CHAR
+       BUFFER.WRITE(CHAR);
+       exit when CHAR = ASCII.EOT;
+    end loop;   
+</pre>
+<P>
+and the consuming task may contain the statements 
+<pre>
+    loop
+       BUFFER.READ(CHAR);
+       --  consume the character CHAR
+       exit when CHAR = ASCII.EOT;
+    end loop; 
+</pre>
+<P>
+The  buffering  task contains an internal pool of characters processed in a
+round-robin fashion.  The pool has two indices, an  IN_INDEX  denoting  the
+space  for the next input character and an OUT_INDEX denoting the space for
+the next output character. 
+<pre>
+    task BUFFER is
+       entry READ (C : out CHARACTER);
+       entry WRITE(C : in  CHARACTER);
+    end; 
+
+    task body BUFFER is
+       POOL_SIZE : constant INTEGER := 100;
+       POOL      : array(1 .. POOL_SIZE) of CHARACTER;
+       COUNT     : INTEGER range 0 .. POOL_SIZE := 0;
+       IN_INDEX, OUT_INDEX : INTEGER range 1 .. POOL_SIZE := 1;
+    begin
+       loop
+          select
+             when COUNT &lt; POOL_SIZE =&gt;
+                accept WRITE(C : in CHARACTER) do
+                   POOL(IN_INDEX) := C;
+                end;
+                IN_INDEX := IN_INDEX mod POOL_SIZE + 1;
+                COUNT    := COUNT + 1;
+          or when COUNT &gt; 0 =&gt;
+                accept READ(C : out CHARACTER) do
+                   C := POOL(OUT_INDEX);
+                end;
+                OUT_INDEX := OUT_INDEX mod POOL_SIZE + 1;
+                COUNT     := COUNT - 1;
+          or
+             terminate;
+          end select;  
+       end loop;
+    end BUFFER;                                                       
+</pre>
+<P>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

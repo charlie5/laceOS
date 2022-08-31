@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>The Standard Task Dispatching Policy</TITLE>
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    DIV.paranum {position: absolute; font-family: Arial, Helvetica, sans-serif; left: 0.5em; top: auto}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; margin-bottom: 0.6em}
+    DIV.Wide {font-family: "Times New Roman", Times, serif; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.WideAnnotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Index {font-family: "Times New Roman", Times, serif}
+    DIV.SyntaxSummary {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; margin-left: 2.0em}
+    DIV.SyntaxIndented {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Indented {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-bottom: 0.6em}
+    DIV.CodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.SmallIndented {font-family: "Times New Roman", Times, serif; margin-left:  10.0em; margin-bottom: 0.6em}
+    DIV.SmallCodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SmallExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left: 7.5em; margin-bottom: 0.6em}
+    DIV.IndentedExamples {font-family: "Courier New", monospace; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.SmallIndentedExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left:  15.0em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.IndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SyntaxIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.Hanging {font-family: "Times New Roman", Times, serif; margin-top: 0em; margin-bottom: 0.6em}
+    DD.Hanging {margin-left: 6.0em}
+    DL.IndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.IndentedHanging {margin-left: 2.0em}
+    DL.HangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.HangingInBulleted {margin-left: 4.0em}
+    DL.SmallHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallHanging {margin-left: 7.5em}
+    DL.SmallIndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallIndentedHanging {margin-left: 2.0em}
+    DL.SmallHangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallHangingInBulleted {margin-left: 5.0em}
+    DL.Enumerated {font-family: "Times New Roman", Times, serif; margin-right: 0.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.Enumerated {margin-left: 2.0em}
+    DL.SmallEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallEnumerated {margin-left: 2.5em}
+    DL.NestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.SmallNestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<P><A HREF="RM-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-D-2-1.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-D-3.html">Next</A></P>
+<HR>
+<H1> D.2.2 The Standard Task Dispatching Policy</H1>
+
+<H4 ALIGN=CENTER>Syntax</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>1</FONT></DIV>
+<DIV Class="SyntaxIndented" Style="margin-bottom: 0.2em">The form of
+a <FONT FACE="Arial, Helvetica">pragma</FONT> Task_Dispatching_Policy
+is as follows: </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>2</FONT></DIV>
+<DIV Class="SyntaxIndented">&nbsp;&nbsp;<B>pragma</B> <A NAME="I6543"></A><A NAME="I6544"></A>Task_Dispatching_Policy(<I>policy_</I><A NAME="I6545"></A><FONT FACE="Arial, Helvetica">identifier</FONT>
+); </DIV>
+
+<H4 ALIGN=CENTER>Legality Rules</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>3</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The <I>policy_</I><A NAME="I6546"></A><FONT FACE="Arial, Helvetica">identifier</FONT>
+shall either be FIFO_Within_Priorities or an implementation-defined <A NAME="I6547"></A><FONT FACE="Arial, Helvetica">identifier</FONT>.
+</DIV>
+
+<H4 ALIGN=CENTER>Post-Compilation Rules</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>4</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<A NAME="I6548"></A><A NAME="I6549"></A>A Task_Dispatching_Policy
+pragma is a configuration pragma.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>5</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;If the FIFO_Within_Priorities policy is specified
+for a partition, then the Ceiling_Locking policy (see <A HREF="RM-D-3.html">D.3</A>)
+shall also be specified for the partition. </DIV>
+
+<H4 ALIGN=CENTER>Dynamic Semantics</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>6</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<A NAME="I6550"></A>A <I>task dispatching policy</I>
+specifies the details of task dispatching that are not covered by the
+basic task dispatching model. These rules govern when tasks are inserted
+into and deleted from the ready queues, and whether a task is inserted
+at the head or the tail of the queue for its active priority. The task
+dispatching policy is specified by a Task_Dispatching_Policy configuration
+pragma. <A NAME="I6551"></A>If no such pragma appears in any of the program
+units comprising a partition, the task dispatching policy for that partition
+is unspecified.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>7</FONT></DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;The language defines
+only one task dispatching policy, FIFO_Within_Priorities; when this policy
+is in effect, modifications to the ready queues occur only as follows:
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>8</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>When a blocked task becomes ready,
+it is added at the tail of the ready queue for its active priority.</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>9</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>When the active priority of a ready
+task that is not running changes, or the setting of its base priority
+takes effect, the task is removed from the ready queue for its old active
+priority and is added at the tail of the ready queue for its new active
+priority, except in the case where the active priority is lowered due
+to the loss of inherited priority, in which case the task is added at
+the head of the ready queue for its new active priority.</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>10</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>When the setting of the base priority
+of a running task takes effect, the task is added to the tail of the
+ready queue for its active priority.</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>11</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>When a task executes a <FONT FACE="Arial, Helvetica">delay_statement</FONT>
+that does not result in blocking, it is added to the tail of the ready
+queue for its active priority. </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>12</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6552"></A><A NAME="I6553"></A>Each
+of the events specified above is a task dispatching point (see <A HREF="RM-D-2-1.html">D.2.1</A>).</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>13</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;In addition, when a task is preempted, it is
+added at the head of the ready queue for its active priority.</DIV>
+
+<H4 ALIGN=CENTER>Documentation Requirements</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>14</FONT></DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6554"></A><I>Priority
+inversion</I> is the duration for which a task remains at the head of
+the highest priority ready queue while the processor executes a lower
+priority task. The implementation shall document: </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>15</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The maximum priority inversion a user
+task can experience due to activity of the implementation (on behalf
+of lower priority tasks), and</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>16</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>whether execution of a task can be
+preempted by the implementation processing of delay expirations for lower
+priority tasks, and if so, for how long. </LI></UL>
+
+<H4 ALIGN=CENTER>Implementation Permissions</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>17</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;Implementations are allowed to define other task
+dispatching policies, but need not support more than one such policy
+per partition.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>18</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;For optimization purposes, an implementation
+may alter the points at which task dispatching occurs, in an implementation
+defined manner. However, a <FONT FACE="Arial, Helvetica">delay_statement</FONT>
+always corresponds to at least one task dispatching point.</DIV>
+<DIV Class="NotesHeader"><FONT SIZE="-1">NOTES</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>19</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">13&nbsp;&nbsp;If the active priority
+of a running task is lowered due to loss of inherited priority (as it
+is on completion of a protected operation) and there is a ready task
+of the same active priority that is not running, the running task continues
+to run (provided that there is no higher priority task).</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>20</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">14&nbsp;&nbsp;The setting of a task's
+base priority as a result of a call to Set_Priority does not always take
+effect immediately when Set_Priority is called. The effect of setting
+the task's base priority is deferred while the affected task performs
+a protected action.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>21</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">15&nbsp;&nbsp;Setting the base priority
+of a ready task causes the task to move to the end of the queue for its
+active priority, regardless of whether the active priority of the task
+actually changes.</FONT></DIV>
+
+<HR>
+<P><A HREF="RM-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-D-2-1.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-D-3.html">Next</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-TTL.html">Legal</A></P>
+</BODY>
+</HTML>

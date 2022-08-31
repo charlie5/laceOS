@@ -1,0 +1,374 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Scheduling and dispatching</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.WideHanging-Body {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 6.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DIV.WideHanging-Term {float: left; font-family: "Times New Roman", Times, serif; line-height: 122%; margin-top: 0em; margin-bottom: 0em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>5.5 Scheduling and dispatching</H1>
+<div class="Normal">Another area of increased flexibility in Ada 2005 
+is that of task dispatching policies. In Ada 95, the only predefined 
+policy is <SPAN Class="swiss">FIFO_Within_Priorities</SPAN> although 
+other policies are permitted. Ada 2005 provides further pragmas, policies 
+and packages which facilitate many different mechanisms such as non-preemption 
+within priorities, the familiar Round Robin using timeslicing, and the 
+more recently acclaimed Earliest Deadline First (EDF) policy. Moreover 
+it is possible to mix different policies according to priority level 
+within a partition.<A NAME="I1178"></A><A NAME="I1179"></A><A NAME="I1180"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">In order to accommodate 
+these many changes, Section D.2 (Priority Scheduling) of the Reference 
+Manual has been reorganized as follows&nbsp;</div>
+<div class="SwissExamples">D.2.1&nbsp;&nbsp;The&nbsp;Task&nbsp;Dispatching&nbsp;Model<BR>
+D.2.2&nbsp;&nbsp;Task&nbsp;Dispatching&nbsp;Pragmas<BR>
+D.2.3&nbsp;&nbsp;Preemptive&nbsp;Dispatching<BR>
+D.2.4&nbsp;&nbsp;Non-Preemptive&nbsp;Dispatching<BR>
+D.2.5&nbsp;&nbsp;Round&nbsp;Robin&nbsp;Dispatching<BR>
+D.2.6&nbsp;&nbsp;Earliest&nbsp;Deadline&nbsp;First&nbsp;Dispatching</div>
+<div class="Normal" style="margin-bottom: 0.4em">Overall control is 
+provided by two pragmas. They are&nbsp;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Task_Dispatching_Policy(<SPAN Class="roman"><I>policy_</I></SPAN>identifier);</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Priority_Specific_Dispatching(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>policy_</I></SPAN>identifer,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>first_priority_</I></SPAN>expression,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>last_priority_</I></SPAN>expression);</div>
+<div class="Normal">The pragma <SPAN Class="swiss">Task_Dispatching_Policy</SPAN>, 
+which already exists in Ada 95, applies the same policy throughout a 
+whole partition.<A NAME="I1181"></A><A NAME="I1182"></A> The pragma <SPAN Class="swiss">Priority_Specific_Dispatching</SPAN>, 
+which is new in Ada 2005, can be used to set different policies for different 
+ranges of priority levels.<A NAME="I1183"></A><A NAME="I1184"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">The full set of predefined 
+policies in Ada 2005 is</div>
+<div class="WideHanging-Term"><SPAN Class="swiss">FIFO_Within_Priorities</SPAN> 
+&ndash;</div><div class="WideHanging-Body"><br clear="left">
+This already exists in Ada 95. Within each priority level to which it 
+applies tasks are dealt with on a first-in-first-out basis. Moreover, 
+a task may preempt a task of a lower priority.<A NAME="I1185"></A></div>
+<div class="WideHanging-Term"><SPAN Class="swiss">Non_Preemptive_FIFO_Within_Priorities</SPAN> 
+&ndash;</div><div class="WideHanging-Body"><br clear="left">
+This is new in Ada 2005. Within each priority level to which it applies 
+tasks run to completion or until they are blocked or execute a delay 
+statement. A task cannot be preempted by one of higher priority. This 
+sort of policy is widely used in high integrity applications.<A NAME="I1186"></A></div>
+<div class="WideHanging-Term"><SPAN Class="swiss">Round_Robin_Within_Priorities</SPAN> 
+&ndash;</div><div class="WideHanging-Body"><br clear="left">
+This is new in Ada 2005. Within each priority level to which it applies 
+tasks are timesliced with an interval that can be specified. This is 
+a very traditional policy widely used since the earliest days of concurrent 
+programming.<A NAME="I1187"></A></div>
+<div class="WideHanging-Term"><SPAN Class="swiss">EDF_Across_Priorities</SPAN> 
+&ndash;</div><div class="WideHanging-Body"><br clear="left">
+This is new in Ada 2005. This provides Earliest Deadline First dispatching. 
+The general idea is that within a range of priority levels, each task 
+has a deadline and that with the earliest deadline is processed. This 
+is a fashionable new policy and has mathematically provable advantages 
+with respect to efficiency.<A NAME="I1188"></A>&nbsp;</div>
+<div class="Normal">For further details of these policies consult <I>Concurrent 
+and Real-Time Programming in Ada 2005</I> by Alan Burns and Andy Wellings 
+<A HREF="Rat-0-2.html#R8">[8]</A>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">These various policies 
+are controlled by the package <SPAN Class="swiss">Ada.Dispatching</SPAN> 
+plus two child packages. The root package has specification<A NAME="I1189"></A><A NAME="I1190"></A><A NAME="I1191"></A> 
+</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Dispatching&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Pure(Dispatching);<BR>
+&nbsp;&nbsp;&nbsp;Dispatching_Policy_Error:&nbsp;<B>exception</B>;<BR>
+<B>end</B>&nbsp;Ada.Dispatching;</div>
+<div class="Normal">As can be seen this root package simply declares 
+the exception <SPAN Class="swiss">Dispatching_Policy_Error</SPAN> which 
+is used by the child packages.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The child package <SPAN Class="swiss">Round_Robin</SPAN> 
+enables the setting of the time quanta for time slicing within one or 
+more priority levels. Its specification is<A NAME="I1192"></A><A NAME="I1193"></A><A NAME="I1194"></A> 
+</div>
+<div class="SwissExamples"><B>with</B>&nbsp;System;&nbsp;&nbsp;<B>use</B>&nbsp;System;<BR>
+<B>with</B>&nbsp;Ada.Real_Time;&nbsp;&nbsp;<B>use</B>&nbsp;Ada.Real_Time;<BR>
+<B>package</B>&nbsp;Ada.Dispatching.Round_Robin&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Default_Quantum:&nbsp;<B>constant</B>&nbsp;Time_Span&nbsp;:=&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Quantum(Pri:&nbsp;<B>in</B>&nbsp;Priority,&nbsp;Quantum:&nbsp;<B>in</B>&nbsp;Time_Span);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Quantum(Low,&nbsp;High:&nbsp;<B>in</B>&nbsp;Priority;&nbsp;Quantum:&nbsp;<B>in</B>&nbsp;Time_Span);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Actual_Quantum(Pri:&nbsp;Priority)&nbsp;<B>return</B>&nbsp;Time_Span;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Is_Round_Robin(Pri:&nbsp;Priority)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>end</B>&nbsp;Ada.Dispatching.Round_Robin;</div>
+<div class="Normal">The procedures <SPAN Class="swiss">Set_Quantum</SPAN> 
+enable the time quantum to be used for time slicing to be set for one 
+or a range of priority levels. The default value is of course the constant 
+<SPAN Class="swiss">Default_Quantum</SPAN>. The function <SPAN Class="swiss">Actual_Quantum</SPAN> 
+enables us to find out the current value of the quantum being used for 
+a particular priority level. Its identifier reflects the fact that the 
+implementation may not be able to apply the exact actual value given 
+in a call of <SPAN Class="swiss">Set_Quantum</SPAN>. The function <SPAN Class="swiss">Is_Round_Robin</SPAN> 
+enables us to check whether the round robin policy has been applied to 
+the given priority level. If we attempt to do something stupid such as 
+set the quantum for a priority level to which the round robin policy 
+does not apply then the exception <SPAN Class="swiss">Dispatching_Policy_Error</SPAN> 
+is raised.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The other new policy 
+concerns deadlines and is controlled by a new pragma <SPAN Class="swiss">Relative_Deadline</SPAN> 
+and the child package <SPAN Class="swiss">Dispatching.EDF</SPAN>. The 
+syntax of the pragma is<A NAME="I1195"></A><A NAME="I1196"></A><A NAME="I1197"></A> 
+</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Relative_Deadline(<SPAN Class="roman"><I>relative_deadline_</I></SPAN>expression);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The deadline of a task 
+is a property similar to priority and both are used for scheduling. Every 
+task has a priority of type <SPAN Class="swiss">Integer</SPAN> and every 
+task has a deadline of type <SPAN Class="swiss">Ada.Real_Time.Time</SPAN>. 
+Priorities can be set when a task is created by pragma <SPAN Class="swiss">Priority</SPAN> 
+</div>
+<div class="SwissExamples"><B>task</B>&nbsp;T&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Priority(P);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and deadlines can similarly 
+be set by the pragma <SPAN Class="swiss">Relative_Deadline</SPAN> thus 
+</div>
+<div class="SwissExamples"><B>task</B>&nbsp;T&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Relative_Deadline(RD);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The expression <SPAN Class="swiss">RD</SPAN> 
+has type <SPAN Class="swiss">Ada.Real_Time.Time_Span</SPAN>. Note carefully 
+that the pragma sets the relative and not the absolute deadline. The 
+initial absolute deadline of the task is&nbsp;</div>
+<div class="SwissExamples">Ada.Real_Time.Clock&nbsp;+&nbsp;RD</div>
+<div class="Normal">where the call of <SPAN Class="swiss">Clock</SPAN> 
+is made between task creation and the start of its activation.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Both pragmas <SPAN Class="swiss">Priority</SPAN> 
+and <SPAN Class="swiss">Relative_Deadline</SPAN> can appear in the main 
+subprogram and they then apply to the environment task. If they appear 
+in any other subprogram then they are ignored. Both properties can also 
+be set via a discriminant. In the case of priorities we can write&nbsp;</div>
+<div class="SwissExamples"><B>task&nbsp;type</B>&nbsp;TT(P:&nbsp;Priority)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Priority(P);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>;</div>
+<div class="SwissExamples">High_Task:&nbsp;TT(13);<BR>
+Low_Task:&nbsp;TT(7);</div>
+<div class="Normal" style="margin-bottom: 0.4em">We cannot do the direct 
+equivalent for deadlines because <SPAN Class="swiss">Time_Span</SPAN> 
+is private and so not discrete. We have to use an access discriminant 
+thus&nbsp;</div>
+<div class="SwissExamples"><B>task&nbsp;type</B>&nbsp;TT(RD:&nbsp;<B>access</B>&nbsp;Timespan)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Relative_Deadline(RD.<B>all</B>);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>;</div>
+<div class="SwissExamples">One_Sec:&nbsp;<B>aliased</B>&nbsp;<B>constant</B>&nbsp;Time_Span&nbsp;:=&nbsp;Seconds(1);<BR>
+Ten_Mins:&nbsp;<B>aliased</B>&nbsp;<B>constant</B>&nbsp;Time_Span&nbsp;:=&nbsp;Minutes(10);</div>
+<div class="SwissExamples">Hot_Task:&nbsp;TT(One_Sec'Access);<BR>
+Cool_Task:&nbsp;TT(Ten_Mins'Access);</div>
+<div class="Normal">Note incidentally that functions <SPAN Class="swiss">Seconds</SPAN> 
+and <SPAN Class="swiss">Minutes</SPAN> have been added to the package 
+<SPAN Class="swiss">Ada.Real_Time</SPAN>. Existing functions <SPAN Class="swiss">Nanoseconds</SPAN>, 
+<SPAN Class="swiss">Microseconds</SPAN> and <SPAN Class="swiss">Milliseconds</SPAN> 
+in Ada 95 enable the convenient specification of short real time intervals 
+(values of type <SPAN Class="swiss">Time_Span</SPAN>). However, the specification 
+of longer intervals such as four minutes meant writing something like 
+<SPAN Class="swiss">Milliseconds(240_000)</SPAN> or perhaps <SPAN Class="swiss">4*60*Milliseconds(1000)</SPAN>. 
+In view of the fact that EDF scheduling and timers (see <A HREF="Rat-5-6.html">5.6</A>) 
+would be likely to require longer times the functions <SPAN Class="swiss">Seconds</SPAN> 
+and <SPAN Class="swiss">Minutes</SPAN> are added in Ada 2005. There is 
+no function <SPAN Class="swiss">Hours</SPAN> because the range of time 
+spans is only guaranteed to be 3600 seconds anyway. (The numerate will 
+recall that 3600 seconds is one hour.)</div>
+<div class="Normal">If a task is created and it does not have a pragma 
+<SPAN Class="swiss">Priority</SPAN> then its initial priority is that 
+of the task that created it. If a task does not have a pragma <SPAN Class="swiss">Relative_Deadline</SPAN> 
+then its initial absolute deadline is the constant <SPAN Class="swiss">Default_Deadline</SPAN> 
+in the package <SPAN Class="swiss">Ada.Dispatching.EDF</SPAN>; this constant 
+has the value <SPAN Class="swiss">Ada.Real_Time.Time_Last</SPAN> (effectively 
+the end of the universe).</div>
+<div class="Normal">Priorities can be dynamically manipulated by the 
+subprograms in the package <SPAN Class="swiss">Ada.Dynamic_Priorities</SPAN> 
+and deadlines can similarly be manipulated by the subprograms in the 
+package <SPAN Class="swiss">Ada.Dispatching.EDF</SPAN> whose specification 
+is<A NAME="I1198"></A><A NAME="I1199"></A><A NAME="I1200"></A>&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Real_Time;&nbsp;&nbsp;<B>use</B>&nbsp;Ada.Real_Time;<BR>
+<B>with</B>&nbsp;Ada.Task_Identification;&nbsp;<B>use</B>&nbsp;Ada.Task_Identification;<BR>
+<B>package</B>&nbsp;Ada.Dispatching.EDF&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;Deadline&nbsp;<B>is</B>&nbsp;Ada.Real_Time.Time;<BR>
+&nbsp;&nbsp;&nbsp;Default_Deadline:&nbsp;<B>constant</B>&nbsp;Deadline&nbsp;:=&nbsp;Time_Last;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Deadline(D:&nbsp;<B>in</B>&nbsp;Deadline;&nbsp;T:&nbsp;<B>in</B>&nbsp;Task_Id&nbsp;:=&nbsp;Current_Task);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Delay_Until_And_Set_Deadline&nbsp;(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Delay_Until_Time:&nbsp;<B>in</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Deadline_Offset:&nbsp;<B>in</B>&nbsp;Time_Span);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Get_Deadline(T:&nbsp;Task_Id&nbsp;:=&nbsp;Current_Task)&nbsp;<B>return</B><BR>
+Deadline;<BR>
+<B>end</B>&nbsp;Ada.Dispatching.EDF;</div>
+<div class="Normal">The subtype <SPAN Class="swiss">Deadline</SPAN> is 
+just declared as a handy abbreviation. The constant <SPAN Class="swiss">Default_Deadline</SPAN> 
+is set to the end of the universe as already mentioned. The procedure 
+<SPAN Class="swiss">Set_Deadline</SPAN> sets the deadline of the task 
+concerned to the value of the parameter <SPAN Class="swiss">D</SPAN>. 
+The long-winded <SPAN Class="swiss">Delay_Until_And_Set_Deadline</SPAN> 
+delays the task concerned until the value of <SPAN Class="swiss">Delay_Until_Time</SPAN> 
+and sets its deadline to be the interval <SPAN Class="swiss">Deadline_Offset</SPAN> 
+from that time &ndash; this is useful for periodic tasks. The function 
+<SPAN Class="swiss">Get_Deadline</SPAN> enables us to find the current 
+deadline of a task.</div>
+<div class="Normal">It is important to note that this package can be 
+used to set and retrieve deadlines for tasks whether or not they are 
+subject to EDF dispatching. We could for example use an ATC on a deadline 
+overrun (ATC = Asynchronous Transfer of Control using a select statement). 
+Hence there is no function <SPAN Class="swiss">Is_EDF</SPAN> corresponding 
+to <SPAN Class="swiss">Is_Round_Robin</SPAN> and calls of the subprograms 
+in this package can never raise the exception <SPAN Class="swiss">Dispatching_Policy_Error</SPAN>.<A NAME="I1201"></A></div>
+<div class="Normal">If we attempt to apply one of the subprograms in 
+this package to a task that has already terminated then <SPAN Class="swiss">Tasking_Error</SPAN> 
+is raised. If the task parameter is <SPAN Class="swiss">Null_Task_Id</SPAN> 
+then <SPAN Class="swiss">Program_Error</SPAN> is raised.</div>
+<div class="Normal" style="margin-bottom: 0.4em">As mentioned earlier, 
+a policy can be selected for a whole partition by for example&nbsp;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Task_Dispatching_Policy(Round_Robin_Within_Priorities);</div>
+<div class="Normal" style="margin-bottom: 0.4em">whereas in order to 
+mix different policies across different priority levels we can write 
+</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Priority_Specific_Dispatching(Round_Robin_Within_Priority,&nbsp;1,&nbsp;1);<BR>
+<B>pragma</B>&nbsp;Priority_Specific_Dispatching(EDF_Across_Priorities,&nbsp;2,&nbsp;10);<BR>
+<B>pragma</B>&nbsp;Priority_Specific_Dispatching(FIFO_Within_Priority,&nbsp;11,&nbsp;24);</div>
+<div class="Normal">This sets Round Robin at priority level 1, EDF at 
+levels 2 to 10, and FIFO at levels 11 to 24. This means for example that 
+none of the EDF tasks can run if any of the FIFO ones can. In other words 
+if any tasks in the highest group can run then they will do so and none 
+in the other groups can run. The scheduling within a range takes over 
+only if tasks in that range can go and none in the higher ranges can.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that if we write 
+</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Priority_Specific_Dispatching(EDF_Across_Priorities,&nbsp;2,&nbsp;5);<BR>
+<B>pragma</B>&nbsp;Priority_Specific_Dispatching(EDF_Across_Priorities,&nbsp;6,&nbsp;10);</div>
+<div class="Normal" style="margin-bottom: 0.4em">then this is not the 
+same us</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Priority_Specific_Dispatching(EDF_Across_Priorities,&nbsp;2,&nbsp;10);</div>
+<div class="Normal">despite the fact that the two ranges in the first 
+case are contiguous. This is because in the first case any task in the 
+6 to 10 range will take precedence over any task in the 2 to 5 range 
+whatever the deadlines. If there is just one range then only the deadlines 
+count in deciding which tasks are scheduled. This is emphasized by the 
+fact that the policy name uses <SPAN Class="swiss">Across</SPAN> rather 
+than <SPAN Class="swiss">Within</SPAN>. For other policies such as <SPAN Class="swiss">Round_Robin_Within_Priority</SPAN> 
+two contiguous ranges would be the same as a single range.</div>
+<div class="Normal">We conclude this section with a few words about ceiling 
+priorities.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 95, the priority 
+of a task can be changed during execution but the ceiling priority of 
+a protected object cannot be so changed. It is permanently set when the 
+object is created using the pragma <SPAN Class="swiss">Priority</SPAN>. 
+This is often done using a discriminant so that at least different objects 
+of a given protected type can have different priorities. Thus we might 
+have&nbsp;</div>
+<div class="SwissExamples"><B>protected&nbsp;type</B>&nbsp;PT(P:&nbsp;Priority)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Priority(P);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;PT;</div>
+<div class="SwissExamples">PO:&nbsp;PT(7);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>ceiling&nbsp;priority&nbsp;is&nbsp;7</I></SPAN></div>
+<div class="Normal">The fact that the ceiling priority of a protected 
+object is static can be a nuisance in many applications especially when 
+the priority of tasks can be dynamic. A common workaround is to give 
+a protected object a higher ceiling than needed in all circumstances 
+(often called &quot;the ceiling of ceilings&quot;). This results in tasks 
+having a higher active priority than necessary when accessing the protected 
+object and this can interfere with the processing of other tasks in the 
+system and thus upset overall schedulability. Moreover, it means that 
+a task of high priority can access an object when it should not (if a 
+task with a priority higher than the ceiling priority of a protected 
+object attempts to access the object then <SPAN Class="swiss">Program_Error</SPAN> 
+is raised &ndash; if the object has an inflated priority then this check 
+will pass when it should not).</div>
+<div class="Normal">This difficulty is overcome in Ada 2005 by allowing 
+protected objects to change their priority. This is done through the 
+introduction of an attribute <SPAN Class="swiss">Priority</SPAN> which 
+applies just to protected objects. It can only be accessed within the 
+body of the protected object concerned.<A NAME="I1202"></A><A NAME="I1203"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">As an example a protected 
+object might have a procedure to change its ceiling priority by a given 
+amount. This could be written as follows&nbsp;</div>
+<div class="SwissExamples"><B>protected&nbsp;type</B>&nbsp;PT&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Change_Priority(Change:&nbsp;<B>in</B>&nbsp;Integer);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>;</div>
+<div class="SwissExamples"><B>protected&nbsp;body</B>&nbsp;PT&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Change_Priority(Change:&nbsp;<B>in</B>&nbsp;Integer)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>PT'Priority&nbsp;has&nbsp;old&nbsp;value&nbsp;here</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PT'Priority&nbsp;:=&nbsp;PT'Priority&nbsp;+&nbsp;Change;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>PT'Priority&nbsp;has&nbsp;new&nbsp;value&nbsp;here</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Change_Priority;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;PT;</div>
+<div class="Normal">Changing the ceiling priority is thus done while 
+mutual exclusion is in force. Although the value of the attribute itself 
+is changed immediately when the assignment is made, the actual ceiling 
+priority of the protected object is only changed when the protected operation 
+(in this case the call of <SPAN Class="swiss">Change_Priority</SPAN>) 
+is finished. Note that if any of the procedures of the protected object 
+is an interrupt handler (through pragma Attach_Handler or Interrupt_Handler) 
+then a check is made that the value is in the range of System.Interrupt_Priority; 
+Program_Error is raised if the check fails.</div>
+<div class="Normal">Note the unusual syntax. Here we permit an attribute 
+as the destination of an assignment statement. This happens nowhere else 
+in the language. Other forms of syntax were considered but this seemed 
+the most expressive.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

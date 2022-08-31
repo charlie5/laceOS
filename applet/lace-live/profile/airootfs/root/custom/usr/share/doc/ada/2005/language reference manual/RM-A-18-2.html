@@ -1,0 +1,1104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>The Package Containers.Vectors</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.CodeIndented {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 5.2em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-18-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-18-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>A.18.2 The Package Containers.Vectors</H1>
+<DIV Class="paranum">1/2</DIV>
+<DIV Class="Normal">The language-defined generic package Containers.Vectors 
+provides private types Vector and Cursor, and a set of operations for 
+each type. A vector container allows insertion and deletion at any position, 
+but it is specifically optimized for insertion and deletion at the high 
+end (the end with the higher index) of the container. A vector container 
+also provides random access to its elements.<A NAME="I5991"></A> <A NAME="I5992"></A></DIV>
+<DIV Class="paranum">2/2</DIV>
+<DIV Class="Normal"><A NAME="I5993"></A><A NAME="I5994"></A>A vector 
+container behaves conceptually as an array that expands as necessary 
+as items are inserted. The <I>length</I> of a vector is the number of 
+elements that the vector contains. The <I>capacity</I> of a vector is 
+the maximum number of elements that can be inserted into the vector prior 
+to it being automatically expanded.</DIV>
+<DIV Class="paranum">3/2</DIV>
+<DIV Class="Normal">Elements in a vector container can be referred to 
+by an index value of a generic formal type. The first element of a vector 
+always has its index value equal to the lower bound of the formal type.</DIV>
+<DIV Class="paranum">4/2</DIV>
+<DIV Class="Normal"><A NAME="I5995"></A>A vector container may contain 
+<I>empty elements</I>. Empty elements do not have a specified value.</DIV>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">5/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The generic library 
+package Containers.Vectors has the following declaration:&nbsp;</DIV>
+<DIV Class="paranum">6/2</DIV>
+<DIV Class="Examples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Index_Type&nbsp;<B>is&nbsp;range</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;Element_Type)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Ada.Containers.Vectors&nbsp;<B>is</B><A NAME="I5996"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Vectors);</DIV>
+<DIV Class="paranum">7/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;<A NAME="I5997"></A>Extended_Index&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index_Type'Base&nbsp;<B>range</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index_Type'First-1&nbsp;..<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index_Type'Min&nbsp;(Index_Type'Base'Last&nbsp;-&nbsp;1,&nbsp;Index_Type'Last)&nbsp;+&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I5998"></A>No_Index&nbsp;:&nbsp;<B>constant</B>&nbsp;Extended_Index&nbsp;:=&nbsp;Extended_Index'First;</DIV>
+<DIV Class="paranum">8/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I5999"></A>Vector&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(Vector);</DIV>
+<DIV Class="paranum">9/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6000"></A>Cursor&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(Cursor);</DIV>
+<DIV Class="paranum">10/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<A NAME="I6001"></A>Empty_Vector&nbsp;:&nbsp;<B>constant</B>&nbsp;Vector;</DIV>
+<DIV Class="paranum">11/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<A NAME="I6002"></A>No_Element&nbsp;:&nbsp;<B>constant</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">12/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">13/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6003"></A>To_Vector&nbsp;(Length&nbsp;:&nbsp;Count_Type)&nbsp;<B>return</B>&nbsp;Vector;</DIV>
+<DIV Class="paranum">14/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6004"></A>To_Vector<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(New_Item&nbsp;:&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Length&nbsp;&nbsp;&nbsp;:&nbsp;Count_Type)&nbsp;<B>return</B>&nbsp;Vector;</DIV>
+<DIV Class="paranum">15/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Vector;</DIV>
+<DIV Class="paranum">16/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left&nbsp;&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right&nbsp;:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Vector;</DIV>
+<DIV Class="paranum">17/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left&nbsp;&nbsp;:&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Vector;</DIV>
+<DIV Class="paranum">18/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left,&nbsp;Right&nbsp;&nbsp;:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Vector;</DIV>
+<DIV Class="paranum">19/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6005"></A>Capacity&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Count_Type;</DIV>
+<DIV Class="paranum">20/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6006"></A>Reserve_Capacity&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Capacity&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type);</DIV>
+<DIV Class="paranum">21/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6007"></A>Length&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Count_Type;</DIV>
+<DIV Class="paranum">22/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6008"></A>Set_Length&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Length&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type);</DIV>
+<DIV Class="paranum">23/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6009"></A>Is_Empty&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">24/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6010"></A>Clear&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector);</DIV>
+<DIV Class="paranum">25/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6011"></A>To_Cursor&nbsp;(Container&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Extended_Index)&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">26/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6012"></A>To_Index&nbsp;(Position&nbsp;&nbsp;:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Extended_Index;</DIV>
+<DIV Class="paranum">27/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6013"></A>Element&nbsp;(Container&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Index_Type)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Element_Type;</DIV>
+<DIV Class="paranum">28/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6014"></A>Element&nbsp;(Position&nbsp;:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Element_Type;</DIV>
+<DIV Class="paranum">29/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6015"></A>Replace_Element&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type);</DIV>
+<DIV Class="paranum">30/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6016"></A>Replace_Element&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type);</DIV>
+<DIV Class="paranum">31/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6017"></A>Query_Element<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container&nbsp;:&nbsp;<B>in</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Index_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process&nbsp;&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Element&nbsp;:&nbsp;<B>in</B>&nbsp;Element_Type));</DIV>
+<DIV Class="paranum">32/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6018"></A>Query_Element<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Position&nbsp;:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Element&nbsp;:&nbsp;<B>in</B>&nbsp;Element_Type));</DIV>
+<DIV Class="paranum">33/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6019"></A>Update_Element<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process&nbsp;&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Element&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Element_Type));</DIV>
+<DIV Class="paranum">34/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6020"></A>Update_Element<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process&nbsp;&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Element&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Element_Type));</DIV>
+<DIV Class="paranum">35/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6021"></A>Move&nbsp;(Target&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector);</DIV>
+<DIV Class="paranum">36/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6022"></A>Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Extended_Index;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Vector);</DIV>
+<DIV Class="paranum">37/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6023"></A>Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Vector);</DIV>
+<DIV Class="paranum">38/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6024"></A>Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Cursor);</DIV>
+<DIV Class="paranum">39/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6025"></A>Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Extended_Index;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">40/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6026"></A>Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">41/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6027"></A>Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">42/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6028"></A>Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Extended_Index;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">43/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6029"></A>Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">44/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6030"></A>Prepend&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Vector);</DIV>
+<DIV Class="paranum">45/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6031"></A>Prepend&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">46/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6032"></A>Append&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Vector);</DIV>
+<DIV Class="paranum">47/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6033"></A>Append&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">48/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6034"></A>Insert_Space&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Extended_Index;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">49/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6035"></A>Insert_Space&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">50/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6036"></A>Delete&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Extended_Index;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">51/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6037"></A>Delete&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">52/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6038"></A>Delete_First&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">53/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6039"></A>Delete_Last&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">54/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6040"></A>Reverse_Elements&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector);</DIV>
+<DIV Class="paranum">55/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6041"></A>Swap&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I,&nbsp;J&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index_Type);</DIV>
+<DIV Class="paranum">56/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6042"></A>Swap&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I,&nbsp;J&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor);</DIV>
+<DIV Class="paranum">57/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6043"></A>First_Index&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Index_Type;</DIV>
+<DIV Class="paranum">58/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6044"></A>First&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">59/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6045"></A>First_Element&nbsp;(Container&nbsp;:&nbsp;Vector)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Element_Type;</DIV>
+<DIV Class="paranum">60/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6046"></A>Last_Index&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Extended_Index;</DIV>
+<DIV Class="paranum">61/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6047"></A>Last&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">62/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6048"></A>Last_Element&nbsp;(Container&nbsp;:&nbsp;Vector)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Element_Type;</DIV>
+<DIV Class="paranum">63/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6049"></A>Next&nbsp;(Position&nbsp;:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">64/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6050"></A>Next&nbsp;(Position&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor);</DIV>
+<DIV Class="paranum">65/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6051"></A>Previous&nbsp;(Position&nbsp;:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">66/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6052"></A>Previous&nbsp;(Position&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor);</DIV>
+<DIV Class="paranum">67/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6053"></A>Find_Index&nbsp;(Container&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Index_Type&nbsp;:=&nbsp;Index_Type'First)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Extended_Index;</DIV>
+<DIV Class="paranum">68/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6054"></A>Find&nbsp;(Container&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;Cursor&nbsp;:=&nbsp;No_Element)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">69/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6055"></A>Reverse_Find_Index&nbsp;(Container&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Index_Type&nbsp;:=&nbsp;Index_Type'Last)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Extended_Index;</DIV>
+<DIV Class="paranum">70/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6056"></A>Reverse_Find&nbsp;(Container&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;Cursor&nbsp;:=&nbsp;No_Element)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">71/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6057"></A>Contains&nbsp;(Container&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">72/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6058"></A>Has_Element&nbsp;(Position&nbsp;:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">73/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;&nbsp;<A NAME="I6059"></A>Iterate<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container&nbsp;:&nbsp;<B>in</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process&nbsp;&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Position&nbsp;:&nbsp;<B>in</B>&nbsp;Cursor));</DIV>
+<DIV Class="paranum">74/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6060"></A>Reverse_Iterate<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container&nbsp;:&nbsp;<B>in</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process&nbsp;&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Position&nbsp;:&nbsp;<B>in</B>&nbsp;Cursor));</DIV>
+<DIV Class="paranum">75/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;&lt;&quot;&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;Element_Type)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean&nbsp;is&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;<A NAME="I6061"></A>Generic_Sorting&nbsp;<B>is</B></DIV>
+<DIV Class="paranum">76/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6062"></A>Is_Sorted&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">77/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6063"></A>Sort&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector);</DIV>
+<DIV Class="paranum">78/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6064"></A>Merge&nbsp;(Target&nbsp;&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source&nbsp;&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector);</DIV>
+<DIV Class="paranum">79/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Generic_Sorting;</DIV>
+<DIV Class="paranum">80/2</DIV>
+<DIV Class="Examples"><B>private</B></DIV>
+<DIV Class="paranum">81/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN></DIV>
+<DIV Class="paranum">82/2</DIV>
+<DIV Class="Examples"><B>end</B>&nbsp;Ada.Containers.Vectors;</DIV>
+<DIV Class="paranum">83/2</DIV>
+<DIV Class="Normal">&nbsp;The actual function for the generic formal function 
+&quot;=&quot; on Element_Type values is expected to define a reflexive 
+and symmetric relationship and return the same result value each time 
+it is called with a particular pair of values. If it behaves in some 
+other manner, the functions defined to use it return an unspecified value. 
+The exact arguments and number of calls of this generic formal function 
+by the functions defined to use it are unspecified.<A NAME="I6065"></A></DIV>
+<DIV Class="paranum">84/2</DIV>
+<DIV Class="Normal">&nbsp;The type Vector is used to represent vectors. The 
+type Vector needs finalization (see <A HREF="RM-7-6.html">7.6</A>).</DIV>
+<DIV Class="paranum">85/2</DIV>
+<DIV Class="Normal">&nbsp;Empty_Vector represents the empty vector object. 
+It has a length of 0. If an object of type Vector is not otherwise initialized, 
+it is initialized to the same value as Empty_Vector.</DIV>
+<DIV Class="paranum">86/2</DIV>
+<DIV Class="Normal">&nbsp;No_Element represents a cursor that designates no 
+element. If an object of type Cursor is not otherwise initialized, it 
+is initialized to the same value as No_Element.</DIV>
+<DIV Class="paranum">87/2</DIV>
+<DIV Class="Normal">&nbsp;The predefined &quot;=&quot; operator for type Cursor 
+returns True if both cursors are No_Element, or designate the same element 
+in the same container.</DIV>
+<DIV Class="paranum">88/2</DIV>
+<DIV Class="Normal">&nbsp;Execution of the default implementation of the Input, 
+Output, Read, or Write attribute of type Cursor raises Program_Error.</DIV>
+<DIV Class="paranum">89/2</DIV>
+<DIV Class="Normal">&nbsp;No_Index represents a position that does not correspond 
+to any element. The subtype Extended_Index includes the indices covered 
+by Index_Type plus the value No_Index and, if it exists, the successor 
+to the Index_Type'Last.</DIV>
+<DIV Class="paranum">90/2</DIV>
+<DIV Class="Normal">&nbsp;Some operations of this generic package have access-to-subprogram 
+parameters. To ensure such operations are well-defined, they guard against 
+certain actions by the designated subprogram. In particular, some operations 
+check for &ldquo;tampering with cursors&rdquo; of a container because 
+they depend on the set of elements of the container remaining constant, 
+and others check for &ldquo;tampering with elements&rdquo; of a container 
+because they depend on elements of the container not being replaced.</DIV>
+<DIV Class="paranum">91/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;<A NAME="I6066"></A>A 
+subprogram is said to <I>tamper with cursors</I> of a vector object <I>V</I> 
+if:</DIV>
+<DIV Class="paranum">92/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>it inserts or deletes elements of 
+<I>V</I>, that is, it calls the Insert, Insert_Space, Clear, Delete, 
+or Set_Length procedures with <I>V</I> as a parameter; or</LI></UL>
+<DIV Class="paranum">93/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>it finalizes <I>V</I>; or</LI></UL>
+<DIV Class="paranum">94/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>it calls the Move procedure with <I>V</I> 
+as a parameter.</LI></UL>
+<DIV Class="paranum">95/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;<A NAME="I6067"></A>A 
+subprogram is said to <I>tamper with elements</I> of a vector object 
+<I>V</I> if:</DIV>
+<DIV Class="paranum">96/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>it tampers with cursors of <I>V</I>; 
+or</LI></UL>
+<DIV Class="paranum">97/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>it replaces one or more elements of 
+<I>V</I>, that is, it calls the Replace_Element, Reverse_Elements, or 
+Swap procedures or the Sort or Merge procedures of an instance of Generic_Sorting 
+with <I>V</I> as a parameter.</LI></UL>
+<DIV Class="paranum">98/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">99/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Left and Right 
+denote the same vector object, then the function returns True. If Left 
+and Right have different lengths, then the function returns False. Otherwise, 
+it compares each element in Left to the corresponding element in Right 
+using the generic formal equality operator. If any such comparison returns 
+False, the function returns False; otherwise it returns True. Any exception 
+raised during evaluation of element equality is propagated.</DIV>
+<DIV Class="paranum">100/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;To_Vector&nbsp;(Length&nbsp;:&nbsp;Count_Type)&nbsp;<B>return</B>&nbsp;Vector;</DIV>
+<DIV Class="paranum">101/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns a vector 
+with a length of Length, filled with empty elements.</DIV>
+<DIV Class="paranum">102/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;To_Vector<BR>
+&nbsp;&nbsp;(New_Item&nbsp;:&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;Length&nbsp;&nbsp;&nbsp;:&nbsp;Count_Type)&nbsp;<B>return</B>&nbsp;Vector;</DIV>
+<DIV Class="paranum">103/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns a vector 
+with a length of Length, filled with elements initialized to the value 
+New_Item.</DIV>
+<DIV Class="paranum">104/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Vector;</DIV>
+<DIV Class="paranum">105/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns a vector 
+comprising the elements of Left followed by the elements of Right.</DIV>
+<DIV Class="paranum">106/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left&nbsp;&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right&nbsp;:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Vector;</DIV>
+<DIV Class="paranum">107/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns a vector 
+comprising the elements of Left followed by the element Right.</DIV>
+<DIV Class="paranum">108/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left&nbsp;&nbsp;:&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Vector;</DIV>
+<DIV Class="paranum">109/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns a vector 
+comprising the element Left followed by the elements of Right.</DIV>
+<DIV Class="paranum">110/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left,&nbsp;Right&nbsp;&nbsp;:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Vector;</DIV>
+<DIV Class="paranum">111/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns a vector 
+comprising the element Left followed by the element Right.</DIV>
+<DIV Class="paranum">112/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Capacity&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Count_Type;</DIV>
+<DIV Class="paranum">113/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns the capacity 
+of Container.</DIV>
+<DIV Class="paranum">114/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Reserve_Capacity&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Capacity&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type);</DIV>
+<DIV Class="paranum">115/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Reserve_Capacity 
+allocates new internal data structures such that the length of the resulting 
+vector can become at least the value Capacity without requiring an additional 
+call to Reserve_Capacity, and is large enough to hold the current length 
+of Container. Reserve_Capacity then copies the elements into the new 
+data structures and deallocates the old data structures. Any exception 
+raised during allocation is propagated and Container is not modified.</DIV>
+<DIV Class="paranum">116/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Length&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Count_Type;</DIV>
+<DIV Class="paranum">117/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns the number 
+of elements in Container.</DIV>
+<DIV Class="paranum">118/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Set_Length&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Length&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type);</DIV>
+<DIV Class="paranum">119/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Length is 
+larger than the capacity of Container, Set_Length calls Reserve_Capacity 
+(Container, Length), then sets the length of the Container to Length. 
+If Length is greater than the original length of Container, empty elements 
+are added to Container; otherwise elements are removed from Container.</DIV>
+<DIV Class="paranum">120/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Is_Empty&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">121/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Length (Container) = 0.</DIV>
+<DIV Class="paranum">122/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Clear&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector);</DIV>
+<DIV Class="paranum">123/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Removes all the 
+elements from Container. The capacity of Container does not change.</DIV>
+<DIV Class="paranum">124/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;To_Cursor&nbsp;(Container&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Extended_Index)&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">125/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Index is not 
+in the range First_Index (Container) .. Last_Index (Container), then 
+No_Element is returned. Otherwise, a cursor designating the element at 
+position Index in Container is returned.</DIV>
+<DIV Class="paranum">126/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;To_Index&nbsp;(Position&nbsp;&nbsp;:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Extended_Index;</DIV>
+<DIV Class="paranum">127/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Position is 
+No_Element, No_Index is returned. Otherwise, the index (within its containing 
+vector) of the element designated by Position is returned.</DIV>
+<DIV Class="paranum">128/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Element&nbsp;(Container&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Index_Type)<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Element_Type;</DIV>
+<DIV Class="paranum">129/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Index is not 
+in the range First_Index (Container) .. Last_Index (Container), then 
+Constraint_Error is propagated. Otherwise, Element returns the element 
+at position Index.</DIV>
+<DIV Class="paranum">130/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Element&nbsp;(Position&nbsp;&nbsp;:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Element_Type;</DIV>
+<DIV Class="paranum">131/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Position equals 
+No_Element, then Constraint_Error is propagated. Otherwise, Element returns 
+the element designated by Position.</DIV>
+<DIV Class="paranum">132/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Replace_Element&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type);</DIV>
+<DIV Class="paranum">133/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Index is not 
+in the range First_Index (Container) .. Last_Index (Container), then 
+Constraint_Error is propagated. Otherwise Replace_Element assigns the 
+value New_Item to the element at position Index. Any exception raised 
+during the assignment is propagated. The element at position Index is 
+not an empty element after successful call to Replace_Element.</DIV>
+<DIV Class="paranum">134/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Replace_Element&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type);</DIV>
+<DIV Class="paranum">135/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Position equals 
+No_Element, then Constraint_Error is propagated; if Position does not 
+designate an element in Container, then Program_Error is propagated. 
+Otherwise Replace_Element assigns New_Item to the element designated 
+by Position. Any exception raised during the assignment is propagated. 
+The element at Position is not an empty element after successful call 
+to Replace_Element.</DIV>
+<DIV Class="paranum">136/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Query_Element<BR>
+&nbsp;&nbsp;(Container&nbsp;:&nbsp;<B>in</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Index_Type;<BR>
+&nbsp;&nbsp;&nbsp;Process&nbsp;&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;<B>procedure</B>&nbsp;(Element&nbsp;:&nbsp;<B>in</B>&nbsp;Element_Type));</DIV>
+<DIV Class="paranum">137/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Index is not 
+in the range First_Index (Container) .. Last_Index (Container), then 
+Constraint_Error is propagated. Otherwise, Query_Element calls Process.<B>all</B> 
+with the element at position Index as the argument. Program_Error is 
+propagated if Process.<B>all</B> tampers with the elements of Container. 
+Any exception raised by Process.<B>all</B> is propagated.</DIV>
+<DIV Class="paranum">138/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Query_Element<BR>
+&nbsp;&nbsp;(Position&nbsp;:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;Process&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;<B>procedure</B>&nbsp;(Element&nbsp;:&nbsp;<B>in</B>&nbsp;Element_Type));</DIV>
+<DIV Class="paranum">139/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Position equals 
+No_Element, then Constraint_Error is propagated. Otherwise, Query_Element 
+calls Process.<B>all</B> with the element designated by Position as the 
+argument. Program_Error is propagated if Process.<B>all</B> tampers with 
+the elements of Container. Any exception raised by Process.<B>all</B> 
+is propagated.</DIV>
+<DIV Class="paranum">140/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Update_Element<BR>
+&nbsp;&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index_Type;<BR>
+&nbsp;&nbsp;&nbsp;Process&nbsp;&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;<B>procedure</B>&nbsp;(Element&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Element_Type));</DIV>
+<DIV Class="paranum">141/2</DIV>
+<DIV Class="CodeIndented">If Index is not in the range First_Index (Container) 
+.. Last_Index (Container), then Constraint_Error is propagated. Otherwise, 
+Update_Element calls Process.<B>all</B> with the element at position 
+Index as the argument. Program_Error is propagated if Process.<B>all</B> 
+tampers with the elements of Container. Any exception raised by Process.<B>all</B> 
+is propagated.</DIV>
+<DIV Class="paranum">142/2</DIV>
+<DIV Class="CodeIndented">If Element_Type is unconstrained and definite, 
+then the actual Element parameter of Process.<B>all</B> shall be unconstrained.</DIV>
+<DIV Class="paranum">143/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">The element at 
+position Index is not an empty element after successful completion of 
+this operation.</DIV>
+<DIV Class="paranum">144/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Update_Element<BR>
+&nbsp;&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;Process&nbsp;&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;<B>procedure</B>&nbsp;(Element&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Element_Type));</DIV>
+<DIV Class="paranum">145/2</DIV>
+<DIV Class="CodeIndented">If Position equals No_Element, then Constraint_Error 
+is propagated; if Position does not designate an element in Container, 
+then Program_Error is propagated. Otherwise Update_Element calls Process.<B>all</B> 
+with the element designated by Position as the argument. Program_Error 
+is propagated if Process.<B>all</B> tampers with the elements of Container. 
+Any exception raised by Process.<B>all</B> is propagated.</DIV>
+<DIV Class="paranum">146/2</DIV>
+<DIV Class="CodeIndented">If Element_Type is unconstrained and definite, 
+then the actual Element parameter of Process.<B>all</B> shall be unconstrained.</DIV>
+<DIV Class="paranum">147/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">The element designated 
+by Position is not an empty element after successful completion of this 
+operation.</DIV>
+<DIV Class="paranum">148/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Move&nbsp;(Target&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector);</DIV>
+<DIV Class="paranum">149/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Target denotes 
+the same object as Source, then Move has no effect. Otherwise, Move first 
+calls Clear (Target); then, each element from Source is removed from 
+Source and inserted into Target in the original order. The length of 
+Source is 0 after a successful call to Move.</DIV>
+<DIV Class="paranum">150/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Extended_Index;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Vector);</DIV>
+<DIV Class="paranum">151/2</DIV>
+<DIV Class="CodeIndented">If Before is not in the range First_Index (Container) 
+.. Last_Index (Container) + 1, then Constraint_Error is propagated. If 
+Length(New_Item) is 0, then Insert does nothing. Otherwise, it computes 
+the new length <I>NL</I> as the sum of the current length and Length 
+(New_Item); if the value of Last appropriate for length <I>NL</I> would 
+be greater than Index_Type'Last then Constraint_Error is propagated.</DIV>
+<DIV Class="paranum">152/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If the current 
+vector capacity is less than <I>NL</I>, Reserve_Capacity (Container, 
+<I>NL</I>) is called to increase the vector capacity. Then Insert slides 
+the elements in the range Before .. Last_Index (Container) up by Length(New_Item) 
+positions, and then copies the elements of New_Item to the positions 
+starting at Before. Any exception raised during the copying is propagated.</DIV>
+<DIV Class="paranum">153/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Vector);</DIV>
+<DIV Class="paranum">154/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Before is 
+not No_Element, and does not designate an element in Container, then 
+Program_Error is propagated. Otherwise, if Length(New_Item) is 0, then 
+Insert does nothing. If Before is No_Element, then the call is equivalent 
+to Insert (Container, Last_Index (Container) + 1, New_Item); otherwise 
+the call is equivalent to Insert (Container, To_Index (Before), New_Item);</DIV>
+<DIV Class="paranum">155/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Cursor);</DIV>
+<DIV Class="paranum">156/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Before is 
+not No_Element, and does not designate an element in Container, then 
+Program_Error is propagated. If Before equals No_Element, then let <I>T</I> 
+be Last_Index (Container) + 1; otherwise, let <I>T</I> be To_Index (Before). 
+Insert (Container, <I>T</I>, New_Item) is called, and then Position is 
+set to To_Cursor (Container, <I>T</I>).</DIV>
+<DIV Class="paranum">157/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Extended_Index;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">158/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Insert (Container, Before, To_Vector (New_Item, Count));</DIV>
+<DIV Class="paranum">159/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">160/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Insert (Container, Before, To_Vector (New_Item, Count));</DIV>
+<DIV Class="paranum">161/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">162/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Insert (Container, Before, To_Vector (New_Item, Count), Position);</DIV>
+<DIV Class="paranum">163/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Extended_Index;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">164/2</DIV>
+<DIV Class="CodeIndented">If Before is not in the range First_Index (Container) 
+.. Last_Index (Container) + 1, then Constraint_Error is propagated. If 
+Count is 0, then Insert does nothing. Otherwise, it computes the new 
+length <I>NL</I> as the sum of the current length and Count; if the value 
+of Last appropriate for length <I>NL</I> would be greater than Index_Type'Last 
+then Constraint_Error is propagated.</DIV>
+<DIV Class="paranum">165/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If the current 
+vector capacity is less than <I>NL</I>, Reserve_Capacity (Container, 
+<I>NL</I>) is called to increase the vector capacity. Then Insert slides 
+the elements in the range Before .. Last_Index (Container) up by Count 
+positions, and then inserts elements that are initialized by default 
+(see <A HREF="RM-3-3-1.html">3.3.1</A>) in the positions starting at 
+Before.</DIV>
+<DIV Class="paranum">166/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">167/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Before is 
+not No_Element, and does not designate an element in Container, then 
+Program_Error is propagated. If Before equals No_Element, then let <I>T</I> 
+be Last_Index (Container) + 1; otherwise, let <I>T</I> be To_Index (Before). 
+Insert (Container, <I>T</I>, Count) is called, and then Position is set 
+to To_Cursor (Container, <I>T</I>).</DIV>
+<DIV Class="paranum">168/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Prepend&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">169/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Insert (Container, First_Index (Container), New_Item).</DIV>
+<DIV Class="paranum">170/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Prepend&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">171/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Insert (Container, First_Index (Container), New_Item, Count).</DIV>
+<DIV Class="paranum">172/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Append&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Vector);</DIV>
+<DIV Class="paranum">173/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Insert (Container, Last_Index (Container) + 1, New_Item).</DIV>
+<DIV Class="paranum">174/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Append&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">175/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Insert (Container, Last_Index (Container) + 1, New_Item, Count).</DIV>
+<DIV Class="paranum">176/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Insert_Space&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Extended_Index;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">177/2</DIV>
+<DIV Class="CodeIndented">If Before is not in the range First_Index (Container) 
+.. Last_Index (Container) + 1, then Constraint_Error is propagated. If 
+Count is 0, then Insert_Space does nothing. Otherwise, it computes the 
+new length <I>NL</I> as the sum of the current length and Count; if the 
+value of Last appropriate for length <I>NL</I> would be greater than 
+Index_Type'Last then Constraint_Error is propagated.</DIV>
+<DIV Class="paranum">178/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If the current 
+vector capacity is less than <I>NL</I>, Reserve_Capacity (Container, 
+<I>NL</I>) is called to increase the vector capacity. Then Insert_Space 
+slides the elements in the range Before .. Last_Index (Container) up 
+by Count positions, and then inserts empty elements in the positions 
+starting at Before.</DIV>
+<DIV Class="paranum">179/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Insert_Space&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">180/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Before is 
+not No_Element, and does not designate an element in Container, then 
+Program_Error is propagated. If Before equals No_Element, then let <I>T</I> 
+be Last_Index (Container) + 1; otherwise, let <I>T</I> be To_Index (Before). 
+Insert_Space (Container, <I>T</I>, Count) is called, and then Position 
+is set to To_Cursor (Container, <I>T</I>).</DIV>
+<DIV Class="paranum">181/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Delete&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Extended_Index;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">182/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Index is not 
+in the range First_Index (Container) .. Last_Index (Container) + 1, then 
+Constraint_Error is propagated. If Count is 0, Delete has no effect. 
+Otherwise Delete slides the elements (if any) starting at position Index 
++ Count down to Index. Any exception raised during element assignment 
+is propagated.</DIV>
+<DIV Class="paranum">183/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Delete&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">184/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Position equals 
+No_Element, then Constraint_Error is propagated. If Position does not 
+designate an element in Container, then Program_Error is propagated. 
+Otherwise, Delete (Container, To_Index (Position), Count) is called, 
+and then Position is set to No_Element.</DIV>
+<DIV Class="paranum">185/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Delete_First&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">186/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Delete (Container, First_Index (Container), Count).</DIV>
+<DIV Class="paranum">187/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Delete_Last&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count_Type&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">188/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Length (Container) 
+&lt;= Count then Delete_Last is equivalent to Clear (Container). Otherwise 
+it is equivalent to Delete (Container, Index_Type'Val(Index_Type'Pos(Last_Index 
+(Container)) &ndash; Count + 1), Count).</DIV>
+<DIV Class="paranum">189/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Reverse_Elements&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;List);</DIV>
+<DIV Class="paranum">190/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Reorders the 
+elements of Container in reverse order.</DIV>
+<DIV Class="paranum">191/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Swap&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I,&nbsp;J&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index_Type);</DIV>
+<DIV Class="paranum">192/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If either I or 
+J is not in the range First_Index (Container) .. Last_Index (Container), 
+then Constraint_Error is propagated. Otherwise, Swap exchanges the values 
+of the elements at positions I and J.</DIV>
+<DIV Class="paranum">193/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Swap&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I,&nbsp;J&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor);</DIV>
+<DIV Class="paranum">194/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If either I or 
+J is No_Element, then Constraint_Error is propagated. If either I or 
+J do not designate an element in Container, then Program_Error is propagated. 
+Otherwise, Swap exchanges the values of the elements designated by I 
+and J.</DIV>
+<DIV Class="paranum">195/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;First_Index&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Index_Type;</DIV>
+<DIV Class="paranum">196/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns the value 
+Index_Type'First.</DIV>
+<DIV Class="paranum">197/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;First&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">198/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Container 
+is empty, First returns No_Element. Otherwise, it returns a cursor that 
+designates the first element in Container.</DIV>
+<DIV Class="paranum">199/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;First_Element&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Element_Type;</DIV>
+<DIV Class="paranum">200/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Element (Container, First_Index (Container)).</DIV>
+<DIV Class="paranum">201/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Last_Index&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Extended_Index;</DIV>
+<DIV Class="paranum">202/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Container 
+is empty, Last_Index returns No_Index. Otherwise, it returns the position 
+of the last element in Container.</DIV>
+<DIV Class="paranum">203/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Last&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">204/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Container 
+is empty, Last returns No_Element. Otherwise, it returns a cursor that 
+designates the last element in Container.</DIV>
+<DIV Class="paranum">205/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Last_Element&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Element_Type;</DIV>
+<DIV Class="paranum">206/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Element (Container, Last_Index (Container)).</DIV>
+<DIV Class="paranum">207/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Next&nbsp;(Position&nbsp;:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">208/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Position equals 
+No_Element or designates the last element of the container, then Next 
+returns the value No_Element. Otherwise, it returns a cursor that designates 
+the element with index To_Index (Position) + 1 in the same vector as 
+Position.</DIV>
+<DIV Class="paranum">209/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Next&nbsp;(Position&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor);</DIV>
+<DIV Class="paranum">210/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Position := Next (Position).</DIV>
+<DIV Class="paranum">211/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Previous&nbsp;(Position&nbsp;:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">212/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Position equals 
+No_Element or designates the first element of the container, then Previous 
+returns the value No_Element. Otherwise, it returns a cursor that designates 
+the element with index To_Index (Position) &ndash; 1 in the same vector 
+as Position.</DIV>
+<DIV Class="paranum">213/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Previous&nbsp;(Position&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor);</DIV>
+<DIV Class="paranum">214/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Position := Previous (Position).</DIV>
+<DIV Class="paranum">215/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Find_Index&nbsp;(Container&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Index_Type&nbsp;:=&nbsp;Index_Type'First)<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Extended_Index;</DIV>
+<DIV Class="paranum">216/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Searches the 
+elements of Container for an element equal to Item (using the generic 
+formal equality operator). The search starts at position Index and proceeds 
+towards Last_Index (Container). If no equal element is found, then Find_Index 
+returns No_Index. Otherwise, it returns the index of the first equal 
+element encountered.</DIV>
+<DIV Class="paranum">217/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Find&nbsp;(Container&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;Cursor&nbsp;:=&nbsp;No_Element)<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">218/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Position is 
+not No_Element, and does not designate an element in Container, then 
+Program_Error is propagated. Otherwise Find searches the elements of 
+Container for an element equal to Item (using the generic formal equality 
+operator). The search starts at the first element if Position equals 
+No_Element, and at the element designated by Position otherwise. It proceeds 
+towards the last element of Container. If no equal element is found, 
+then Find returns No_Element. Otherwise, it returns a cursor designating 
+the first equal element encountered.</DIV>
+<DIV Class="paranum">219/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Reverse_Find_Index&nbsp;(Container&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Index_Type&nbsp;:=&nbsp;Index_Type'Last)<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Extended_Index;</DIV>
+<DIV Class="paranum">220/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Searches the 
+elements of Container for an element equal to Item (using the generic 
+formal equality operator). The search starts at position Index or, if 
+Index is greater than Last_Index (Container), at position Last_Index 
+(Container). It proceeds towards First_Index (Container). If no equal 
+element is found, then Reverse_Find_Index returns No_Index. Otherwise, 
+it returns the index of the first equal element encountered.</DIV>
+<DIV Class="paranum">221/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Reverse_Find&nbsp;(Container&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;Cursor&nbsp;:=&nbsp;No_Element)<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">222/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Position is 
+not No_Element, and does not designate an element in Container, then 
+Program_Error is propagated. Otherwise Reverse_Find searches the elements 
+of Container for an element equal to Item (using the generic formal equality 
+operator). The search starts at the last element if Position equals No_Element, 
+and at the element designated by Position otherwise. It proceeds towards 
+the first element of Container. If no equal element is found, then Reverse_Find 
+returns No_Element. Otherwise, it returns a cursor designating the first 
+equal element encountered.</DIV>
+<DIV Class="paranum">223/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Contains&nbsp;(Container&nbsp;:&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">224/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Has_Element (Find (Container, Item)).</DIV>
+<DIV Class="paranum">225/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Has_Element&nbsp;(Position&nbsp;:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">226/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns True 
+if Position designates an element, and returns False otherwise.</DIV>
+<DIV Class="paranum">227/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Iterate<BR>
+&nbsp;&nbsp;(Container&nbsp;:&nbsp;<B>in</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;Process&nbsp;&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;<B>procedure</B>&nbsp;(Position&nbsp;:&nbsp;<B>in</B>&nbsp;Cursor));</DIV>
+<DIV Class="paranum">228/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Invokes Process.<B>all</B> 
+with a cursor that designates each element in Container, in index order. 
+Program_Error is propagated if Process.<B>all</B> tampers with the cursors 
+of Container. Any exception raised by Process is propagated.</DIV>
+<DIV Class="paranum">229/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Reverse_Iterate<BR>
+&nbsp;&nbsp;(Container&nbsp;:&nbsp;<B>in</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;Process&nbsp;&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;<B>procedure</B>&nbsp;(Position&nbsp;:&nbsp;<B>in</B>&nbsp;Cursor));</DIV>
+<DIV Class="paranum">230/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Iterates over 
+the elements in Container as per Iterate, except that elements are traversed 
+in reverse index order.</DIV>
+<DIV Class="paranum">231/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;The actual function for the generic formal function 
+&quot;&lt;&quot; of Generic_Sorting is expected to return the same value 
+each time it is called with a particular pair of element values. It should 
+define a strict ordering relationship, that is, be irreflexive, asymmetric, 
+and transitive; it should not modify Container. If the actual for &quot;&lt;&quot; 
+behaves in some other manner, the behavior of the subprograms of Generic_Sorting 
+are unspecified. How many times the subprograms of Generic_Sorting call 
+&quot;&lt;&quot; is unspecified.<A NAME="I6068"></A></DIV>
+<DIV Class="paranum">232/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Is_Sorted&nbsp;(Container&nbsp;:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">233/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns True 
+if the elements are sorted smallest first as determined by the generic 
+formal &quot;&lt;&quot; operator; otherwise, Is_Sorted returns False. 
+Any exception raised during evaluation of &quot;&lt;&quot; is propagated.</DIV>
+<DIV Class="paranum">234/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Sort&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector);</DIV>
+<DIV Class="paranum">235/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Reorders the 
+elements of Container such that the elements are sorted smallest first 
+as determined by the generic formal &quot;&lt;&quot; operator provided. 
+Any exception raised during evaluation of &quot;&lt;&quot; is propagated.</DIV>
+<DIV Class="paranum">236/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Merge&nbsp;(Target&nbsp;&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source&nbsp;&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector);</DIV>
+<DIV Class="paranum">237/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Merge removes 
+elements from Source and inserts them into Target; afterwards, Target 
+contains the union of the elements that were initially in Source and 
+Target; Source is left empty. If Target and Source are initially sorted 
+smallest first, then Target is ordered smallest first as determined by 
+the generic formal &quot;&lt;&quot; operator; otherwise, the order of 
+elements in Target is unspecified. Any exception raised during evaluation 
+of &quot;&lt;&quot; is propagated.</DIV>
+
+<H4 Class="centered">Bounded (Run-Time) Errors</H4>
+<DIV Class="paranum">238/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;<A NAME="I6069"></A>Reading the value of an empty 
+element by calling Element, Query_Element, Update_Element, Swap, Is_Sorted, 
+Sort, Merge, &quot;=&quot;, Find, or Reverse_Find is a bounded error. 
+The implementation may treat the element as having any normal value (see 
+<A HREF="RM-13-9-1.html">13.9.1</A>) of the element type, or raise Constraint_Error 
+or Program_Error before modifying the vector.</DIV>
+<DIV Class="paranum">239/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;<A NAME="I6070"></A>Calling Merge in an instance 
+of Generic_Sorting with either Source or Target not ordered smallest 
+first using the provided generic formal &quot;&lt;&quot; operator is 
+a bounded error. Either Program_Error is raised after Target is updated 
+as described for Merge, or the operation works as defined.</DIV>
+<DIV Class="paranum">240/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;<A NAME="I6071"></A><A NAME="I6072"></A>A 
+Cursor value is <I>ambiguous</I> if any of the following have occurred 
+since it was created:</DIV>
+<DIV Class="paranum">241/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>Insert, Insert_Space, or Delete has 
+been called on the vector that contains the element the cursor designates 
+with an index value (or a cursor designating an element at such an index 
+value) less than or equal to the index value of the element designated 
+by the cursor; or</LI></UL>
+<DIV Class="paranum">242/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The vector that contains the element 
+it designates has been passed to the Sort or Merge procedures of an instance 
+of Generic_Sorting, or to the Reverse_Elements procedure.</LI></UL>
+<DIV Class="paranum">243/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;<A NAME="I6073"></A> 
+It is a bounded error to call any subprogram other than &quot;=&quot; 
+or Has_Element declared in Containers.Vectors with an ambiguous (but 
+not invalid, see below) cursor parameter. Possible results are:</DIV>
+<DIV Class="paranum">244/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The cursor may be treated as if it 
+were No_Element;</LI></UL>
+<DIV Class="paranum">245/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The cursor may designate some element 
+in the vector (but not necessarily the element that it originally designated);</LI></UL>
+<DIV Class="paranum">246/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>Constraint_Error may be raised; or</LI></UL>
+<DIV Class="paranum">247/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>Program_Error may be raised.</LI></UL>
+
+<H4 Class="centered">Erroneous Execution</H4>
+<DIV Class="paranum">248/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;A Cursor value is 
+<I>invalid</I> if any of the following have occurred since it was created:<A NAME="I6074"></A> 
+<A NAME="I6075"></A></DIV>
+<DIV Class="paranum">249/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The vector that contains the element 
+it designates has been finalized;</LI></UL>
+<DIV Class="paranum">250/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The vector that contains the element 
+it designates has been used as the Source or Target of a call to Move; 
+or</LI></UL>
+<DIV Class="paranum">251/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The element it designates has been 
+deleted.</LI></UL>
+<DIV Class="paranum">252/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;The result of &quot;=&quot; or Has_Element is unspecified 
+if it is called with an invalid cursor parameter.<A NAME="I6076"></A> 
+Execution is erroneous if any other subprogram declared in Containers.Vectors 
+is called with an invalid cursor parameter.<A NAME="I6077"></A></DIV>
+
+<H4 Class="centered">Implementation Requirements</H4>
+<DIV Class="paranum">253/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;No storage associated with a vector object shall 
+be lost upon assignment or scope exit.</DIV>
+<DIV Class="paranum">254/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;The execution of an <SPAN Class="swiss"><A HREF="RM-5-2.html#S0137">assignment_statement</A></SPAN> 
+for a vector shall have the effect of copying the elements from the source 
+vector object to the target vector object.</DIV>
+
+<H4 Class="centered">Implementation Advice</H4>
+<DIV Class="paranum">255/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;Containers.Vectors should be implemented similarly 
+to an array. In particular, if the length of a vector is <I>N</I>, then</DIV>
+<DIV Class="paranum">256/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>the worst-case time complexity of 
+Element should be <I>O</I>(log <I>N</I>);&nbsp;</LI></UL>
+<DIV Class="paranum">257</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>the worst-case time complexity of 
+Append with Count=1 when <I>N</I> is less than the capacity of the vector 
+should be <I>O</I>(log <I>N</I>); and&nbsp;</LI></UL>
+<DIV Class="paranum">258/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>the worst-case time complexity of 
+Prepend with Count=1 and Delete_First with Count=1 should be <I>O</I>(<I>N</I> 
+log <I>N</I>).&nbsp;</LI></UL>
+<DIV Class="paranum">259/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;The worst-case time complexity of a call on procedure 
+Sort of an instance of Containers.Vectors.Generic_Sorting should be <I>O</I>(<I>N</I>**2), 
+and the average time complexity should be better than <I>O</I>(<I>N</I>**2). 
+</DIV>
+<DIV Class="paranum">260/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;Containers.Vectors.Generic_Sorting.Sort and Containers.Vectors.Generic_Sorting.Merge 
+should minimize copying of elements.&nbsp;</DIV>
+<DIV Class="paranum">261/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;Move should not copy elements, and should minimize 
+copying of internal data structures.&nbsp;</DIV>
+<DIV Class="paranum">262/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;If an exception is propagated from a vector operation, 
+no storage should be lost, nor any elements removed from a vector unless 
+specified by the operation.&nbsp;</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">263/2</DIV>
+<DIV Class="Notes">42&nbsp;&nbsp;All elements of a vector occupy locations 
+in the internal array. If a sparse container is required, a Hashed_Map 
+should be used rather than a vector.</DIV>
+<DIV Class="paranum">264/2</DIV>
+<DIV Class="Notes">43&nbsp;&nbsp;If Index_Type'Base'First = Index_Type'First 
+an instance of Ada.Containers.Vectors will raise Constraint_Error. A 
+value below Index_Type'First is required so that an empty vector has 
+a meaningful value of Last_Index.</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-18-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-18-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

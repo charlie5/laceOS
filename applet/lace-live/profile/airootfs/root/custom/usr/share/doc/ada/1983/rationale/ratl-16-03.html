@@ -1,0 +1,258 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 16.3: Designation of Files</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 16: Input-Output</H2>
+
+<H3><a name="16.3">16.3 Designation of Files</a></H3>
+
+Input-output operations  effect data  exchanges between  a  processor,
+running on  behalf of  the user  program, and  some peripheral device.
+Traditionally,  the  notion  of  a  file,  seen  as  a  repository  of
+information, is  often distinguished  from that  of a device. However,
+the logical  behavior of  a program as a processor of information must
+not depend  on the  source or destination of data, as long as the data
+represents the  desired information.  For  example,  it  is  perfectly
+reasonable to interface the same program with a disk file at one time,
+and with a terminal at another time.
+<p>
+Consequently, the  conventions used  to designate  the  target  of  an
+input-output operation should not necessarily distinguish between file
+names, device  names, volume  names, and  so on.  In  addition,  these
+conventions should  not conflict  with those  of any  operating system
+under which the language is implemented. Thus we need to reconcile the
+ability to  communicate with files in arbitrary operating systems with
+the retention  of as  much portability as possible in the greater part
+of the  program. This  is done  by distinguishing an external physical
+file, whose  general properties  - in  particular the  lifetime -  are
+quite outside  the realm of the Ada program, from an internal abstract
+Ada object, upon which the program can operate with a well-defined set
+of abstract operations.
+<p>
+The external  file is  conveniently  designated  by  a  string,  whose
+interpretation is  completely implementation-dependent.  A  string  is
+used for  this purpose  because of  its generality  and  accommodating
+nature. This  string is  thus  a  parameter  (called  NAME)  of  those
+procedures that  need to  identify an external file. There are in fact
+two of  these: CREATE  which establishes a new external file, and OPEN
+which refers  to an existing external file. In addition, it has proved
+convenient to provide a second string parameter (called FORM), through
+which arbitrary  auxiliary information  can be  supplied. The  default
+value for  each of these parameters is the null string; in the case of
+the name,  this is  conveniently taken  to indicate  a  temporary  and
+anonymous file,  whereas in  the case  of the form it merely indicates
+the absence of explicit auxiliary information.
+<p>
+Within the Ada program, the file is referred to via an Ada object of a
+limited private  type. The  type is limited (rather than just private)
+so that  the user  cannot make  arbitrary copies  of file objects, and
+thereby prevent  the file  package from  having complete  control over
+file access  and over the deallocation of internal buffer storage; for
+a more extensive discussion of this technique see <a href="ratl-09-02.html#9.2.3">section 9.2.3</a>.
+<p>
+The connection  between the internal file object and the external file
+is made  by passing  the object  as a  further parameter  to CREATE or
+OPEN. All access to the external file is then made by referring to the
+internal object.  This includes calls of CLOSE and DELETE, which sever
+the connection  between the external file and the internal file object
+and, in the case of DELETE, actually delete the external file itself.
+
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#16.3.1">16.3.1 Access Control</a><BR>
+<a href="#16.3.2">16.3.2 Default Files</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="16.3.1">16.3.1 Access Control</a></H3>
+
+There is  a need  to provide  a degree  of access control, in order to
+reduce the  risk of  inadvertently misusing  files. Typically,  a file
+would have  a MODE,  which would allow read-only, write-only, or read-
+and-write access. This could be done in a variety of ways, such as:
+<ul>
+<li>By providing  three quite  distinct file  types, such  as  IN_FILE,
+   OUT_FILE and  INOUT_FILE, corresponding  to the access modes. (This
+   was the approach taken in the <a href="ratl-BIB.html#languages">Green</a> language.)
+<p>
+<li>By introducing an enumeration type FILE_MODE, with possible literal
+   values IN_FILE,  OUT_FILE and  INOUT_FILE, and  then using a single
+   file type with a discriminant thus:
+<p>
+     type FILE_TYPE(MODE :  FILE_MODE) is limited private;
+<p>
+<li>By having  a  single  file  type,  without  any  discriminant,  but
+   associating each  file object  with a  dynamic property  that is  a
+   value of  the enumeration  type FILE_MODE.  This  is  the  approach
+   actually taken by Ada.
+</ul>
+
+At first sight, the first approach looks attractive. It means that the
+correct use  of mode can be ensured at compilation time, with apparent
+subsequent cost savings at run time. In practice, however, there are a
+number of serious problems:
+<ul>
+<li>It is not possible to change the mode of a file without closing it,
+   and then reopening it using a different file object; this makes the
+   provision of  temporary files rather awkward. Of course, such files
+   could be declared as INOUT, but this removes the security of access
+   we were  looking for  in the  first place,  and is  counter to  the
+   concept of sequential files.
+<p>
+<li>The individual  file types  make  it  impossible  to  write  single
+   general procedures that apply to all files.
+<p>
+<li>The individual  types  cause  an  excessive  number  of  overloaded
+   subprograms.
+</ul>
+
+Furthermore, the  apparent run-time  saving is usually illusory, since
+the underlying  operating system inevitably carries out its own access
+checks anyway.  (This would  not necessarily  apply in  the case  of a
+system specifically written to support just Ada.)
+<p>
+We therefore  reject the first approach, and consider approaches using
+a single  type. The  use of  a discriminant  to govern the access mode
+appears neat;  it solves the problems of multiple types, and keeps the
+access information  within the  type concept  but yet  visible to  the
+user. However, since the type is limited, the user is unable to change
+the discriminant anyway, and so this approach is unfruitful.
+<p>
+We thus  come to  the third  of  the  possibilities  outlined  at  the
+beginning of this section. This offers a practical solution, which has
+been adopted.
+<p>
+There is  a single type, FILE_TYPE, which applies to all files and, in
+addition, a  quite separate  property of  each file, which governs its
+access mode.  This property  is set  when a file is opened or created,
+through a  parameter to  OPEN or  CREATE, and  can also  be changed by
+calling the  procedure RESET.  The specifications  of these procedures
+are thus
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure CREATE     (FILE  :  in out     FILE_TYPE;
+                MODE :  in  FILE_MODE  :=  OUT_FILE;
+                NAME :  in  STRING  :=  "";
+                FORM :  in  STRING  :=  "");
+
+procedure OPEN       (FILE  :  in out     FILE_TYPE;
+               MODE  :  in  FILE_MODE;
+               NAME  :  in  STRING;
+               FORM  :  in  STRING  :=  "");
+
+procedure RESET      (FILE  :  in out     FILE_TYPE;
+               MODE  :  in  FILE_MODE);
+</pre></td></tr></table>
+<p>
+Note that  the MODE  has a  default value  of OUT_FILE  in the case of
+CREATE. This  is sensible,  since it  is appropriate  that  the  first
+action on  a newly  created file  is to  write to  it. (In the case of
+direct files,  the default  is INOUT_FILE; this mode does not apply to
+sequential and text files.)
+<p>
+The procedure  RESET repositions a file at the beginning, and can also
+be used  to change the mode so that, having written a file, we can now
+read it.  There is also a further overloading of RESET which omits the
+second parameter  and just  repositions the  file without changing its
+mode.
+<p>
+We conclude  this section  by observing that, although the system does
+not give  the compilation  time security  that one  would have  liked,
+nevertheless a  special secure  system of  the first category could be
+built on  top of  the more  flexible current  one using derived types.
+However, the  reverse is not possible, and so the present solution has
+the  additional  merit  of  leaving  more  options  open  for  special
+circumstances.
+
+<H3><BR><a name="16.3.2">16.3.2 Default Files</a></H3>
+
+It is  often the  case that  a number  of operations  are performed in
+sequence on  the same  file. This  applies particularly in the case of
+TEXT_IO, where a line of text typically comprises a mixture of numbers
+and strings that are output by a series of different calls, such as
+<p>
+<table border cellpadding=6><tr><td><pre>
+PUT(RESULTS,       "value   is    ");       PUT(RESULTS,    VALUE);
+NEW_LINE(RESULTS);
+</pre></td></tr></table>
+<p>
+in which the repetition of the file name RESULTS is rather verbose.
+<p>
+In order  to overcome this, the various procedures have two overloaded
+forms, one  with the  file parameter and one without - for example, in
+the case of the type character:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure PUT(FILE    :  in FILE_TYPE;  ITEM :  in CHARACTER);
+procedure PUT(ITEM    :  in CHARACTER);
+</pre></td></tr></table>
+<p>
+If the  file parameter is omitted, an appropriate default file is used
+- there  is one  for input and one for output. These default files are
+initially set  to two  standard files, but can be changed by the user.
+Thus we can more conveniently write
+<p>
+<PRE>    SET_OUTPUT(RESULTS);</PRE>
+<p>
+followed by
+<p>
+<PRE>    PUT("value is ");  PUT(VALUE);  NEW_LINE;</PRE>
+<p>
+The subprograms provided for the manipulation of the default files are
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure                 SET_OUTPUT(FILE :  in FILE_TYPE);
+function                  STANDARD_OUTPUT return FILE_TYPE;
+function                  CURRENT_OUTPUT  return FILE_TYPE;
+</pre></td></tr></table>
+<p>
+with corresponding  subprograms  for  input.  As  the  names  suggest,
+SET_OUTPUT sets  the default  to the  specified file,  STANDARD_OUTPUT
+returns the initial standard file, and CURRENT_OUTPUT returns the file
+that is the present default file.
+<p>
+It is  thus possible to set the default file to that required locally,
+and then to reset it to the standard, by:
+<p>
+<table border cellpadding=6><tr><td><pre>
+SET_OUTPUT(local_file);
+-- do the I/O
+SET_OUTPUT(STANDARD_OUTPUT);
+</pre></td></tr></table>
+<p>
+A more  general requirement  (in a  widely used  standard  subprogram,
+perhaps) might  be to  surround the  local use  of a  default file  by
+statements which  preserve and then restore the existing default file.
+The function CURRENT_OUTPUT is provided so that this can be done.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-16-04.html#16.4"><b>NEXT</b></a>
+&#128; <a href="ratl-16-02.html#16.2"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-16.html#16"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>

@@ -1,0 +1,616 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 6.2: Communication
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://www.software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 6: Concurrency</H2>
+
+<H3><a name="6.2">6.2     Communication</a></H3>
+The need for tasks to communicate gives rise to most of the problems that make 
+concurrent programming so difficult. Used properly, Ada's intertask 
+communication features can improve the reliability of concurrent programs; 
+used thoughtlessly, they can introduce subtle errors that can be difficult to 
+detect and correct.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-05.html#9.5">9.5&nbsp;Entries, Entry Calls, and Accept Statements</A>
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><br>
+<a href="#6.2.1">6.2.1   Efficient Task Communications</a><BR>
+<a href="#6.2.2">6.2.2   Defensive Task Communication</a><BR>
+<a href="#6.2.3">6.2.3    Attributes <CODE>'Count</CODE>, <CODE>'Callable</CODE> and <CODE>'Terminated</CODE></a><BR>
+<a href="#6.2.4">6.2.4   Shared Variables</a><BR>
+<a href="#6.2.5">6.2.5   Tentative Rendezvous Constructs</a><BR>
+<a href="#6.2.6">6.2.6   Communication Complexity</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-06-04.html#6.4.2"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="6.2.1">6.2.1   Efficient Task Communications</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Minimize the work performed during a rendezvous. 
+<li>Minimize the work performed in the selective wait loop of a task. 
+</UL>
+
+<H4>example</H4>
+In the following example, the statements in the accept body are performed as  
+part of the execution of both the caller task and the task <CODE>Server</CODE> which  
+contains <CODE>Operation</CODE> and <CODE>Operation2</CODE>. The statements after the accept body are  
+executed before Server can accept additional calls to <CODE>Operation</CODE> or <CODE>Operation2</CODE>.
+<table border cellpadding=6><tr><td><pre>   ... 
+   loop 
+      select 
+         accept Operation do
+         
+            -- These statements are executed during rendezvous. 
+            -- Both caller and server are blocked during this time. 
+            ... 
+         end Operation;
+         
+         ... 
+         -- These statements are not executed during rendezvous. 
+         -- Their execution delays getting back to the accept and 
+         --   may be a candidate for another task.
+         
+      or 
+         accept Operation_2 do
+         
+            -- These statements are executed during rendezvous. 
+            -- Both caller and server are blocked during this time. 
+            ... 
+         end Operation_2;
+         
+      end select; 
+      -- These statements are also not executed during rendezvous, 
+      -- Their execution delays getting back to the accept and may 
+      --   be a candidate for another task.
+      
+   end loop;</pre></td></tr></table>
+
+<H4>rationale</H4>
+Only work that needs to be performed during a rendezvous, such as saving or  
+generating parameters, should be allowed in the accept bodies to minimize the  
+time required to rendezvous.<P>
+When work is removed from the accept body and placed later in the selective 
+wait loop, the additional work may still suspend the caller task. If the 
+caller task calls entry <CODE>Operation</CODE> again before the server task completes its 
+additional work, the caller is delayed until the server completes the 
+additional work. If the potential delay is unacceptable and the additional 
+work does not need to be completed before the next service of the caller task, 
+the additional work may form the basis of a new task that will not block the 
+caller task.
+
+<H4>note</H4>
+In some cases, additional functions may be added to a task. For example, a 
+task controlling a communication device may be responsible for a periodic 
+function to ensure that the device is operating correctly. This type of 
+addition should be done with care realizing that the response time of the task 
+is impacted (see rationale).
+
+<H4>exceptions</H4>
+Task communication overhead must be balanced with the associated blocking. 
+Each time a new task is introduced, there is a timing impact caused by 
+scheduling and synchronization with the new task. Be careful when introducing 
+tasks to reduce blocking. The reduction in blocking time will cause increased 
+task scheduling and synchronization overhead and software architecture 
+complexity.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-07.html#9.7">9.7&nbsp;Select Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-07.html#9.7.1">9.7.1&nbsp;Selective Waits</A>
+
+
+<H3><BR><a name="6.2.2">6.2.2   Defensive Task Communication</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li> Provide a handler for exception <CODE>Program_Error</CODE> whenever you cannot 
+avoid a selective wait statement whose alternates can all be closed (Honeywell 
+1986). 
+<li>Make systematic use of handlers for <CODE>Tasking_Error</CODE>. 
+<li>Be prepared to handle exceptions during a rendezvous. 
+</UL>
+
+<H4>example</H4>
+This block allows recovery from exceptions raised while attempting to  
+communicate a command to another task.
+<table border cellpadding=6><tr><td><pre>Accelerate: 
+   begin 
+      Throttle.Increase(Step);
+      
+   exception 
+      when Tasking_Error     =&gt;     ... 
+      when Constraint_Error | 
+           Numeric_Error     =&gt;     ... 
+      when Throttle_Too_Wide =&gt;     ...
+      
+      ... 
+   end Accelerate;</pre></td></tr></table>
+<P>
+In this select statement, if all the guards happen to be closed, the program 
+can continue by executing the else part. There is no need for a handler for 
+<CODE>Program_Error</CODE>. Other exceptions can still be raised while
+evaluating the guards or attempting to communicate.
+<table border cellpadding=6><tr><td><pre>... 
+Guarded: 
+   begin 
+      select 
+         when Condition_1 =&gt; 
+            accept Entry_1;
+            
+      or 
+         when Condition_2 =&gt; 
+            accept Entry_2;
+            
+      else  -- all alternatives closed 
+         ... 
+      end select; 
+   exception 
+      when Constraint_Error | Numeric_Error =&gt; 
+         ... 
+   end Guarded;</pre></td></tr></table>
+<P>
+In this select statement, if all the guards happen to be closed, exception  
+<CODE>Program_Error</CODE> will be raised. Other exceptions can still be raised
+while evaluating the guards or attempting to communicate.
+<table border cellpadding=6><tr><td><pre>  
+Guarded: 
+   begin 
+      select 
+         when Condition_1 =&gt; 
+            accept Entry_1;
+            
+      or 
+         when Condition_2 =&gt; 
+            delay Fraction_Of_A_Second; 
+      end select;
+      
+   exception 
+      when Program_Error     =&gt;  ... 
+      when Constraint_Error | 
+           Numeric_Error     =&gt;  ... 
+   end Guarded; 
+...</pre></td></tr></table>
+
+<H4>rationale</H4>
+The exception <CODE>Program_Error</CODE> is raised if a selective wait statement (select  
+statement containing accepts) is reached, all of whose alternatives are closed  
+(i.e., the guards evaluate to <CODE>False</CODE> and there are no alternatives without  
+guards), unless there is an else part. When all alternatives are closed, the  
+task can never again progress, so there is by definition an error in its  
+programming. You must be prepared to handle this error should it occur.<P>
+Since an else part cannot have a guard, it can never be closed off as an  
+alternative action, thus its presence prevents <CODE>Program_Error</CODE>. However, an else  
+part, a delay alternative, and a terminate alternative are all mutually  
+exclusive, so you will not always be able to provide an else part. In these  
+cases, you must be prepared to handle <CODE>Program_Error</CODE>.<P>
+The exception <CODE>Tasking_Error</CODE> can be raised in the calling task whenever it 
+attempts to communicate. There are many situations permitting this. Few of 
+them are preventable by the calling task.<P>
+If an exception is raised during a rendezvous and not handled in the accept  
+statement, it is propagated to both tasks and must be handled in two places.  
+See <a href="sty-05-08.html#5.8">Guideline 5.8</a>.
+
+<H4>note</H4>
+There are other ways to prevent <CODE>Program_Error</CODE> at a selective wait. These 
+involve leaving at least one alternative unguarded, or proving that at least 
+one guard will evaluate <CODE>True</CODE> under all circumstances. The point here is that 
+you, or your successors, will make mistakes in trying to do this, so you 
+should prepare to handle the inevitable exception.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-07.html#9.7.1">9.7.1&nbsp;Selective Waits</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-02.html#11.2">11.2&nbsp;Exception Handlers</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-04.html#11.4">11.4&nbsp;Exception Handling</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-05.html#11.5">11.5&nbsp;Exceptions Raised During Task Communication</A>
+
+
+<H3><BR><a name="6.2.3">6.2.3    Attributes <CODE>'Count</CODE>, <CODE>'Callable</CODE> and <CODE>'Terminated</CODE></a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Do not depend on the values of the task attributes <CODE>'Callable</CODE> or  
+<CODE>'Terminated</CODE> (Nissen and Wallis 1984). 
+<li>Do not depend on attributes to avoid <CODE>Tasking_Error</CODE> on an entry call.  
+<li>Do not depend on the value of the entry attribute <CODE>'Count</CODE>. 
+</UL>
+
+<H4>example </H4>
+In the following examples <CODE>Intercept'Callable</CODE> is a boolean indicating if a call 
+can be made to the task <CODE>Intercept</CODE> without raising the exception <CODE>Tasking_Error</CODE>. 
+<CODE>Launch'Count</CODE> indicates the number of callers currently waiting at entry <CODE>Launch</CODE>.  <CODE>Intercept'Terminated</CODE> is a boolean indicating if the task <CODE>Intercept</CODE> is 
+in terminated state.<P>
+This task is badly programmed because it relies upon the values of the <CODE>'Count</CODE>  
+attributes not changing between evaluating and acting upon them.
+<table border cellpadding=6><tr><td><pre>--------------------------------------------------------------------- 
+task body Intercept is 
+...
+
+   select 
+      when Launch'Count &gt; 0 and Recall'Count = 0 =&gt; 
+         accept Launch; 
+         ...
+         
+   or 
+      accept Recall; 
+      ... 
+   end select;
+   
+... 
+end Intercept; 
+---------------------------------------------------------------------</pre></td></tr></table>
+<P>
+If the following code is preempted between evaluating the condition and  
+initiating the call, the assumption that the task is still callable may no  
+longer be valid.
+<table border cellpadding=6><tr><td><pre>... 
+if Intercept'Callable then 
+   Intercept.Recall; 
+end if; 
+...</pre></td></tr></table>
+
+<H4>rationale</H4>
+Attributes <CODE>'Callable</CODE>, <CODE>'Terminated</CODE>, and <CODE>'Count</CODE> are all subject to race  
+conditions. Between the time you reference an attribute and the time you take  
+action the value of the attribute may change. Attributes <CODE>'Callable</CODE> and  
+<CODE>'Terminated</CODE> convey reliable information once they become <CODE>False</CODE> and <CODE>True</CODE>,  
+respectively. If <CODE>'Callable</CODE> is <CODE>False</CODE>, you can expect the callable state to  
+remain constant. If <CODE>'Terminated</CODE> is <CODE>True</CODE>, you can expect the task to remain  
+terminated. Otherwise, <CODE>'Terminated</CODE> and <CODE>'Callable</CODE> can change between the time  
+your code tests them and the time it responds to the result. <P>
+The <a href="http://archive.adaic.com/standards/83lrm/html/">Ada Language Reference Manual (Department of Defense 1983)</a> itself warns 
+about the asynchronous increase and decrease of the value of <CODE>'Count</CODE>. A task 
+can be removed from an entry queue due to execution of an abort statement as 
+well as expiration of a timed entry call. The use of this attribute in guards 
+of a selective wait statement may result in the opening of alternatives which 
+should not be opened under a changed value of <CODE>'Count</CODE>.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-04.html#9.4">9.4&nbsp;Task Dependence - Termination of Tasks</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-09.html#9.9">9.9&nbsp;Task and Entry Attributes</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-A.html#A">A&nbsp;Predefined Language Attributes</A>
+
+
+<H3><BR><a name="6.2.4">6.2.4   Shared Variables</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use the rendezvous mechanism, not shared variables, to pass data  
+between tasks. 
+<li>Do not use shared variables as a task synchronization device. 
+<li>Do not reference nonlocal variables in a guard. 
+</UL>
+
+<H4>example</H4>
+This code will either print the same line more than once, fail to print some  
+lines, or print garbled lines (part of one line followed by part of another)  
+nondeterministically.
+<table border cellpadding=6><tr><td><pre>--------------------------------------------------------------------- 
+task body Robot_Arm_Driver is
+
+   Current_Command : Robot_Command;
+   
+begin  -- Robot_Arm_Driver 
+   loop
+   
+      Current_Command := Command; 
+      -- send to device
+      
+   end loop; 
+... 
+end Robot_Arm_Driver;
+
+--------------------------------------------------------------------- 
+task body Stream_Server is 
+begin 
+   loop
+   
+      Stream_Read(Stream_File, Command);
+      
+   end loop; 
+... 
+end Stream_Server; 
+---------------------------------------------------------------------</pre></td></tr></table>
+<P>
+This code ensures that a missile cannot be fired unless the doors are open and  
+that the missile cannot be armed unless the doors are shut. In this case the  
+requirement for arming may be derived from the duration that the door may be  
+open (i.e., arm first, open door, launch, close door).
+<table border cellpadding=6><tr><td><pre>Doors_Open : Boolean := False;
+
+--------------------------------------------------------------------- 
+task body Intercept is 
+begin 
+   ...
+   
+   select 
+      when Doors_Open = True =&gt; 
+         accept Launch; 
+         ...
+         
+   or 
+      when Doors_Open = False =&gt; 
+         accept Arm; 
+         ... 
+   end select;
+   
+... 
+end Intercept; 
+---------------------------------------------------------------------
+
+--------------------------------------------------------------------- 
+task body Intercept is
+
+   Local_Doors_Open : Boolean := False;
+   
+begin  -- Intercept 
+   ...
+   
+   select 
+      when Local_Doors_Open = True =&gt; 
+         accept Launch; 
+         ...
+         
+   or 
+      when Local_Doors_Open = False =&gt; 
+         accept Arm; 
+         ...
+         
+   or 
+      accept Door_Status 
+            (Doors_Open : in     Boolean) do 
+         Local_Doors_Open := Doors_Open; 
+      end Door_Status; 
+   end select;
+   
+... 
+end Intercept; 
+---------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+There are many techniques for protecting and synchronizing data access. You  
+must program most of them yourself to use them. It is difficult to write a  
+program that shares data correctly. If it is not done correctly, the  
+reliability of the program suffers. Ada provides the rendezvous to support  
+synchronization and communication of information between tasks. Data that you  
+might be tempted to share can be put into a task body with read and write  
+entries to access it.<P>
+The first example above has a race condition requiring perfect interleaving of 
+execution. This code can be made more reliable by introducing a flag that is 
+set by <CODE>Spool_Server</CODE> and reset by <CODE>Line_Printer_Driver</CODE>. An <CODE>if (condition flag) 
+then delay ... else</CODE> would be added to each task loop in order to ensure that 
+the interleaving is satisfied. However, notice that this approach requires a 
+delay and the associated rescheduling. Presumably this rescheduling overhead 
+is what is being avoided by not using the rendezvous.<P>
+A guard is a conditional select alternative starting with a when (see <a href="http://archive.adaic.com/standards/83lrm/html/lrm-09-07.html#9.7.1">9.7.1 in 
+Department of Defense 1983</a>). The second example above also has a race 
+condition requiring two different things. First, the task that opens the doors 
+must open the doors and update <CODE>Doors_Open</CODE> before allowing the intercept task 
+to continue execution. Second, the run time system evaluation of the guard in 
+the select statement cannot occur until the <CODE>Doors_Open</CODE> matches the next 
+anticipated entry call. If the next call will be to <CODE>ARM</CODE>, then you must make 
+sure that <CODE>Doors_Open</CODE> changes to <CODE>False</CODE> before the Intercept task reevaluates 
+the select statement. If the select statement is evaluated while <CODE>Doors_Open</CODE> is 
+<CODE>True</CODE> and <CODE>Doors_Open</CODE> is subsequently set to <CODE>False</CODE>, the select will continue to 
+wait on the <CODE>Launch</CODE> until a <CODE>Launch</CODE> is received. An alternate approach is to use 
+<CODE>Local_Doors_Open</CODE> in the example. This guarantees that the guards will be 
+reevaluated upon a change in the value of <CODE>Doors_Open</CODE>.
+
+<H4>exceptions</H4>
+For some required synchronizations the rendezvous may not meet time 
+constraints. Each case should be analyzed in detail to justify the use of 
+pragma <CODE>Shared</CODE>, which presumably has less overhead than the rendezvous. Be 
+careful to correctly implement a data access synchronization technique. 
+Without great effort you might get it wrong. Pragma <CODE>Shared</CODE> can serve as an 
+expedient against poor run time support systems. Do not always use this as an 
+excuse to avoid the rendezvous because implementations are allowed to ignore 
+pragma <CODE>Shared</CODE> (Nissen and Wallis 1984). When pragma <CODE>Shared</CODE> is implemented by 
+compilers, the implementation is not always uniform and can still lead to 
+nonportable code. Pragma <CODE>Shared</CODE> affects only those objects whose storage and 
+retrieval are implemented as indivisible operations. Also, pragma <CODE>Shared</CODE>
+can only be used for variables of scalar or access type.
+
+<H4>note</H4>
+As pointed out above, a guarantee of noninterference may be difficult with  
+implementations that ignore pragma <CODE>Shared</CODE>. If you must share data, share the  
+absolute minimum amount necessary, and be especially careful. As always,  
+encapsulate the synchronization portions of code.<P>
+The problem is with variables. Constants, such as tables fixed at compile 
+time, may be safely shared between tasks.<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-07.html#9.7.1">9.7.1&nbsp;Selective Waits</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-11.html#9.11">9.11&nbsp;Shared Variables</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-B.html#B">B&nbsp;Predefined Language Pragmas</A>
+
+
+<H3><BR><a name="6.2.5">6.2.5   Tentative Rendezvous Constructs</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use caution with conditional entry calls. 
+<li>Use caution with selective waits with else parts. 
+<li>Do not depend upon a particular delay in timed entry calls. 
+<li>Do not depend upon a particular delay in selective waits with delay  
+alternatives. 
+</UL>
+
+<H4>example</H4>
+The conditional entry call in the following code results in a race condition  
+that may degenerate into a busy waiting loop. The task <CODE>Current_Position</CODE> 
+containing entry <CODE>Request_New_Coordinates</CODE> may never execute if this task has a  
+higher priority than <CODE>Current_Position</CODE>, because this task doesn't release the processing resource.
+<table border cellpadding=6><tr><td><pre>... 
+loop
+
+   select 
+      Current_Position.Request_New_Coordinates(X, Y); 
+      -- calculate target location based on new coordinates 
+      ...
+      
+   else 
+      -- calculate target location based on last locations 
+      ... 
+   end select;
+   
+end loop; 
+...</pre></td></tr></table>
+<P>
+The addition of a delay as shown may allow Current_Position to execute until 
+it reaches an accept for Request_New_Coordinates.
+<table border cellpadding=6><tr><td><pre>... 
+loop
+
+   select 
+      Current_Position.Request_New_Coordinates(X, Y); 
+      -- calculate target location based on new coordinates 
+      ...
+      
+   else 
+      -- calculate target location based on last locations 
+      ...
+      
+      delay Next_Execute - Clock; 
+      Next_Execute := Next_Execute + Period; 
+   end select;
+   
+end loop; 
+...</pre></td></tr></table>
+<P>
+The following selective wait with else again does not degenerate into a busy  
+wait loop only because of the addition of a delay statement.
+<table border cellpadding=6><tr><td><pre>   loop 
+      delay Next_Execute - Clock;
+      
+      select 
+         accept Get_New_Message (Message : in     String) do 
+            -- copy message to parameters 
+            ... 
+         end Get_New_Message;
+         
+      else  -- Don't wait for rendezvous 
+         -- perform built in test Functions 
+         ... 
+      end select;
+      
+      Next_Execute := Next_Execute + Task_Period; 
+   end loop;</pre></td></tr></table>
+<P>
+The following timed entry call may be considered an unacceptable 
+implementation if lost communications with the reactor for over 25 
+milliseconds results in a critical situation.
+<table border cellpadding=6><tr><td><pre>... 
+loop
+
+   select 
+      Reactor.Status(OK);
+      
+   or 
+      delay 0.025; 
+      -- lost communication for more that 25 milliseconds 
+      Emergency_Shutdown; 
+   end select;
+   
+   -- process reactor status 
+   ... 
+end loop; 
+...</pre></td></tr></table>
+<P>
+In the following &quot;selective wait with delay&quot; example, the accuracy of the 
+coordinate calculation function is bounded by time. For example, the required  
+accuracy cannot be obtained unless <CODE>Period</CODE> is within <CODE>+</CODE> or <CODE>-</CODE> 0.005 seconds. This  
+period cannot be guaranteed because of the inaccuracy of the delay statement.
+<table border cellpadding=6><tr><td><pre>... 
+loop
+
+   select 
+      accept Request_New_Coordinates (X :    out Integer; 
+                                      Y :    out Integer) do 
+         -- copy coordinates to parameters 
+         ... 
+      end Request_New_Coordinates;
+      
+   or 
+      delay Next_Execute - Calendar.Clock; 
+   end select;
+   
+   Next_Execute := Next_Execute + Period; 
+   -- Read Sensors 
+   -- execute coordinate transformations 
+end loop; 
+...</pre></td></tr></table>
+
+<H4>rationale</H4>
+Use of these constructs always poses a risk of race conditions. Using them in  
+loops, particularly with poorly chosen task priorities, can have the effect of  
+busy waiting.<P>
+These constructs are very much implementation dependent. For conditional entry 
+calls and selective waits with else parts, the <a href="http://archive.adaic.com/standards/83lrm/html/">Ada Language Reference Manual</a> 
+(Department of Defense 1983) does not define &quot;immediately.&quot; For timed entry 
+calls and selective waits with delay alternatives, implementors may have ideas 
+of time that differ from each other and from your own. Like the delay 
+statement, the delay alternative on the select construct might wait longer 
+than the time required (see <a href="sty-06-01.html#6.1.5">Guideline 6.1.5</a>).<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-06.html#9.6">9.6&nbsp;Delay Statements, Duration, and Time</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-07.html#9.7.1">9.7.1&nbsp;Selective Waits</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-07.html#9.7.2">9.7.2&nbsp;Conditional Entry Calls</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-07.html#9.7.3">9.7.3&nbsp;Timed Entry Calls</A>
+
+
+<H3><BR><a name="6.2.6">6.2.6   Communication Complexity</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Minimize the number of accept and select statements per task. 
+<li>Minimize the number of accept statements per entry. 
+</UL>
+
+<H4>example</H4>
+Use
+<table border cellpadding=6><tr><td><pre>accept A; 
+if Mode_1 then 
+   -- do one thing 
+else  -- Mode_2 
+   -- do something different 
+end if;</pre></td></tr></table>
+<P>
+rather than
+<table border cellpadding=6><tr><td><pre>if Mode_1 then 
+   accept A; 
+   -- do one thing
+   
+else  -- Mode_2 
+   accept A; 
+   -- do something different 
+end if;</pre></td></tr></table>
+
+<H4>rationale</H4>
+This guideline reduces conceptual complexity. Only entries necessary to  
+understand externally observable task behavior should be introduced. If there  
+are several different accept and select statements that do not modify task  
+behavior in a way important to the user of the task, there is unnecessary  
+complexity introduced by the proliferation of select/accept statements.  
+Externally observable behavior important to the task user includes task timing  
+behavior, task rendezvous initiated by the entry calls, prioritization of  
+entries, or data updates (where data is shared between tasks).<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-07.html#9.7">9.7&nbsp;Select Statements</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

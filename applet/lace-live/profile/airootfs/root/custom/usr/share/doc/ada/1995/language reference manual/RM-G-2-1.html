@@ -1,0 +1,164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Model of Floating Point Arithmetic</TITLE>
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    DIV.paranum {position: absolute; font-family: Arial, Helvetica, sans-serif; left: 0.5em; top: auto}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; margin-bottom: 0.6em}
+    DIV.Wide {font-family: "Times New Roman", Times, serif; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.WideAnnotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Index {font-family: "Times New Roman", Times, serif}
+    DIV.SyntaxSummary {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; margin-left: 2.0em}
+    DIV.SyntaxIndented {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Indented {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-bottom: 0.6em}
+    DIV.CodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.SmallIndented {font-family: "Times New Roman", Times, serif; margin-left:  10.0em; margin-bottom: 0.6em}
+    DIV.SmallCodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SmallExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left: 7.5em; margin-bottom: 0.6em}
+    DIV.IndentedExamples {font-family: "Courier New", monospace; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.SmallIndentedExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left:  15.0em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.IndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SyntaxIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.Hanging {font-family: "Times New Roman", Times, serif; margin-top: 0em; margin-bottom: 0.6em}
+    DD.Hanging {margin-left: 6.0em}
+    DL.IndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.IndentedHanging {margin-left: 2.0em}
+    DL.HangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.HangingInBulleted {margin-left: 4.0em}
+    DL.SmallHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallHanging {margin-left: 7.5em}
+    DL.SmallIndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallIndentedHanging {margin-left: 2.0em}
+    DL.SmallHangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallHangingInBulleted {margin-left: 5.0em}
+    DL.Enumerated {font-family: "Times New Roman", Times, serif; margin-right: 0.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.Enumerated {margin-left: 2.0em}
+    DL.SmallEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallEnumerated {margin-left: 2.5em}
+    DL.NestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.SmallNestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<P><A HREF="RM-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-G-2.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-G-2-2.html">Next</A></P>
+<HR>
+<H1> G.2.1 Model of Floating Point Arithmetic</H1>
+<DIV Class="Paranum"><FONT SIZE=-2>1</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;In the strict mode, the predefined operations
+of a floating point type shall satisfy the accuracy requirements specified
+here and shall avoid or signal overflow in the situations described.
+This behavior is presented in terms of a model of floating point arithmetic
+that builds on the concept of the canonical form (see <A HREF="RM-A-5-3.html">A.5.3</A>).
+</DIV>
+
+<H4 ALIGN=CENTER>Static Semantics</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>2</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;Associated with each floating point type is an
+infinite set of model numbers. The model numbers of a type are used to
+define the accuracy requirements that have to be satisfied by certain
+predefined operations of the type; through certain attributes of the
+model numbers, they are also used to explain the meaning of a user-declared
+floating point type declaration. The model numbers of a derived type
+are those of the parent type; the model numbers of a subtype are those
+of its type.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>3</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<A NAME="I6998"></A>The <I>model numbers</I> of
+a floating point type T are zero and all the values expressible in the
+canonical form (for the type T), in which <I>mantissa</I> has T'Model_Mantissa
+digits and <I>exponent</I> has a value greater than or equal to T'Model_Emin.
+(These attributes are defined in <A HREF="RM-G-2-2.html">G.2.2</A>.)
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>4</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<A NAME="I6999"></A>A <I>model interval</I> of
+a floating point type is any interval whose bounds are model numbers
+of the type. <A NAME="I7000"></A>The <I>model interval</I> of a type
+T <I>associated with a value</I> <I>v</I> is the smallest model interval
+of T that includes <I>v</I>. (The model interval associated with a model
+number of a type consists of that number only.) </DIV>
+
+<H4 ALIGN=CENTER>Implementation Requirements</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>5</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The accuracy requirements for the evaluation of
+certain predefined operations of floating point types are as follows.
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>6</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<A NAME="I7001"></A>An <I>operand interval</I>
+is the model interval, of the type specified for the operand of an operation,
+associated with the value of the operand.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>7</FONT></DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;For any predefined
+arithmetic operation that yields a result of a floating point type T,
+the required bounds on the result are given by a model interval of T
+(called the <I>result interval</I>) defined in terms of the operand values
+as follows: </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>8</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I7002"></A>The result interval
+is the smallest model interval of T that includes the minimum and the
+maximum of all the values obtained by applying the (exact) mathematical
+operation to values arbitrarily selected from the respective operand
+intervals. </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>9</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The result interval of an exponentiation is obtained
+by applying the above rule to the sequence of multiplications defined
+by the exponent, assuming arbitrary association of the factors, and to
+the final division in the case of a negative exponent.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>10</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;The result interval of a conversion of a numeric
+value to a floating point type T is the model interval of T associated
+with the operand value, except when the source expression is of a fixed
+point type with a <I>small</I> that is not a power of T'Machine_Radix
+or is a fixed point multiplication or division either of whose operands
+has a <I>small</I> that is not a power of T'Machine_Radix; in these cases,
+the result interval is implementation defined. </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>11</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I7003"></A><A NAME="I7004"></A>For any
+of the foregoing operations, the implementation shall deliver a value
+that belongs to the result interval when both bounds of the result interval
+are in the safe range of the result type T, as determined by the values
+of T'Safe_First and T'Safe_Last; otherwise, </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>12</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I7005"></A>if T'Machine_Overflows
+is True, the implementation shall either deliver a value that belongs
+to the result interval or raise Constraint_Error;</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>13</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>if T'Machine_Overflows is False, the
+result is implementation defined. </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>14</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;For any predefined relation on operands of a
+floating point type T, the implementation may deliver any value (i.e.,
+either True or False) obtained by applying the (exact) mathematical comparison
+to values arbitrarily chosen from the respective operand intervals.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>15</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;The result of a membership test is defined in
+terms of comparisons of the operand value with the lower and upper bounds
+of the given range or type mark (the usual rules apply to these comparisons).
+</DIV>
+
+<H4 ALIGN=CENTER>Implementation Permissions</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>16</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;If the underlying floating point hardware implements
+division as multiplication by a reciprocal, the result interval for division
+(and exponentiation by a negative exponent) is implementation defined.
+</DIV>
+
+<HR>
+<P><A HREF="RM-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-G-2.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-G-2-2.html">Next</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-TTL.html">Legal</A></P>
+</BODY>
+</HTML>

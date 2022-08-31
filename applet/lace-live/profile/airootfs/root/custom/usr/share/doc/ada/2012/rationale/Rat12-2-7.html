@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Storage occupancy checks</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-6.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>2.7 Storage occupancy checks</H1>
+<div class="Normal">Finally, two new attributes are introduced to aid 
+in the writing of preconditions. Sometimes it is necessary to check that 
+two objects do not occupy the same storage in whole or in part. This 
+can be done with two functional attributes <SPAN Class="swiss">X'Has_Same_Storage</SPAN> 
+and <SPAN Class="swiss">X'Overlaps_Storage</SPAN> which apply to an object<SPAN Class="swiss">X</SPAN> 
+of any type.} <A NAME="I1309"></A><A NAME="I1310"></A><A NAME="I1311"></A><A NAME="I1312"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Their specifications 
+are</div>
+<div class="SwissExamples"><B>function</B>&nbsp;X'Has_Same_Storage(Arg:&nbsp;<SPAN Class="roman"><I>any_type</I></SPAN>)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;X'Overlaps_Storage(Arg:&nbsp;<SPAN Class="roman"><I>any_type</I></SPAN>)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="Normal" style="margin-bottom: 0.4em">As an example we might 
+have a procedure <SPAN Class="swiss">Exchange</SPAN> and wish to ensure 
+that the parameters do not overlap in any way. We can write</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Exchange(X,&nbsp;Y:&nbsp;<B>in&nbsp;out</B>&nbsp;T)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;X'Overlaps_Storage(Y);</div>
+<div class="Normal">Attributes are used rather than predefined functions 
+since this enables the semantics to be written in a manner that permits 
+<SPAN Class="swiss">X</SPAN> and <SPAN Class="swiss">Y</SPAN> to be of 
+any type and moreover does not imply that <SPAN Class="swiss">X</SPAN> 
+or <SPAN Class="swiss">Y</SPAN> are read.</div>
+<div class="Normal">The object <SPAN Class="swiss">X</SPAN> and the parameter 
+<SPAN Class="swiss">Y</SPAN> could be components such as <SPAN Class="swiss">A(5)</SPAN> 
+or indeed <SPAN Class="swiss">A(J)</SPAN> or even a slice <SPAN Class="swiss">A(1 
+.. N)</SPAN>. Thus the actual addresses to be checked may not be statically 
+determined but have to be determined at the point of call.</div>
+<div class="Normal" style="margin-bottom: 0.4em"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0191-1.TXT">AI-191</A> 
+shows the following curious example</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Count(A:&nbsp;<B>in&nbsp;out</B>&nbsp;Arrtype;&nbsp;B:&nbsp;<B>in</B>&nbsp;Arrtype)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;A'Overlaps_Storage(B)<BR>
+<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>intended&nbsp;to&nbsp;count&nbsp;in&nbsp;A&nbsp;the&nbsp;number&nbsp;of&nbsp;value</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>occurrences&nbsp;in&nbsp;B&nbsp;as&nbsp;part&nbsp;of&nbsp;a&nbsp;distribution&nbsp;sort</I></SPAN><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>for</B>&nbsp;I&nbsp;<B>in</B>&nbsp;B'Range&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A(B(I))&nbsp;:=&nbsp;A(B(I))&nbsp;+&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;loop</B>;<BR>
+<B>end</B>&nbsp;Count;</div>
+<div class="Normal">The author seems to have assumed that the array <SPAN Class="swiss">A</SPAN> 
+has appropriate components and that they are initialized to zero. This 
+also illustrates the use of an aspect specification in a subprogram body.</div>
+<div class="Normal">At the machine level <SPAN Class="swiss">Overlaps_Storage</SPAN> 
+means that at least one bit is in common and <SPAN Class="swiss">Has_Same_Storage</SPAN> 
+means that all bits are in common. Hence <SPAN Class="swiss">X'Has_Same_Storage(Y)</SPAN> 
+implies <SPAN Class="swiss">X'Overlaps_Storage(Y)</SPAN>.</div>
+<div class="Normal">In some applications involving the possibility of 
+aliasing (messing with tree structures comes to mind) we do really want 
+to check that two entities are not in the same place rather than just 
+overlapping in which case it is more logical to use <SPAN Class="swiss">Has_Same_Storage</SPAN>.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-6.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

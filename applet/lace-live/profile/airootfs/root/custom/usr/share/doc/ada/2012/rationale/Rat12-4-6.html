@@ -1,0 +1,203 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Extended return statements</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-4-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>4.6 Extended return statements</H1>
+<div class="Normal">The final topic in this chapter is the extended return 
+statement. This was introduced in Ada 2005 largely to solve problems 
+with limited types. However, some glitches have come to light and these 
+are corrected in Ada 2012. <A NAME="I1365"></A></div>
+<div class="Normal">A description of the reasons for and general properties 
+of the extended return statement will be found in <A HREF="Rat12-0-3.html#R15">15</A>.</div>
+<div class="Normal">The syntax for extended return statement in Ada 2005 
+as found in <A HREF="Rat12-0-3.html#R5">5</A> is</div>
+<div class="SwissExamples">extended_return_statement&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;defining_identifier:&nbsp;[<B>aliased</B>]&nbsp;return_subtype_indication&nbsp;[:=&nbsp;expression]&nbsp;[<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handled_sequence_of_statements<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>];</div>
+<div class="Normal">Before going further, it should be mentioned that 
+there was some confusion regarding limited types and so the term immutably 
+limited was introduced in the course of the maintenance of Ada 2005. 
+<A NAME="I1366"></A>There were various problems. Basically, limitedness 
+is a property of a view of a type. Thus even in Ada 83 a private type 
+might be limited but the full view found in the private part would not 
+be limited. Ada 95 introduced explicitly limited types. Ada 2005 introduced 
+coextensions and these could even include such obviously limited things 
+as task types thus adding a limited part to what was otherwise a seemingly 
+nonlimited type. It became clear that it was necessary to introduce a 
+term which meant that a type was really and truly limited and could not 
+subsequently become nonlimited for example in a private part or in a 
+child unit. So a type is immutably limited if</div>
+<div class="Bulleted">it is an explicitly limited record type,</div>
+<div class="Bulleted">it is a task type, protected type or synchronized 
+interface,</div>
+<div class="Bulleted">it is a non-formal limited private type that is 
+tagged or has an access discriminant with a default expression,</div>
+<div class="Bulleted">it is derived from an immutably limited type.&nbsp;</div>
+<div class="Normal">It was then realised that there were problems with 
+extended return statements containing an explicit <B>aliased</B>. Consequently, 
+it was decided that there was really no need for <B>aliased</B> if there 
+was a rule that immutably limited return objects were implicitly aliased. 
+So <B>aliased</B> was removed from the syntax. However, some users had 
+already written <B>aliased</B> and this would have introduced an irritating 
+incompatibility. So finally it was decided that <B>aliased</B> could 
+be written but only if the type were immutably limited. <A NAME="I1367"></A><A NAME="I1368"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Another small problem 
+concerned constants. Thus we might write</div>
+<div class="SwissExamples"><B>return</B>&nbsp;X:&nbsp;T&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>compute&nbsp;X</I></SPAN><BR>
+<B>end&nbsp;return</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, especially 
+in the case of a limited type <SPAN Class="swiss">LT</SPAN>, we might 
+also give the return object an initial value, thus</div>
+<div class="SwissExamples"><B>return</B>&nbsp;X:&nbsp;LT&nbsp;:=&nbsp;(A,&nbsp;B,&nbsp;C)&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>other&nbsp;stuff</I></SPAN><BR>
+<B>end&nbsp;return</B>;</div>
+<div class="Normal">Now it might be that although the type as a whole 
+is limited one or more of its components might not be and so could be 
+manipulated in the sequence of statements. But if we want to ensure that 
+this does not happen, it would be appropriate to indicate that <SPAN Class="swiss">X</SPAN> 
+was constant. But, almost surely by an oversight, we cannot do that since 
+it is not permitted by the syntax. So the syntax needed changing to permit 
+the addition of constant. <A NAME="I1369"></A><A NAME="I1370"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">To aid the description 
+the syntax in Ada 2012 is actually written as two productions as follows</div>
+<div class="SwissExamples">extended_return_object_declaration&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;defining_identifier:&nbsp;[<B>aliased</B>]&nbsp;[<B>constant</B>]&nbsp;return_subtype_indication&nbsp;[:=&nbsp;expression]</div>
+<div class="SwissExamples">extended_return_statement&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;extended_return_object_declaration&nbsp;[<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handled_sequence_of_statements<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;</div>
+<div class="Normal">The other small change to the extended return statement 
+concerns the subtype given in the profile of the function and that in 
+the extended return statement itself. The result type of the function 
+can be constrained or unconstrained but that given in the extended return 
+statement must be constrained.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This can be illustrated 
+by considering array types. (These examples are from <A HREF="Rat12-0-3.html#R15">15</A>.) 
+Suppose we have</div>
+<div class="SwissExamples"><B>type</B>&nbsp;UA&nbsp;<B>is&nbsp;array</B>&nbsp;(Integer&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;<B>of</B>&nbsp;Float;<BR>
+<B>subtype</B>&nbsp;CA&nbsp;<B>is</B>&nbsp;UA(1&nbsp;..&nbsp;10);</div>
+<div class="Normal" style="margin-bottom: 0.4em">then we can write</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Make(&nbsp;...&nbsp;)&nbsp;<B>return</B>&nbsp;CA&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;UA(1&nbsp;..&nbsp;10)&nbsp;<B>do</B>&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;statically&nbsp;matches</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;<BR>
+<B>end</B>&nbsp;Make;</div>
+<div class="Normal">This is allowed because the subtypes statically match.</div>
+<div class="Normal">If the subtype in the function profile is unconstrained 
+then the result must be constrained either by its subtype or by its initial 
+value. For example</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Make(&nbsp;...&nbsp;)&nbsp;<B>return</B>&nbsp;UA&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;UA(1&nbsp;..&nbsp;N)&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;<BR>
+<B>end</B>&nbsp;Make;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and here the result 
+<SPAN Class="swiss">R</SPAN> is constrained by its subtype. A similar 
+situation can arise with records with discriminants. Thus we can have</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Person(Sex:&nbsp;Gender)&nbsp;<B>is</B>&nbsp;...&nbsp;;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;F(&nbsp;...&nbsp;)&nbsp;<B>return</B>&nbsp;Person&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;...&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;Person(Sex&nbsp;=&gt;&nbsp;Male)&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;Person(Sex&nbsp;=&gt;&nbsp;Female)&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end</B>&nbsp;F;</div>
+<div class="Normal">which shows that we have the possibility of returning 
+a person of either gender.</div>
+<div class="Normal">However, what is missing from Ada 2005 is that we 
+can have analogous situations with tagged types in that a function might 
+wish to return a value of some type in a class.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So we would like to 
+write things such as</div>
+<div class="SwissExamples"><B>function</B>&nbsp;F(&nbsp;...&nbsp;)&nbsp;<B>return</B>&nbsp;Object'Class&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;...&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;C:&nbsp;Circle&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>elsif</B>&nbsp;...&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;S:&nbsp;Square&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end</B>&nbsp;F;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is not permitted 
+in Ada 2005 which required the types to be the same. This can be overcome 
+by writing</div>
+<div class="SwissExamples"><B>return</B>&nbsp;C:&nbsp;Object'Class&nbsp;:=&nbsp;Circle_Func&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end&nbsp;return</B>;</div>
+<div class="Normal">where <SPAN Class="swiss">Circle_Func</SPAN> is some 
+local function that returns the required object of type <SPAN Class="swiss">Circle</SPAN>.</div>
+<div class="Normal">This is all rather irksome so the wording is changed 
+in Ada 2012 to say that in this situation the subtype in the extended 
+return statement need not be the same as that in the profile but simply 
+must be covered by it. There are also related slight changes to the accessibility 
+rules.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-4-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

@@ -1,0 +1,577 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Lists and vectors</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-8-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-8-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>8.2 Lists and vectors</H1>
+<div class="Normal" style="margin-bottom: 0.4em">We will first consider 
+the list container since in some ways it is the simplest.<A NAME="I1383"></A><A NAME="I1384"></A> 
+Here is its specification interspersed with some explanation<A NAME="I1385"></A><A NAME="I1386"></A><A NAME="I1387"></A> 
+</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;<B>function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Ada.Containers.Doubly_Linked_Lists&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Doubly_Linked_Lists);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;List&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(List);<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Cursor&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(Cursor);<BR>
+&nbsp;&nbsp;&nbsp;Empty_List:&nbsp;<B>constant</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;No_Element:&nbsp;<B>constant</B>&nbsp;Cursor;</div>
+<div class="Normal">The two generic parameters are the type of the elements 
+in the list and the definition of equality for comparing elements. This 
+equality relation must be such that <SPAN Class="swiss">x = y</SPAN> 
+and <SPAN Class="swiss">y = x</SPAN> always have the same value.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A list container is 
+an object of the type <SPAN Class="swiss">List</SPAN>. It is tagged since 
+it will inevitably be implemented as a controlled type. The fact that 
+it is visibly tagged means that all the advantages of object oriented 
+programming are available. For one thing it enables the use of the prefixed 
+notation so that we can write operations such as&nbsp;</div>
+<div class="SwissExamples">My_List.Append(Some_Value);</div>
+<div class="Normal" style="margin-bottom: 0.4em">rather than&nbsp;</div>
+<div class="SwissExamples">Append(My_List,&nbsp;Some_Value);</div>
+<div class="Normal">The type <SPAN Class="swiss">Cursor</SPAN> is an 
+important concept. It provides the means of access to individual elements 
+in the container. Not only does it contain a reference to an element 
+but it also identifies the container as well. This enables various checks 
+to be made to ensure that we don't accidentally meddle with an element 
+in the wrong container.</div>
+<div class="Normal">The constants <SPAN Class="swiss">Empty_List</SPAN> 
+and <SPAN Class="swiss">No_Element</SPAN> are as expected and also provide 
+default values for objects of types <SPAN Class="swiss">List</SPAN> and 
+<SPAN Class="swiss">Cursor</SPAN> respectively.</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;List)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>function</B>&nbsp;Length(Container:&nbsp;List)&nbsp;<B>return</B>&nbsp;Count_Type;<BR>
+<B>function</B>&nbsp;Is_Empty(Container:&nbsp;List)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>procedure</B>&nbsp;Clear(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List);</div>
+<div class="Normal">The function &quot;=&quot; compares two lists. It 
+only returns true if both lists have the same number of elements and 
+corresponding elements have the same value as determined by the generic 
+parameter &quot;=&quot; for comparing elements. The subprograms <SPAN Class="swiss">Length</SPAN>, 
+<SPAN Class="swiss">Is_Empty</SPAN> and <SPAN Class="swiss">Clear</SPAN> 
+are as expected.</div>
+<div class="Normal">Note that <SPAN Class="swiss">A_List = Empty_List</SPAN>, 
+<SPAN Class="swiss">Is_Empty(A_List)</SPAN> and <SPAN Class="swiss">Length(A_List) 
+= 0</SPAN> all have the same value.</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Element(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Element_Type;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Replace_Element(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type);</div>
+<div class="Normal">These are the first operations we have met that use 
+a cursor. The function <SPAN Class="swiss">Element</SPAN> takes a cursor 
+and returns the value of the corresponding element (remember that a cursor 
+identifies the list as well as the element itself). The procedure <SPAN Class="swiss">Replace_Element</SPAN> 
+replaces the value of the element identified by the cursor by the value 
+given; it makes a copy of course.</div>
+<div class="Normal">Note carefully that <SPAN Class="swiss">Replace_Element</SPAN> 
+has both the list and cursor as parameters. There are two reasons for 
+this concerning correctness. One is to enable a check that the cursor 
+does indeed identify an element in the given list. The other is to ensure 
+that we do have write access to the container (the parameter has mode 
+<B>in out</B>). Otherwise it would be possible to modify a container 
+even though we only had a constant view of it. So as a general principle 
+any operation that modifies a container must have the container as a 
+parameter whereas an operation that only reads it such as the function 
+<SPAN Class="swiss">Element</SPAN> does not.</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Query_Element(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Element:&nbsp;<B>in</B>&nbsp;Element_Type));</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Update_Element(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Element:&nbsp;<B>in&nbsp;out</B>&nbsp;Element_Type));</div>
+<div class="Normal">These procedures provide <I>in situ</I> access to 
+an element. One parameter is the cursor identifying the element and another 
+is an access to a procedure to be called with that element as parameter. 
+In the case of <SPAN Class="swiss">Query_Element</SPAN>, we can only 
+read the element whereas in the case of <SPAN Class="swiss">Update_Element</SPAN> 
+we can change it as well since the parameter mode of the access procedure 
+is <B>in out</B>. Note that <SPAN Class="swiss">Update_Element</SPAN> 
+also has the container as a parameter for reasons just mentioned when 
+discussing <SPAN Class="swiss">Replace_Element</SPAN>.</div>
+<div class="Normal">The reader might wonder whether there is any difference 
+between calling the function <SPAN Class="swiss">Element</SPAN> to obtain 
+the current value of an element and using the seemingly elaborate mechanism 
+of <SPAN Class="swiss">Query_Element</SPAN>. The answer is that the function 
+<SPAN Class="swiss">Element</SPAN> makes a copy of the value whereas 
+<SPAN Class="swiss">Query_Element</SPAN> gives access to the value without 
+making a copy. (And similarly for <SPAN Class="swiss">Replace_Element</SPAN> 
+and <SPAN Class="swiss">Update_Element</SPAN>.) This wouldn't matter 
+for a simple list of integers but it would matter if the elements were 
+large or of a controlled type (maybe even lists themselves).</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Move(Target,&nbsp;Source:&nbsp;<B>in&nbsp;out</B>&nbsp;List);</div>
+<div class="Normal">This moves the list from the source to the target 
+after first clearing the target. It does not make copies of the elements 
+so that after the operation the source is empty and <SPAN Class="swiss">Length(Source)</SPAN> 
+is zero.</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Insert(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count:&nbsp;<B>in</B>&nbsp;Count_Type&nbsp;:=&nbsp;1);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Insert(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count:&nbsp;<B>in</B>&nbsp;Count_Type&nbsp;:=&nbsp;1);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Insert(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count:&nbsp;<B>in</B>&nbsp;Count_Type&nbsp;:=&nbsp;1);</div>
+<div class="Normal">These three procedures enable one or more identical 
+elements to be added anywhere in a list. The place is indicated by the 
+parameter <SPAN Class="swiss">Before</SPAN> &ndash; if this is <SPAN Class="swiss">No_Element</SPAN>, 
+then the new elements are added at the end. The second procedure is similar 
+to the first but also returns a cursor to the first of the added elements. 
+The third is like the second but the new elements take their default 
+values. Note the default value of one for the number of elements.</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Prepend(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count:&nbsp;<B>in</B>&nbsp;Count_Type&nbsp;:=&nbsp;1);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Append(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count:&nbsp;<B>in</B>&nbsp;Count_Type&nbsp;:=&nbsp;1);</div>
+<div class="Normal">These add one or more new elements at the beginning 
+or end of a list respectively. Clearly these operations can be done using 
+<SPAN Class="swiss">Insert</SPAN> but they are sufficiently commonly 
+needed that it is convenient to provide them specially.</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Delete(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count:&nbsp;<B>in</B>&nbsp;Count_Type&nbsp;:=&nbsp;1);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Delete_First(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List;&nbsp;Count:&nbsp;<B>in</B>&nbsp;Count_Type&nbsp;:=&nbsp;1);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Delete_Last(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List;&nbsp;Count:&nbsp;<B>in</B>&nbsp;Count_Type&nbsp;:=&nbsp;1);</div>
+<div class="Normal">These delete one or more elements at the appropriate 
+position. In the case of <SPAN Class="swiss">Delete</SPAN>, the parameter 
+<SPAN Class="swiss">Position</SPAN> is set to <SPAN Class="swiss">No_Element</SPAN> 
+upon return. If there are not as many as <SPAN Class="swiss">Count</SPAN> 
+elements to be deleted at the appropriate place then it just deletes 
+as many as possible (this clearly results in the container becoming empty 
+in the case of <SPAN Class="swiss">Delete_First</SPAN> and <SPAN Class="swiss">Delete_Last</SPAN>).</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Reverse_Elements(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List);</div>
+<div class="Normal">This does the obvious thing. It would have been nice 
+to call this procedure <SPAN Class="swiss">Reverse</SPAN> but sadly that 
+is a reserved word.</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Swap(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List;&nbsp;I,&nbsp;J:&nbsp;<B>in</B>&nbsp;Cursor);</div>
+<div class="Normal">This handy procedure swaps the values in the two 
+elements denoted by the two cursors. The elements must be in the given 
+container otherwise <SPAN Class="swiss">Program_Error</SPAN> is raised. 
+Note that the cursors do not change.</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Swap_Links(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List;&nbsp;I,&nbsp;J:&nbsp;<B>in</B>&nbsp;Cursor);</div>
+<div class="Normal">This performs the low level operation of swapping 
+the links rather than the values which can be much faster if the elements 
+are large. There is no analogue in the vectors package.</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Splice(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Target:&nbsp;<B>in&nbsp;out</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source&nbsp;<B>in&nbsp;out</B>&nbsp;List);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Splice(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Target:&nbsp;<B>in&nbsp;out</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source:&nbsp;<B>in&nbsp;out</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Splice(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor);</div>
+<div class="Normal">These three procedures enable elements to be moved 
+(without copying). The place is indicated by the parameter <SPAN Class="swiss">Before</SPAN> 
+&ndash; if this is <SPAN Class="swiss">No_Element</SPAN>, then the elements 
+are added at the end. The first moves all the elements of <SPAN Class="swiss">Source</SPAN> 
+into <SPAN Class="swiss">Target</SPAN> at the position given by <SPAN Class="swiss">Before</SPAN>; 
+as a consequence, like the procedure <SPAN Class="swiss">Move</SPAN>, 
+after the operation the source is empty and <SPAN Class="swiss">Length(Source)</SPAN> 
+is zero. The second moves a single element at <SPAN Class="swiss">Position</SPAN> 
+from the list <SPAN Class="swiss">Source</SPAN> to <SPAN Class="swiss">Target</SPAN> 
+and so the length of target is incremented whereas that of source is 
+decremented; <SPAN Class="swiss">Position</SPAN> is updated to its new 
+location in <SPAN Class="swiss">Target</SPAN>. The third moves a single 
+element within a list and so the length remains the same (note the formal 
+parameter is <SPAN Class="swiss">Container</SPAN> rather than <SPAN Class="swiss">Target</SPAN> 
+in this case). There are no corresponding operations in the vectors package 
+because, like <SPAN Class="swiss">Swap_Links</SPAN>, we are just moving 
+the links and not copying the elements.</div>
+<div class="SwissExamples"><B>function</B>&nbsp;First(Container:&nbsp;List)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+<B>function</B>&nbsp;First_Element(Container:&nbsp;List)&nbsp;<B>return</B>&nbsp;Element_Type;<BR>
+<B>function</B>&nbsp;Last(Container:&nbsp;List)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+<B>function</B>&nbsp;Last_Element(Container:&nbsp;List)&nbsp;<B>return</B>&nbsp;Element_Type;<BR>
+<B>function</B>&nbsp;Next(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+<B>function</B>&nbsp;Previous(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+<B>procedure</B>&nbsp;Next(Position:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor);<BR>
+<B>procedure</B>&nbsp;Previous(Position:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor);</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Find(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item:&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;Cursor:=&nbsp;No_Element)&nbsp;<B>return</B>&nbsp;Cursor;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Reverse_Find(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item:&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;Cursor:=&nbsp;No_Element)&nbsp;<B>return</B>&nbsp;Cursor;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Contains(Container:&nbsp;List;&nbsp;Item:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="Normal">Hopefully the purpose of these is almost self-evident. 
+The function <SPAN Class="swiss">Find</SPAN> searches for an element 
+with the given value starting at the given cursor position (or at the 
+beginning if the position is <SPAN Class="swiss">No_Element)</SPAN>; 
+if no element is found then it returns <SPAN Class="swiss">No_Element</SPAN>. 
+<SPAN Class="swiss">Reverse_Find</SPAN> does the same but backwards. 
+Note that equality used for the comparison in <SPAN Class="swiss">Find</SPAN> 
+and <SPAN Class="swiss">Reverse_Find</SPAN> is that defined by the generic 
+parameter <SPAN Class="swiss">&quot;=&quot;</SPAN>.</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Has_Element(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="Normal">This returns <SPAN Class="swiss">False</SPAN> if 
+the cursor does not identify an element; for example if it is <SPAN Class="swiss">No_Element</SPAN>.</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Iterate(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Position:&nbsp;<B>in</B>&nbsp;Cursor));</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Reverse_Iterate(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Position:&nbsp;<B>in</B>&nbsp;Cursor));</div>
+<div class="Normal">These apply the procedure designated by the parameter 
+<SPAN Class="swiss">Process</SPAN> to each element of the container in 
+turn in the appropriate order.</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;&lt;&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Generic_Sorting&nbsp;is<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Is_Sorted(Container:&nbsp;List)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Sort(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Merge(Target,&nbsp;Source:&nbsp;<B>in&nbsp;out</B>&nbsp;List);<BR>
+<B>end</B>&nbsp;Generic_Sorting;</div>
+<div class="Normal">This generic package performs sort and merge operations 
+using the order specified by the generic formal parameter. Note that 
+we use generics rather than access to subprogram parameters when the 
+formal process is given by an operator. This is because the predefined 
+operations have convention <SPAN Class="swiss">Intrinsic</SPAN> and one 
+cannot pass an intrinsic operation as an access to subprogram parameter. 
+The function <SPAN Class="swiss">Is_Sorted</SPAN> returns <SPAN Class="swiss">True</SPAN> 
+if the container is already sorted. The procedure <SPAN Class="swiss">Sort</SPAN> 
+arranges the elements into order as necessary &ndash; note that no copying 
+is involved since it is only the links that are moved. The procedure 
+<SPAN Class="swiss">Merge</SPAN> takes the elements from <SPAN Class="swiss">Source</SPAN> 
+and adds them to <SPAN Class="swiss">Target</SPAN>. After the merge <SPAN Class="swiss">Length(Source)</SPAN> 
+is zero. If both lists were sorted before the merge then the result is 
+also sorted.<A NAME="I1388"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">And finally we have 
+</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;Ada.Containers.Doubly_Linked_Lists;</div>
+<div class="Normal" style="margin-bottom: 0.4em">If the reader has got 
+this far they have probably understood how to use this package so extensive 
+examples are unnecessary. However, as a taste, here is a simple stack 
+of floating point numbers&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Stack&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Push(X:&nbsp;<B>in</B>&nbsp;Float);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Pop&nbsp;<B>return</B>&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Size&nbsp;<B>return</B>&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;Stack_Empty&nbsp;:&nbsp;<B>exception</B>;<BR>
+<B>end</B>;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Containers.Doubly_Linked_Lists;<BR>
+<B>use</B>&nbsp;Ada.Containers;<BR>
+<B>package&nbsp;body</B>&nbsp;Stack&nbsp;is</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;Float_Container&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;Doubly_Linked_Lists(Float);<BR>
+&nbsp;&nbsp;&nbsp;<B>use</B>&nbsp;Float_Container;<BR>
+&nbsp;&nbsp;&nbsp;The_Stack:&nbsp;List;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Push(X:&nbsp;<B>in</B>&nbsp;Float)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Append(The_Stack,&nbsp;X);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>or&nbsp;The_Stack.Append(X);</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Push;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Pop&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Result:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Is_Empty(The_Stack)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>raise</B>&nbsp;Stack_Empty;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;<B>if</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Result&nbsp;:=&nbsp;Last_Element(The_Stack);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Delete_Last(The_Stack);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Result;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Pop;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Size&nbsp;<B>return</B>&nbsp;Integer&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Integer(Length(The_Stack));<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Size;</div>
+<div class="SwissExamples"><B>end</B>&nbsp;Stack;</div>
+<div class="Normal">This barely needs any explanation. The lists package 
+is instantiated in the package <SPAN Class="swiss">Stack</SPAN> and the 
+object <SPAN Class="swiss">The_Stack</SPAN> is of course the list container. 
+The rest is really straightforward. We could of course use the prefixed 
+notation throughout as indicated in <SPAN Class="swiss">Push</SPAN>.</div>
+<div class="Normal">An important point should be mentioned concerning 
+lists (and containers in general). This is that attempts to do foolish 
+things typically result in <SPAN Class="swiss">Constraint_Error</SPAN> 
+or <SPAN Class="swiss">Program_Error</SPAN> being raised. This especially 
+applies to the procedures <SPAN Class="swiss">Process</SPAN> in <SPAN Class="swiss">Query_Element</SPAN>, 
+<SPAN Class="swiss">Update_Element</SPAN>, <SPAN Class="swiss">Iterate</SPAN> 
+and <SPAN Class="swiss">Reverse_Iterate</SPAN>. The concepts of tampering 
+with cursors and elements are introduced in order to dignify a general 
+motto of &quot;Thou shalt not violate thy container&quot;.</div>
+<div class="Normal">Tampering with cursors occurs when elements are added 
+to or deleted from a container (by calling <SPAN Class="swiss">Insert</SPAN> 
+and so on) whereas tampering with elements means replacing an element 
+(by calling <SPAN Class="swiss">Replace_Element</SPAN> for example). 
+Tampering with elements is a greater sin and includes tampering with 
+cursors. The procedure <SPAN Class="swiss">Process</SPAN> in <SPAN Class="swiss">Query_Element</SPAN> 
+and <SPAN Class="swiss">Update_Element</SPAN> must not tamper with elements 
+and the procedure <SPAN Class="swiss">Process</SPAN> in the other cases 
+must not tamper with cursors. The reader might think it rather odd that 
+<SPAN Class="swiss">Update_Element</SPAN> should not be allowed to tamper 
+with elements since the whole purpose is to update the element; this 
+comes back to the point mentioned earlier that update element gives access 
+to the existing element <I>in situ</I> via the parameter of <SPAN Class="swiss">Process</SPAN> 
+and that is allowed &ndash; calling <SPAN Class="swiss">Replace_Element</SPAN> 
+within <SPAN Class="swiss">Process</SPAN> would be tampering. Tampering 
+causes <SPAN Class="swiss">Program_Error</SPAN> to be raised.</div>
+<div class="Normal">We will now consider the vectors package.<A NAME="I1389"></A><A NAME="I1390"></A> 
+Its specification starts<A NAME="I1391"></A><A NAME="I1392"></A><A NAME="I1393"></A> 
+</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Index_Type&nbsp;<B>is&nbsp;range</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;<B>function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Ada.Containers.Vectors&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Vectors);</div>
+<div class="Normal">This is similar to the lists package except for the 
+additional generic parameter <SPAN Class="swiss">Index_Type</SPAN> (note 
+that this is an integer type and not a discrete type). This additional 
+parameter reflects the idea that a vector is essentially an array and 
+we can index directly into an array.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In fact the vectors 
+package enables us to access elements either by using an index or by 
+using a cursor. Thus many operations are duplicated such as&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Element(Container:&nbsp;Vector;&nbsp;Index:&nbsp;Index_Type)&nbsp;<B>return</B>&nbsp;Element_Type;<BR>
+<B>function</B>&nbsp;Element(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Element_Type;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Replace_Element(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index:&nbsp;<B>in</B>&nbsp;Index_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Replace_Element(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type);</div>
+<div class="Normal">If we use an index then there is always a distinct 
+parameter identifying the vector as well. If we use a cursor then the 
+vector parameter is omitted if the vector is unchanged as is the case 
+with the function <SPAN Class="swiss">Element</SPAN>. Remember that we 
+stated earlier that a cursor identifies both an element and the container 
+but if the container is being changed as in the case of <SPAN Class="swiss">Replace_Element</SPAN> 
+then the container has to be passed as well to ensure write access and 
+to enable a check that the cursor does identify an element in the correct 
+container.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There are also functions 
+<SPAN Class="swiss">First_Index</SPAN> and <SPAN Class="swiss">Last_Index</SPAN> 
+thus&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;First_Index(Container:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Index_Type;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Last_Index(Container:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Extended_Index;</div>
+<div class="Normal">These return the values of the index of the first 
+and last elements respectively. The function <SPAN Class="swiss">First_Index</SPAN> 
+always returns <SPAN Class="swiss">Index_Type'First</SPAN> whereas <SPAN Class="swiss">Last_Index</SPAN> 
+will return <SPAN Class="swiss">No_Index</SPAN> if the vector is empty. 
+The function <SPAN Class="swiss">Length</SPAN> returns <SPAN Class="swiss">Last_Index&ndash;First_Index+1</SPAN> 
+which is zero if the vector is empty. Note that the irritating subtype 
+<SPAN Class="swiss">Extended_Index</SPAN> has to be introduced in order 
+to cope with end values. The constant <SPAN Class="swiss">No_Index</SPAN> 
+has the value <SPAN Class="swiss">Extended_Index'First</SPAN> which is 
+equal to <SPAN Class="swiss">Index_Type'First&ndash;1</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There are operations 
+to convert between an index and a cursor thus&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;To_Cursor(Container:&nbsp;Vector;&nbsp;Index:&nbsp;Extended_Index)&nbsp;<B>return</B>&nbsp;Cursor;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;To_Index(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Extended_Index;</div>
+<div class="Normal">It is perhaps slightly messier to use the index and 
+vector parameters because of questions concerning the range of values 
+of the index but probably slightly faster and maybe more familiar. And 
+sometimes of course using an index is the whole essence of the problem. 
+In the chapter on access types (see <A HREF="Rat-3-4.html">3.4</A>) we 
+showed a use of the procedure <SPAN Class="swiss">Update_Element</SPAN> 
+to double the values of those elements of a vector whose index was in 
+the range 5 to 10. This would be tedious with cursors.</div>
+<div class="Normal">But an advantage of using cursors is that (provided 
+certain operations are avoided) it is easy to replace the use of vectors 
+by lists.</div>
+<div class="Normal" style="margin-bottom: 0.4em">For example here is 
+the stack package rewritten to use vectors&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Containers.Vectors;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>changed</I></SPAN><BR>
+<B>use</B>&nbsp;Ada.Containers;<BR>
+<B>package&nbsp;body</B>&nbsp;Stack&nbsp;is</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;Float_Container&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;Vectors(Natural,Float);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>changed</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>use</B>&nbsp;Float_Container;<BR>
+&nbsp;&nbsp;&nbsp;The_Stack:&nbsp;Vector;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>changed</I></SPAN></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Push(X:&nbsp;<B>in</B>&nbsp;Float)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Append(The_Stack,&nbsp;X);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Push;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>etc&nbsp;exactly&nbsp;as&nbsp;before</I></SPAN></div>
+<div class="SwissExamples"><B>end</B>&nbsp;Stack;</div>
+<div class="Normal">So the changes are very few indeed and can be quickly 
+done with a simple edit.</div>
+<div class="Normal">Note that the index parameter has been given as <SPAN Class="swiss">Natural</SPAN> 
+rather than <SPAN Class="swiss">Integer</SPAN>. Using <SPAN Class="swiss">Integer</SPAN> 
+will not work since attempting to elaborate the subtype <SPAN Class="swiss">Extended_Index</SPAN> 
+would raise <SPAN Class="swiss">Constraint_Error</SPAN> when evaluating 
+<SPAN Class="swiss">Integer'First&ndash;1</SPAN>. But in any event it 
+is more natural for the index range of the container to start at <SPAN Class="swiss">0</SPAN> 
+(or <SPAN Class="swiss">1</SPAN>) rather than a large negative value 
+such as <SPAN Class="swiss">Integer'First</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There are other important 
+properties of vectors that should be mentioned. One is that there is 
+a concept of capacity. Vectors are adjustable and will extend if necessary 
+when new items are added. However, this might lead to lots of extensions 
+and copying and so we can set the capacity of a container by calling 
+</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Reserve_Capacity(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;&nbsp;Capacity:&nbsp;<B>in</B>&nbsp;Count_Type);</div>
+<div class="Normal" style="margin-bottom: 0.4em">There is also&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Capacity(Container:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Count_Type;</div>
+<div class="Normal">which naturally returns the current capacity. Note 
+that <SPAN Class="swiss">Length(V)</SPAN> cannot exceed <SPAN Class="swiss">Capacity(V)</SPAN> 
+but might be much less.</div>
+<div class="Normal">If we add items to a vector whose length and capacity 
+are the same then no harm is done. The capacity will be expanded automatically 
+by effectively calling <SPAN Class="swiss">Reserve_Capacity</SPAN> internally. 
+So the user does not need to set the capacity although not doing so might 
+result in poorer performance.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There is also the concept 
+of &quot;empty elements&quot;. These are elements whose values have not 
+been set. There is no corresponding concept with lists. It is a bounded 
+error to read an empty element. Empty elements arise if we declare a 
+vector by calling&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;To_Vector(Length:&nbsp;Count_Type)&nbsp;<B>return</B>&nbsp;Vector;</div>
+<div class="Normal" style="margin-bottom: 0.4em">as in&nbsp;</div>
+<div class="SwissExamples">My_Vector:&nbsp;Vector&nbsp;:=&nbsp;To_Vector(100);</div>
+<div class="Normal" style="margin-bottom: 0.4em">There is also the much 
+safer&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;To_Vector(New_Item:&nbsp;Element_Type;&nbsp;Length:&nbsp;Count_Type)&nbsp;<B>return</B>&nbsp;Vector;</div>
+<div class="Normal">which sets all the elements to the value <SPAN Class="swiss">New_Item</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There is also a procedure</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Set_Length(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;&nbsp;Length:&nbsp;<B>in</B>&nbsp;Count_Type);</div>
+<div class="Normal">This changes the length of a vector. This may require 
+elements to be deleted (from the end) or to be added (in which case the 
+new ones are empty).</div>
+<div class="Normal" style="margin-bottom: 0.4em">The final way to get 
+an empty element is by calling one of&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Insert_Space(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Extended_Index;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count:&nbsp;<B>in</B>&nbsp;Count_Type&nbsp;:=&nbsp;1);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Insert_Space(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count:&nbsp;<B>in</B>&nbsp;Count_Type&nbsp;:=&nbsp;1);</div>
+<div class="Normal">These insert the number of empty elements given by 
+<SPAN Class="swiss">Count</SPAN> at the place indicated. Existing elements 
+are slid along as necessary. These should not be confused with the versions 
+of <SPAN Class="swiss">Insert</SPAN> which do not provide an explicit 
+value for the elements &ndash; in those cases the new elements take their 
+default values.</div>
+<div class="Normal">Care needs to be taken if we use empty elements. 
+For example we should not compare two vectors using <SPAN Class="swiss">&quot;=&quot;</SPAN> 
+if they have empty elements because this implies reading them. But the 
+big advantage of empty elements is that they provide a quick way to make 
+a large lump of space in a vector which can then be filled in with appropriate 
+values. One big slide is a lot faster than lots of little ones.</div>
+<div class="Normal">For completeness, we briefly mention the remaining 
+few subprograms that are unique to the vectors package.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There are further versions 
+of <SPAN Class="swiss">Insert</SPAN> thus&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Insert(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Extended_Index;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Vector);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Insert(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Vector);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Insert(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before:&nbsp;<B>in</B>&nbsp;Cursor;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Vector;&nbsp;Position:&nbsp;<B>out</B>&nbsp;Cursor);</div>
+<div class="Normal">These insert copies of a vector into another vector 
+(rather than just single elements).</div>
+<div class="Normal" style="margin-bottom: 0.4em">There are also corresponding 
+versions of <SPAN Class="swiss">Prepend</SPAN> and <SPAN Class="swiss">Append</SPAN> 
+thus&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Prepend(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Vector);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Append(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Vector;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Vector);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Finally, there are 
+four functions <SPAN Class="swiss">&quot;&amp;&quot;</SPAN> which concatenate 
+vectors and elements by analogy with those for the type <SPAN Class="swiss">String</SPAN>. 
+Their specifications are&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Vector;<BR>
+<B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left:&nbsp;Vector;&nbsp;Right:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Vector;<BR>
+<B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left:&nbsp;Element_Type;&nbsp;Right:&nbsp;Vector)&nbsp;<B>return</B>&nbsp;Vector;<BR>
+<B>function</B>&nbsp;&quot;&amp;&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Vector;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note the similarity 
+between&nbsp;</div>
+<div class="SwissExamples">Append(V1,&nbsp;V2);<BR>
+V1&nbsp;:=&nbsp;V1&nbsp;&amp;&nbsp;V2;</div>
+<div class="Normal">The result is the same but using <SPAN Class="swiss">&quot;&amp;&quot;</SPAN> 
+is less efficient because of the extra copying involved. But <SPAN Class="swiss">&quot;&amp;&quot;</SPAN> 
+is a familiar operation and so is provided for convenience.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-8-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-8-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

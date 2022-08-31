@@ -1,0 +1,403 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Maps</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.CodeIndented {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 5.2em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedBulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 7.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-18-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-18-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>A.18.4 Maps</H1>
+<DIV Class="paranum">1/2</DIV>
+<DIV Class="Normal">The language-defined generic packages Containers.Hashed_Maps 
+and Containers.Ordered_Maps provide private types Map and Cursor, and 
+a set of operations for each type. A map container allows an arbitrary 
+type to be used as a key to find the element associated with that key. 
+A hashed map uses a hash function to organize the keys, while an ordered 
+map orders the keys per a specified relation. <A NAME="I6136"></A><A NAME="I6137"></A></DIV>
+<DIV Class="paranum">2/2</DIV>
+<DIV Class="Normal">This section describes the declarations that are 
+common to both kinds of maps. See <A HREF="RM-A-18-5.html">A.18.5</A> 
+for a description of the semantics specific to Containers.Hashed_Maps 
+and <A HREF="RM-A-18-6.html">A.18.6</A> for a description of the semantics 
+specific to Containers.Ordered_Maps.&nbsp;</DIV>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">3/2</DIV>
+<DIV Class="Normal">The actual function for the generic formal function 
+&quot;=&quot; on Element_Type values is expected to define a reflexive 
+and symmetric relationship and return the same result value each time 
+it is called with a particular pair of values. If it behaves in some 
+other manner, the function &quot;=&quot; on map values returns an unspecified 
+value. The exact arguments and number of calls of this generic formal 
+function by the function &quot;=&quot; on map values are unspecified.<A NAME="I6138"></A></DIV>
+<DIV Class="paranum">4/2</DIV>
+<DIV Class="Normal">The type Map is used to represent maps. The type 
+Map needs finalization (see <A HREF="RM-7-6.html">7.6</A>).</DIV>
+<DIV Class="paranum">5/2</DIV>
+<DIV Class="Normal"><A NAME="I6139"></A>A map contains pairs of keys 
+and elements, called <I>nodes</I>. Map cursors designate nodes, but also 
+can be thought of as designating an element (the element contained in 
+the node) for consistency with the other containers. There exists an 
+equivalence relation on keys, whose definition is different for hashed 
+maps and ordered maps. A map never contains two or more nodes with equivalent 
+keys. The <I>length</I> of a map is the number of nodes it contains.<A NAME="I6140"></A></DIV>
+<DIV Class="paranum">6/2</DIV>
+<DIV Class="Normal"><A NAME="I6141"></A><A NAME="I6142"></A><A NAME="I6143"></A>Each 
+nonempty map has two particular nodes called the <I>first node</I> and 
+the <I>last node</I> (which may be the same). Each node except for the 
+last node has a <I>successor node</I>. If there are no other intervening 
+operations, starting with the first node and repeatedly going to the 
+successor node will visit each node in the map exactly once until the 
+last node is reached. The exact definition of these terms is different 
+for hashed maps and ordered maps.</DIV>
+<DIV Class="paranum">7/2</DIV>
+<DIV Class="Normal">Some operations of these generic packages have access-to-subprogram 
+parameters. To ensure such operations are well-defined, they guard against 
+certain actions by the designated subprogram. In particular, some operations 
+check for &ldquo;tampering with cursors&rdquo; of a container because 
+they depend on the set of elements of the container remaining constant, 
+and others check for &ldquo;tampering with elements&rdquo; of a container 
+because they depend on elements of the container not being replaced.</DIV>
+<DIV Class="paranum">8/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><A NAME="I6144"></A>A 
+subprogram is said to <I>tamper with cursors</I> of a map object <I>M</I> 
+if:</DIV>
+<DIV Class="paranum">9/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>it inserts or deletes elements of 
+<I>M</I>, that is, it calls the Insert, Include, Clear, Delete, or Exclude 
+procedures with <I>M</I> as a parameter; or</LI></UL>
+<DIV Class="paranum">10/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>it finalizes <I>M</I>; or</LI></UL>
+<DIV Class="paranum">11/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>it calls the Move procedure with <I>M</I> 
+as a parameter; or</LI></UL>
+<DIV Class="paranum">12/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>it calls one of the operations defined 
+to tamper with the cursors of <I>M</I>.</LI></UL>
+<DIV Class="paranum">13/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;<A NAME="I6145"></A>A 
+subprogram is said to <I>tamper with elements</I> of a map object <I>M</I> 
+if:</DIV>
+<DIV Class="paranum">14/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>it tampers with cursors of <I>M</I>; 
+or</LI></UL>
+<DIV Class="paranum">15/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>it replaces one or more elements of 
+<I>M</I>, that is, it calls the Replace or Replace_Element procedures 
+with <I>M</I> as a parameter.</LI></UL>
+<DIV Class="paranum">16/2</DIV>
+<DIV Class="Normal">&nbsp;Empty_Map represents the empty Map object. It has 
+a length of 0. If an object of type Map is not otherwise initialized, 
+it is initialized to the same value as Empty_Map.</DIV>
+<DIV Class="paranum">17/2</DIV>
+<DIV Class="Normal">&nbsp;No_Element represents a cursor that designates no 
+node. If an object of type Cursor is not otherwise initialized, it is 
+initialized to the same value as No_Element.</DIV>
+<DIV Class="paranum">18/2</DIV>
+<DIV Class="Normal">&nbsp;The predefined &quot;=&quot; operator for type Cursor 
+returns True if both cursors are No_Element, or designate the same element 
+in the same container.</DIV>
+<DIV Class="paranum">19/2</DIV>
+<DIV Class="Normal">&nbsp;Execution of the default implementation of the Input, 
+Output, Read, or Write attribute of type Cursor raises Program_Error.</DIV>
+<DIV Class="paranum">20/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;Map)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">21/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.4em">If Left and Right 
+denote the same map object, then the function returns True. If Left and 
+Right have different lengths, then the function returns False. Otherwise, 
+for each key <I>K</I> in Left, the function returns False if:</DIV>
+<DIV Class="paranum">22/2</DIV>
+<UL Class="CodeIndentedBulleted"><LI TYPE=DISC>a key equivalent to <I>K</I> 
+is not present in Right; or</LI></UL>
+<DIV Class="paranum">23/2</DIV>
+<UL Class="CodeIndentedBulleted"><LI TYPE=DISC>the element associated 
+with <I>K</I> in Left is not equal to the element associated with <I>K</I> 
+in Right (using the generic formal equality operator for elements).&nbsp;</LI></UL>
+<DIV Class="paranum">24/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If the function 
+has not returned a result after checking all of the keys, it returns 
+True. Any exception raised during evaluation of key equivalence or element 
+equality is propagated.&nbsp;</DIV>
+<DIV Class="paranum">25/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Length&nbsp;(Container&nbsp;:&nbsp;Map)&nbsp;<B>return</B>&nbsp;Count_Type;</DIV>
+<DIV Class="paranum">26/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns the number 
+of nodes in Container.</DIV>
+<DIV Class="paranum">27/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Is_Empty&nbsp;(Container&nbsp;:&nbsp;Map)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">28/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Length (Container) = 0.</DIV>
+<DIV Class="paranum">29/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Clear&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Map);</DIV>
+<DIV Class="paranum">30/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Removes all the 
+nodes from Container.</DIV>
+<DIV Class="paranum">31/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Key&nbsp;(Position&nbsp;:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Key_Type;</DIV>
+<DIV Class="paranum">32/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Position equals 
+No_Element, then Constraint_Error is propagated. Otherwise, Key returns 
+the key component of the node designated by Position.</DIV>
+<DIV Class="paranum">33/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Element&nbsp;(Position&nbsp;:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Element_Type;</DIV>
+<DIV Class="paranum">34/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Position equals 
+No_Element, then Constraint_Error is propagated. Otherwise, Element returns 
+the element component of the node designated by Position.</DIV>
+<DIV Class="paranum">35/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Replace_Element&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type);</DIV>
+<DIV Class="paranum">36/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Position equals 
+No_Element, then Constraint_Error is propagated; if Position does not 
+designate an element in Container, then Program_Error is propagated. 
+Otherwise Replace_Element assigns New_Item to the element of the node 
+designated by Position.</DIV>
+<DIV Class="paranum">37/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Query_Element<BR>
+&nbsp;&nbsp;(Position&nbsp;:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;Process&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Key_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element&nbsp;:&nbsp;<B>in</B>&nbsp;Element_Type));</DIV>
+<DIV Class="paranum">38/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Position equals 
+No_Element, then Constraint_Error is propagated. Otherwise, Query_Element 
+calls Process.<B>all</B> with the key and element from the node designated 
+by Position as the arguments. Program_Error is propagated if Process.<B>all</B> 
+tampers with the elements of Container. Any exception raised by Process.<B>all</B> 
+is propagated.</DIV>
+<DIV Class="paranum">39/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Update_Element<BR>
+&nbsp;&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;Process&nbsp;&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Element_Type));</DIV>
+<DIV Class="paranum">40/2</DIV>
+<DIV Class="CodeIndented">If Position equals No_Element, then Constraint_Error 
+is propagated; if Position does not designate an element in Container, 
+then Program_Error is propagated. Otherwise Update_Element calls Process.<B>all</B> 
+with the key and element from the node designated by Position as the 
+arguments. Program_Error is propagated if Process.<B>all</B> tampers 
+with the elements of Container. Any exception raised by Process.<B>all</B> 
+is propagated.</DIV>
+<DIV Class="paranum">41/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Element_Type 
+is unconstrained and definite, then the actual Element parameter of Process.<B>all</B> 
+shall be unconstrained.</DIV>
+<DIV Class="paranum">42/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Move&nbsp;(Target&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Map);</DIV>
+<DIV Class="paranum">43/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Target denotes 
+the same object as Source, then Move has no effect. Otherwise, Move first 
+calls Clear (Target). Then, each node from Source is removed from Source 
+and inserted into Target. The length of Source is 0 after a successful 
+call to Move.</DIV>
+<DIV Class="paranum">44/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Inserted&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Boolean);</DIV>
+<DIV Class="paranum">45/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Insert checks 
+if a node with a key equivalent to Key is already present in Container. 
+If a match is found, Inserted is set to False and Position designates 
+the element with the matching key. Otherwise, Insert allocates a new 
+node, initializes it to Key and New_Item, and adds it to Container; Inserted 
+is set to True and Position designates the newly-inserted node. Any exception 
+raised during allocation is propagated and Container is not modified.</DIV>
+<DIV Class="paranum">46/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Inserted&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Boolean);</DIV>
+<DIV Class="paranum">47/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Insert inserts 
+Key into Container as per the five-parameter Insert, with the difference 
+that an element initialized by default (see <A HREF="RM-3-3-1.html">3.3.1</A>) 
+is inserted.</DIV>
+<DIV Class="paranum">48/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Insert&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type);</DIV>
+<DIV Class="paranum">49/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Insert inserts 
+Key and New_Item into Container as per the five-parameter Insert, with 
+the difference that if a node with a key equivalent to Key is already 
+in the map, then Constraint_Error is propagated.</DIV>
+<DIV Class="paranum">50/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Include&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type);</DIV>
+<DIV Class="paranum">51/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Include inserts 
+Key and New_Item into Container as per the five-parameter Insert, with 
+the difference that if a node with a key equivalent to Key is already 
+in the map, then this operation assigns Key and New_Item to the matching 
+node. Any exception raised during assignment is propagated.</DIV>
+<DIV Class="paranum">52/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Replace&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type);</DIV>
+<DIV Class="paranum">53/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Replace checks 
+if a node with a key equivalent to Key is present in Container. If a 
+match is found, Replace assigns Key and New_Item to the matching node; 
+otherwise, Constraint_Error is propagated.</DIV>
+<DIV Class="paranum">54/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Exclude&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key_Type);</DIV>
+<DIV Class="paranum">55/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Exclude checks 
+if a node with a key equivalent to Key is present in Container. If a 
+match is found, Exclude removes the node from the map.</DIV>
+<DIV Class="paranum">56/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Delete&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key_Type);</DIV>
+<DIV Class="paranum">57/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Delete checks 
+if a node with a key equivalent to Key is present in Container. If a 
+match is found, Delete removes the node from the map; otherwise, Constraint_Error 
+is propagated.</DIV>
+<DIV Class="paranum">58/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Delete&nbsp;(Container&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position&nbsp;&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor);</DIV>
+<DIV Class="paranum">59/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Position equals 
+No_Element, then Constraint_Error is propagated. If Position does not 
+designate an element in Container, then Program_Error is propagated. 
+Otherwise, Delete removes the node designated by Position from the map. 
+Position is set to No_Element on return.</DIV>
+<DIV Class="paranum">60/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;First&nbsp;(Container&nbsp;:&nbsp;Map)&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">61/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Length (Container) 
+= 0, then First returns No_Element. Otherwise, First returns a cursor 
+that designates the first node in Container.</DIV>
+<DIV Class="paranum">62/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Next&nbsp;(Position&nbsp;&nbsp;:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">63/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns a cursor 
+that designates the successor of the node designated by Position. If 
+Position designates the last node, then No_Element is returned. If Position 
+equals No_Element, then No_Element is returned.</DIV>
+<DIV Class="paranum">64/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Next&nbsp;(Position&nbsp;&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor);</DIV>
+<DIV Class="paranum">65/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Position := Next (Position).</DIV>
+<DIV Class="paranum">66/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Find&nbsp;(Container&nbsp;:&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Cursor;</DIV>
+<DIV Class="paranum">67/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">If Length (Container) 
+equals 0, then Find returns No_Element. Otherwise, Find checks if a node 
+with a key equivalent to Key is present in Container. If a match is found, 
+a cursor designating the matching node is returned; otherwise, No_Element 
+is returned.</DIV>
+<DIV Class="paranum">68/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Element&nbsp;(Container&nbsp;:&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Element_Type;</DIV>
+<DIV Class="paranum">69/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Element (Find (Container, Key)).</DIV>
+<DIV Class="paranum">70/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Contains&nbsp;(Container&nbsp;:&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">71/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Equivalent to 
+Find (Container, Key) /= No_Element.</DIV>
+<DIV Class="paranum">72/2</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Has_Element&nbsp;(Position&nbsp;:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">73/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Returns True 
+if Position designates a node, and returns False otherwise.</DIV>
+<DIV Class="paranum">74/2</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Iterate<BR>
+&nbsp;&nbsp;(Container&nbsp;:&nbsp;<B>in</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;Process&nbsp;&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Position&nbsp;:&nbsp;<B>in</B>&nbsp;Cursor));</DIV>
+<DIV Class="paranum">75/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Iterate calls 
+Process.<B>all</B> with a cursor that designates each node in Container, 
+starting with the first node and moving the cursor according to the successor 
+relation. Program_Error is propagated if Process.<B>all</B> tampers with 
+the cursors of Container. Any exception raised by Process.<B>all</B> 
+is propagated.</DIV>
+
+<H4 Class="centered">Erroneous Execution</H4>
+<DIV Class="paranum">76/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;A Cursor value is 
+<I>invalid</I> if any of the following have occurred since it was created:<A NAME="I6146"></A> 
+<A NAME="I6147"></A></DIV>
+<DIV Class="paranum">77/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The map that contains the node it 
+designates has been finalized;</LI></UL>
+<DIV Class="paranum">78/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The map that contains the node it 
+designates has been used as the Source or Target of a call to Move; or</LI></UL>
+<DIV Class="paranum">79/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The node it designates has been deleted 
+from the map.&nbsp;</LI></UL>
+<DIV Class="paranum">80/2</DIV>
+<DIV Class="Normal">&nbsp;The result of &quot;=&quot; or Has_Element is unspecified 
+if these functions are called with an invalid cursor parameter.<A NAME="I6148"></A> 
+Execution is erroneous if any other subprogram declared in Containers.Hashed_Maps 
+or Containers.Ordered_Maps is called with an invalid cursor parameter.<A NAME="I6149"></A></DIV>
+
+<H4 Class="centered">Implementation Requirements</H4>
+<DIV Class="paranum">81/2</DIV>
+<DIV Class="Normal">&nbsp;No storage associated with a Map object shall be 
+lost upon assignment or scope exit.</DIV>
+<DIV Class="paranum">82/2</DIV>
+<DIV Class="Normal">&nbsp;The execution of an <SPAN Class="swiss"><A HREF="RM-5-2.html#S0137">assignment_statement</A></SPAN> 
+for a map shall have the effect of copying the elements from the source 
+map object to the target map object.</DIV>
+
+<H4 Class="centered">Implementation Advice</H4>
+<DIV Class="paranum">83/2</DIV>
+<DIV Class="Normal">&nbsp;Move should not copy elements, and should minimize 
+copying of internal data structures.&nbsp;</DIV>
+<DIV Class="paranum">84/2</DIV>
+<DIV Class="Normal">&nbsp;If an exception is propagated from a map operation, 
+no storage should be lost, nor any elements removed from a map unless 
+specified by the operation.&nbsp;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-18-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-18-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

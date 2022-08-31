@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 9.6: Delay Statements, Duration, and Time</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="9.6">9.6</A>.  Delay Statements, Duration, and Time  </H2>
+<A HREF="lrm-09-05.html#9.5"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-09.html#9"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-09-07.html#9.7"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The execution of a delay statement evaluates  the  simple  expression,  and  
+suspends  further  execution of the task that executes the delay statement,
+for at least the duration specified by the resulting value. 
+<pre>
+    delay_statement ::= delay simple_expression;   
+</pre>
+<P>
+The simple expression must be of the predefined fixed point type  DURATION;
+its value is expressed in seconds;  a delay statement with a negative value
+is equivalent to a delay statement with a zero value. 
+<P>
+Any  implementation  of  the  type  DURATION  must  allow representation of
+durations (both positive and negative) up to at least  86400  seconds  (one
+day);   the  smallest  representable  duration,  DURATION'SMALL must not be
+greater than twenty milliseconds (whenever possible, a  value  not  greater
+than  fifty  microseconds should be chosen).  Note that DURATION'SMALL need
+not correspond to the basic clock cycle, the named number SYSTEM.TICK  (see
+<a href="lrm-13-07.html#13.7">13.7</a>).                                                                               
+<P>
+The  definition  of  the  type  TIME  is provided in the predefined library
+package CALENDAR.  The function CLOCK returns the current value of TIME  at
+the  time  it is called.  The functions YEAR, MONTH, DAY and SECONDS return
+the corresponding values for a given value of the type TIME;  the procedure
+SPLIT returns all four  corresponding  values.   Conversely,  the  function
+TIME_OF  combines  a  year  number,  a  month  number,  a day number, and a
+duration, into a value of  type  TIME.   The  operators  "+"  and  "-"  for
+addition  and  subtraction  of  times  and  durations,  and  the relational
+operators for times, have the conventional meaning. 
+<P>
+The exception TIME_ERROR is raised by the function TIME_OF  if  the  actual 
+parameters do not form a proper date.  This exception is also raised by the
+operators  "+"  and  "-" if, for the given operands, these operators cannot
+return a date whose year number  is  in  the  range  of  the  corresponding
+subtype, or if the operator "-" cannot return a result that is in the range
+of the type DURATION. 
+<pre>
+    package CALENDAR is
+       type TIME is private; 
+
+       subtype YEAR_NUMBER  is INTEGER  range 1901 .. 2099;
+       subtype MONTH_NUMBER is INTEGER  range 1 .. 12;
+       subtype DAY_NUMBER   is INTEGER  range 1 .. 31;
+       subtype DAY_DURATION is DURATION range 0.0 .. 86_400.0;
+
+       function CLOCK return TIME; 
+
+       function YEAR   (DATE : TIME) return YEAR_NUMBER;
+       function MONTH  (DATE : TIME) return MONTH_NUMBER;
+       function DAY    (DATE : TIME) return DAY_NUMBER;
+       function SECONDS(DATE : TIME) return DAY_DURATION; 
+
+       procedure SPLIT (DATE    : in  TIME;
+                        YEAR    : out YEAR_NUMBER;
+                        MONTH   : out MONTH_NUMBER;
+                        DAY     : out DAY_NUMBER;
+                        SECONDS : out DAY_DURATION); 
+
+       function TIME_OF(YEAR    : YEAR_NUMBER;
+                        MONTH   : MONTH_NUMBER;
+                        DAY     : DAY_NUMBER;
+                        SECONDS : DAY_DURATION := 0.0) return TIME;  
+
+       function "+"  (LEFT : TIME;     RIGHT : DURATION) return TIME;
+       function "+"  (LEFT : DURATION; RIGHT : TIME)     return TIME;
+       function "-"  (LEFT : TIME;     RIGHT : DURATION) return TIME;
+       function "-"  (LEFT : TIME;     RIGHT : TIME)     return DURATION; 
+
+       function "&lt;"  (LEFT, RIGHT : TIME) return BOOLEAN;
+       function "&lt;=" (LEFT, RIGHT : TIME) return BOOLEAN;
+       function "&gt;"  (LEFT, RIGHT : TIME) return BOOLEAN;
+       function "&gt;=" (LEFT, RIGHT : TIME) return BOOLEAN;   
+
+       TIME_ERROR : exception;  --  can be raised by TIME_OF, "+", and "-" 
+
+    private
+       -- implementation-dependent
+    end;                                                                              
+</pre>
+<P>
+Examples: 
+<pre>
+    delay 3.0;  --  delay 3.0 seconds 
+
+    declare
+       use CALENDAR;
+       --  INTERVAL is a global constant of type DURATION
+       NEXT_TIME : TIME := CLOCK + INTERVAL;
+    begin
+       loop
+          delay NEXT_TIME - CLOCK;
+          --  some actions
+          NEXT_TIME := NEXT_TIME + INTERVAL;
+       end loop;
+    end; 
+</pre>
+<P>
+Notes: 
+<P>
+The second example causes the loop to be repeated every INTERVAL seconds on
+average.    This   interval  between  two  successive  iterations  is  only
+approximate.  However, there will be no cumulative drift  as  long  as  the
+duration of each iteration is (sufficiently) less than INTERVAL.  
+<P>
+<b>References:</b>   <A HREF="lrm-C.html#C">duration</A>,
+<A HREF="lrm-03-05.html#3.5.9">fixed point type</A>,
+<A HREF="lrm-06-04.html#6.4">function call</A>,
+<A HREF="lrm-10-01.html#10.1">library unit</A>,
+<A HREF="lrm-04-05.html#4.5">operator</A>,
+<A HREF="lrm-07.html#7">package</A>,
+<A HREF="lrm-07-04.html#7.4">private type</A>,
+<A HREF="lrm-04-05.html#4.5">relational operator</A>,
+<A HREF="lrm-04-04.html#4.4">simple expression</A>,
+<A HREF="lrm-05.html#5">statement</A>,
+<A HREF="lrm-09.html#9">task</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-13-02.html#13.2.7">13.2.7&nbsp;Timed and Conditional Communication</a>
+<p>
+
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-01.html#6.1.5">6.1.5&nbsp;Delay Statements</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-02.html#6.2.5">6.2.5&nbsp;Tentative Rendezvous Constructs</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-01.html#7.1.1">7.1.1&nbsp;Global Assumptions</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-04.html#7.4.2">7.4.2&nbsp;Delay Statements</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-04.html#7.4.3">7.4.3&nbsp;Package Calendar, Type Duration, and System.Tick</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

@@ -1,0 +1,401 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 2.2: Textual Structure</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+
+<H2>CHAPTER 2: Lexical and Textual Structure</H2>
+
+<H3><a name="2.2">2.2 Textual Structure</a></H3>
+<p>
+Above the lexical level, the text of a program is structured as an
+arrangement of lexical elements. This structure is described by the
+Ada syntax in the conventional manner. However, a number of issues
+require separate discussion to clarify the decisions taken.
+<p>
+Declarations and statements are always terminated by semicolons - this
+differs from the Pascal practice, in which a semicolon is used as a
+separator. The Ada convention simplifies the insertion of another
+declaration or statement: normal layout places the semicolon at the
+end of a line and thus, where semicolons are separators, insertion of
+a line often entails changing the previous line as well. This is an
+argument against separators between items that are likely to be on
+separate lines. We want each line to be a complete unit - therefore
+including a terminator - so that adding a line does not require
+changing a previous line. (Fortran achieves this by having the end of
+line be a terminator.)
+<p>
+The use of semicolons as terminators aids recovery by the compiler
+after finding a syntax error; recovery from omission of the semicolon
+itself is usually quite simple for the parser. Finally, comparative
+analyses of programmer errors have shown the use of semicolon as a
+terminator to be less error-prone than its use as a separator <a href="ratl-BIB.html">[GH 75]</a>.
+<p>
+Having dealt with the lines of text themselves, we next consider the
+two-dimensional arrangement of lexical elements to form a page.
+Reading a page of a program normally proceeds on a line by line basis,
+at least consciously. But reading and vision are indeed more complex
+than is suggested by this purely linear process. While the eye
+consciously concentrates on a given point (a given line), peripheral
+vision is actively at work in a parallel fashion. This unconscious
+reading activity provides us with information on the overall structure
+of the text - the textual structure - and gradually develops our
+intuition of what is coming in subsequent lines, and also our
+perception of the spatial relationships of different parts of the
+text.
+<p>
+A readable textual structure is one that facilitates this parallel
+decoding activity: readability is thus improved by suitable
+paragraphing (layout) of the program text. This facet of readability
+has influenced the design of Ada textual structure in several ways.
+For each of the major program structures, we have defined a textual
+structure that reflects the underlying logical structure (this point
+will be substantiated later by examples). This textual structure is
+given by the recommended paragraphing specified in the Ada reference
+manual through the layout of the syntax rules. Finally, the syntax was
+designed in such a way that this recommended paragraphing can be
+produced by very simple mechanical tools, on the basis of the reserved
+words alone.
+<p>
+We should therefore expect Ada programs to be paragraphed in a
+systematic and automatic manner. This consistency and uniformity of
+presentation is a significant advantage for readers, in particular
+when reading programs written by others. The resulting textual
+structure is what will be perceived when looking at a program from a
+distance, when the individual details (the individual lexical
+elements) can no longer be seen distinctly. Even at this first level
+of perception, a good program will provide us with some intuition of
+its organization into major parts.
+<p>
+Some program structures have simple brackets, for example the loop and
+end loop of the loop statement, and similarly the record and end
+record of the record type definition. This simplifies the insertion of
+additional statements or declarations. Thus, adding a statement to the
+Ada if statement
+<p><table border cellpadding=6><tr><td><pre>if COUNT &lt; AVERAGE then
+ 
+     INCREASE(COUNT);
+end if;</pre></td></tr></table>
+<P>
+requires a single line insertion:
+<p><table border cellpadding=6><tr><td><pre>if COUNT &lt; AVERAGE then
+ 
+     PRINT(COUNT);                      -- added
+     INCREASE(COUNT);
+end if;</pre></td></tr></table>
+<P>
+Note that the similar transformation of the Pascal if statement
+<p><table border cellpadding=6><tr><td><pre>if COUNT &lt; AVERAGE then
+ 
+     INCREASE(COUNT);</pre></td></tr></table>
+<p>
+would be more cumbersome since it would require more modifications:
+<p><table border cellpadding=6><tr><td><pre>if COUNT &lt; AVERAGE then
+ 
+     begin                   {added}
+       PRINT(COUNT);         {added}
+       INCREASE(COUNT)       {; deleted}
+     end;                    {added}</pre></td></tr></table>
+<p>
+and forgetting the begin ... end makes the increase of count
+unconditional!
+<p>
+Several other program constructs exhibit a comb-like structure, which
+is best illustrated with the if statement as in the following example:
+<p><table border cellpadding=6><tr><td><pre>_____ if ... then
+
+|
+|                   ...
+|
+|               elsif ... then    
+|
+|                   ...
+|
+|               elsif ... then    
+|
+|                   ...
+|
+|               end if;</pre></td></tr></table>
+<P>
+This structure is built around four markers: an initial opening marker
+(if ... then), two intermediate markers (elsif ... then), and a
+closing marker (end if). Each of the three major parts bracketed by
+two consecutive markers is a sequence of statements that forms one of
+the alternatives of the if statement. Thus each major part of the comb
+structure correspond to a logical alternative of the if statement. A
+similar comb structure is exhibited by the case statement:
+<p><table border cellpadding=6><tr><td><pre>_____ case LIGHT is
+ 
+|
+|                    when GREEN =&gt;     
+|
+|                        ...
+|
+|                    when AMBER =&gt;
+|
+|                        ...
+|
+|                    when RED =&gt;
+|
+|                        ...
+|
+|               end case;</pre></td></tr></table>
+<P>
+
+Here again the layout defines three major parts of the text, which
+correspond to the three logical alternatives of the case statement.
+Further examples of the comb structure are
+<p><table border cellpadding=6><tr><td><pre>_____ procedure P is
+ 
+|
+|                   ...
+|
+|               begin
+|
+|                   ...
+|
+|               exception
+|
+|                   ...
+|
+|               end P;</pre></td></tr></table>
+<P>
+
+<p><table border cellpadding=6><tr><td><pre>_____ select
+|
+|                   ...
+|
+|               or when ... =&gt;
+|
+|                   ...
+|
+|               or when ... =&gt;
+|
+|                   ...
+|
+|               else
+|
+|                   ...
+|
+|               end select;</pre></td></tr></table>
+<P>
+
+Note that each large-scale comb structure has the terminating reserved
+word end. For declarations and statements, this is followed by a
+reserved word echoing the corresponding opening marker:
+<p><table border cellpadding=6><tr><td><pre>case      end case
+ 
+if        end if
+ 
+loop      end loop
+ 
+record    end record
+ 
+select    end select</pre></td></tr></table>
+<P>
+For named constructs such as subprograms, packages, and task units the
+name of the construct may be written after the final end to assist in
+the recognition of the structure, something which is quite useful in
+the case of long program units:
+<p><table border cellpadding=6><tr><td><pre>package KEY_MANAGER is
+ 
+     ...
+end KEY_MANAGER;</pre></td></tr></table>
+<P>
+When program constructs are nested, this pairing of opening and
+closing markers will assist in reading the program. Special tools used
+for printing (or displaying) programs may also print additional
+vertical lines that further enhance the major structures as in the
+example below:
+<p><table border cellpadding=6><tr><td><pre>task body CONTROLLER is
+|
+| ...
+|
+begin
+|
+|    loop
+|    |
+|    |    select
+|    |    |
+|    |    |    accept READ ... do
+|    |    |    |
+|    |    |    |    ...
+|    |    |    |
+|    |    |    end READ;
+|    |    |
+|    |    or
+|    |    |
+|    |    |    accept WRITE ... do
+|    |    |    |
+|    |    |    |    ...
+|    |    |    |
+|    |    |    end WRITE;
+|    |    |
+|    |    end select;
+|    |
+|    end loop;
+|
+end CONTROLLER;</pre></td></tr></table>
+<P>
+Naturally, these structural vertical lines are not part of the input
+text submitted to an Ada compiler, any more than are font indications
+such as the use of boldface for reserved words. Such enhancing
+techniques are not superfluous: they have an important role in
+facilitating the reading of programs, an important activity in our
+profession.
+<p>
+In general, language constructs which do not express similar ideas
+should not look similar. Thus, unlike Pascal which used a colon in
+both cases, Ada uses different notations for statement labels (used by
+goto statements) and for choices (in case statements). Statement
+labels have angle brackets <CODE>&lt;&lt; &gt;&gt;</CODE> placed around the label identifier;
+they emphasize that this is a special point in the program.
+Conversely, choices express preconditions for executing the statements
+that follow. Their form is therefore as follows:
+<p>
+<PRE>    when ... =&gt;</PRE>
+<p>
+The same form is also used in select statements and exception
+handlers, since it corresponds to the same idea of a precondition.
+<p>
+Whenever possible, a uniform notation is used for similar constructs.
+The clearest example of this principle is the case structure, which is
+used for variant parts in records as well as for case statements. In
+Ada, both constructs have the same morphology, so as to reflect the
+common idea of discrimination among several alternatives: seen from a
+distance the two structures are indistinguishable. This should
+simplify teaching of the language and avoid programming errors.
+<p>
+Pascal variant parts and case statements, although similar, do not
+follow our principle. The contrast is illustrated by an example:
+<p>
+A graphics data structure in Pascal:
+<p><table border cellpadding=6><tr><td><pre>type SHAPE =  (CIRCLE, TRIANGLE, POINT);
+ 
+type FIGURE =
+     record
+          X, Y :  REAL;
+          case KIND :  SHAPE of
+               CIRCLE:
+                    (RADIUS :  REAL);
+               TRIANGLE:
+                    (INCLINATION, ANGLE  :  REAL;
+                    LEFT_SIDE, RIGHT_SIDE   :  REAL);
+               POINT:()
+     end
+</pre></td></tr></table>
+<P>
+A case statement in Pascal:
+<p><table border cellpadding=6><tr><td><pre>case A.KIND of
+ 
+     CIRCLE:
+          PRINT(A.RADIUS);
+     TRIANGLE:
+          begin
+             PRINT(A.INCLINATION);  PRINT(A.ANGLE);
+             PRINT(A.LEFT_SIDE); PRINT(A.RIGHT_SIDE)
+          end;
+     POINT:
+end</pre></td></tr></table>
+<P>
+The equivalent data structure in Ada:
+<p><table border cellpadding=6><tr><td><pre>type SHAPE is (CIRCLE, TRIANGLE, POINT);
+ 
+type FIGURE(KIND :  SHAPE) is
+     record
+          X, Y :  REAL;
+               case KIND is
+                    when CIRCLE =&gt;
+                         RADIUS :  REAL;
+                    when TRIANGLE =&gt;
+                         INCLINATION, ANGLE  :  REAL;
+                         LEFT_SIDE, RIGHT_SIDE :  REAL;
+                    when POINT =&gt;
+                         null;
+               end case;
+     end record</pre></td></tr></table>
+<p>
+The equivalent case statement in Ada:
+<p><table border cellpadding=6><tr><td><pre>case A.KIND is
+     when CIRCLE =&gt;
+          PRINT(A.RADIUS);
+     when TRIANGLE =&gt;
+          PRINT(A.INCLINATION);  PRINT(A.ANGLE);
+          PRINT(A.LEFT_SIDE); PRINT(A.RIGHT_SIDE);
+     when POINT =&gt;
+          null;
+end case;</pre></td></tr></table>
+<P>
+In Ada, the structural analogy between the declarative case structure
+(the variant part) and the case statement should assist the human
+reader and help in learning the language. The approach will also
+simplify pretty-printing of programs by mechanical tools which need
+not be able to distinguish the two (semantically different) versions
+of the case structure, namely variant parts and case statements.
+<p>
+A similar structural analogy exists between the case statement, the
+select statement, and exception handlers. Other structural analogies,
+which are adequately reflected by the syntax, are shown by the textual
+structure of functions, procedures, package bodies, task bodies, and
+blocks. In each case the syntax defines three major logical parts (a
+declarative part, a sequence of statements, and exception handlers)
+that are reflected by the textual structure
+<p><table border cellpadding=6><tr><td><pre>   function F ... is      procedure P ... is      declare
+   |                      |                       |
+   |                      |                       |
+   |      begin           |      begin            |    begin            
+   |                      |                       |
+   |                      |                       |
+   |      exception       |      exception        |    exception
+   |                      |                       |
+   |                      |                       |
+   |      end F;          |      end P;           |    end
+  </pre></td></tr></table>
+<P>
+<table border cellpadding=6><tr><td><pre>   package body P is      task body T is
+   |                      |         
+   |                      |    
+   |     begin            |     begin            
+   |                      |    
+   |                      |    
+   |     exception        |     exception     
+   |                      |    
+   |                      |    
+   |     end P;           |     end T;   
+</pre></td></tr></table>
+<P>
+and similarly for package and task specifications
+<p><table border cellpadding=6><tr><td><pre>   package P is        task T is
+   |                   |
+   |                   |
+   |     end P;        |     end T        </pre></td></tr></table>
+<P>
+These structural analogies have been used quite systematically. They
+should develop a feeling of familiarity for the reader and simplify
+the teaching of the Ada language.
+
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-03.html#3"><b>NEXT</b></a>
+&#128; <a href="ratl-02-01.html#2.1"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-02.html#2"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>

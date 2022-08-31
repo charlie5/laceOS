@@ -1,0 +1,238 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>User-Defined Assignment and Finalization</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-7-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-7-6-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>7.6 User-Defined Assignment and Finalization</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal"><A NAME="I3290"></A><A NAME="I3291"></A>Three kinds 
+of actions are fundamental to the manipulation of objects: initialization, 
+finalization, and assignment. Every object is initialized, either explicitly 
+or by default, after being created (for example, by an <SPAN Class="swiss"><A HREF="RM-3-3-1.html#S0032">object_declaration</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="RM-4-8.html#S0129">allocator</A></SPAN>). 
+Every object is finalized before being destroyed (for example, by leaving 
+a <SPAN Class="swiss"><A HREF="RM-6-3.html#S0162">subprogram_body</A></SPAN> 
+containing an <SPAN Class="swiss"><A HREF="RM-3-3-1.html#S0032">object_declaration</A></SPAN>, 
+or by a call to an instance of Unchecked_Deallocation). An assignment 
+operation is used as part of <SPAN Class="swiss"><A HREF="RM-5-2.html#S0137">assignment_statement</A></SPAN>s, 
+explicit initialization, parameter passing, and other operations. <A NAME="I3292"></A><A NAME="I3293"></A><A NAME="I3294"></A></DIV>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal">Default definitions for these three fundamental operations 
+are provided by the language, but <A NAME="I3295"></A>a <I>controlled</I> 
+type gives the user additional control over parts of these operations. 
+<A NAME="I3296"></A><A NAME="I3297"></A><A NAME="I3298"></A>In particular, 
+the user can define, for a controlled type, an Initialize procedure which 
+is invoked immediately after the normal default initialization of a controlled 
+object, a Finalize procedure which is invoked immediately before finalization 
+of any of the components of a controlled object, and an Adjust procedure 
+which is invoked as the last step of an assignment to a (nonlimited) 
+controlled object.&nbsp;</DIV>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The following language-defined 
+library package exists:&nbsp;</DIV>
+<DIV Class="paranum">4/1</DIV>
+<DIV Class="Examples"><B>package</B>&nbsp;Ada.Finalization&nbsp;<B>is</B><A NAME="I3299"></A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Finalization);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Remote_Types(Finalization);</DIV>
+<DIV Class="paranum">5/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I3300"></A>Controlled&nbsp;<B>is&nbsp;abstract&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(Controlled);</DIV>
+<DIV Class="paranum">6/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I3301"></A>Initialize&nbsp;(Object&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Controlled)&nbsp;<B>is&nbsp;null</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I3302"></A>Adjust&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Object&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Controlled)&nbsp;<B>is&nbsp;null</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I3303"></A>Finalize&nbsp;&nbsp;&nbsp;(Object&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Controlled)&nbsp;<B>is&nbsp;null</B>;</DIV>
+<DIV Class="paranum">7/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I3304"></A>Limited_Controlled&nbsp;<B>is&nbsp;abstract&nbsp;tagged&nbsp;limited&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(Limited_Controlled);</DIV>
+<DIV Class="paranum">8/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I3305"></A>Initialize&nbsp;(Object&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Limited_Controlled)&nbsp;<B>is&nbsp;null</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I3306"></A>Finalize&nbsp;&nbsp;&nbsp;(Object&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Limited_Controlled)&nbsp;<B>is&nbsp;null</B>;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;Ada.Finalization;</DIV>
+<DIV Class="paranum">9/2</DIV>
+<DIV Class="Normal"><A NAME="I3307"></A>A controlled type is a descendant 
+of Controlled or Limited_Controlled. The predefined &quot;=&quot; operator 
+of type Controlled always returns True, since this operator is incorporated 
+into the implementation of the predefined equality operator of types 
+derived from Controlled, as explained in <A HREF="RM-4-5-2.html">4.5.2</A>. 
+The type Limited_Controlled is like Controlled, except that it is limited 
+and it lacks the primitive subprogram Adjust.&nbsp;</DIV>
+<DIV Class="paranum">9.1/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;A type is said to 
+<I>need finalization</I> if:<A NAME="I3308"></A><A NAME="I3309"></A></DIV>
+<DIV Class="paranum">9.2/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>it is a controlled type, a task type 
+or a protected type; or</LI></UL>
+<DIV Class="paranum">9.3/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>it has a component that needs finalization; 
+or</LI></UL>
+<DIV Class="paranum">9.4/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>it is a limited type that has an access 
+discriminant whose designated type needs finalization; or</LI></UL>
+<DIV Class="paranum">9.5/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>it is one of a number of language-defined 
+types that are explicitly defined to need finalization.</LI></UL>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">10/2</DIV>
+<DIV Class="Normal">&nbsp;During the elaboration or evaluation of a construct 
+that causes an object to be initialized by default, for every controlled 
+subcomponent of the object that is not assigned an initial value (as 
+defined in <A HREF="RM-3-3-1.html">3.3.1</A>), Initialize is called on 
+that subcomponent. Similarly, if the object that is initialized by default 
+as a whole is controlled, Initialize is called on the object.</DIV>
+<DIV Class="paranum">11/2</DIV>
+<DIV Class="Normal">&nbsp;For an <SPAN Class="swiss"><A HREF="RM-4-3-2.html#S0109">extension_aggregate</A></SPAN> 
+whose <SPAN Class="swiss"><A HREF="RM-4-3-2.html#S0110">ancestor_part</A></SPAN> 
+is a <SPAN Class="swiss"><A HREF="RM-3-2-2.html#S0028">subtype_mark</A></SPAN> 
+denoting a controlled subtype, the Initialize procedure of the ancestor 
+type is called, unless that Initialize procedure is abstract.&nbsp;</DIV>
+<DIV Class="paranum">12</DIV>
+<DIV Class="Normal">Initialize and other initialization operations are 
+done in an arbitrary order, except as follows. Initialize is applied 
+to an object after initialization of its subcomponents, if any (including 
+both implicit initialization and Initialize calls). If an object has 
+a component with an access discriminant constrained by a per-object expression, 
+Initialize is applied to this component after any components that do 
+not have such discriminants. For an object with several components with 
+such a discriminant, Initialize is applied to them in order of their 
+<SPAN Class="swiss"><A HREF="RM-3-8.html#S0070">component_declaration</A></SPAN>s. 
+For an <SPAN Class="swiss"><A HREF="RM-4-8.html#S0129">allocator</A></SPAN>, 
+any task activations follow all calls on Initialize.&nbsp;</DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><A NAME="I3310"></A>When 
+a target object with any controlled parts is assigned a value, either 
+when created or in a subsequent <SPAN Class="swiss"><A HREF="RM-5-2.html#S0137">assignment_statement</A></SPAN>, 
+the <I>assignment operation</I> proceeds as follows:&nbsp;</DIV>
+<DIV Class="paranum">14</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The value of the target becomes the 
+assigned value.</LI></UL>
+<DIV Class="paranum">15</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I3311"></A><A NAME="I3312"></A>The 
+value of the target is <I>adjusted.</I>&nbsp;</LI></UL>
+<DIV Class="paranum">16</DIV>
+<DIV Class="Normal"><A NAME="I3313"></A><A NAME="I3314"></A>To adjust 
+the value of a (nonlimited) composite object, the values of the components 
+of the object are first adjusted in an arbitrary order, and then, if 
+the object is controlled, Adjust is called. Adjusting the value of an 
+elementary object has no effect, nor does adjusting the value of a composite 
+object with no controlled parts.&nbsp;</DIV>
+<DIV Class="paranum">17</DIV>
+<DIV Class="Normal"><A NAME="I3315"></A>For an <SPAN Class="swiss"><A HREF="RM-5-2.html#S0137">assignment_statement</A></SPAN>, 
+ after the <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+and <SPAN Class="swiss"><A HREF="RM-4-4.html#S0115">expression</A></SPAN> 
+have been evaluated, and any conversion (including constraint checking) 
+has been done, an anonymous object is created, and the value is assigned 
+into it; that is, the assignment operation is applied. (Assignment includes 
+value adjustment.) The target of the <SPAN Class="swiss"><A HREF="RM-5-2.html#S0137">assignment_statement</A></SPAN> 
+is then finalized. The value of the anonymous object is then assigned 
+into the target of the <SPAN Class="swiss"><A HREF="RM-5-2.html#S0137">assignment_statement</A></SPAN>. 
+Finally, the anonymous object is finalized. As explained below, the implementation 
+may eliminate the intermediate anonymous object, so this description 
+subsumes the one given in <A HREF="RM-5-2.html">5.2</A>, &ldquo;<A HREF="RM-5-2.html">Assignment 
+Statements</A>&rdquo;.&nbsp;</DIV>
+
+<H4 Class="centered">Implementation Requirements</H4>
+<DIV Class="paranum">17.1/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;For an <SPAN Class="swiss"><A HREF="RM-4-3.html#S0104">aggregate</A></SPAN> 
+of a controlled type whose value is assigned, other than by an <SPAN Class="swiss"><A HREF="RM-5-2.html#S0137">assignment_statement</A></SPAN>, 
+the implementation shall not create a separate anonymous object for the 
+<SPAN Class="swiss"><A HREF="RM-4-3.html#S0104">aggregate</A></SPAN>. 
+The aggregate value shall be constructed directly in the target of the 
+assignment operation and Adjust is not called on the target object.&nbsp;</DIV>
+
+<H4 Class="centered">Implementation Permissions</H4>
+<DIV Class="paranum">18</DIV>
+<DIV Class="Normal">An implementation is allowed to relax the above rules 
+(for nonlimited controlled types) in the following ways:&nbsp;</DIV>
+<DIV Class="paranum">19</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>For an <SPAN Class="swiss"><A HREF="RM-5-2.html#S0137">assignment_statement</A></SPAN> 
+that assigns to an object the value of that same object, the implementation 
+need not do anything.&nbsp;</LI></UL>
+<DIV Class="paranum">20</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>For an <SPAN Class="swiss"><A HREF="RM-5-2.html#S0137">assignment_statement</A></SPAN> 
+for a noncontrolled type, the implementation may finalize and assign 
+each component of the variable separately (rather than finalizing the 
+entire variable and assigning the entire new value) unless a discriminant 
+of the variable is changed by the assignment.&nbsp;</LI></UL>
+<DIV Class="paranum">21/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>For an <SPAN Class="swiss"><A HREF="RM-4-3.html#S0104">aggregate</A></SPAN> 
+or function call whose value is assigned into a target object, the implementation 
+need not create a separate anonymous object if it can safely create the 
+value of the <SPAN Class="swiss"><A HREF="RM-4-3.html#S0104">aggregate</A></SPAN> 
+or function call directly in the target object. Similarly, for an <SPAN Class="swiss"><A HREF="RM-5-2.html#S0137">assignment_statement</A></SPAN>, 
+the implementation need not create an anonymous object if the value being 
+assigned is the result of evaluating a <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+denoting an object (the source object) whose storage cannot overlap with 
+the target. If the source object might overlap with the target object, 
+then the implementation can avoid the need for an intermediary anonymous 
+object by exercising one of the above permissions and perform the assignment 
+one component at a time (for an overlapping array assignment), or not 
+at all (for an assignment where the target and the source of the assignment 
+are the same object).&nbsp;</LI></UL>
+<DIV Class="paranum">22/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;Furthermore, an implementation 
+is permitted to omit implicit Initialize, Adjust, and Finalize calls 
+and associated assignment operations on an object of a nonlimited controlled 
+type provided that:</DIV>
+<DIV Class="paranum">23/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>any omitted Initialize call is not 
+a call on a user-defined Initialize procedure, and&nbsp;</LI></UL>
+<DIV Class="paranum">24/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>any usage of the value of the object 
+after the implicit Initialize or Adjust call and before any subsequent 
+Finalize call on the object does not change the external effect of the 
+program, and</LI></UL>
+<DIV Class="paranum">25/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>after the omission of such calls and 
+operations, any execution of the program that executes an Initialize 
+or Adjust call on an object or initializes an object by an <SPAN Class="swiss"><A HREF="RM-4-3.html#S0104">aggregate</A></SPAN> 
+will also later execute a Finalize call on the object and will always 
+do so prior to assigning a new value to the object, and</LI></UL>
+<DIV Class="paranum">26/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>the assignment operations associated 
+with omitted Adjust calls are also omitted.&nbsp;</LI></UL>
+<DIV Class="paranum">27/2</DIV>
+<DIV Class="Normal">&nbsp;This permission applies to Adjust and Finalize calls 
+even if the implicit calls have additional external effects.&nbsp;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-7-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-7-6-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

@@ -1,0 +1,578 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>The Context of Overload Resolution</TITLE>
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    DIV.paranum {position: absolute; font-family: Arial, Helvetica, sans-serif; left: 0.5em; top: auto}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; margin-bottom: 0.6em}
+    DIV.Wide {font-family: "Times New Roman", Times, serif; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.WideAnnotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Index {font-family: "Times New Roman", Times, serif}
+    DIV.SyntaxSummary {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; margin-left: 2.0em}
+    DIV.SyntaxIndented {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Indented {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-bottom: 0.6em}
+    DIV.CodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.SmallIndented {font-family: "Times New Roman", Times, serif; margin-left:  10.0em; margin-bottom: 0.6em}
+    DIV.SmallCodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SmallExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left: 7.5em; margin-bottom: 0.6em}
+    DIV.IndentedExamples {font-family: "Courier New", monospace; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.SmallIndentedExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left:  15.0em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.IndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SyntaxIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.Hanging {font-family: "Times New Roman", Times, serif; margin-top: 0em; margin-bottom: 0.6em}
+    DD.Hanging {margin-left: 6.0em}
+    DL.IndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.IndentedHanging {margin-left: 2.0em}
+    DL.HangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.HangingInBulleted {margin-left: 4.0em}
+    DL.SmallHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallHanging {margin-left: 7.5em}
+    DL.SmallIndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallIndentedHanging {margin-left: 2.0em}
+    DL.SmallHangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallHangingInBulleted {margin-left: 5.0em}
+    DL.Enumerated {font-family: "Times New Roman", Times, serif; margin-right: 0.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.Enumerated {margin-left: 2.0em}
+    DL.SmallEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallEnumerated {margin-left: 2.5em}
+    DL.NestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.SmallNestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<P><A HREF="AA-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-8-5-5.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-9.html">Next</A></P>
+<HR>
+<H1> 8.6 The Context of Overload Resolution</H1>
+<DIV Class="Paranum"><FONT SIZE=-2>1</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;[<FONT SIZE="-1">{<I>overload resolution</I>}</FONT>
+<A NAME="I3435"></A>Because declarations can be overloaded, it is possible
+for an occurrence of a usage name to have more than one possible interpretation;
+in most cases, ambiguity is disallowed. This clause describes how the
+possible interpretations resolve to the actual interpretation.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>2</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<FONT SIZE="-1">{<I>overloading rules</I>}</FONT>
+<A NAME="I3436"></A>Certain rules of the language (the Name Resolution
+Rules) are considered ``overloading rules''. If a possible interpretation
+violates an overloading rule, it is assumed not to be the intended interpretation;
+some other possible interpretation is assumed to be the actual interpretation.
+On the other hand, violations of non-overloading rules do not affect
+which interpretation is chosen; instead, they cause the construct to
+be illegal. To be legal, there usually has to be exactly one acceptable
+interpretation of a construct that is a ``complete context'', not counting
+any nested complete contexts.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>3</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<FONT SIZE="-1">{<I>grammar (resolution of ambiguity)</I>}</FONT>
+<A NAME="I3437"></A>The syntax rules of the language and the visibility
+rules given in <A HREF="AA-8-3.html">8.3</A> determine the possible interpretations.
+Most type checking rules (rules that require a particular type, or a
+particular class of types, for example) are overloading rules. Various
+rules for the matching of formal and actual parameters are overloading
+rules.] </DIV>
+
+<H4 ALIGN=CENTER>Language Design Principles</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>3.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">The type resolution rules are
+intended to minimize the need for implicit declarations and preference
+rules associated with implicit conversion and dispatching operations.
+</FONT></DIV>
+
+<H4 ALIGN=CENTER>Name Resolution Rules</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>4</FONT></DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;<FONT SIZE="-1">{<I>complete
+context</I>}</FONT> <A NAME="I3438"></A>[Overload resolution is applied
+separately to each <I>complete context</I>, not counting inner complete
+contexts.] Each of the following constructs is a <I>complete context</I>:
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>5</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>A <FONT FACE="Arial, Helvetica">context_item</FONT>.</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>6</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>A <FONT FACE="Arial, Helvetica">declarative_item</FONT>
+or declaration. </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>6.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>A <FONT FACE="Arial, Helvetica">loop_parameter_specification</FONT>
+is a declaration, and hence a complete context. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>7</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>A <FONT FACE="Arial, Helvetica">statement</FONT>.</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>8</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>A <FONT FACE="Arial, Helvetica">pragma_argument_association</FONT>.
+</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>8.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Reason: </B>We would make
+it the whole <FONT FACE="Arial, Helvetica">pragma</FONT>, except that
+certain pragma arguments are allowed to be ambiguous, and ambiguity applies
+to a complete context. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>9</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The <FONT FACE="Arial, Helvetica">expression</FONT>
+of a <FONT FACE="Arial, Helvetica">case_statement</FONT>. </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>9.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>This means
+that the <FONT FACE="Arial, Helvetica">expression</FONT> is resolved
+without looking at the choices. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>10</FONT></DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;&nbsp;<FONT SIZE="-1">{<I>interpretation
+(of a complete context)</I>}</FONT> <A NAME="I3439"></A><FONT SIZE="-1">{<I>overall
+interpretation (of a complete context)</I>}</FONT> <A NAME="I3440"></A>An
+(overall) <I>interpretation</I> of a complete context embodies its meaning,
+and includes the following information about the constituents of the
+complete context, not including constituents of inner complete contexts:
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>11</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>for each constituent of the complete
+context, to which syntactic categories it belongs, and by which syntax
+rules; and </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>11.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>Syntactic
+categor<I>ies</I> is plural here, because there are lots of trivial productions
+-- an <FONT FACE="Arial, Helvetica">expression</FONT> might also be all
+of the following, in this order: <FONT FACE="Arial, Helvetica">identifier</FONT>,
+<FONT FACE="Arial, Helvetica">name</FONT>, <FONT FACE="Arial, Helvetica">primary</FONT>,
+<FONT FACE="Arial, Helvetica">factor</FONT>, <FONT FACE="Arial, Helvetica">term</FONT>,
+<FONT FACE="Arial, Helvetica">simple_expression</FONT>, and <FONT FACE="Arial, Helvetica">relation</FONT>.
+Basically, we're trying to capture all the information in the parse tree
+here, without using compiler-writer's jargon like ``parse tree''. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>12</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>for each usage name, which declaration
+it denotes (and, therefore, which view and which entity it denotes);
+and </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>12.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>In most
+cases, a usage name denotes the view declared by the denoted declaration.
+However, in certain cases, a usage name that denotes a declaration and
+appears inside the declarative region of that same declaration, denotes
+the current instance of the declaration. For example, within a <FONT FACE="Arial, Helvetica">task_body</FONT>,
+a usage name that denotes the <FONT FACE="Arial, Helvetica">task_type_declaration</FONT>
+denotes the object containing the currently executing task, and not the
+task type declared by the declaration. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>13</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>for a complete context that is a <FONT FACE="Arial, Helvetica">declarative_item</FONT>,
+whether or not it is a completion of a declaration, and (if so) which
+declaration it completes. </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>13.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>Unfortunately,
+we are not confident that the above list is complete. We'll have to live
+with that. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>13.b</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>To be honest: </B>For ``possible''
+interpretations, the above information is tentative. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>13.c</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Discussion: </B>A possible
+interpretation (an <I>input</I> to overload resolution) contains information
+about what a usage name <I>might</I> denote, but what it actually <I>does</I>
+denote requires overload resolution to determine. Hence the term ``tentative''
+is needed for possible interpretations; otherwise, the definition would
+be circular. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>14</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;<FONT SIZE="-1">{<I>possible interpretation</I>}</FONT>
+<A NAME="I3441"></A>A <I>possible interpretation</I> is one that obeys
+the syntax rules and the visibility rules. <FONT SIZE="-1">{<I>acceptable
+interpretation</I>}</FONT> <A NAME="I3442"></A><FONT SIZE="-1">{<I>resolve
+(overload resolution)</I>}</FONT> <A NAME="I3443"></A><FONT SIZE="-1">{<I>interpretation
+(overload resolution)</I>}</FONT> <A NAME="I3444"></A>An <I>acceptable
+interpretation</I> is a possible interpretation that obeys the <I>overloading
+rules</I>[, that is, those rules that specify an expected type or expected
+profile, or specify how a construct shall <I>resolve</I> or be <I>interpreted</I>.]
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>14.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>To be honest: </B>One rule
+that falls into this category, but does not use the above-mentioned magic
+words, is the rule about numbers of parameter associations in a call
+(see <A HREF="AA-6-4.html">6.4</A>). </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>14.b</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>The Name
+Resolution Rules are the ones that appear under the Name Resolution Rules
+heading. Some Syntax Rules are written in English, instead of BNF. No
+rule is a Syntax Rule or Name Resolution Rule unless it appears under
+the appropriate heading. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>15</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;<FONT SIZE="-1">{<I>interpretation (of a constituent
+of a complete context)</I>}</FONT> <A NAME="I3445"></A>The <I>interpretation</I>
+of a constituent of a complete context is determined from the overall
+interpretation of the complete context as a whole. [Thus, for example,
+``interpreted as a <FONT FACE="Arial, Helvetica">function_call</FONT>,''
+means that the construct's interpretation says that it belongs to the
+syntactic category <FONT FACE="Arial, Helvetica">function_call</FONT>.]</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>16</FONT></DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;&nbsp;<FONT SIZE="-1">{<I>denote</I>}</FONT>
+<A NAME="I3446"></A>[Each occurrence of] a usage name <I>denotes</I>
+the declaration determined by its interpretation. It also denotes the
+view declared by its denoted declaration, except in the following cases:
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>16.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>As explained
+below, a pragma argument is allowed to be ambiguous, so it can denote
+several declarations, and all of the views declared by those declarations.
+</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>17</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><FONT SIZE="-1">{<I>current instance
+(of a type)</I>}</FONT> <A NAME="I3447"></A>If a usage name appears within
+the declarative region of a <FONT FACE="Arial, Helvetica">type_declaration</FONT>
+and denotes that same <FONT FACE="Arial, Helvetica">type_declaration</FONT>,
+then it denotes the <I>current instance</I> of the type (rather than
+the type itself). The current instance of a type is the object or value
+of the type that is associated with the execution that evaluates the
+usage name. </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>17.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Reason: </B>This is needed,
+for example, for references to the Access attribute from within the <FONT FACE="Arial, Helvetica">type_declaration</FONT>.
+Also, within a <FONT FACE="Arial, Helvetica">task_body</FONT> or <FONT FACE="Arial, Helvetica">protected_body</FONT>,
+we need to be able to denote the current task or protected object. (For
+a <FONT FACE="Arial, Helvetica">single_task_declaration</FONT> or <FONT FACE="Arial, Helvetica">single_protected_declaration</FONT>,
+the rule about current instances is not needed.) </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>18</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><FONT SIZE="-1">{<I>current instance
+(of a generic unit)</I>}</FONT> <A NAME="I3448"></A>If a usage name appears
+within the declarative region of a <FONT FACE="Arial, Helvetica">generic_declaration</FONT>
+(but not within its <FONT FACE="Arial, Helvetica">generic_formal_part</FONT>)
+and it denotes that same <FONT FACE="Arial, Helvetica">generic_declaration</FONT>,
+then it denotes the <I>current instance</I> of the generic unit (rather
+than the generic unit itself). See also <A HREF="AA-12-3.html">12.3</A>.
+</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>18.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>To be honest: </B>The current
+instance of a generic unit is the instance created by whichever <FONT FACE="Arial, Helvetica">generic_instantiation</FONT>
+is of interest at any given time. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>18.b</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>Within
+a <FONT FACE="Arial, Helvetica">generic_formal_part</FONT>, a <FONT FACE="Arial, Helvetica">name</FONT>
+that denotes the <FONT FACE="Arial, Helvetica">generic_declaration</FONT>
+denotes the generic unit, which implies that it is not overloadable.
+</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>19</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;A usage name that denotes a view also denotes
+the entity of that view. </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>19.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>Usually,
+a usage name denotes only one declaration, and therefore one view and
+one entity. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>20</FONT></DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;&nbsp;<FONT SIZE="-1">{<I>expected
+type</I> [distributed]}</FONT> <A NAME="I3449"></A>The <I>expected type</I>
+for a given <FONT FACE="Arial, Helvetica">expression</FONT>, <FONT FACE="Arial, Helvetica">name</FONT>,
+or other construct determines, according to the <I>type resolution rules</I>
+given below, the types considered for the construct during overload resolution.
+<FONT SIZE="-1">{<I>type resolution rules</I>}</FONT> <A NAME="I3450"></A>[
+The type resolution rules provide support for class-wide programming,
+universal numeric literals, dispatching operations, and anonymous access
+types:] </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>20.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>Expected
+types are defined throughout the RM95. The most important definition
+is that, for a subprogram, the expected type for the actual parameter
+is the type of the formal parameter.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>20.b</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">The type resolution rules are
+trivial unless either the actual or expected type is universal, class-wide,
+or of an anonymous access type. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>21</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><FONT SIZE="-1">{<I>type resolution
+rules (if any type in a specified class of types is expected)</I> [partial]}</FONT>
+<A NAME="I3451"></A><FONT SIZE="-1">{<I>type resolution rules (if expected
+type is universal or class-wide)</I> [partial]}</FONT> <A NAME="I3452"></A>If
+a construct is expected to be of any type in a class of types, or of
+the universal or class-wide type for a class, then the type of the construct
+shall resolve to a type in that class or to a universal type that covers
+the class. </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>21.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>This matching
+rule handles (among other things) cases like the Val attribute, which
+denotes a function that takes a parameter of type <I>universal_integer</I>.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>21.b/1</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">The last part of the rule, ``or
+to a universal type that <U>covers</U> <S>includes</S> the class'' implies
+that if the expected type for an expression is <I>universal_fixed</I>,
+then an expression whose type is <I>universal_real</I> (such as a real
+literal) is OK. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>22</FONT></DIV>
+<UL Class="Bulleted" Style="margin-bottom: 0.3em"><LI TYPE=DISC><FONT SIZE="-1">{<I>type
+resolution rules (if expected type is specific)</I> [partial]}</FONT>
+<A NAME="I3453"></A>If the expected type for a construct is a specific
+type <I>T</I>, then the type of the construct shall resolve either to
+<I>T</I>, or: </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>22.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>{<I>Beaujolais
+effect</I> [partial]} <A NAME="I3454"></A>This rule is <I>not</I> intended
+to create a preference for the specific type -- such a preference would
+cause Beaujolais effects. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>23</FONT></DIV>
+<UL Class="CodeIndentedBulleted"><LI TYPE=DISC>to <I>T</I>'Class; or
+</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>23.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>This will
+only be legal as part of a call on a dispatching operation; see <A HREF="AA-3-9-2.html">3.9.2</A>,
+``<A HREF="AA-3-9-2.html">Dispatching Operations of Tagged Types</A>''.
+Note that that rule is not a Name Resolution Rule. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>24</FONT></DIV>
+<UL Class="CodeIndentedBulleted"><LI TYPE=DISC>to a universal type that
+covers <I>T</I>; or</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>25</FONT></DIV>
+<UL Class="CodeIndentedBulleted"><LI TYPE=DISC>when <I>T</I> is an anonymous
+access type (see <A HREF="AA-3-10.html">3.10</A>) with designated type
+<I>D</I>, to an access-to-variable type whose designated type is <I>D</I>'Class
+or is covered by <I>D</I>. </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>25.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>Because
+it says ``access-to-variable'' instead of ``access-to-object,'' two subprograms
+that differ only in that one has a parameter of an access-to-constant
+type, and the other has an access parameter, are distinguishable during
+overload resolution.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>25.b</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">The case where the actual is
+access-to-<I>D</I>'Class will only be legal as part of a call on a dispatching
+operation; see <A HREF="AA-3-9-2.html">3.9.2</A>, ``<A HREF="AA-3-9-2.html">Dispatching
+Operations of Tagged Types</A>''. Note that that rule is not a Name Resolution
+Rule. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>26</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;<FONT SIZE="-1">{<I>expected profile</I> [distributed]}</FONT>
+<A NAME="I3455"></A>In certain contexts, [such as in a <FONT FACE="Arial, Helvetica">subprogram_renaming_declaration</FONT>,]
+the Name Resolution Rules define an <I>expected profile</I> for a given
+<FONT FACE="Arial, Helvetica">name</FONT>; <FONT SIZE="-1">{<I>profile
+resolution rule (name with a given expected profile)</I>}</FONT> <A NAME="I3456"></A>in
+such cases, the <FONT FACE="Arial, Helvetica">name</FONT> shall resolve
+to the name of a callable entity whose profile is type conformant with
+the expected profile. <FONT SIZE="-1">{<I>type conformance (required)</I>}</FONT>
+<A NAME="I3457"></A></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>26.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>The parameter
+and result <I>sub</I>types are not used in overload resolution. Only
+type conformance of profiles is considered during overload resolution.
+Legality rules generally require at least mode-conformance in addition,
+but those rules are not used in overload resolution. </FONT></DIV>
+
+<H4 ALIGN=CENTER>Legality Rules</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>27</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;<FONT SIZE="-1">{<I>single (class expected type)</I>}</FONT>
+<A NAME="I3458"></A>When the expected type for a construct is required
+to be a <I>single</I> type in a given class, the type expected for the
+construct shall be determinable solely from the context in which the
+construct appears, excluding the construct itself, but using the requirement
+that it be in the given class; the type of the construct is then this
+single expected type. Furthermore, the context shall not be one that
+expects any type in some class that contains types of the given class;
+in particular, the construct shall not be the operand of a <FONT FACE="Arial, Helvetica">type_conversion</FONT>.
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>27.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>For example,
+the expected type for the literal <B>null</B> is required to be a single
+access type. But the expected type for the operand of a <FONT FACE="Arial, Helvetica">type_conversion</FONT>
+is any type. Therefore, the literal <B>null</B> is not allowed as the
+operand of a <FONT FACE="Arial, Helvetica">type_conversion</FONT>. This
+is true even if there is only one access type in scope. The reason for
+these rules is so that the compiler will not have to search ``everywhere''
+to see if there is exactly one type in a class in scope. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>28</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;A complete context shall have at least one acceptable
+interpretation; if there is exactly one, then that one is chosen. </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>28.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>This, and
+the rule below about ambiguity, are the ones that suck in all the Syntax
+Rules and Name Resolution Rules as compile-time rules. Note that this
+and the ambiguity rule have to be Legality Rules. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>29</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;<FONT SIZE="-1">{<I>preference (for root numeric
+operators and ranges)</I>}</FONT> <A NAME="I3459"></A>There is a <I>preference</I>
+for the primitive operators (and <FONT FACE="Arial, Helvetica">range</FONT>s)
+of the root numeric types <I>root_integer</I> and <I>root_real</I>. In
+particular, if two acceptable interpretations of a constituent of a complete
+context differ only in that one is for a primitive operator (or <FONT FACE="Arial, Helvetica">range</FONT>)
+of the type <I>root_integer</I> or <I>root_real</I>, and the other is
+not, the interpretation using the primitive operator (or <FONT FACE="Arial, Helvetica">range</FONT>)
+of the root numeric type is <I>preferred</I>. </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>29.a</FONT></DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em"><FONT SIZE="-1"><B>Reason:
+</B>The reason for this preference is so that expressions involving literals
+and named numbers can be unambiguous. For example, without the preference
+rule, the following would be ambiguous: </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>29.b/1</FONT></DIV>
+<DIV Class="SmallExamples"><TT>N&nbsp;:&nbsp;<B>constant</B>&nbsp;:=&nbsp;123;<BR>
+<B>if</B>&nbsp;N&nbsp;&gt;&nbsp;100&nbsp;<B>then</B>&nbsp;--<I>&nbsp;Preference&nbsp;for&nbsp;root_integer&nbsp;&quot;<U>&gt;</U> <S>&lt;</S>&quot;&nbsp;operator.</I><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;<B>if</B>;</TT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>30</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;For a complete context, if there is exactly one
+overall acceptable interpretation where each constituent's interpretation
+is the same as or preferred (in the above sense) over those in all other
+overall acceptable interpretations, then that one overall acceptable
+interpretation is chosen. <FONT SIZE="-1">{<I>ambiguous</I>}</FONT> <A NAME="I3460"></A>Otherwise,
+the complete context is <I>ambiguous</I>.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>31</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;A complete context other than a <FONT FACE="Arial, Helvetica">pragma_argument_association</FONT>
+shall not be ambiguous.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>32</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;A complete context that is a <FONT FACE="Arial, Helvetica">pragma_argument_association</FONT>
+is allowed to be ambiguous (unless otherwise specified for the particular
+pragma), but only if every acceptable interpretation of the pragma argument
+is as a <FONT FACE="Arial, Helvetica">name</FONT> that statically denotes
+a callable entity. <FONT SIZE="-1">{<I>denote (name used as a pragma
+argument)</I> [partial]}</FONT> <A NAME="I3461"></A>Such a <FONT FACE="Arial, Helvetica">name</FONT>
+denotes all of the declarations determined by its interpretations, and
+all of the views declared by these declarations. </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>32.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>This applies
+to Inline, Suppress, Import, Export, and Convention <FONT FACE="Arial, Helvetica">pragma</FONT>s.
+For example, it is OK to say ``<B>pragma</B> Suppress(Elaboration_Check,
+On =&gt; P.Q);'', even if there are two directly visible P's, and there
+are two Q's declared in the visible part of each P. In this case, P.Q
+denotes four different declarations. This rule also applies to certain
+pragmas defined in the Specialized Needs Annexes. It almost applies to
+Pure, Elaborate_Body, and Elaborate_All <FONT FACE="Arial, Helvetica">pragma</FONT>s,
+but those can't have overloading for other reasons.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>32.b</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">Note that if a pragma argument
+denotes a <I>call</I> to a callable entity, rather than the entity itself,
+this exception does not apply, and ambiguity is disallowed.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>32.c</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">Note that we need to carefully
+define which pragma-related rules are Name Resolution Rules, so that,
+for example, a <FONT FACE="Arial, Helvetica">pragma</FONT> Inline does
+not pick up subprograms declared in enclosing declarative regions, and
+therefore make itself illegal.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>32.d</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">We say ``statically denotes''
+in the above rule in order to avoid having to worry about how many times
+the <FONT FACE="Arial, Helvetica">name</FONT> is evaluated, in case it
+denotes more than one callable entity. </FONT></DIV>
+<DIV Class="NotesHeader"><FONT SIZE="-1">NOTES</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>33</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">16&nbsp;&nbsp;If a usage name has
+only one acceptable interpretation, then it denotes the corresponding
+entity. However, this does not mean that the usage name is necessarily
+legal since other requirements exist which are not considered for overload
+resolution; for example, the fact that an expression is static, whether
+an object is constant, mode and subtype conformance rules, freezing rules,
+order of elaboration, and so on.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>34</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">Similarly, subtypes are not considered
+for overload resolution (the violation of a constraint does not make
+a program illegal but raises an exception during program execution).
+</FONT></DIV>
+
+<H4 ALIGN=CENTER>Incompatibilities With Ada 83</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>34.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">{<I>incompatibilities with Ada
+83</I>} <A NAME="I3462"></A>{<I>Beaujolais effect</I> [partial]} <A NAME="I3463"></A>The
+new preference rule for operators of root numeric types is upward incompatible,
+but only in cases that involved <I>Beaujolais</I> effects in Ada 83.
+Such cases are ambiguous in Ada 95. </FONT></DIV>
+
+<H4 ALIGN=CENTER>Extensions to Ada 83</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>34.b</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">{<I>extensions to Ada 83</I>}
+<A NAME="I3464"></A>The rule that allows an expected type to match an
+actual expression of a universal type, in combination with the new preference
+rule for operators of root numeric types, subsumes the Ada 83 &quot;implicit
+conversion&quot; rules for universal types. </FONT></DIV>
+
+<H4 ALIGN=CENTER>Wording Changes from Ada 83</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>34.c</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">In Ada 83, it is not clear what
+the ``syntax rules'' are. AI83-00157 states that a certain textual rule
+is a syntax rule, but it's still not clear how one tells in general which
+textual rules are syntax rules. We have solved the problem by stating
+exactly which rules are syntax rules -- the ones that appear under the
+``Syntax'' heading.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>34.d</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">RM83 has a long list of the
+``forms'' of rules that are to be used in overload resolution (in addition
+to the syntax rules). It is not clear exactly which rules fall under
+each form. We have solved the problem by explicitly marking all rules
+that are used in overload resolution. Thus, the list of kinds of rules
+is unnecessary. It is replaced with some introductory (intentionally
+vague) text explaining the basic idea of what sorts of rules are overloading
+rules.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>34.e</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">It is not clear from RM83 what
+information is embodied in a ``meaning'' or an ``interpretation.'' ``Meaning''
+and ``interpretation'' were intended to be synonymous; we now use the
+latter only in defining the rules about overload resolution. ``Meaning''
+is used only informally. This clause attempts to clarify what is meant
+by ``interpretation.''</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>34.f</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">For example, RM83 does not make
+it clear that overload resolution is required in order to match <FONT FACE="Arial, Helvetica">subprogram_bodies</FONT>
+with their corresponding declarations (and even to tell whether a given
+<FONT FACE="Arial, Helvetica">subprogram_body</FONT> is the completion
+of a previous declaration). Clearly, the information needed to do this
+is part of the ``interpretation'' of a <FONT FACE="Arial, Helvetica">subprogram_body</FONT>.
+The resolution of such things is defined in terms of the ``expected profile''
+concept. Ada 95 has some new cases where expected profiles are needed
+-- the resolution of P'Access, where P might denote a subprogram, is
+an example.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>34.g</FONT></DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em"><FONT SIZE="-1">RM83-8.7(2)
+might seem to imply that an interpretation embodies information about
+what is denoted by each usage name, but not information about which syntactic
+category each construct belongs to. However, it seems necessary to include
+such information, since the Ada grammar is highly ambiguous. For example,
+X(Y) might be a <FONT FACE="Arial, Helvetica">function_call</FONT> or
+an <FONT FACE="Arial, Helvetica">indexed_component</FONT>, and no context-free/syntactic
+information can tell the difference. It seems like we should view X(Y)
+as being, for example, ``interpreted as a <FONT FACE="Arial, Helvetica">function_call</FONT>''
+(if that's what overload resolution decides it is). Note that there are
+examples where the denotation of each usage name does not imply the syntactic
+category. However, even if that were not true, it seems that intuitively,
+the interpretation includes that information. Here's an example: </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>34.h</FONT></DIV>
+<DIV Class="SmallExamples"><TT><B>type</B>&nbsp;T;<BR>
+<B>type</B>&nbsp;A&nbsp;<B>is</B>&nbsp;<B>access</B>&nbsp;T;<BR>
+<B>type</B>&nbsp;T&nbsp;<B>is</B>&nbsp;<B>array</B>(Integer&nbsp;<B>range</B>&nbsp;1..10)&nbsp;<B>of</B>&nbsp;A;<BR>
+I&nbsp;:&nbsp;Integer&nbsp;:=&nbsp;3;<BR>
+<B>function</B>&nbsp;F(X&nbsp;:&nbsp;Integer&nbsp;:=&nbsp;7)&nbsp;<B>return</B>&nbsp;A;<BR>
+Y&nbsp;:&nbsp;A&nbsp;:=&nbsp;F(I);&nbsp;--<I>&nbsp;Ambiguous?&nbsp;(We&nbsp;hope&nbsp;so.)</I></TT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>34.i/1</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">Consider the declaration of
+Y (a complete context). In the above example, overload resolution can
+easily determine the declaration, and therefore the entity, denoted by
+Y, A, F, and I. However, given all of that information, we still don't
+know whether F(I) is a <FONT FACE="Arial, Helvetica">function_call</FONT>
+or an <FONT FACE="Arial, Helvetica">indexed_component</FONT> whose <U><FONT FACE="Arial, Helvetica">prefix</FONT></U> <S>prefix</S>
+is a <FONT FACE="Arial, Helvetica">function_call</FONT>. (In the latter
+case, it is equivalent to F(7).<B>all</B>(I).)</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>34.j</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">It seems clear that the declaration
+of Y ought to be considered ambiguous. We describe that by saying that
+there are two interpretations, one as a <FONT FACE="Arial, Helvetica">function_call</FONT>,
+and one as an <FONT FACE="Arial, Helvetica">indexed_component</FONT>.
+These interpretations are both acceptable to the overloading rules. Therefore,
+the complete context is ambiguous, and therefore illegal.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>34.k</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">{<I>Beaujolais effect</I> [partial]}
+<A NAME="I3465"></A>It is the intent that the Ada 95 preference rule
+for root numeric operators is more locally enforceable than that of RM83-4.6(15).
+It should also eliminate interpretation shifts due to the addition or
+removal of a <FONT FACE="Arial, Helvetica">use_clause</FONT> (the so
+called <I>Beaujolais</I> effect).</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>34.l</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">RM83-8.7 seems to be missing
+some complete contexts, such as <FONT FACE="Arial, Helvetica">pragma_argument_association</FONT>s,
+<FONT FACE="Arial, Helvetica">declarative_item</FONT>s that are not declarations
+or <FONT FACE="Arial, Helvetica">representation_clause</FONT>s, and <FONT FACE="Arial, Helvetica">context_item</FONT>s.
+We have added these, and also replaced the ``must be determinable'' wording
+of RM83-5.4(3) with the notion that the expression of a <FONT FACE="Arial, Helvetica">case_statement</FONT>
+is a complete context.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>34.m</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">Cases like the Val attribute
+are now handled using the normal type resolution rules, instead of having
+special cases that explicitly allow things like ``any integer type.''
+</FONT></DIV>
+
+<HR>
+<P><A HREF="AA-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-8-5-5.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-9.html">Next</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-TTL.html">Legal</A></P>
+</BODY>
+</HTML>

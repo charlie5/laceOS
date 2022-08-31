@@ -1,0 +1,247 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>The Package Streams.Stream_IO</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-12.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-12-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>A.12.1 The Package Streams.Stream_IO</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal"><A NAME="I5858"></A>The subprograms in the child 
+package Streams.Stream_IO provide control over stream files. Access to 
+a stream file is either sequential, via a call on Read or Write to transfer 
+an array of stream elements, or positional (if supported by the implementation 
+for the given file), by specifying a relative index for an element. Since 
+a stream file can be converted to a Stream_Access value, calling stream-oriented 
+attribute subprograms of different element types with the same Stream_Access 
+value provides heterogeneous input-output. See <A HREF="RM-13-13.html">13.13</A> 
+for a general discussion of streams.&nbsp;</DIV>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">1.1/1</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;The elements of a stream file are stream elements. 
+If positioning is supported for the specified external file, a current 
+index and current size are maintained for the file as described in <A HREF="RM-A-8.html">A.8</A>. 
+If positioning is not supported, a current index is not maintained, and 
+the current size is implementation defined.<A NAME="I5859"></A><A NAME="I5860"></A> 
+</DIV>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The library package 
+Streams.Stream_IO has the following declaration:&nbsp;</DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Examples"><B>with</B>&nbsp;Ada.IO_Exceptions;<A NAME="I5861"></A><BR>
+<B>package</B>&nbsp;Ada.Streams.Stream_IO&nbsp;<B>is</B></DIV>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I5862"></A>Stream_Access&nbsp;<B>is</B>&nbsp;<B>access</B>&nbsp;<B>all</B>&nbsp;Root_Stream_Type'Class;</DIV>
+<DIV Class="paranum">5</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I5863"></A>File_Type&nbsp;<B>is</B>&nbsp;<B>limited</B>&nbsp;<B>private;</B></DIV>
+<DIV Class="paranum">6</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I5864"></A>File_Mode&nbsp;<B>is</B>&nbsp;(In_File,&nbsp;Out_File,&nbsp;Append_File);</DIV>
+<DIV Class="paranum">7</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I5865"></A>Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>is</B>&nbsp;<B>range</B>&nbsp;0&nbsp;..&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;<A NAME="I5866"></A>Positive_Count&nbsp;<B>is</B>&nbsp;Count&nbsp;<B>range</B>&nbsp;1&nbsp;..&nbsp;Count'Last;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Index&nbsp;into&nbsp;file,&nbsp;in&nbsp;stream&nbsp;elements.</I></SPAN></DIV>
+<DIV Class="paranum">8</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5867"></A>Create&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mode&nbsp;:&nbsp;<B>in</B>&nbsp;File_Mode&nbsp;:=&nbsp;Out_File;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name&nbsp;:&nbsp;<B>in</B>&nbsp;String&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;&quot;&quot;;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;:&nbsp;<B>in</B>&nbsp;String&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;&quot;&quot;);</DIV>
+<DIV Class="paranum">9</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5868"></A>Open&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mode&nbsp;:&nbsp;<B>in</B>&nbsp;File_Mode;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;:&nbsp;<B>in</B>&nbsp;String&nbsp;:=&nbsp;&quot;&quot;);</DIV>
+<DIV Class="paranum">10</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5869"></A>Close&nbsp;&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;File_Type);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5870"></A>Delete&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;File_Type);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5871"></A>Reset&nbsp;&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;File_Type;&nbsp;Mode&nbsp;:&nbsp;<B>in</B>&nbsp;File_Mode);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5872"></A>Reset&nbsp;&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;File_Type);</DIV>
+<DIV Class="paranum">11</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5873"></A>Mode&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;File_Mode;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5874"></A>Name&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5875"></A>Form&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;String;</DIV>
+<DIV Class="paranum">12</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5876"></A>Is_Open&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5877"></A>End_Of_File&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5878"></A>Stream&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;Stream_Access;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Return&nbsp;stream&nbsp;access&nbsp;for&nbsp;use&nbsp;with&nbsp;T'Input&nbsp;and&nbsp;T'Output</I></SPAN></DIV>
+<DIV Class="paranum">14/1</DIV>
+<DIV Class="Examples"><SPAN STYLE="font-size: 80%"><I>This paragraph 
+was deleted.</I></SPAN></DIV>
+<DIV Class="paranum">15</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Read&nbsp;array&nbsp;of&nbsp;stream&nbsp;elements&nbsp;from&nbsp;file</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5879"></A>Read&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>out</B>&nbsp;Stream_Element_Array;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last&nbsp;:&nbsp;<B>out</B>&nbsp;Stream_Element_Offset;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;Positive_Count);</DIV>
+<DIV Class="paranum">16</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5880"></A>Read&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>out</B>&nbsp;Stream_Element_Array;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last&nbsp;:&nbsp;<B>out</B>&nbsp;Stream_Element_Offset);</DIV>
+<DIV Class="paranum">17/1</DIV>
+<DIV Class="Examples"><SPAN STYLE="font-size: 80%"><I>This paragraph 
+was deleted.</I></SPAN></DIV>
+<DIV Class="paranum">18</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Write&nbsp;array&nbsp;of&nbsp;stream&nbsp;elements&nbsp;into&nbsp;file</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5881"></A>Write&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>in</B>&nbsp;Stream_Element_Array;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;To&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive_Count);</DIV>
+<DIV Class="paranum">19</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5882"></A>Write&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>in</B>&nbsp;Stream_Element_Array);</DIV>
+<DIV Class="paranum">20/1</DIV>
+<DIV Class="Examples"><SPAN STYLE="font-size: 80%"><I>This paragraph 
+was deleted.</I></SPAN></DIV>
+<DIV Class="paranum">21</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Operations&nbsp;on&nbsp;position&nbsp;within&nbsp;file</I></SPAN></DIV>
+<DIV Class="paranum">22</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5883"></A>Set_Index(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;&nbsp;To&nbsp;:&nbsp;<B>in</B>&nbsp;Positive_Count);</DIV>
+<DIV Class="paranum">23</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5884"></A>Index(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;Positive_Count;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5885"></A>Size&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;Count;</DIV>
+<DIV Class="paranum">24</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5886"></A>Set_Mode(File&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;File_Type;&nbsp;Mode&nbsp;:&nbsp;<B>in</B>&nbsp;File_Mode);</DIV>
+<DIV Class="paranum">25/1</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5887"></A>Flush(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type);</DIV>
+<DIV Class="paranum">26</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>exceptions</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I5888"></A>Status_Error&nbsp;:&nbsp;<B>exception</B>&nbsp;<B>renames</B>&nbsp;IO_Exceptions.Status_Error;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I5889"></A>Mode_Error&nbsp;&nbsp;&nbsp;:&nbsp;<B>exception</B>&nbsp;<B>renames</B>&nbsp;IO_Exceptions.Mode_Error;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I5890"></A>Name_Error&nbsp;&nbsp;&nbsp;:&nbsp;<B>exception</B>&nbsp;<B>renames</B>&nbsp;IO_Exceptions.Name_Error;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I5891"></A>Use_Error&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>exception</B>&nbsp;<B>renames</B>&nbsp;IO_Exceptions.Use_Error;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I5892"></A>Device_Error&nbsp;:&nbsp;<B>exception</B>&nbsp;<B>renames</B>&nbsp;IO_Exceptions.Device_Error;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I5893"></A>End_Error&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>exception</B>&nbsp;<B>renames</B>&nbsp;IO_Exceptions.End_Error;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I5894"></A>Data_Error&nbsp;&nbsp;&nbsp;:&nbsp;<B>exception</B>&nbsp;<B>renames</B>&nbsp;IO_Exceptions.Data_Error;</DIV>
+<DIV Class="paranum">27</DIV>
+<DIV Class="Examples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;Ada.Streams.Stream_IO;</DIV>
+<DIV Class="paranum">27.1/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The type File_Type needs finalization (see <A HREF="RM-7-6.html">7.6</A>).</DIV>
+<DIV Class="paranum">28/2</DIV>
+<DIV Class="Normal">&nbsp;The subprograms given in subclause <A HREF="RM-A-8-2.html">A.8.2</A> 
+for the control of external files (Create, Open, Close, Delete, Reset, 
+Mode, Name, Form, and Is_Open) are available for stream files.</DIV>
+<DIV Class="paranum">28.1/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;The End_Of_File 
+function:&nbsp;</DIV>
+<DIV Class="paranum">28.2/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>Propagates Mode_Error if the mode 
+of the file is not In_File;</LI></UL>
+<DIV Class="paranum">28.3/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If positioning is supported for the 
+given external file, the function returns True if the current index exceeds 
+the size of the external file; otherwise it returns False;</LI></UL>
+<DIV Class="paranum">28.4/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If positioning is not supported for 
+the given external file, the function returns True if no more elements 
+can be read from the given file; otherwise it returns False.&nbsp;</LI></UL>
+<DIV Class="paranum">28.5/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The Set_Mode procedure sets the mode of the file. 
+If the new mode is Append_File, the file is positioned to its end; otherwise, 
+the position in the file is unchanged.</DIV>
+<DIV Class="paranum">28.6/1</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The Flush procedure synchronizes the external 
+file with the internal file (by flushing any internal buffers) without 
+closing the file or changing the position. Mode_Error is propagated if 
+the mode of the file is In_File.</DIV>
+<DIV Class="paranum">29/1</DIV>
+<DIV Class="Normal">&nbsp;The Stream function returns a Stream_Access result 
+from a File_Type object, thus allowing the stream-oriented attributes 
+Read, Write, Input, and Output to be used on the same file for multiple 
+types. Stream propagates Status_Error if File is not open.</DIV>
+<DIV Class="paranum">30/2</DIV>
+<DIV Class="Normal">&nbsp;The procedures Read and Write are equivalent to 
+the corresponding operations in the package Streams. Read propagates 
+Mode_Error if the mode of File is not In_File. Write propagates Mode_Error 
+if the mode of File is not Out_File or Append_File. The Read procedure 
+with a Positive_Count parameter starts reading at the specified index. 
+The Write procedure with a Positive_Count parameter starts writing at 
+the specified index. For a file that supports positioning, Read without 
+a Positive_Count parameter starts reading at the current index, and Write 
+without a Positive_Count parameter starts writing at the current index.</DIV>
+<DIV Class="paranum">30.1/1</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The Size function returns the current size of 
+the file.</DIV>
+<DIV Class="paranum">31/1</DIV>
+<DIV Class="Normal">&nbsp;The Index function returns the current index.&nbsp;</DIV>
+<DIV Class="paranum">32</DIV>
+<DIV Class="Normal">The Set_Index procedure sets the current index to 
+the specified value.</DIV>
+<DIV Class="paranum">32.1/1</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;If positioning is 
+supported for the external file, the current index is maintained as follows:</DIV>
+<DIV Class="paranum">32.2/1</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>For Open and Create, if the Mode parameter 
+is Append_File, the current index is set to the current size of the file 
+plus one; otherwise, the current index is set to one.</LI></UL>
+<DIV Class="paranum">32.3/1</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>For Reset, if the Mode parameter is 
+Append_File, or no Mode parameter is given and the current mode is Append_File, 
+the current index is set to the current size of the file plus one; otherwise, 
+the current index is set to one.</LI></UL>
+<DIV Class="paranum">32.4/1</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>For Set_Mode, if the new mode is Append_File, 
+the current index is set to current size plus one; otherwise, the current 
+index is unchanged.</LI></UL>
+<DIV Class="paranum">32.5/1</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>For Read and Write without a Positive_Count 
+parameter, the current index is incremented by the number of stream elements 
+read or written.</LI></UL>
+<DIV Class="paranum">32.6/1</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>For Read and Write with a Positive_Count 
+parameter, the value of the current index is set to the value of the 
+Positive_Count parameter plus the number of stream elements read or written. 
+</LI></UL>
+<DIV Class="paranum">33</DIV>
+<DIV Class="Normal">If positioning is not supported for the given file, 
+then a call of Index or Set_Index propagates Use_Error. Similarly, a 
+call of Read or Write with a Positive_Count parameter propagates Use_Error.</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%"><I>Paragraphs 34 through 
+36 were deleted.</I></SPAN>&nbsp;</DIV>
+
+<H4 Class="centered">Erroneous Execution</H4>
+<DIV Class="paranum">36.1/1</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<A NAME="I5895"></A>If the File_Type object passed 
+to the Stream function is later closed or finalized, and the stream-oriented 
+attributes are subsequently called (explicitly or implicitly) on the 
+Stream_Access value returned by Stream, execution is erroneous. This 
+rule applies even if the File_Type object was opened again after it had 
+been closed.&nbsp;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-12.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-12-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

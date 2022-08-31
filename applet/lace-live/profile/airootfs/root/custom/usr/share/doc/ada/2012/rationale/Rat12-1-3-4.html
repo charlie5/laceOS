@@ -1,0 +1,246 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Overview: Tasking and real-time facilities</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-1-3-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-1-3-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>1.3.4 Overview: Tasking and real-time facilities</H1>
+<div class="Normal">There are a number of improvements regarding scheduling 
+and dispatching in the Real-Time Systems annex.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A small addition concerns 
+non-preemptive dispatching. In Ada 2005, a task wishing to indicate that 
+it is willing to be preempted has to execute</div>
+<div class="SwissExamples"><B>delay</B>&nbsp;0.0;</div>
+<div class="Normal">(or <SPAN Class="swiss"><B>delay until</B> Ada.Real_Time.Time_First</SPAN> 
+in Ravenscar). This is ugly and so a procedure <SPAN Class="swiss">Yield</SPAN> 
+is added to the package <SPAN Class="swiss">Ada.Dispatching</SPAN>. <A NAME="I1068"></A><A NAME="I1069"></A><A NAME="I1070"></A></div>
+<div class="Normal">A further addition is the ability to indicate that 
+a task is willing to be preempted by a task of higher priority (but not 
+the same priority). This is done by calling <SPAN Class="swiss">Yield_To_Higher</SPAN> 
+which is declared in a new child package with specification <A NAME="I1071"></A><A NAME="I1072"></A><A NAME="I1073"></A></div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Dispatching.Non_Preemptive&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Non_Preemptive);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Yield_To_Higher;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Yield_To_Same_Or_Higher&nbsp;<B>renames</B>&nbsp;Yield;<BR>
+<B>end</B>&nbsp;Ada.Dispatching.Non_Preemptive;</div>
+<div class="Normal">Another low-level scheduling capability concerns 
+suspension objects; these were introduced in Ada 95. Recall that we can 
+declare an object of type <SPAN Class="swiss">Suspension_Object</SPAN> 
+and call procedures to set it <SPAN Class="swiss">True</SPAN> or <SPAN Class="swiss">False</SPAN>. 
+By calling <SPAN Class="swiss">Suspend_Until_True</SPAN> a task can suspend 
+itself until the state of the object is true. <A NAME="I1074"></A></div>
+<div class="Normal">Ada 2005 introduced Earliest Deadline First (EDF) 
+scheduling. The key feature here is that tasks are scheduled according 
+to deadlines and not by priorities. A new facility introduced in Ada 
+2012 is the ability to suspend until a suspension object is true and 
+then set its deadline sometime in the future. This is done by calling 
+the aptly named procedure <SPAN Class="swiss">Suspend_Until_True_And_Set_Deadline</SPAN> 
+in a new child package <SPAN Class="swiss">Ada.Synchronous_Task_Control.EDF</SPAN>. 
+<A NAME="I1075"></A><A NAME="I1076"></A><A NAME="I1077"></A><A NAME="I1078"></A></div>
+<div class="Normal">A new scheduling feature is the introduction of synchronous 
+barriers in a new child package <SPAN Class="swiss">Ada.Synchronous_Barriers</SPAN>. 
+The main features are a type <SPAN Class="swiss">Synchronous_Barrier</SPAN> 
+with a discriminant giving the number of tasks to be waited for. <A NAME="I1079"></A><A NAME="I1080"></A><A NAME="I1081"></A></div>
+<div class="SwissExamples"><B>type</B>&nbsp;Synchronous_Barrier(Release_Threshold:&nbsp;Barrier_Limit)<B>is&nbsp;limited&nbsp;private</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">There is also a procedure</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Wait_For_Release(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The_Barrier:&nbsp;<B>in&nbsp;out&nbsp;</B>Synchronous_Barrier;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Notified:&nbsp;<B>out</B>&nbsp;Boolean);</div>
+<div class="Normal">When a task calls <SPAN Class="swiss">Wait_For_Release</SPAN> 
+it gets suspended until the number waiting equals the discriminant. All 
+the tasks are then released and just one of them is told about it by 
+the parameter <SPAN Class="swiss">Notified</SPAN> being <SPAN Class="swiss">True</SPAN>. 
+The general idea is that this one task then does something on behalf 
+of all the others. The count of tasks waiting is then reset to zero so 
+that the synchronous barrier can be used again.</div>
+<div class="Normal">A number of other changes in this area are about 
+the use of multiprocessors and again concern the Real-Time Systems annex.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A new package <SPAN Class="swiss">System.Multiprocessors</SPAN> 
+is introduced as follows <A NAME="I1082"></A><A NAME="I1083"></A></div>
+<div class="SwissExamples"><B>package</B>&nbsp;System.Multiprocessors&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;CPU_Range<B>is&nbsp;range</B>&nbsp;0..<I>implementation-defined</I>;<BR>
+&nbsp;&nbsp;&nbsp;Not_A_Specific_CPU:&nbsp;<B>constant</B>&nbsp;CPU_Range&nbsp;:=&nbsp;0:<BR>
+&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;CPU&nbsp;<B>is</B>&nbsp;CPU_Range&nbsp;<B>range</B>&nbsp;1&nbsp;..&nbsp;CPU_Range'Last;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Number_Of_CPUs&nbsp;<B>return</B>&nbsp;CPU;<BR>
+<B>end</B>&nbsp;System.Multiprocessors;</div>
+<div class="Normal">A value of subtype <SPAN Class="swiss">CPU</SPAN> 
+denotes a specific processor. Zero indicates don't know or perhaps don't 
+care. The total number of CPUs is determined by calling the function 
+<SPAN Class="swiss">Number_Of_CPUs</SPAN>. This is a function rather 
+than a constant because there could be several partitions with a different 
+number of CPUs on each partition.<A NAME="I1084"></A><A NAME="I1085"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Tasks can be allocated 
+to processors by an aspect specification. If we write</div>
+<div class="SwissExamples"><B>task</B>&nbsp;My_Task<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;CPU&nbsp;=&gt;&nbsp;10;</div>
+<div class="Normal">then <SPAN Class="swiss">My_Task</SPAN> will be executed 
+by processor number <SPAN Class="swiss">10</SPAN>. In the case of a task 
+type then all tasks of that type will be executed by the given processor. 
+The expression giving the processor for a task can be dynamic. The aspect 
+can also be set by a corresponding pragma CPU. (This is an example of 
+a pragma born obsolescent.) The aspect <SPAN Class="swiss">CPU</SPAN> 
+can also be given to the main subprogram in which case the expression 
+must be static. <A NAME="I1086"></A><A NAME="I1087"></A></div>
+<div class="Normal">Further facilities are provided by the child package 
+<SPAN Class="swiss">System.Multiprocessors.Dispatching_Domains</SPAN>. 
+The idea is that processors are grouped together into dispatching domains. 
+A task may then be allocated to a domain and it will be executed on one 
+of the processors of that domain. <A NAME="I1088"></A><A NAME="I1089"></A></div>
+<div class="Normal">Domains are of a type <SPAN Class="swiss">Dispatching_Domain</SPAN>. 
+They are created by a function <SPAN Class="swiss">Create</SPAN> <A NAME="I1090"></A></div>
+<div class="SwissExamples"><B>function</B>&nbsp;Create(First,&nbsp;Last:&nbsp;CPU)&nbsp;<B>return</B>&nbsp;Dispatching_Domain;</div>
+<div class="Normal">that takes the first and last numbered CPU of the 
+domain and then returns the domain. All CPUs are initially in the <SPAN Class="swiss">System_Dispatching_Domain</SPAN>. 
+If we attempt to do something silly such as create overlapping domains, 
+then <SPAN Class="swiss">Dispatching_Domain_Error</SPAN> is raised.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Tasks can be assigned 
+to a domain in two ways. One way is to use an aspect<A NAME="I1091"></A><A NAME="I1092"></A></div>
+<div class="SwissExamples"><B>task</B>&nbsp;My_Task<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Dispatching_Domain&nbsp;=&gt;&nbsp;My_Domain;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The other way is by 
+calling the procedure <SPAN Class="swiss">Assign_Task</SPAN> whose specification 
+is</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Assign_Task(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Domain:&nbsp;<B>in&nbsp;out</B>&nbsp;Dispatching_Domain;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;CPU:&nbsp;<B>in</B>&nbsp;CPU_Range&nbsp;:=&nbsp;Not_A_Specific_CPU;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;T:&nbsp;<B>in</B>&nbsp;Task_Id&nbsp;:=&nbsp;Current_Task);</div>
+<div class="Normal">There are a number of other subprograms for manipulating 
+domains and CPUs. An interesting one is <SPAN Class="swiss">Delay_Until_And_Set_CPU</SPAN> 
+which delays the calling task until a given real time and then sets the 
+processor.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The Ravenscar profile 
+is now defined to be permissible with multiprocessors. However, there 
+is a restriction that tasks may not change CPU. Accordingly the definition 
+of the profile now includes the following restriction <A NAME="I1093"></A></div>
+<div class="SwissExamples">No_Dependence&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.Multiprocessors.Dispatching_Domains</div>
+<div class="Normal" style="margin-bottom: 0.4em">In order to clarify 
+the use of multiprocessors with group budgets the package <SPAN Class="swiss">Ada.Execution_Time.Group_Budgets</SPAN> 
+introduced in Ada 2005 is slightly modified. The type <SPAN Class="swiss">Group_Budget</SPAN> 
+(which in Ada 2005 is just <B>tagged limited private</B>) has a discriminant 
+in Ada 2012 giving the CPU thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Group_Budget(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CPU:&nbsp;System.Multiprocessors.CPU&nbsp;:=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.Multiprocessors.CPU'First)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>is&nbsp;tagged&nbsp;limited&nbsp;private</B>;</div>
+<div class="Normal">This means that a group budget only applies to a 
+single processor. If a task in a group is executed on another processor 
+then the budget is not consumed. Note that the default value for <SPAN Class="swiss">CPU</SPAN> 
+is <SPAN Class="swiss">CPU'First</SPAN> which is always <SPAN Class="swiss">1</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another improvement 
+relating to times and budgets concerns interrupts. Two Boolean constants 
+are added to the package<SPAN Class="swiss">Ada.Execution_Time</SPAN> 
+<A NAME="I1094"></A><A NAME="I1095"></A></div>
+<div class="SwissExamples">Interrupt_Clocks_Supported:<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>constant</B>&nbsp;Boolean&nbsp;:=&nbsp;<I>implementation-defined</I>;<BR>
+Separate_Interrupt_Clocks_Supported:<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>constant</B>&nbsp;Boolean&nbsp;:=&nbsp;<I>implementation-defined</I>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The constant <SPAN Class="swiss">Interrupt_Clocks_Supported</SPAN> 
+indicates whether the time spent in interrupts is accounted for separately 
+from the tasks and then <SPAN Class="swiss">Separate_Interrupt_Clocks_Supported 
+</SPAN>indicates whether it is accounted for each interrupt individually. 
+There is also a function</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Clocks_For_Interrupts&nbsp;<B>return</B>&nbsp;CPU_Time;</div>
+<div class="Normal">This function gives the time used over all interrupts. 
+Calling it if <SPAN Class="swiss">Interrupt_Clocks_Supported</SPAN> is 
+false raises <SPAN Class="swiss">Program_Error</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A new child package 
+accounts for the interrupts separately if <SPAN Class="swiss">Separate_Interrupt_Clocks_Supported</SPAN> 
+is true. <A NAME="I1096"></A><A NAME="I1097"></A></div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Execution_Time.Interrupts&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Clock(Interrupt:&nbsp;Ada.Interrupts.Interrupt_Id)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;CPU_Time;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Supported(Interrupt:&nbsp;Ada.Interrupts.Interrupt_Id)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>end</B>&nbsp;Ada.Execution_Time.Interrupts;</div>
+<div class="Normal">The function <SPAN Class="swiss">Supported</SPAN> 
+indicates whether the time for a particular interrupt is being monitored. 
+If it is then <SPAN Class="swiss">Clock</SPAN> returns the accumulated 
+time spent in that interrupt handler (otherwise it returns zero). However, 
+if the overall constant <SPAN Class="swiss">Separate_Interrupt_Clocks_Supported</SPAN> 
+is false then calling <SPAN Class="swiss">Clock</SPAN> for a particular 
+interrupt raises <SPAN Class="swiss">Program_Error</SPAN>.</div>
+<div class="Normal">Multiprocessors have an impact on shared variables. 
+The existing pragma <SPAN Class="swiss">Volatile</SPAN> (now the aspect 
+<SPAN Class="swiss">Volatile</SPAN>) requires access to be in memory 
+but this is strictly unnecessary. All we need is to ensure that reads 
+and writes occur in the right order. A new aspect <SPAN Class="swiss">Coherent</SPAN> 
+was considered but was rejected in favour of simply changing the definition 
+of <SPAN Class="swiss">Volatile</SPAN>.</div>
+<div class="Normal">The final improvement in this section is in the core 
+language and concerns synchronized interfaces and requeue. The procedures 
+of a synchronized interface may be implemented by a procedure or entry 
+or by a protected procedure. However, in Ada 2005 it is not possible 
+to requeue on a procedure of a synchronized interface even if it is implemented 
+by an entry. This is a nuisance and prevents certain high level abstractions.</div>
+<div class="Normal">Accordingly, Ada 2012 has an aspect <SPAN Class="swiss">Synchronization</SPAN> 
+that takes one of <SPAN Class="swiss">By_Entry</SPAN>, <SPAN Class="swiss">By_Protected_Procedure</SPAN>, 
+and <SPAN Class="swiss">Optional</SPAN>. So we might write <A NAME="I1098"></A><A NAME="I1099"></A></div>
+<div class="SwissExamples"><B>type</B>&nbsp;Server&nbsp;<B>is&nbsp;synchronized&nbsp;interface</B>;<BR>
+<B>procedure</B>&nbsp;Q(S:&nbsp;<B>in&nbsp;out</B>&nbsp;Server;&nbsp;X:&nbsp;<B>in</B>&nbsp;Item);<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Synchronization&nbsp;=&gt;&nbsp;By_Entry;</div>
+<div class="Normal">and then we are assured that we are permitted to 
+perform a requeue on any implementation of <SPAN Class="swiss">Q</SPAN>.</div>
+<div class="Normal">As expected there are a number of consistency rules. 
+The aspect can also be applied to a task interface or to a protected 
+interface. But for a task interface it obviously cannot be <SPAN Class="swiss">By_Protected_Procedure</SPAN>.</div>
+<div class="Normal">In the case of inheritance, any <SPAN Class="swiss">Synchronization</SPAN> 
+property is inherited. Naturally, multiple aspect specifications must 
+be consistent. Thus <SPAN Class="swiss">Optional</SPAN> can be overridden 
+by <SPAN Class="swiss">By_Entry</SPAN> or by <SPAN Class="swiss">By_Protected_Procedure</SPAN> 
+but other combinations conflict and so are forbidden.</div>
+<div class="Normal">A related change is that if an entry is renamed as 
+a procedure then we can do a requeue using the procedure name. This was 
+not allowed in Ada 95 or Ada 2005.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-1-3-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-1-3-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

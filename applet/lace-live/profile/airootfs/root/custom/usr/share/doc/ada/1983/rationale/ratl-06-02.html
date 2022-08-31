@@ -1,0 +1,388 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 6.2: Overview of the Issues</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 6: Access Types</H2>
+
+<H3><a name="6.2">6.2 Overview of the Issues</a></H3>
+
+The main  problems usually encountered with access types fall into two
+categories:
+<ul>
+<li>Conceptual aspects
+<p>
+<li>Reliability, efficiency, and implementation.
+</ul>
+
+We first  discuss these  problems and  then define the desirable goals
+for a formulation of access types.
+
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#6.2.1">6.2.1  Conceptual Aspects</a><BR>
+<a href="#6.2.2">6.2.2  Reliability, Efficiency, and Implementation Issues</a><BR>
+<a href="#6.2.3">6.2.3  Goals for a Formulation of Access Types</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="6.2.1">6.2.1 Conceptual Aspects</a></H3>
+
+The objects of a program can be classified into two categories: static
+objects and dynamically allocated objects.
+<p>
+<b>Static objects</b>  are declared  in a  program  and  are  containers  for
+values. Each  static object  has a  simple name that is used to denote
+either the  container or the value, depending on the context where the
+name appears.  The simple  name of  a static  object is defined by its
+declaration. For  example, an  object declared  within a  procedure is
+created by  the elaboration of the object declaration and exists until
+the end  of the  procedure. Such  objects are  said to be static since
+their lifetime  is determined by the static (textual) structure of the
+program.
+<p>
+In contrast,  the creation  of <b>dynamically  allocated  objects</b>  occurs
+dynamically, by  the execution  of so-called  allocators, and  is  not
+directly related  to the  program structure. In general, the number of
+dynamically allocated  objects is  not easy to predict and it will not
+be possible  to define  their names  by declarations.  Hence  what  is
+returned by the execution of an allocator is an internal name - not an
+identifier - and therefore it cannot be used explicitly in the text to
+denote the newly allocated object.
+<p>
+To deal with this problem, one usually defines by declaration a number
+of indirect names that may be used to access the different dynamically
+allocated objects  at successive  stages of  execution.  The  internal
+names of  the allocated  objects will  be the values of these declared
+indirect names.  For this  reason, indirect  names are  called  access
+objects in Ada and throughout the remainder of this chapter (they have
+been called  pointers or  reference variables  in other languages). An
+access object  can be a declared variable or a component of a declared
+variable (and  hence static);  but it  can also be a component of some
+dynamically created object. Internal names are called access values in
+Ada. To  emphasize the difference between names and internal names, we
+say that  a name denotes an object whereas we say that an access value
+designates an object.
+<p>
+Four important  consequences follow  from the fact that access objects
+contain internal names:
+<ol type=a>
+<li>The same  internal name  may be  contained in several
+   access objects,  with the  consequence that  they provide access to
+   the same dynamically allocated object.
+<p>
+<li>Access objects  may be used to describe relations, in
+   particular, relations that change over time.
+<p>
+<li>Since  the  internal  name  contained  in  an  access
+   variable may  vary with successive stages of the program execution,
+   a given  dynamically allocated  object may  become inaccessible:  A
+   dynamically allocated  object is accessible as long as its internal
+   name is  contained by  a declared access object, or if its internal
+   name is contained by an access object that is itself a component of
+   a dynamically allocated object that is still accessible, and so on.
+<p>
+<li>Since an  access object does not contain any internal
+   name prior  to its  first allocation or assignment, there must be a
+   special null  value corresponding  to no  internal name  ( none  in
+   Simula, nil  in <a href="ratl-BIB.html#languages">Algol 68</a> and <a href="ratl-BIB.html#languages">Lisp</a>, null in Ada). This value is also
+   required for describing partial relations.
+</ol>
+
+Sharing and  the possibility  of inaccessibility  are thus  two of the
+classical difficulties  of access  types. A third classical difficulty
+is the well-known problem of dereferencing: Considering the name of an
+access object, this name may stand for several different things:
+<ul>
+<li>The name of the (static) access object.
+<p>
+<li>The content  of the  access object (that is, its value: an internal
+   name).
+<p>
+<li>The content  of the dynamically allocated object that is designated
+   by this internal name.
+</ul>>
+
+The first  two possibilities  (name or  content) also exist for static
+objects. Most  languages (<a href="ratl-BIB.html#languages">Bliss</a>  being an  exception)  have  the  same
+notation in  the two  cases, and  make a  distinction by  context. The
+third possibility,  however, only  exists for  access objects, and the
+solutions offered by programming languages are very diverse.
+<p>
+Two issues arise:
+<ul>
+<li>For assignments,  it must be clear whether the assignment refers to
+   the access  objects (access  assignment),  or  to  the  dynamically
+   allocated  objects   they  designate   (value   assignment).   This
+   distinction is  essential and  has been treated differently in most
+   languages.
+<p>
+<li>For component  selection, that  is, for  denoting a  component of a
+   dynamically  created   record,  there  is  no  possible  ambiguity.
+   Nevertheless some  languages  have  chosen  to  make  dereferencing
+   explicit even in this case.
+</ul>
+
+The diversity of the solutions adopted by several languages is a clear
+indication of the conceptual difficulties involved. We illustrate this
+diversity with  the example  below, where X and Y are access variables
+and AGE is a component of the dynamically allocated record object (For
+the Algol  68 formulation,  T is  assumed to be the mode of the record
+values; the  Simula example  extends  the  possibilities  offered  for
+texts).
+<p>
+<p>
+<center><table border cellpadding=6><tr><th align=left>language</th><th align=left>access assignment</th><th align=left>value assignment</th><th align=left>component selection</th></tr>
+<tr><td>
+<table><tr><td><pre>Simula
+Algol 68
+Pascal
+Ada</pre></td></tr></table>
+</td><td>
+<table><tr><td>
+<pre>X :- Y;
+X := Y;
+X := Y;
+X := Y;</pre></td></tr></table>
+</td><td>
+<table><tr><td>
+<pre>X := Y;
+T(X) :=Y;
+X^ := Y^;
+X.all := Y.all;</pre></td></tr></table>
+</td><td>
+<table><tr><td>
+<pre>X.AGE
+X.AGE
+X^.AGE
+X.AGE</pre></td></tr></table></tr></table></center>
+<p>
+
+A final  conceptual difficulty  in defining access types is the notion
+of constant access objects. Suppose an access object is declared to be
+constant. Several  alternative interpretations could be given for such
+a declaration.
+<ol>
+<li>The access value (an internal name) is constant. This
+   means that  it always  designates the  same  dynamically  allocated
+   object. The value of the latter, however, could vary.
+<p>
+<li>The access value can vary, but it may only be used to
+   read the components of a designated object.
+<p>
+<li>The access  value is constant and it may only be used
+   to read  the components  of the  designated object.  Note, however,
+   that  we   cannot  infer  that  the  dynamically  allocated  object
+   designated by  such a  constant is  itself  constant,  since  other
+   variables may designate the same dynamically allocated object.
+</ol>
+
+Some languages,  including  <a href="ratl-BIB.html#languages">Mary</a>  and  <a href="ratl-BIB.html#languages">Lis</a>,  have  provided  different
+syntaxes for all three forms of constant semantics. The first meaning,
+however, is  the one  that is  most consistent  with what  is done for
+other types. Consider the analogy with an index:
+<p>
+<table border cellpadding=6><tr><td><pre>
+subtype INDEX is INTEGER range 1 .. 9;
+MEDIAN  :  constant INDEX  :=  (INDEX'FIRST + INDEX'LAST)/2;
+TABLE   :  array (INDEX) of COLOR  :=  (others =&gt; WHITE);
+</pre></td></tr></table>
+<p>
+In this  formulation we  use the  index MEDIAN  to refer to the median
+value of  the table:  TABLE(MEDIAN). Now,  the  fact  that  MEDIAN  is
+constant only  means that  we always  refer to this component; it does
+not mean that assignment to this component is forbidden.
+
+<H3><BR><a name="6.2.2">6.2.2 Reliability, Efficiency, and Implementation Issues</a></H3>
+
+When  a   dynamically  allocated   object  becomes  inaccessible,  the
+corresponding space  may (at  least theoretically)  be  reclaimed  for
+other uses  without  any  risk.  This  operation,  classically  called
+garbage-collection, has  been used  in languages such as <a href="ratl-BIB.html#languages">Lisp, Simula,
+and Algol 68</a>.
+<p>
+Unfortunately, there  is no  method  of  garbage  collection  that  is
+generally suitable  to real-time applications. The method used in most
+Lisp implementations  is to  allocate storage  continuously until  the
+available space is exhausted, and then reclaim inaccessible objects by
+a complete  traversal of  all allocated  structures. This implies that
+the  execution   of  an   allocator  can   suddenly  initiate  garbage
+collection,  thereby  causing  a  large  and  unpredictable  overhead.
+Moreover, as  the available storage becomes increasingly fragmented by
+accessible objects,  garbage collection  could be  triggered ever more
+frequently, causing rapid degradation of performance.
+<p>
+Another method  is to  maintain reference  counts with  each allocated
+object: an object is inaccessible if its reference count is zero. This
+fails with  cyclic structures,  where a  non-zero reference count does
+not necessarily  imply accessibility.  It also  causes  implementation
+problems, since  the reference  count of  an accessed  object must  be
+decremented whenever  a declared  access  object  that  designates  it
+passes out of scope - either in the normal course of execution or as a
+result of  an exception.  Access objects are therefore associated with
+finalization actions,  with all their attendant difficulties. However,
+even if  this method  were fully  implemented it  would not  solve the
+problem: the unpredictable overhead has merely been transferred to the
+deallocation operation.
+<p>
+A third  method is  to perform  garbage collection  periodically by  a
+parallel process  of  lower  priority.  Provided  the  synchronization
+problems  can  be  solved,  this  provides  the  least  unsatisfactory
+solution for real-time use. Its major defect is that, under conditions
+where the  transaction rate  is high, the lower-priority processes may
+become starved,  so garbage  collection might not be done often enough
+to maintain a satisfactory pool of free storage.
+<p>
+For these  reasons several  languages in  the systems programming area
+(including <a href="ratl-BIB.html#languages">Lis  and Euclid</a>) try to achieve better control over storage
+management for  dynamically allocated  objects. This  means that  such
+languages offer  the opportunity  to define  the  workings  of  object
+allocation  within  the  language  itself.  Similarly  they  admit  an
+explicit deallocation  statement which  can also be defined within the
+language itself.
+<p>
+Such operations  usually cannot  be written  with the  full degree  of
+compilation-time checking  that is  provided by  types, though the Ada
+generics facility  permits a greater degree of safety than is found in
+many other  languages.  In  addition,  the  availability  of  explicit
+deallocation introduces the possibility of dangling access values: the
+program might  deallocate a dynamically allocated object that is still
+accessible by other paths - its internal name still being contained by
+other access variables.
+<p>
+Confronted with  this dilemma  between reliability  and efficiency,  a
+possible answer  is to  choose reliability  and accept the possibility
+that access  types might  not be  used  in  programs  that  are  time-
+critical. However,  there are cases where access types should be used,
+precisely because  the application  considered  is  time-critical.  We
+illustrate this point with the following example:
+<p>
+Assume that  we need  to compute the sum of the elements of a circular
+list. A formulation using an array might look as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type INDEX is range 1 .. 1000;
+
+type ITEM is
+  record
+    SUCC, PRED :  INDEX;
+    CONTENT    :  INTEGER;
+  end record;
+
+TABLE :  array (INDEX) of ITEM;
+HEAD, NEXT :  INDEX;
+SUM :  INTEGER;
+</pre></td></tr></table>
+<p>
+The algorithm for adding the contents of the successors of HEAD may be
+written as a while loop:
+<p>
+<table border cellpadding=6><tr><td><pre>
+SUM    :=  0;
+NEXT   :=  TABLE(HEAD).SUCC;
+while NEXT /=  HEAD loop
+  SUM   :=  SUM + TABLE(NEXT).CONTENT;
+  NEXT  :=  TABLE(NEXT).SUCC;
+end loop;
+</pre></td></tr></table>
+<p>
+Clearly, the  above formulation  attempts to use index values in order
+to express  relations, and  does  not  achieve  this  with  quite  the
+elegance and  readability offered by access variables. The main point,
+however, is that the index computation involved in accessing the array
+element TABLE(NEXT) at each iteration may be a drawback, especially on
+small computers where multiplication is rather slow.
+<p>
+The alternative formulation with access objects (declarations omitted)
+is given below:
+<p>
+<table border cellpadding=6><tr><td><pre>
+SUM   :=  0;
+NEXT  :=  HEAD.SUCC;
+while NEXT /=  HEAD loop
+  SUM   :=  SUM + NEXT.CONTENT;
+  NEXT  :=  NEXT.SUCC;
+end loop;
+</pre></td></tr></table>
+<p>
+This solution  is more readable - it does not require mention of names
+such as  TABLE that are irrelevant to the logic of the algorithm - and
+also more efficient since no index calculation is involved.
+<p>
+In general,  when access variables are used, address computations will
+be done  only once,  at the  time of  dynamic  allocation.  Thereafter
+access values can only be assigned to access objects or used to access
+the dynamically  allocated objects.  This  however  does  not  involve
+address computations.  On the  other  hand,  when  indices  are  used,
+address computations must be redone for every access.
+
+<H3><BR><a name="6.2.3">6.2.3 Goals For a Formulation of Access Types</a></H3>
+
+As shown  by the  previous example,  one of  the advantages  of access
+variables is  efficiency. As a consequence we must be able to use them
+in time-critical  applications. In this case, however, we must provide
+a form  of access  variable that does not result in garbage collection
+with the  associated costs  and unpredictability.  Naturally this does
+not exclude  the possibility  of  more  elaborate  storage  management
+strategies in applications that are not time-critical.
+<p>
+The  needs  of  efficiency  being  thus  satisfied,  it  remains  that
+reliability should be a major goal in the formulation of access types,
+especially in  view of the conceptual difficulties they raise. Hence a
+safe  formulation  of  access  types  should  have  several  important
+properties:
+     
+<ul>
+<li>There  must  be  a  null  value  for  access  objects.  Since  null
+   designates no  object, any  attempt to  denote a  component of this
+   nonexistent object should raise the exception CONSTRAINT_ERROR (the
+   null value  cannot be dereferenced). On many computers checking for
+   such attempts  is achievable  without  any  run-time  cost  if  the
+   internal value of null corresponds to some protected address.
+<p>
+<li>Access variables  should be  typed (as in Simula or Pascal) so that
+   one access variable can designate only objects of one type.
+<p>
+<li>There  should   be  a  basic  operation  -  the  allocator  -  that
+   dynamically  creates   an  object  and  delivers  an  access  value
+   designating this  object (its  internal name).  On the  other hand,
+   there should  be  no  operation  for  explicit  deallocation  of  a
+   dynamically allocated object (to avoid dangling access values).
+<p>
+<li>There should  be a clear distinction between access types and other
+   types. In  particular, there should be no possibility for an access
+   value to  designate a  static variable  (again, to  avoid  dangling
+   access values).
+</ul>
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-06-03.html#6.3"><b>NEXT</b></a>
+&#128; <a href="ratl-06-01.html#6.1"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-06.html#6"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

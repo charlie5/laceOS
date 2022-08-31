@@ -1,0 +1,425 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 11.3: Visibility Rules</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 11: General Program Structure - Visibility and Overloading</H2>
+
+<H3><a name="11.3">11.3 Visibility Rules</a></H3>
+
+The visibility  rules provided  in Ada  combine Algol-like inheritance
+rules with  an ability  to control  the set  of names that can be used
+within  a   given  context.  This  ability  follows  from  the  naming
+conventions and  the facilities offered by packages and use clauses. A
+renaming capability is also provided.
+<p>
+We  first   discuss  the  basic  visibility  model,  then  the  naming
+conventions, use clauses, and renaming.
+
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#11.3.1">11.3.1 Basic Visibility Model</a><BR>
+<a href="#11.3.2">11.3.2 Naming Conventions: Expanded Names and Use Clauses</a><BR>
+<a href="#11.3.3">11.3.3 Visibility Rules for Record Types</a><BR>
+<a href="#11.3.4">11.3.4 Renaming</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="11.3.1">11.3.1 Basic Visibility Model</a></H3>
+
+The search  for simple and uniform scope rules has led to the adoption
+of a  traditional approach: an identifier that is declared immediately
+within a  given declarative  region is  directly visible  within inner
+(nested) declarative regions.
+<p>
+The term  declarative region  in the above rule refers to a portion of
+the program  text which  includes a  major group  of declarations. For
+example a  declarative region  is formed  by a  block statement,  by a
+subprogram, or by any other program unit (a package, a task unit, or a
+generic unit);  similarly a  declarative region  is formed by a record
+type declaration. Thus the basic rule is essentially that of <a href="ratl-BIB.html#languages">Algol 60</a>.
+The only  extensions to  this rule  are related  to  packages  and  to
+separate compilation.
+<p>
+The fundamental  reason for  selecting this  liberal approach  is  the
+pragmatic assumption  that names  declared together are normally meant
+to be used together. Consider, for instance, the skeleton:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure P is
+  type T is <a href="ratl-00.html#errors"><i>[**error in text - Ed.**]</a></i>. ; -- type declaration
+  V :  T;         -- variable declaration
+  procedure Q;    -- procedure declaration
+
+  ...
+
+  procedure Q is
+    ...
+  begin
+    ...
+  end Q;
+begin
+  ...
+end P;
+</pre></td></tr></table>
+<p>
+It can  be assumed  that the  names T, V and Q are defined in the same
+context (the  declarative part  of P)  because they are intended to be
+used together  - here  in the  sequence of  statements of P. Extending
+this reasoning  to inner  program units  means for  instance that  the
+names T,  V, and  possibly Q are also visible within the body of Q, so
+that this  body may  be directly defined in terms of these names. This
+suggests the  assumption that  entities declared  in the  same context
+have mutually dependent definitions.
+<p>
+One alternative considered was to designate certain program units such
+as procedures  and packages as being always closed: Closed units would
+not automatically inherit the visibility of outer declarative regions,
+so that  some form  of explicit  import directive would be required in
+order for  names declared  in outer  regions to  become visible within
+closed units.  This was  ultimately deemed unacceptable because it led
+to clutter and to long name lists in many common cases.
+<p>
+The following  example  illustrates  the  useless  redundancy  of  the
+directive "sees  T, C,  L", where  the procedures  P_1 through P_N are
+obviously meant to work with T, C and L.
+<p>
+<table border cellpadding=6><tr><td><pre>
+-- the following is not an Ada text
+
+package D is
+  type T is ... ;
+  C :  constant T  :=  ... ;
+
+  procedure P_1  ( ... );
+  procedure P_2  ( ... );
+  ...
+  procedure P_N( ... );
+end D;
+
+package body D is
+  L :  T;
+
+  -- note: "sees T, C, L" is not legal in Ada
+
+  procedure P_1( ... )     sees T, C, L is ... end P_1;
+  procedure P_2( ... )     sees T, C, L is ... end P_2;
+  ...
+  procedure P_N( ... )     sees T, C, L is ... end P_N;
+end D;
+</pre></td></tr></table>
+<p>
+Early experience  with the  <a href="ratl-BIB.html#languages">Euclid</a> language, in which such an approach
+was taken,  shows that  the danger  of long  name lists  is not  to be
+underestimated. Because  of transitivity,  Euclid import lists can get
+very long.  The danger is then - as evidenced by experience with named
+common in  <a href="ratl-BIB.html#languages">Fortran</a> programs  - that  programmers tend  to use the same
+import lists  in all program units, for fear of omitting something. In
+any case,  long name  lists are usually skipped when reading, and this
+defeats their  very  purpose.  The  classical  argument  developed  by
+Dijkstra <a href="ratl-BIB.html">[Di  72]</a>, about  our inability to deal with a large number of
+entities at  the same  time, also  applies to  long  -  and  therefore
+unstructured - name lists.
+<p>
+The only  way to  avoid this form of text clutter is to make automatic
+inheritance the  default  rule.  The  argument  is  that  the  textual
+embedding of  declarations is already a strong indication of potential
+dependence. The  systematic inclusion  of additional import directives
+does not  usually  provide  much  information  that  may  usefully  be
+exploited by  the translator,  and it  is likely to distract readers -
+and writers - of programs.
+<p>
+It was found, moreover, that whether a given syntactic category should
+be an  open scope  or a closed scope was a highly subjective question.
+The answer  may vary from one use to another, depending on the size of
+a particular  program unit,  the depth  to which  it  is  nested,  the
+probability of subsequent recompilation, and so on.
+<p>
+It seems  clear, therefore, that the syntax of the language should not
+arbitrarily impose  a decision in this regard. For this reason we have
+adopted the following approach:
+<ul>
+<li>All  syntactic  constructs  that  introduce  declarations  normally
+   inherit the identifiers of outer (enclosing) contexts.
+<p>
+<li>A set  of declarations can be encapsulated in the visible part of a
+   package: the  visibility of  these declarations is then acquired in
+   other contexts by means of use clauses.
+</ul>
+
+<H3><BR><a name="11.3.2">11.3.2 Naming Conventions: Expanded Names and Use Clauses</a></H3>
+
+Since classical  inheritance of  identifiers  from  outer  declarative
+regions is the default rule, redeclaration of identifiers is possible,
+with the  effect of  hiding the  outer definitions  within  the  inner
+region.
+<p>
+Some of  the difficulties  with identifier redeclarations disappear if
+the names  of the  corresponding entities  can be  written as expanded
+names: using  the dot  notation. Consider,  for example,  the  type  T
+declared immediately within the procedure P above, and assume that the
+same identifier were reused for a declaration given within the body of
+Q. The  type name  could still  be written  as P.T  in the  inner unit
+(exploiting the  fact that  the identifier  P is  visible there); this
+expanded type  name may  thus be  used in  qualified  expressions  and
+wherever the need to denote the type arises.
+<p>
+The use  of expanded  names is  also the  general rule for denoting an
+identifier declared  within a  package, when  outside of  the  package
+itself. Thus,  outside the  package SIMPLE_IO,  the identifier  CREATE
+declared in  the visible  part of  this package  can be denoted by the
+expanded name  SIMPLE_IO.CREATE, in  spite of  the fact that CREATE is
+not directly visible there.
+<p>
+As an additional syntactic convenience, a use clause may be given in a
+declarative part.  A use  clause mentions  the names  of one  or  more
+packages and  its effect  is  to  achieve  direct  visibility  of  any
+identifier declared  in the  visible part  of  one  of  the  packages,
+exactly as if the identifier were declared at the place of the package
+concerned. For  a given  identifier,  however,  this  effect  is  only
+achieved in the absence of any conflicting identifier. For example, in
+a region that includes the use clause
+<p>
+<PRE>    use D, E;</PRE>
+<p>
+the identifier  I is  an acceptable abbreviation for D.I provided that
+this identifier  is declared  in D and is not hidden by an intervening
+redeclaration of  I, and  provided also  that the  package E  does not
+contain an  identifier  I  in  its  visible  part.  In  all  cases  of
+redeclaration or conflict, the intended name must be given in full, as
+an expanded name.
+<p>
+These rules are illustrated by the following example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+package D is
+   T, U, V :  BOOLEAN;
+end D;
+                                   -- (1)
+procedure P is
+                                   -- (2)
+  package E is
+    B, W, V :  INTEGER;
+  end E;
+                                   -- (3)
+  procedure Q is
+    T, X :  REAL;
+                                   -- (4)
+  begin
+    ...
+    declare
+      use D, E;
+    begin
+      -- the name T   means Q.T, not D.T
+      -- the name U   means D.U
+      -- the name B   means E.B
+      -- the name W   means E.W
+      -- the name X   means Q.X
+      -- the name V is illegal:  it must be written either D.V or E.V
+      ...
+    end;
+  end Q;
+begin
+  ...
+end P;
+</pre></td></tr></table>
+<p>
+In deciding  which names are visible within the sequence of statements
+of the block statement we apply the following two-step rule:
+<ol type=a>
+<li>First we  inherit the names declared in outer regions
+   and not  redefined. Thus  we inherit the names D and P, the names E
+   and Q declared within P, and the names T and X declared within Q.
+<p>
+<li>Then we  consider  the  entities  that  may  be  made
+   directly visible by means of use clauses. In the above example this
+   means the  entities that are declared in the visible parts of D and
+   E. We  retain names  that appear  in only one of these packages and
+   that do  not conflict with a name introduced in the step (a). Hence
+   the names retained here are U, B, W.
+</ol>
+
+One consequence  of these  rules is  that the  position of use clauses
+does not  matter. Thus  the same effect would be achieved in the above
+example if  the clause  "use D;"  were given at any of the points (1),
+(2), (3),  or (4);  and the  clause "use  E;" were given at any of the
+points (3) or (4).
+<p>
+Another consequence  is that a name that is made directly visible by a
+use clause  cannot hide  another name.  This is  quite  essential  for
+maintainability reasons.  Assume, for  example, that the specification
+of the  package D were modified to include the declaration of some new
+entity called  X. This should normally have no effect on the procedure
+Q. In  particular, the inner reference to X should retain its previous
+meaning  and   should  hence  mean  Q.X  both  before  and  after  the
+modification. (Note  that we  have only  reduced the magnitude of this
+general problem,  since a  later introduction  of  W  within  D  would
+conflict with  the W  of E;  the full  solution  lies  in  maintenance
+tools.)
+<p>
+A  similar   maintainability  argument  led  us  to  reject  a  unique
+visibility  rule;   that  is,   a  rule  forbidding  redeclaration  of
+identifiers that  were already visible. If redefinition of identifiers
+were not allowed, the later introduction of some entity named X in the
+declaration list  of P  would force  textual modification  of an inner
+procedure such  as Q,  which should  normally be  unaffected  by  this
+change.
+<p>
+Note that use clauses may be viewed as one possible form of the import
+directives mentioned  in <a href="#11.3.1">section  11.3.1</a>. However, the items listed in
+use clauses  can only  be names  of packages, and the risk of long use
+lists is  correspondingly reduced. Naturally, effective modularization
+will depend  upon the user writing packages in such a way that related
+definitions are in the same packages; related definitions will usually
+be required together.
+
+<H3><BR><a name="11.3.3">11.3.3 Visibility Rules for Record Types</a></H3>
+
+A record  type definition  introduces a  new declarative region. Hence
+component  identifiers   may  be  freely  chosen.  For  each  selected
+component, the  visibility of the corresponding component is opened by
+the dot  that follows  the name of the record variable in the selected
+component.
+<p>
+As with  <a href="ratl-BIB.html#languages">Pascal</a>,  variants  within  a  record  do  not  introduce  new
+declarative regions. Hence the component names of each variant must be
+distinct  from  those  of  every  other  variant,  even  if  they  are
+semantically equivalent  as far  as the  programmer is  concerned. The
+reason for  not introducing a new declarative region with each variant
+can be seen from the following example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type T(COMPACT :  BOOLEAN  :=  TRUE) is
+  record
+    case COMPACT is
+      when TRUE =&gt;  VALUE :  FLOAT;
+      when FALSE =&gt;  VALUE :  LONG_FLOAT;  -- illegal redeclaration
+    end case;
+  end record;
+
+R :  T;
+</pre></td></tr></table>
+<p>
+A selected  component such  as R.VALUE  would have  to be treated as a
+conditional  expression,   dependent  on  the  discriminant,  possibly
+delivering results of alternative types.
+
+<H3><BR><a name="11.3.4">11.3.4 Renaming</a></H3>
+
+A renaming capability is offered in Ada. As an example consider
+<p>
+<table border cellpadding=6><tr><td><pre>
+declare
+  L :  PERSON renames LEFTMOST_PERSON;
+  R :  PERSON renames TO_BE_PROCESSED(NEXT);
+begin
+  L.AGE :=  L.AGE + 1;
+  R.AGE :=  R.AGE - 1;
+  if   L.BIRTH &lt; R.BIRTH then
+     L.RANK :=  L.RANK + 1;
+  else
+     R.RANK :=  R.RANK + 1;
+  end if;
+end;
+</pre></td></tr></table>
+<p>
+The renaming  declarations of  L and R are used to introduce new local
+names    for     the    outer     variables    LEFTMOST_PERSON     and
+TO_BE_PROCESSED(NEXT). In  the sequence  of statements of the block, L
+and R  may be  used as  convenient names  of the  variables that  they
+denote. Here the renaming facility is used for purposes similar to the
+Pascal with  statement -  as a  convenient alternative  for frequently
+used long  names. However,  components of  renamed records  are  still
+denoted with  the syntax  of  record  components  so  they  cannot  be
+confused with variables bearing the same name as the components.
+<p>
+In addition  to the  notational advantage, such a renaming declaration
+avoids reevaluating  the access  path to  the record variable for each
+component  selection,   and  may  allow  more  efficient  code  to  be
+generated.
+<p>
+Renaming declarations  are also  permitted for  subprograms, packages,
+and exceptions.  In addition,  subtype declarations  can  be  used  to
+achieve the effect of renaming for types:
+<p>
+<table border cellpadding=6><tr><td><pre>
+function  "&#42;"   (LEFT,  RIGHT   :    VECTOR)  return  REAL  renames DOT_PRODUCT;
+procedure READ(V :  out ELEM) renames PROTECTED_VARIABLE.READ;
+package TM renames TABLE_MANAGER;
+DATA_ERROR :  exception renames IO_EXCEPTIONS.DATA_ERROR;
+</pre></td></tr></table>
+<p>
+The ability  to rename  turns out  to be  very convenient when working
+with packages  that are developed independently by different groups of
+programmers. Being  independently developed,  such packages  may  well
+declare the  same  identifiers.  If  later  these  packages  are  both
+mentioned by  a use  clause  in  a  given  region,  it  may  often  be
+convenient to  resolve name conflicts by renaming rather than by using
+dot notation whenever these identifiers appear. For example consider:
+<p>
+<table border cellpadding=6><tr><td><pre>
+package TRAFFIC is
+  type COLOR is (RED, AMBER, GREEN);
+  ...
+end TRAFFIC;
+
+package WATER_COLORS is
+  type COLOR is (WHITE, RED, YELLOW, GREEN, BLUE, BROWN);
+  ...
+end WATER_COLORS;
+
+declare
+  use TRAFFIC, WATER_COLORS;
+  subtype SIGNAL is TRAFFIC.COLOR;
+  subtype TINT is WATER_COLORS.COLOR;
+  LIGHT  :  SIGNAL;
+  SHADE  :  TINT;
+  ...
+begin
+  ...
+end;
+</pre></td></tr></table>
+<p>
+The subtypes  SIGNAL and  TINT effectively  rename  the  corresponding
+types and  are unambiguous  within the  block, whereas  COLOR would be
+ambiguous.
+<p>
+Because of  the possibility  of overloading,  it will often suffice to
+rename  conflicting   type  names:   names  of   subprograms  will  in
+consequence  be  resolved  by  the  overloading  rules.  The  renaming
+facility can  also be  used to  provide a name more appropriate to the
+context of  its use.  For instance,  the author  of a sort routine may
+call his  version QUICKSORT2  whereas SORT  may be  better  (and  less
+cumbersome) throughout the application.
+
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-11-04.html#11.4"><b>NEXT</b></a>
+&#128; <a href="ratl-11-02.html#11.2"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-11.html#11"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>

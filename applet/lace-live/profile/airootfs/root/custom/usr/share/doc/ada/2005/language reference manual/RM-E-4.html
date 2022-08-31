@@ -1,0 +1,180 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Remote Subprogram Calls</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-E-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-E-4-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>E.4 Remote Subprogram Calls</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal"><A NAME="I7126"></A><A NAME="I7127"></A><A NAME="I7128"></A><A NAME="I7129"></A><A NAME="I7130"></A>A 
+<I>remote subprogram call</I> is a subprogram call that invokes the execution 
+of a subprogram in another partition. The partition that originates the 
+remote subprogram call is the <I>calling partition</I>, and the partition 
+that executes the corresponding subprogram body is the <I>called partition</I>. 
+Some remote procedure calls are allowed to return prior to the completion 
+of subprogram execution. These are called <I>asynchronous remote procedure 
+calls</I>.</DIV>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">There are three different 
+ways of performing a remote subprogram call:&nbsp;</DIV>
+<DIV Class="paranum">3</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>As a direct call on a (remote) subprogram 
+explicitly declared in a remote call interface;</LI></UL>
+<DIV Class="paranum">4</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>As an indirect call through a value 
+of a remote access-to-subprogram type;</LI></UL>
+<DIV Class="paranum">5</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>As a dispatching call with a controlling 
+operand designated by a value of a remote access-to-class-wide type. 
+</LI></UL>
+<DIV Class="paranum">6</DIV>
+<DIV Class="Normal">The first way of calling corresponds to a <I>static</I> 
+binding between the calling and the called partition. The latter two 
+ways correspond to a <I>dynamic</I> binding between the calling and the 
+called partition.</DIV>
+<DIV Class="paranum">7</DIV>
+<DIV Class="Normal">A remote call interface library unit (see <A HREF="RM-E-2-3.html">E.2.3</A>) 
+defines the remote subprograms or remote access types used for remote 
+subprogram calls.&nbsp;</DIV>
+
+<H4 Class="centered">Legality Rules</H4>
+<DIV Class="paranum">8</DIV>
+<DIV Class="Normal">In a dispatching call with two or more controlling 
+operands, if one controlling operand is designated by a value of a remote 
+access-to-class-wide type, then all shall be.&nbsp;</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">9</DIV>
+<DIV Class="Normal"><A NAME="I7131"></A><A NAME="I7132"></A><A NAME="I7133"></A>For 
+the execution of a remote subprogram call, subprogram parameters (and 
+later the results, if any) are passed using a stream-oriented representation 
+(see <A HREF="RM-13-13-1.html">13.13.1</A>) which is suitable for transmission 
+between partitions. This action is called <I>marshalling</I>. <I>Unmarshalling</I> 
+is the reverse action of reconstructing the parameters or results from 
+the stream-oriented representation. Marshalling is performed initially 
+as part of the remote subprogram call in the calling partition; unmarshalling 
+is done in the called partition. After the remote subprogram completes, 
+marshalling is performed in the called partition, and finally unmarshalling 
+is done in the calling partition.</DIV>
+<DIV Class="paranum">10</DIV>
+<DIV Class="Normal"><A NAME="I7134"></A><A NAME="I7135"></A>A <I>calling 
+stub</I> is the sequence of code that replaces the subprogram body of 
+a remotely called subprogram in the calling partition. A <I>receiving 
+stub</I> is the sequence of code (the &ldquo;wrapper&rdquo;) that receives 
+a remote subprogram call on the called partition and invokes the appropriate 
+subprogram body.&nbsp;</DIV>
+<DIV Class="paranum">11</DIV>
+<DIV Class="Normal"><A NAME="I7136"></A>Remote subprogram calls are executed 
+at most once, that is, if the subprogram call returns normally, then 
+the called subprogram's body was executed exactly once.</DIV>
+<DIV Class="paranum">12</DIV>
+<DIV Class="Normal">The task executing a remote subprogram call blocks 
+until the subprogram in the called partition returns, unless the call 
+is asynchronous. For an asynchronous remote procedure call, the calling 
+task can become ready before the procedure in the called partition returns.</DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Normal"><A NAME="I7137"></A>If a construct containing a remote 
+call is aborted, the remote subprogram call is <I>cancelled</I>. Whether 
+the execution of the remote subprogram is immediately aborted as a result 
+of the cancellation is implementation defined.&nbsp;</DIV>
+<DIV Class="paranum">14</DIV>
+<DIV Class="Normal">If a remote subprogram call is received by a called 
+partition before the partition has completed its elaboration, the call 
+is kept pending until the called partition completes its elaboration 
+(unless the call is cancelled by the calling partition prior to that).</DIV>
+<DIV Class="paranum">15</DIV>
+<DIV Class="Normal">If an exception is propagated by a remotely called 
+subprogram, and the call is not an asynchronous call, the corresponding 
+exception is reraised at the point of the remote subprogram call. For 
+an asynchronous call, if the remote procedure call returns prior to the 
+completion of the remotely called subprogram, any exception is lost.</DIV>
+<DIV Class="paranum">16</DIV>
+<DIV Class="Normal">The exception Communication_Error (see <A HREF="RM-E-5.html">E.5</A>) 
+is raised if a remote call cannot be completed due to difficulties in 
+communicating with the called partition.</DIV>
+<DIV Class="paranum">17</DIV>
+<DIV Class="Normal"><A NAME="I7138"></A><A NAME="I7139"></A>All forms 
+of remote subprogram calls are potentially blocking operations (see <A HREF="RM-9-5-1.html">9.5.1</A>). 
+</DIV>
+<DIV Class="paranum">18/1</DIV>
+<DIV Class="Normal">&nbsp;<A NAME="I7140"></A><A NAME="I7141"></A>In a remote 
+subprogram call with a formal parameter of a class-wide type, a check 
+is made that the tag of the actual parameter identifies a tagged type 
+declared in a declared-pure or shared passive library unit, or in the 
+visible part of a remote types or remote call interface library unit. 
+<A NAME="I7142"></A>Program_Error is raised if this check fails. In a 
+remote function call which returns a class-wide type, the same check 
+is made on the function result.&nbsp;</DIV>
+<DIV Class="paranum">19</DIV>
+<DIV Class="Normal"><A NAME="I7143"></A><A NAME="I7144"></A>In a dispatching 
+call with two or more controlling operands that are designated by values 
+of a remote access-to-class-wide type, a check is made (in addition to 
+the normal Tag_Check &mdash; see <A HREF="RM-11-5.html">11.5</A>) that 
+all the remote access-to-class-wide values originated from Access <SPAN Class="swiss"><A HREF="RM-4-1-4.html#S0100">attribute_reference</A></SPAN>s 
+that were evaluated by tasks of the same active partition. <A NAME="I7145"></A>Constraint_Error 
+is raised if this check fails.&nbsp;</DIV>
+
+<H4 Class="centered">Implementation Requirements</H4>
+<DIV Class="paranum">20</DIV>
+<DIV Class="Normal">The implementation of remote subprogram calls shall 
+conform to the PCS interface as defined by the specification of the language-defined 
+package System.RPC (see <A HREF="RM-E-5.html">E.5</A>). The calling stub 
+shall use the Do_RPC procedure unless the remote procedure call is asynchronous 
+in which case Do_APC shall be used. On the receiving side, the corresponding 
+receiving stub shall be invoked by the RPC-receiver.&nbsp;</DIV>
+<DIV Class="paranum">20.1/1</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;With respect to shared variables in shared passive 
+library units, the execution of the corresponding subprogram body of 
+a synchronous remote procedure call is considered to be part of the execution 
+of the calling task. The execution of the corresponding subprogram body 
+of an asynchronous remote procedure call proceeds in parallel with the 
+calling task and does not signal the next action of the calling task 
+(see <A HREF="RM-9-10.html">9.10</A>).&nbsp;</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">21</DIV>
+<DIV Class="Notes">6&nbsp;&nbsp;A given active partition can both make 
+and receive remote subprogram calls. Thus, an active partition can act 
+as both a client and a server.</DIV>
+<DIV Class="paranum">22</DIV>
+<DIV Class="Notes">7&nbsp;&nbsp;If a given exception is propagated by 
+a remote subprogram call, but the exception does not exist in the calling 
+partition, the exception can be handled by an <B>others</B> choice or 
+be propagated to and handled by a third partition.&nbsp;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-E-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-E-4-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

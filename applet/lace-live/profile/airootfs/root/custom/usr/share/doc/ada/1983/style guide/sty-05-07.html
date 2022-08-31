@@ -1,0 +1,270 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 5.7: Visibility
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://www.software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 5: Programming Practices</H2>
+
+<H3><a name="5.7">5.7     Visibility</a></H3>
+As noted in <a href="sty-04-02.html#4.2">Guideline 4.2</a>, Ada's ability to enforce information hiding and  
+separation of concerns through its visibility controlling features is one of  
+the most important advantages of the language. Subverting these features, for  
+example by over liberal use of the use clause, is wasteful and dangerous. <P>
+<b>Language Ref Manual references:</b> 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08.html#8">8&nbsp;Visibility Rules</A>
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><br>
+<a href="#5.7.1">5.7.1   The Use Clause</a><BR>
+<a href="#5.7.2">5.7.2   The Renames Clause</a><BR>
+<a href="#5.7.3">5.7.3   Overloaded Subprograms</a><BR>
+<a href="#5.7.4">5.7.4   Overloaded Operators</a><BR>
+<a href="#5.7.5">5.7.5   Overloading the Equality Operator</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-05-10.html#5.10.7"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="5.7.1">5.7.1   The Use Clause</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Minimize using the use clause (Nissen and Wallis 1984). 
+<li>Consider using the use clause in the following situations: 
+<UL TYPE=square>
+<li>Infix operators are needed 
+<li>Standard packages are needed and no ambiguous references are introduced 
+<li>References to enumeration literals are needed 
+</UL>
+<li>Consider the renames clause to avoid the use clause. 
+<li>Localize the effect of all use clauses. 
+</UL>
+
+<H4>example</H4>
+This is a modification of the example from <a href="sty-04-02.html#4.2.3">Guideline 4.2.3</a>. The effect of a use  
+clause is localized.
+<table border cellpadding=6><tr><td><pre>... 
+procedure Compiler is
+
+   ... 
+   package Listing_Facilities is 
+   end Listing_Facilities;
+   
+   ... 
+   package body Listing_Facilities is separate;
+   
+   ... 
+end Compiler;
+
+------------------------------------------------------------------------ 
+with Text_IO;
+
+separate (Compiler) 
+package body Listing_Facilities is
+
+   ...
+   
+   --------------------------------------------------------------------- 
+   procedure New_Line_Of_Print is 
+      use Text_IO; 
+   begin 
+      ... 
+   end New_Line_Of_Print;
+   
+   ... 
+end Listing_Facilities;</pre></td></tr></table>
+
+<H4>rationale</H4>
+These guidelines allow you to maintain a careful balance between 
+maintainability and readability.  Excessive use of the use clause may indeed 
+make the code read more like prose text.  However, the maintainer may also 
+need to resolve references and identify ambiguous operations.  In the absence 
+of tools to resolve these references and identify the impact of changing use 
+clauses, fully qualified names are the best alternative.<P>
+Avoiding the use clause forces you to use fully qualified names. In large  
+systems, there may be many library units named in with clauses. When  
+corresponding use clauses accompany the with clauses and the simple names of  
+the library packages are omitted (as is allowed by the use clause), references  
+to external entities are obscured and identification of external dependencies  
+becomes difficult. <P>
+In some situations, the benefits of the use clause are clear.  The use clause 
+can make several infix operators visible without the need for renames clauses. 
+A standard package can be used with the obvious assumption that the reader is 
+very familiar with those packages and that additional overloading will not be 
+introduced.<P>
+You can minimize the scope of the use clause by placing it in the body of a  
+package or subprogram or by encapsulating it in a block to restrict visibility.
+
+<H4>notes</H4>
+Avoiding the use clause completely can cause problems with enumeration  
+literals, which must then be fully qualified. This problem can be solved by  
+declaring constants with the enumeration literals as their values, except that  
+such constants cannot be overloaded like enumeration literals.<P>
+An argument defending the use clause can be found in Rosen (1987).
+
+<H4>automation note</H4>
+There are tools that can analyze your Ada source code, resolve overloading of  
+names, and automatically convert between the use clause or fully qualified  
+names.<P>
+<b>Language Ref Manual references:</b> 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.1">3.5.1&nbsp;Enumeration Types</A>, 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5">4.5&nbsp;Operators and Expression Evaluation</A>, 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-03.html#8.3">8.3&nbsp;Visibility</A>, 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-04.html#8.4">8.4&nbsp;Use Clauses</A>, 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-05.html#8.5">8.5&nbsp;Renaming Declarations</A>, 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-C.html#C">C&nbsp;Predefined Language Environment</A>
+
+
+<H3><BR><a name="5.7.2">5.7.2   The Renames Clause</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Rename a long, fully qualified name to reduce the complexity if it  
+becomes unwieldy (<a href="sty-03-01.html#3.1.4">Guideline 3.1.4</a>). 
+<li>Rename declarations for visibility purposes rather than using the use  
+clause, especially for infix operators (<a href="#5.7.1">Guideline 5.7.1</a>). 
+<li>	Rename parts when interfacing to reusable components originally 
+written with nondescriptive or inapplicable nomenclature. 
+<li>Use a project-wide standard list of abbreviations to rename common 
+packages. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>procedure Disk_Write (Track_Name : in     Track; 
+		      Item       : in     Data) renames 
+   System_Specific.Device_Drivers.Disk_Head_Scheduler.Transmit;</pre></td></tr></table>
+
+<H4>rationale</H4>
+If the renaming facility is abused, the code can be difficult to read. A 
+renames clause can substitute an abbreviation for a qualifier or long package 
+name locally. This can make code more readable yet anchor the code to the full 
+name. However, the use of renames clauses can often be avoided or made 
+obviously undesirable by carefully choosing names so that fully qualified 
+names read well. The list of renaming declarations serves as a list of 
+abbreviation definitions (see Guideline ). By renaming imported infix 
+operators, the use clause can often be avoided. The method prescribed in the 
+Ada Language Reference Manual (Department of Defense 1983) for renaming a type 
+is to use a subtype (see Guideline ). Often the parts recalled from a reuse 
+library do not have names that are as general as they could be or that match 
+the new application's naming scheme. An interface package exporting the 
+renamed subprograms can map to your project's nomenclature.<P>
+<b>Language Ref Manual references:</b> 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-03.html#3.3.2">3.3.2&nbsp;Subtype Declarations</A>, 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5">4.5&nbsp;Operators and Expression Evaluation</A>, 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-04.html#8.4">8.4&nbsp;Use Clauses</A>, 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-05.html#8.5">8.5&nbsp;Renaming Declarations</A>
+
+
+<H3><BR><a name="5.7.3">5.7.3   Overloaded Subprograms</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Limit overloading to widely used subprograms that perform similar  
+actions on arguments of different types (Nissen and Wallis 1984). 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>function Sin (Angles : in     Matrix_Of_Radians) return Matrix; 
+function Sin (Angles : in     Vector_Of_Radians) return Vector; 
+function Sin (Angle  : in     Radians)           return Small_Real; 
+function Sin (Angle  : in     Degrees)           return Small_Real;</pre></td></tr></table>
+
+<H4>rationale</H4>
+Excessive overloading can be confusing to maintainers (Nissen and Wallis 1984, 
+65). There is also the danger of hiding declarations if overloading becomes 
+habitual.  Attempts to overload an operation may actually hide the original 
+operation if the parameter profile is not distinct.  From that point on, it is 
+not clear whether invoking the new operation is what the programmer intended 
+or whether the programmer intended to invoke the hidden operation and 
+accidentally hid it.
+
+<H4>note</H4>
+This guideline does not prohibit subprograms with identical names declared in  
+different packages.<P>
+<b>Language Ref Manual references:</b> 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-06.html#6.6">6.6&nbsp;Parameter and Result Type Profile - Overloading of Subprograms</A>, 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-03.html#8.3">8.3&nbsp;Visibility</A>
+
+
+<H3><BR><a name="5.7.4">5.7.4   Overloaded Operators</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Preserve the conventional meaning of overloaded operators (Nissen and  
+Wallis 1984). 
+<li>Use &quot;<CODE>+</CODE>&quot; to identify adding, joining, increasing, and enhancing kinds of functions.  
+<li>Use &quot;<CODE>-</CODE>&quot; to identify subtraction, separation, decreasing, and depleting kinds of functions. 
+</UL>
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>function &quot;+&quot; (X : in     Matrix; 
+	      Y : in     Matrix) 
+      return Matrix;
+      
+... 
+Sum := A + B;</pre></td></tr></table>
+
+<H4>rationale</H4>
+Subverting the conventional interpretation of operators leads to confusing  
+code.
+
+<H4>note</H4>
+There are potential problems with any overloading. For example, if there are  
+several versions of the &quot;<CODE>+</CODE>&quot; operator, and a change to one of them affects the 
+number or order of its parameters, locating the occurrences that must be  
+changed can be difficult.<P>
+<b>Language Ref Manual references:</b> 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5">4.5&nbsp;Operators and Expression Evaluation</A>, 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5.3">4.5.3&nbsp;Binary Adding Operators</A>
+
+
+<H3><BR><a name="5.7.5">5.7.5   Overloading the Equality Operator</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Do not depend on the definition of equality provided by private types. 
+<li>When overloading the equality operator for limited private types,  
+maintain the properties of an algebraic equivalence relation. 
+</UL>
+
+<H4>rationale</H4>
+The predefined equality operation provided with private types is dependent on 
+the data structure chosen to implement that type.  If access types are used, 
+then equality will mean the operands have the same pointer value.  If discrete 
+types are used, then equality will mean the operands have the same value.  If 
+a floating point type is used, then equality is based on Ada model intervals 
+(see <a href="sty-07-02.html#7.2.8">Guideline 7.2.8</a>.).<P>
+Any assumptions about the meaning of equality for private types will create a  
+dependency on the implementation of that type.  See Gonzalez (1992) for a  
+detailed discussion.<P>
+For limited private types, the definition of &quot;<CODE>=</CODE>&quot; is optional.  When provided,  
+however, there is a conventional algebraic meaning implied by this symbol.  As  
+described in Baker (1991), the following properties should remain true for the  
+equality operator:
+
+<table><tr><td><IMG SRC="indent.gif"><CODE>-</CODE><IMG SRC="indent.gif">reflexive:</td><td><CODE>a = a</CODE></td></tr>
+<tr><td><IMG SRC="indent.gif"><CODE>-</CODE><IMG SRC="indent.gif">symmetric:</td><td><CODE>a = b ==> b = a</CODE></td></tr>
+<tr><td><IMG SRC="indent.gif"><CODE>-</CODE><IMG SRC="indent.gif">transitive:</td><td><CODE>a = b and b = c  ==> a = c</CODE></td></tr>
+</table>
+<b>Language Ref Manual references:</b> 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5.2">4.5.2&nbsp;Relational Operators and Membership Tests</A>, 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-07.html#6.7">6.7&nbsp;Overloading of Operators</A>, 
+	<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-04.html#7.4.4">7.4.4&nbsp;Limited Types</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

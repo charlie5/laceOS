@@ -1,0 +1,221 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 15.6: Configuration Specification and Environment Enquiries</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 15: Representation Clauses and Machine Dependences</H2>
+
+<H3><a name="15.6">15.6 Configuration Specification and Environment Enquiries</a></H3>
+
+To generate  object code,  some machine-  and  configuration-dependent
+properties such  as  the  machine  model,  memory  size,  and  special
+hardware  options  must  be  available  to  the  compiler.  Hence  the
+specification of  configuration-dependent features  must be  possible.
+Typical uses  of such  information are for the detection of exhaustion
+of  various   resources,  and   the  generation   of   special-purpose
+instructions for the target machine.
+<p>
+Conversely, programs  may need  to access information that is known to
+the compiler.  There are  many uses for such information. A user-level
+input-output  subprogram  may  need  to  invoke  different  algorithms
+depending on the object machine configuration (with the discrimination
+being made  at compilation  time); similarly,  it may need to know the
+size of  the storage  unit for the object machine, and the size of the
+objects transferred.
+<p>
+The approach used in Ada is to group such system-dependent information
+in a  package called SYSTEM and to provide certain specific pragmas to
+establish certain  characteristics that  may  vary  between  different
+configurations of the system considered.
+
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#15.6.1">15.6.1 The Package SYSTEM</a><BR>
+<a href="#15.6.2">15.6.2 Pragmas for Configuration Specification</a><BR>
+<a href="#15.6.3">15.6.3 Representation Attributes</a><BR>
+<a href="#15.6.4">15.6.4 Configuration Specification and Conditional Compilation</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="15.6.1">15.6.1 The Package SYSTEM</a></H3>
+
+The  package   SYSTEM  includes  the  definition  of  system-dependent
+information. At  the minimum  it will  include what  is shown  in  the
+skeleton given below:
+<p>
+<table border cellpadding=6><tr><td><pre>
+package SYSTEM is
+  type ADDRESS   is implementation_defined;
+  type NAME      is implementation_defined_enumeration_type;
+
+  SYSTEM_NAME    :  constant NAME :=  implementation_defined;
+
+  STORAGE_UNIT   :  constant :=  implementation_defined;
+  MEMORY_SIZE    :  constant :=  implementation_defined;
+
+  -- System-Dependent Named Numbers:
+
+  MIN_INT        :  constant :=  implementation_defined;
+  MAX_INT        :  constant :=  implementation_defined;
+  MAX_DIGITS     :  constant :=  implementation_defined;
+  MAX_MANTISSA   :  constant :=  implementation_defined;
+  FINE_DELTA     :  constant :=  implementation_defined;
+  TICK           :  constant :=  implementation_defined;
+
+  -- Other System-Dependent Declarations
+
+  subtype PRIORITY is INTEGER range implementation_defined;
+
+  ...
+end SYSTEM;
+</pre></td></tr></table>
+<p>
+The  type   ADDRESS  defines   what  addresses  are,  on  the  machine
+considered: on  some machines  it will  be an  integer type,  on  some
+others an  arbitrary record type. The type NAME is an enumeration type
+that defines  names of  alternative machine  configurations  that  are
+handled by the system. For example we could have:
+<p>
+<PRE>    type NAME is (MODEL_20, MODEL_40, MODEL_45, MODEL_70);</PRE>
+<p>
+As this  example suggests,  these possible  variations are  meaningful
+when dealing  with variations of a machine that all have the same type
+ADDRESS. Although  nothing forbids it, it would not make much sense to
+have a type such as
+<p>
+<PRE>    type NAME is (VAX_11, IBM_370, APPLE_II);</PRE>
+<p>
+since the  other quantities defined in the package SYSTEM are unlikely
+to be  the same  for these  alternative  machines.  For  example,  the
+following constants are defined in the package:
+<ul>
+<li>SYSTEM_NAME: the name of the current configuration.
+<p>
+<li>STORAGE_UNIT: the number of bits per storage unit:
+<p>
+<li>MEMORY_SIZE: the number of storage units in the configuration.
+</ul>
+
+It is  a consequence  of the visibility rules that a declaration given
+in the  (library) package  SYSTEM can be made visible within a program
+unit that has a with clause that mentions SYSTEM. For example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+with SYSTEM;
+procedure SPECIAL_APPLICATION is
+  ...
+  SIZE :  constant :=  SYSTEM.MEMORY_SIZE;
+  ...
+end;
+</pre></td></tr></table>
+<p>
+The fact  that SYSTEM  needs to  be  mentioned  in  the  above  manner
+provides an  easy way  of finding  out which program units make direct
+use of system-dependent properties.
+
+<H3><BR><a name="15.6.2">15.6.2 Pragmas for Configuration Specification</a></H3>
+
+A particular  configuration of  the package  SYSTEM,  with  a  certain
+configuration  name,  storage  unit  size,  and  memory  size  can  be
+specified by means of corresponding pragmas. For example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+pragma SYSTEM_NAME(MODEL_45);
+pragma STORAGE_UNIT(8);     -- 8 bits
+pragma MEMORY_SIZE(2#1#E18);    -- 256 kbytes
+</pre></td></tr></table>
+<p>
+This has the effect of establishing the corresponding constants:
+<p>
+<table border cellpadding=6><tr><td><pre>
+SYSTEM.SYSTEM_NAME   = MODEL_45
+SYSTEM.STORAGE_UNIT  = 8
+SYSTEM.MEMORY_SIZE   = 262_144
+</pre></td></tr></table>
+
+<H3><BR><a name="15.6.3">15.6.3 Representation Attributes</a></H3>
+
+Representation attributes  provide an  environment  enquiry  mechanism
+that can  be used to obtain information that is known by the compiler;
+for example  to obtain the address of an object, subprogram, or entry,
+the position  of record  components, or the size of objects of a given
+type.
+<p>
+As mentioned in the section on lexical issues, an attribute designator
+is always preceded by an apostrophe. The corresponding identifiers are
+consequently not reserved. Some typical examples are given below.
+<p>
+<table border cellpadding=6><tr><td><pre>
+OLD_PSW'ADDRESS   -- the address in storage units of OLD_PSW
+X.MASK'POSITION   -- the starting position of the component MASK in X
+X.MASK'FIRST_BIT  -- the position of the first bit of MASK
+X.MASK'LAST_BIT   -- the position of the last bit of MASK
+INTEGER'SIZE      -- the implemented size of INTEGER in bits
+</pre></td></tr></table>
+
+<H3><BR><a name="15.6.4">15.6.4 Configuration Specification and Conditional Compilation</a></H3>
+
+Sometimes it  is desirable  to write  and compile  a program  in which
+portions vary  according to  the object  machine  configuration.  Such
+conditional compilation can be achieved by conditional statements that
+select from alternative program fragments. For example, a program that
+provides different  algorithms for  different systems  may  appear  as
+follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+pragma SYSTEM_NAME(MODEL_45);
+...
+case SYSTEM.SYSTEM_NAME is
+  when MODEL_45 | MODEL_70 =&gt;
+    ...
+    -- part specific to models with full floating-point support
+
+  when MODEL_40 =&gt;
+    ...
+    -- part specific to models with some floating-point support
+
+  when MODEL_20 =&gt;
+    ...
+    -- part specific to models without floating-point support
+end case;
+</pre></td></tr></table>
+<p>
+The system  name established  by the  pragma is  known at  compilation
+time, and  the  compiler  is  therefore  able  to  optimize  the  case
+statement and  generate only  the code that corresponds to the current
+system name. Thus the program can be tailored to a given machine.
+<p>
+This conditional  compilation facility  is  somewhat  primitive.  More
+powerful mechanisms  for conditional  compilation  are  likely  to  be
+provided by the support environments built around the Ada language.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-15-07.html#15.7"><b>NEXT</b></a>
+&#128; <a href="ratl-15-05.html#15.5"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-15.html#15"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>

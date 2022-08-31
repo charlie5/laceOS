@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Program Structure and Compilation Issues</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 6.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><B><SPAN Style="font-size:200%; color: rgb(0,51,153)">Annotated</SPAN><SPAN Style="font-size:200%; color: rgb(0,0,102)">&nbsp;Ada Reference Manual</SPAN></B> &mdash; <A HREF="AA-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-9-11.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-10-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>Section 10: Program Structure and Compilation Issues</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal">[The overall structure of programs and the facilities 
+for separate compilation are described in this section. A <I>program</I> 
+is a set of <I>partitions</I>, each of which may execute in a separate 
+address space, possibly on a separate computer.&nbsp;</DIV>
+<DIV Class="paranum">1.a</DIV>
+<DIV Class="Annotations"><B>Glossary entry:&nbsp;</B>{<I>Program</I>} A <I>program</I> 
+is a set of <I>partitions</I>, each of which may execute in a separate 
+address space, possibly on a separate computer. A partition consists 
+of a set of library units.</DIV>
+<DIV Class="paranum">1.b</DIV>
+<DIV Class="Annotations"><B>Glossary entry:&nbsp;</B>{<I>Partition</I>} A 
+<I>partition</I> is a part of a program. Each partition consists of a 
+set of library units. Each partition may run in a separate address space, 
+possibly on a separate computer. A program may contain just one partition. 
+A distributed program typically contains multiple partitions, which can 
+execute concurrently.</DIV>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>library unit (informal 
+introduction)</I>}</SPAN> <A NAME="I4290"></A><SPAN STYLE="font-size: 80%">{<I>library_item 
+(informal introduction)</I>}</SPAN> <A NAME="I4291"></A><SPAN STYLE="font-size: 80%">{<I>library 
+(informal introduction)</I>}</SPAN> <A NAME="I4292"></A>As explained 
+below, a partition is constructed from <I>library units</I>. Syntactically, 
+the declaration of a library unit is a <SPAN Class="swiss"><A HREF="AA-10-1-1.html#S0230">library_item</A></SPAN>, 
+as is the body of a library unit. An implementation may support a concept 
+of a <I>program library</I> (or simply, a &ldquo;library&rdquo;), which 
+contains <SPAN Class="swiss"><A HREF="AA-10-1-1.html#S0230">library_item</A></SPAN>s 
+and their subunits. <SPAN STYLE="font-size: 80%">{<I>program library: 
+See library</I>}</SPAN> <A NAME="I4293"></A>Library units may be organized 
+into a hierarchy of children, grandchildren, and so on.]</DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Normal">This section has two clauses: <A HREF="AA-10-1.html">10.1</A>, 
+&ldquo;<A HREF="AA-10-1.html">Separate Compilation</A>&rdquo; discusses 
+compile-time issues related to separate compilation. <A HREF="AA-10-2.html">10.2</A>, 
+&ldquo;<A HREF="AA-10-2.html">Program Execution</A>&rdquo; discusses 
+issues related to what is traditionally known as &ldquo;link time&rdquo; 
+and &ldquo;run time&rdquo; &mdash; building and executing partitions.</DIV>
+
+<H4 Class="centered">Language Design Principles</H4>
+<DIV Class="paranum">3.a</DIV>
+<DIV Class="Annotations">{<I>avoid overspecifying environmental issues</I>} 
+<A NAME="I4294"></A>We should avoid specifying details that are outside 
+the domain of the language itself. The standard is intended (at least 
+in part) to promote portability of Ada programs at the source level. 
+It is not intended to standardize extra-language issues such as how one 
+invokes the compiler (or other tools), how one's source is represented 
+and organized, version management, the format of error messages, etc.</DIV>
+<DIV Class="paranum">3.b</DIV>
+<DIV Class="Annotations">{<I>safe separate compilation</I>} <A NAME="I4295"></A>{<I>separate 
+compilation (safe)</I>} <A NAME="I4296"></A>The rules of the language 
+should be enforced even in the presence of separate compilation. Using 
+separate compilation should not make a program less safe.</DIV>
+<DIV Class="paranum">3.c</DIV>
+<DIV Class="Annotations">{<I>legality determinable via semantic dependences</I>} 
+<A NAME="I4297"></A>It should be possible to determine the legality of 
+a compilation unit by looking only at the compilation unit itself and 
+the compilation units upon which it depends semantically. As an example, 
+it should be possible to analyze the legality of two compilation units 
+in parallel if they do not depend semantically upon each other.</DIV>
+<DIV Class="paranum">3.d</DIV>
+<DIV Class="Annotations">On the other hand, it may be necessary to look 
+outside that set in order to generate code &mdash; this is generally 
+true for generic instantiation and inlining, for example. Also on the 
+other hand, it is generally necessary to look outside that set in order 
+to check Post-Compilation Rules.</DIV>
+<DIV Class="paranum">3.e</DIV>
+<DIV Class="Annotations">See also the &ldquo;generic contract model&rdquo; 
+Language Design Principle of <A HREF="AA-12-3.html">12.3</A>, &ldquo;<A HREF="AA-12-3.html">Generic 
+Instantiation</A>&rdquo;.&nbsp;</DIV>
+
+<H4 Class="centered">Wording Changes from Ada 83</H4>
+<DIV Class="paranum">3.f</DIV>
+<DIV Class="Annotations">The section organization mentioned above is 
+different from that of RM83.&nbsp;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-9-11.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-10-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="font-size: 125%">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

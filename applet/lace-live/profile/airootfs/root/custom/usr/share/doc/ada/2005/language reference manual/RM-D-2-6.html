@@ -1,0 +1,229 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Earliest Deadline First Dispatching</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.SyntaxIndented {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-bottom: 0.4em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-2-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>D.2.6 Earliest Deadline First Dispatching</H1>
+<DIV Class="paranum">1/2</DIV>
+<DIV Class="Normal">The deadline of a task is an indication of the urgency 
+of the task; it represents a point on an ideal physical time line. The 
+deadline might affect how resources are allocated to the task.</DIV>
+<DIV Class="paranum">2/2</DIV>
+<DIV Class="Normal">This clause defines a package for representing the 
+deadline of a task and a dispatching policy that defines Earliest Deadline 
+First (EDF) dispatching. A pragma is defined to assign an initial deadline 
+to a task.</DIV>
+
+<H4 Class="centered">Syntax</H4>
+<DIV Class="paranum">3/2</DIV>
+<DIV Class="SyntaxIndented" Style="margin-bottom: 0.2em">The form of 
+a <SPAN Class="swiss"><A HREF="RM-2-8.html#S0019">pragma</A></SPAN> Relative_Deadline 
+is as follows:&nbsp;</DIV>
+<DIV Class="paranum">4/2</DIV>
+<DIV Class="SyntaxIndented">&nbsp;&nbsp;<B>pragma</B> <A NAME="I6849"></A><A NAME="I6850"></A>Relative_Deadline 
+(<I>relative_deadline_</I><A NAME="I6851"></A><SPAN Class="swiss"><A HREF="RM-4-4.html#S0115">expression</A></SPAN>);</DIV>
+
+<H4 Class="centered">Name Resolution Rules</H4>
+<DIV Class="paranum">5/2</DIV>
+<DIV Class="Normal">The expected type for <I>relative_deadline_</I><SPAN Class="swiss"><A HREF="RM-4-4.html#S0115">expression</A></SPAN> 
+is Real_Time.Time_Span.</DIV>
+
+<H4 Class="centered">Legality Rules</H4>
+<DIV Class="paranum">6/2</DIV>
+<DIV Class="Normal">A Relative_Deadline pragma is allowed only immediately 
+within a <SPAN Class="swiss"><A HREF="RM-9-1.html#S0190">task_definition</A></SPAN> 
+or the <SPAN Class="swiss"><A HREF="RM-3-11.html#S0086">declarative_part</A></SPAN> 
+of a <SPAN Class="swiss"><A HREF="RM-6-3.html#S0162">subprogram_body</A></SPAN>. 
+At most one such pragma shall appear within a given construct.</DIV>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">7/2</DIV>
+<DIV Class="Normal">The <I>policy_</I><SPAN Class="swiss"><A HREF="RM-2-3.html#S0002">identifier</A></SPAN> 
+EDF_Across_Priorities is a task dispatching policy.</DIV>
+<DIV Class="paranum">8/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The following language-defined 
+library package exists:&nbsp;</DIV>
+<DIV Class="paranum">9/2</DIV>
+<DIV Class="Examples"><B>with</B>&nbsp;Ada.Real_Time;<BR>
+<B>with</B>&nbsp;Ada.Task_Identification;<BR>
+<B>package</B>&nbsp;Ada.Dispatching.EDF&nbsp;<B>is</B><A NAME="I6852"></A><BR>
+&nbsp;&nbsp;<B>subtype</B>&nbsp;<A NAME="I6853"></A>Deadline&nbsp;<B>is</B>&nbsp;Ada.Real_Time.Time;<BR>
+&nbsp;&nbsp;<A NAME="I6854"></A>Default_Deadline&nbsp;:&nbsp;<B>constant</B>&nbsp;Deadline&nbsp;:=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ada.Real_Time.Time_Last;<BR>
+&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6855"></A>Set_Deadline&nbsp;(D&nbsp;:&nbsp;<B>in</B>&nbsp;Deadline;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T&nbsp;:&nbsp;<B>in</B>&nbsp;Ada.Task_Identification.Task_Id&nbsp;:=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ada.Task_Identification.Current_Task);<BR>
+&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6856"></A>Delay_Until_And_Set_Deadline&nbsp;(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Delay_Until_Time&nbsp;:&nbsp;<B>in</B>&nbsp;Ada.Real_Time.Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Deadline_Offset&nbsp;:&nbsp;<B>in</B>&nbsp;Ada.Real_Time.Time_Span);<BR>
+&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6857"></A>Get_Deadline&nbsp;(T&nbsp;:&nbsp;Ada.Task_Identification.Task_Id&nbsp;:=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ada.Task_Identification.Current_Task)&nbsp;<B>return</B>&nbsp;Deadline;<BR>
+<B>end</B>&nbsp;Ada.Dispatching.EDF;</DIV>
+
+<H4 Class="centered">Post-Compilation Rules</H4>
+<DIV Class="paranum">10/2</DIV>
+<DIV Class="Normal">&nbsp;If the EDF_Across_Priorities policy is specified 
+for a partition, then the Ceiling_Locking policy (see <A HREF="RM-D-3.html">D.3</A>) 
+shall also be specified for the partition.</DIV>
+<DIV Class="paranum">11/2</DIV>
+<DIV Class="Normal">&nbsp;If the EDF_Across_Priorities policy appears in a 
+Priority_Specific_Dispatching pragma (see <A HREF="RM-D-2-2.html">D.2.2</A>) 
+in a partition, then the Ceiling_Locking policy (see <A HREF="RM-D-3.html">D.3</A>) 
+shall also be specified for the partition.</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">12/2</DIV>
+<DIV Class="Normal">&nbsp;A Relative_Deadline pragma has no effect if it occurs 
+in the <SPAN Class="swiss"><A HREF="RM-3-11.html#S0086">declarative_part</A></SPAN> 
+of the <SPAN Class="swiss"><A HREF="RM-6-3.html#S0162">subprogram_body</A></SPAN> 
+of a subprogram other than the main subprogram.</DIV>
+<DIV Class="paranum">13/2</DIV>
+<DIV Class="Normal">&nbsp;The initial absolute deadline of a task containing 
+pragma Relative_Deadline is the value of Real_Time.Clock + <I>relative_deadline_</I><SPAN Class="swiss"><A HREF="RM-4-4.html#S0115">expression</A></SPAN>, 
+where the call of Real_Time.Clock is made between task creation and the 
+start of its activation. If there is no Relative_Deadline pragma then 
+the initial absolute deadline of a task is the value of Default_Deadline. 
+The environment task is also given an initial deadline by this rule.</DIV>
+<DIV Class="paranum">14/2</DIV>
+<DIV Class="Normal">&nbsp;The procedure Set_Deadline changes the absolute 
+deadline of the task to D. The function Get_Deadline returns the absolute 
+deadline of the task.</DIV>
+<DIV Class="paranum">15/2</DIV>
+<DIV Class="Normal">&nbsp;The procedure Delay_Until_And_Set_Deadline delays 
+the calling task until time Delay_Until_Time. When the task becomes runnable 
+again it will have deadline Delay_Until_Time + Deadline_Offset.</DIV>
+<DIV Class="paranum">16/2</DIV>
+<DIV Class="Normal">&nbsp;On a system with a single processor, the setting 
+of the deadline of a task to the new value occurs immediately at the 
+first point that is outside the execution of a protected action. If the 
+task is currently on a ready queue it is removed and re-entered on to 
+the ready queue determined by the rules defined below.</DIV>
+<DIV Class="paranum">17/2</DIV>
+<DIV Class="Normal">&nbsp;When EDF_Across_Priorities is specified for priority 
+range <I>Low</I>..<I>High</I> all ready queues in this range are ordered 
+by deadline. The task at the head of a queue is the one with the earliest 
+deadline.</DIV>
+<DIV Class="paranum">18/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;A task dispatching 
+point occurs for the currently running task <I>T</I> to which policy 
+EDF_Across_Priorities applies:</DIV>
+<DIV Class="paranum">19/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>when a change to the deadline of <I>T</I> 
+occurs;</LI></UL>
+<DIV Class="paranum">20/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>there is a task on the ready queue 
+for the active priority of <I>T</I> with a deadline earlier than the 
+deadline of <I>T</I>; or</LI></UL>
+<DIV Class="paranum">21/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>there is a non-empty ready queue for 
+that processor with a higher priority than the active priority of the 
+running task.</LI></UL>
+<DIV Class="paranum">22/2</DIV>
+<DIV Class="Normal">&nbsp;In these cases, the currently running task is said 
+to be preempted and is returned to the ready queue for its active priority.</DIV>
+<DIV Class="paranum">23/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;For a task <I>T</I> 
+to which policy EDF_Across_Priorities applies, the base priority is not 
+a source of priority inheritance; the active priority when first activated 
+or while it is blocked is defined as the maximum of the following:</DIV>
+<DIV Class="paranum">24/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>the lowest priority in the range specified 
+as EDF_Across_Priorities that includes the base priority of <I>T</I>;</LI></UL>
+<DIV Class="paranum">25/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>the priorities, if any, currently 
+inherited by <I>T</I>;</LI></UL>
+<DIV Class="paranum">26/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>the highest priority <I>P</I>, if 
+any, less than the base priority of <I>T</I> such that one or more tasks 
+are executing within a protected object with ceiling priority <I>P</I> 
+and task <I>T</I> has an earlier deadline than all such tasks.&nbsp;</LI></UL>
+<DIV Class="paranum">27/2</DIV>
+<DIV Class="Normal">&nbsp;When a task <I>T</I> is first activated or becomes 
+unblocked, it is added to the ready queue corresponding to this active 
+priority. Until it becomes blocked again, the active priority of <I>T</I> 
+remains no less than this value; it will exceed this value only while 
+it is inheriting a higher priority.</DIV>
+<DIV Class="paranum">28/2</DIV>
+<DIV Class="Normal">&nbsp;When the setting of the base priority of a ready 
+task takes effect and the new priority is in a range specified as EDF_Across_Priorities, 
+the task is added to the ready queue corresponding to its new active 
+priority, as determined above.</DIV>
+<DIV Class="paranum">29/2</DIV>
+<DIV Class="Normal">&nbsp;For all the operations defined in Dispatching.EDF, 
+Tasking_Error is raised if the task identified by T has terminated. Program_Error 
+is raised if the value of T is Null_Task_Id.</DIV>
+
+<H4 Class="centered">Bounded (Run-Time) Errors</H4>
+<DIV Class="paranum">30/2</DIV>
+<DIV Class="Normal">&nbsp;<A NAME="I6858"></A>If EDF_Across_Priorities is 
+specified for priority range <I>Low</I>..<I>High</I>, it is a bounded 
+error to declare a protected object with ceiling priority <I>Low</I> 
+or to assign the value <I>Low</I> to attribute 'Priority. In either case 
+either Program_Error is raised or the ceiling of the protected object 
+is assigned the value <I>Low</I>+1.</DIV>
+
+<H4 Class="centered">Erroneous Execution</H4>
+<DIV Class="paranum">31/2</DIV>
+<DIV Class="Normal">&nbsp;<A NAME="I6859"></A>If a value of Task_Id is passed 
+as a parameter to any of the subprograms of this package and the corresponding 
+task object no longer exists, the execution of the program is erroneous.</DIV>
+
+<H4 Class="centered">Documentation Requirements</H4>
+<DIV Class="paranum">32/2</DIV>
+<DIV Class="Normal">&nbsp;On a multiprocessor, the implementation shall document 
+any conditions that cause the completion of the setting of the deadline 
+of a task to be delayed later than what is specified for a single processor. 
+</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">33/2</DIV>
+<DIV Class="Notes">18&nbsp;&nbsp;If two adjacent priority ranges, <I>A</I>..<I>B</I> 
+and <I>B</I>+1..<I>C</I> are specified to have policy EDF_Across_Priorities 
+then this is not equivalent to this policy being specified for the single 
+range, <I>A</I>..<I>C</I>.</DIV>
+<DIV Class="paranum">34/2</DIV>
+<DIV Class="Notes">19&nbsp;&nbsp;The above rules implement the preemption-level 
+protocol (also called Stack Resource Policy protocol) for resource sharing 
+under EDF dispatching. The preemption-level for a task is denoted by 
+its base priority. The definition of a ceiling preemption-level for a 
+protected object follows the existing rules for ceiling locking.</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-2-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

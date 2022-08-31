@@ -1,0 +1,1433 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 14.3: Text Input-Output</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="14.3">14.3</A>.  Text Input-Output  </H2>
+<A HREF="lrm-14-02.html#14.2"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-14.html#14"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-14-04.html#14.4"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+This  section  describes the package TEXT_IO, which provides facilities for
+input and output in human-readable form.  Each  file  is  read  or  written
+sequentially,  as  a  sequence  of  characters grouped into lines, and as a
+sequence of lines grouped into pages.  The specification of the package  is
+given below in section <a href="#14.3.10">14.3.10</a>.    
+<P>
+The  facilities  for  file  management  given above, in sections <a href="lrm-14-02.html#14.2.1">14.2.1</a> and
+<a href="lrm-14-02.html#14.2.2">14.2.2</a>, are available for text input-output.  In place of READ  and  WRITE,
+however,  there  are  procedures  GET and PUT that input values of suitable
+types from text files,  and  output  values  to  them.   These  values  are
+provided  to  the  PUT procedures, and returned by the GET procedures, in a
+parameter ITEM.  Several overloaded procedures of these  names  exist,  for
+different  types of ITEM.  These GET procedures analyze the input sequences
+of  characters  as  lexical  elements  (see  Chapter  2)  and  return   the   
+corresponding  values;   the  PUT  procedures  output  the  given values as
+appropriate lexical elements.  Procedures GET and PUT  are  also  available
+that  input  and  output  individual characters treated as character values
+rather than as lexical elements.                                                  
+<P>
+In addition to the procedures GET and PUT for numeric and enumeration types
+of ITEM that operate on text files, analogous procedures are provided  that
+read  from  and  write  to  a  parameter  of type STRING.  These procedures
+perform the same analysis and composition of character sequences  as  their
+counterparts which have a file parameter. 
+<P>
+For  all  GET  and  PUT procedures that operate on text files, and for many
+other subprograms, there are forms with and without a file parameter.  Each
+such GET procedure operates on an input file, and each such  PUT  procedure
+operates  on an output file.  If no file is specified, a default input file
+or a default output file is used. 
+<P>
+At the beginning of program execution the default input  and  output  files
+are  the  so-called  standard  input  file and standard output file.  These
+files are open, have respectively the current modes IN_FILE  and  OUT_FILE,
+and   are   associated  with  two  implementation-defined  external  files.
+Procedures are provided to change the current default input  file  and  the
+current default output file. 
+<P>
+From a logical point of view, a text file is a sequence of pages, a page is
+a  sequence of lines, and a line is a sequence of characters;  the end of a
+line is marked by a line terminator;  the end of a page is  marked  by  the
+combination of a line terminator immediately followed by a page terminator; 
+and  the  end  of  a file is marked by the combination of a line terminator
+immediately followed by a page  terminator  and  then  a  file  terminator.
+Terminators  are  generated  during  output;  either by calls of procedures
+provided expressly for that  purpose;   or  implicitly  as  part  of  other
+operations, for example, when a bounded line length, a bounded page length,
+or both, have been specified for a file. 
+<P>
+The  actual  nature of terminators is not defined by the language and hence
+depends on the implementation.   Although  terminators  are  recognized  or
+generated   by  certain  of  the  procedures  that  follow,  they  are  not
+necessarily implemented  as  characters  or  as  sequences  of  characters.
+Whether  they  are  characters  (and  if  so  which ones) in any particular
+implementation need not concern a user who neither explicitly  outputs  nor
+explicitly  inputs  control  characters.   The effect of input or output of
+control characters (other than horizontal tabulation) is not defined by the
+language. 
+<P>
+The characters of a line are numbered, starting from one;  the number of  a
+character  is  called  its  column number.  For a line terminator, a column
+number is also defined:  it is one more than the number  of  characters  in
+the  line.   The  lines  of  a page, and the pages of a file, are similarly
+numbered.  The current column number is  the  column  number  of  the  next
+character or line terminator to be transferred.  The current line number is
+the  number  of the current line.  The current page number is the number of
+the current page.  These numbers are values of the  subtype  POSITIVE_COUNT
+of  the type COUNT (by convention, the value zero of the type COUNT is used
+to indicate special conditions). 
+<pre>
+    type COUNT is range 0 .. implementation_defined;
+    subtype POSITIVE_COUNT is COUNT range 1 .. COUNT'LAST;    
+</pre>
+<P>
+For an output file, a maximum line length can be specified  and  a  maximum
+page  length  can  be specified.  If a value to be output cannot fit on the
+current line, for a specified maximum line  length,  then  a  new  line  is
+automatically  started  before  the value is output;  if, further, this new
+line cannot fit on the current page, for a specified maximum  page  length,
+then  a  new  page  is  automatically  started  before the value is output.
+Functions are provided to determine the maximum line length and the maximum
+page length.  When a file is opened with mode  OUT_FILE,  both  values  are
+zero:  by convention, this means that the line lengths and page lengths are
+unbounded.   (Consequently,  output  consists  of  a  single  line  if  the
+subprograms for explicit control of line and page structure are not  used.)
+The constant UNBOUNDED is provided for this purpose. 
+<P>
+<b>References:</b>  <A HREF="#14.3.10">count type</A>,
+<A HREF="#14.3.2">default current input file</A>,
+<A HREF="#14.3.2">default current  output  file</A>,
+<A HREF="lrm-14-01.html#14.1">external file</A>,
+<A HREF="lrm-14-01.html#14.1">file</A>,
+<A HREF="#14.3.5">get procedure</A>,
+<A HREF="lrm-14-01.html#14.1">in_file</A>,
+<A HREF="lrm-14-01.html#14.1">out_file</A>,
+<A HREF="#14.3.5">put  procedure</A>,
+<A HREF="lrm-14-02.html#14.2.2">read</A>,
+<A HREF="lrm-14-01.html#14.1">sequential  access</A>,
+<A HREF="#14.3.2">standard input file</A>,
+<A HREF="#14.3.2">standard output file</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-16-05.html#16.5">16.5&nbsp;Text Files</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-16-05.html#16.5.1">16.5.1&nbsp;Overloading PUT and GET</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-16-05.html#16.5.2">16.5.2&nbsp;Generic Treatment of Numeric and Enumeration Types</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-16-05.html#16.5.3">16.5.3&nbsp;Use of Default Parameters for Formatting</a>
+<p>
+
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-04-02.html#4.2.2">4.2.2&nbsp;Nested Packages</a>
+<p>
+
+<b>Sub-topics:</b>
+<ul>
+<li><A HREF="#14.3.1">14.3.1</A> File Management  
+<li><A HREF="#14.3.2">14.3.2</A> Default Input and Output Files  
+<li><A HREF="#14.3.3">14.3.3</A> Specification of Line and Page Lengths  
+<li><A HREF="#14.3.4">14.3.4</A> Operations on Columns, Lines, and Pages  
+<li><A HREF="#14.3.5">14.3.5</A> Get and Put Procedures  
+<li><A HREF="#14.3.6">14.3.6</A> Input-Output of Characters and Strings  
+<li><A HREF="#14.3.7">14.3.7</A> Input-Output for Integer Types  
+<li><A HREF="#14.3.8">14.3.8</A> Input-Output for Real Types  
+<li><A HREF="#14.3.9">14.3.9</A> Input-Output for Enumeration Types  
+<li><A HREF="#14.3.10">14.3.10</A> Specification of the Package Text_IO   
+</ul>
+
+<H3><A NAME="14.3.1">14.3.1</A>.  File Management  </H3>
+<A HREF="#14.3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#14.3.2"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The only allowed file modes for  text  files  are  the  modes  IN_FILE  and
+OUT_FILE.   The  subprograms  given  in  section  <a href="lrm-14-02.html#14.2.1">14.2.1</a> for the control of
+external files, and the function END_OF_FILE given in  section  <a href="lrm-14-02.html#14.2.2">14.2.2</a>  for
+sequential  input-output, are also available for text files.  There is also
+a version of END_OF_FILE that refers to the  current  default  input  file.
+For text files, the procedures have the following additional effects:  
+<ul>
+<li>For the procedures CREATE and OPEN:  After opening a  file  with  mode
+OUT_FILE, the page length and line length are unbounded (both have the
+conventional  value  zero).  After opening a file with mode IN_FILE or
+OUT_FILE, the current column, current line, and current  page  numbers
+are set to one.<br><br> 
+<li>For the procedure CLOSE:  If the file has the current  mode  OUT_FILE,
+has the effect of calling NEW_PAGE, unless the current page is already
+terminated; then outputs a file terminator.<br><br> 
+<li>For the procedure RESET:  If the file has the current  mode  OUT_FILE,
+has the effect of calling NEW_PAGE, unless the current page is already
+terminated;   then outputs a file terminator.  If the new file mode is
+OUT_FILE, the page and line lengths are unbounded.  For all modes, the
+current column, line, and page numbers are set to one. 
+</ul>
+<P>
+The exception MODE_ERROR is raised by the procedure RESET upon  an  attempt
+to change the mode of a file that is either the current default input file,
+or the current default output file. 
+<P>
+<b>References:</b>   <A HREF="lrm-14-02.html#14.2.1">create  procedure</A>,
+<A HREF="#14.3">current column number</A>,
+<A HREF="#14.3">current default input file</A>,
+<A HREF="#14.3">current line  number</A>,
+<A HREF="#14.3">current  page  number</A>,
+<A HREF="#14.3">end_of_file</A>,
+<A HREF="lrm-14-01.html#14.1">external file</A>,
+<A HREF="lrm-14-01.html#14.1">file</A>,
+<A HREF="lrm-14-01.html#14.1">file mode</A>,
+<A HREF="#14.3">file terminator</A>,
+<A HREF="lrm-14-01.html#14.1">in_file</A>,
+<A HREF="#14.3">line length</A>,
+<A HREF="lrm-14-04.html#14.4">mode_error exception</A>,
+<A HREF="lrm-14-02.html#14.2.1">open  procedure</A>,
+<A HREF="lrm-14-01.html#14.1">out_file</A>,
+<A HREF="#14.3">page length</A>,
+<A HREF="lrm-14-02.html#14.2.1">reset procedure</A>.
+<P>
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-07.html#7.7.2">7.7.2&nbsp;File Closing</a>
+
+<H3><A NAME="14.3.2">14.3.2</A>.  Default Input and Output Files  </H3>
+<A HREF="#14.3.1"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#14.3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#14.3.3"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The following subprograms provide for the control of the particular default
+files that are used when a file parameter is omitted from  a  GET,  PUT  or
+other operation of text input-output described below.  
+<pre>
+    procedure SET_INPUT(FILE : in FILE_TYPE); 
+
+          Operates  on  a  file  of mode IN_FILE.  Sets the current default
+          input file to FILE.    
+
+          The exception STATUS_ERROR is raised if the  given  file  is  not
+          open.   The  exception  MODE_ERROR  is  raised if the mode of the
+          given file is not IN_FILE.  
+
+    procedure SET_OUTPUT(FILE : in FILE_TYPE); 
+
+          Operates on a file of mode OUT_FILE.  Sets  the  current  default
+          output file to FILE.
+
+          The  exception  STATUS_ERROR  is  raised if the given file is not
+          open.  The exception MODE_ERROR is raised  if  the  mode  of  the
+          given file is not OUT_FILE.                                                
+
+    function STANDARD_INPUT return FILE_TYPE; 
+
+          Returns the standard input file (see <a href="#14.3">14.3</a>).  
+
+    function STANDARD_OUTPUT return FILE_TYPE; 
+
+          Returns the standard output file (see <a href="#14.3">14.3</a>).  
+
+    function CURRENT_INPUT return FILE_TYPE; 
+
+          Returns the current default input file.  
+
+    function CURRENT_OUTPUT return FILE_TYPE; 
+
+          Returns the current default output file.
+</pre>
+<P>
+Note: 
+<P>
+The  standard input and the standard output files cannot be opened, closed,
+reset,  or  deleted,  because  the  parameter  FILE  of  the  corresponding
+procedures has the mode in out. 
+<P>
+<b>References:</b>   <A HREF="#14.3">current default file</A>,
+<A HREF="#14.3">default file</A>,
+<A HREF="lrm-14-01.html#14.1">file_type</A>,
+<A HREF="#14.3.5">get procedure</A>,
+<A HREF="lrm-14-04.html#14.4">mode_error  exception</A>,
+<A HREF="#14.3.5">put  procedure</A>,
+<A HREF="lrm-14-04.html#14.4">status_error exception</A>.
+
+<H3><A NAME="14.3.3">14.3.3</A>.  Specification of Line and Page Lengths  </H3>
+<A HREF="#14.3.2"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#14.3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#14.3.4"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The  subprograms  described in this section are concerned with the line and
+page structure of a file of mode OUT_FILE.  They operate either on the file 
+given as the first parameter, or, in the absence of such a file  parameter,
+on the current default output file.  They provide for output of text with a
+specified  maximum  line  length  or page length.  In these cases, line and
+page terminators are output implicitly and automatically when needed.  When
+line  and  page  lengths  are  unbounded  (that  is,  when  they  have  the
+conventional  value zero), as in the case of a newly opened file, new lines
+and new pages are only started when explicitly called for. 
+<P>
+In all cases, the exception STATUS_ERROR is raised if the file to  be  used
+is  not open; the exception MODE_ERROR is raised if the mode of the file is
+not OUT_FILE.  
+<pre>
+    procedure SET_LINE_LENGTH(FILE : in FILE_TYPE; TO : in COUNT);
+    procedure SET_LINE_LENGTH(TO   : in COUNT);    
+
+          Sets the maximum line length of the specified output file to  the
+          number  of  characters  specified  by  TO.  The value zero for TO
+          specifies an unbounded line length. 
+
+          The exception USE_ERROR is raised if the specified line length is
+          inappropriate for the associated external file.                                                   
+
+    procedure SET_PAGE_LENGTH(FILE : in FILE_TYPE; TO : in COUNT);
+    procedure SET_PAGE_LENGTH(TO   : in COUNT); 
+
+          Sets the maximum page length of the specified output file to  the
+          number of lines specified by TO.  The value zero for TO specifies
+          an unbounded page length. 
+
+          The exception USE_ERROR is raised if the specified page length is
+          inappropriate for the associated external file.   
+
+    function LINE_LENGTH(FILE : in FILE_TYPE) return COUNT;
+    function LINE_LENGTH return COUNT; 
+
+          Returns  the  maximum line length currently set for the specified
+          output file, or zero if the line length is unbounded.  
+
+    function PAGE_LENGTH(FILE : in FILE_TYPE) return COUNT;
+    function PAGE_LENGTH return COUNT; 
+
+          Returns the maximum page length currently set for  the  specified
+          output file, or zero if the page length is unbounded.  
+</pre>
+<P>
+<b>References:</b>   <A HREF="#14.3">count  type</A>,
+<A HREF="#14.3">current default output file</A>,
+<A HREF="lrm-14-01.html#14.1">external file</A>,
+<A HREF="lrm-14-01.html#14.1">file</A>,
+<A HREF="lrm-14-01.html#14.1">file_type</A>,
+<A HREF="#14.3">line</A>,
+<A HREF="#14.3">line  length</A>,
+<A HREF="#14.3">line terminator</A>,
+<A HREF="#14.3">maximum  line  length</A>,
+<A HREF="#14.3">maximum  page length</A>,
+<A HREF="lrm-14-04.html#14.4">mode_error exception</A>,
+<A HREF="lrm-14-01.html#14.1">open file</A>,
+<A HREF="lrm-14-01.html#14.1">out_file</A>,
+<A HREF="#14.3">page</A>,
+<A HREF="#14.3">page length</A>,
+<A HREF="#14.3">page terminator</A>,
+<A HREF="lrm-14-04.html#14.4">status_error exception</A>,
+<A HREF="#14.3">unbounded page length</A>,
+<A HREF="lrm-14-04.html#14.4">use_error exception</A>.
+
+<H3><A NAME="14.3.4">14.3.4</A>.  Operations on Columns, Lines, and Pages  </H3>
+<A HREF="#14.3.3"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#14.3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#14.3.5"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The subprograms described in this section provide for explicit  control  of
+line  and  page  structure;   they  operate either on the file given as the
+first parameter, or, in the absence  of  such  a  file  parameter,  on  the
+appropriate   (input  or  output)  current  default  file.   The  exception
+STATUS_ERROR is raised by any of these subprograms if the file to  be  used
+is not open.  
+<pre>
+    procedure NEW_LINE(FILE : in FILE_TYPE; SPACING : in POSITIVE_COUNT := 1);
+    procedure NEW_LINE(SPACING : in POSITIVE_COUNT := 1); 
+
+          Operates on a file of mode OUT_FILE. 
+
+          For  a  SPACING  of  one:  Outputs a line terminator and sets the
+          current column number to one.  Then increments the  current  line
+          number by one, except in the case that the current line number is
+          already  greater  than or equal to the maximum page length, for a  
+          bounded page length;  in that case a page terminator  is  output,  
+          the  current  page  number is incremented by one, and the current
+          line number is set to one. 
+
+          For a SPACING greater than one, the above actions  are  performed
+          SPACING times. 
+
+          The  exception  MODE_ERROR is raised if the mode is not OUT_FILE.                                                    
+
+    procedure SKIP_LINE(FILE  : in FILE_TYPE; SPACING : in POSITIVE_COUNT := 1);
+    procedure SKIP_LINE(SPACING : in POSITIVE_COUNT := 1);
+
+          Operates on a file of mode IN_FILE. 
+
+          For a SPACING of one:  Reads and discards all characters until  a
+          line  terminator  has been read, and then sets the current column
+          number to  one.   If  the  line  terminator  is  not  immediately
+          followed  by  a  page  terminator,  the  current  line  number is
+          incremented  by  one.   Otherwise,  if  the  line  terminator  is
+          immediately   followed  by  a  page  terminator,  then  the  page
+          terminator is skipped, the current page number is incremented  by
+          one, and the current line number is set to one. 
+
+          For  a  SPACING greater than one, the above actions are performed
+          SPACING times. 
+
+          The exception MODE_ERROR is raised if the mode  is  not  IN_FILE.
+          The exception END_ERROR is raised if an attempt is made to read a
+          file terminator.    
+
+    function END_OF_LINE(FILE : in FILE_TYPE) return BOOLEAN;
+    function END_OF_LINE return BOOLEAN;    
+
+          Operates  on  a  file  of  mode IN_FILE.  Returns TRUE if  a line
+          terminator or a  file  terminator  is  next;   otherwise  returns
+          FALSE. 
+
+          The exception MODE_ERROR is raised if the mode is not IN_FILE.  
+
+    procedure NEW_PAGE(FILE : in FILE_TYPE);
+    procedure NEW_PAGE; 
+
+          Operates  on  a file of mode OUT_FILE.  Outputs a line terminator
+          if the current line is not terminated, or if the current page  is
+          empty  (that  is, if the current column and line numbers are both
+          equal to one).  Then outputs a page terminator, which  terminates
+          the  current  page.  Adds one to the current page number and sets
+          the current column and line numbers to one. 
+
+          The exception MODE_ERROR is raised if the mode is  not  OUT_FILE.  
+
+    procedure SKIP_PAGE(FILE: in FILE_TYPE);
+    procedure SKIP_PAGE; 
+
+          Operates  on  a  file  of  mode  IN_FILE.  Reads and discards all
+          characters and line terminators until a page terminator has  been
+          read.   Then  adds  one  to the current page number, and sets the
+          current column and line numbers to one.    
+
+          The exception MODE_ERROR is raised if the mode  is  not  IN_FILE.
+          The exception END_ERROR is raised if an attempt is made to read a
+          file terminator.                                                         
+
+    function END_OF_PAGE(FILE : in FILE_TYPE) return BOOLEAN;
+    function END_OF_PAGE return BOOLEAN; 
+
+          Operates  on  a  file  of  mode  IN_FILE.   Returns  TRUE  if the
+          combination of a line terminator and a page terminator  is  next,
+          or if a file terminator is next;  otherwise returns FALSE. 
+
+          The exception MODE_ERROR is raised if the mode is not IN_FILE.  
+
+    function END_OF_FILE(FILE : in FILE_TYPE) return BOOLEAN;
+    function END_OF_FILE return BOOLEAN; 
+
+          Operates  on  a  file  of  mode  IN_FILE.  Returns TRUE if a file
+          terminator is next, or if the combination of a line, a page,  and
+          a file terminator is next;  otherwise returns FALSE. 
+
+          The exception MODE_ERROR is raised if the mode is not IN_FILE.  
+</pre>
+<P>
+The  following  subprograms provide for the control of the current position
+of reading or writing in a file.  In all cases, the  default  file  is  the
+current output file. 
+<pre>
+    procedure SET_COL(FILE : in FILE_TYPE; TO : in POSITIVE_COUNT);
+    procedure SET_COL(TO   : in POSITIVE_COUNT); 
+
+          If the file mode is OUT_FILE: 
+
+               If  the  value  specified  by TO is greater than the current
+               column number, outputs spaces, adding  one  to  the  current
+               column  number  after  each  space, until the current column
+               number equals the specified value.  If the  value  specified
+               by  TO  is  equal  to the current column number, there is no
+               effect.  If the value specified  by  TO  is  less  than  the
+               current  column  number,  has the effect of calling NEW_LINE
+               (with a spacing of one), then outputs (TO - 1)  spaces,  and
+               sets the current column number to the specified value. 
+
+               The  exception LAYOUT_ERROR is raised if the value specified
+               by TO exceeds LINE_LENGTH when the line  length  is  bounded
+               (that  is,  when  it  does  not  have the conventional value
+               zero).  
+
+          If the file mode is IN_FILE:    
+
+               Reads   (and   discards)   individual    characters,    line
+               terminators,  and page terminators, until the next character
+               to be read  has  a  column  number  that  equals  the  value
+               specified  by  TO;  there is no effect if the current column
+               number already  equals  this  value.   Each  transfer  of  a
+               character  or terminator maintains the current column, line,
+               and page numbers in the same way as  a  GET  procedure  (see  
+               <a href="#14.3.5">14.3.5</a>).   (Short  lines  will  be  skipped  until a line is
+               reached  that  has  a  character  at  the  specified  column
+               position.) 
+
+               The  exception  END_ERROR is raised if an attempt is made to
+               read a file terminator.                                                   
+
+    procedure SET_LINE(FILE : in FILE_TYPE; TO : in POSITIVE_COUNT);
+    procedure SET_LINE(TO   : in POSITIVE_COUNT);  
+
+          If the file mode is OUT_FILE: 
+
+               If the value specified by TO is  greater  than  the  current
+               line  number,  has the effect of repeatedly calling NEW_LINE
+               (with a spacing of  one),  until  the  current  line  number
+               equals the specified value.  If the value specified by TO is
+               equal  to  the  current line number, there is no effect.  If
+               the value specified by TO is  less  than  the  current  line
+               number,  has  the  effect  of calling NEW_PAGE followed by a
+               call of NEW_LINE with a spacing equal to (TO - 1).    
+
+               The exception LAYOUT_ERROR is raised if the value  specified
+               by  TO  exceeds  PAGE_LENGTH when the page length is bounded
+               (that is, when it  does  not  have  the  conventional  value
+               zero).  
+
+          If the mode is IN_FILE: 
+
+               Has  the  effect  of  repeatedly  calling  SKIP_LINE (with a
+               spacing of one), until the current line  number  equals  the
+               value  specified  by  TO;  there is no effect if the current
+               line number already equals this value.  (Short pages will be
+               skipped until a page is reached  that  has  a  line  at  the
+               specified line position.) 
+
+               The  exception  END_ERROR is raised if an attempt is made to
+               read a file terminator.  
+
+    function COL(FILE : in FILE_TYPE) return POSITIVE_COUNT;
+    function COL return POSITIVE_COUNT; 
+
+          Returns the current column number. 
+
+          The exception LAYOUT_ERROR  is  raised  if  this  number  exceeds
+          COUNT'LAST.  
+
+    function LINE(FILE : in FILE_TYPE) return POSITIVE_COUNT;
+    function LINE return POSITIVE_COUNT; 
+
+          Returns the current line number. 
+
+          The  exception  LAYOUT_ERROR  is  raised  if  this number exceeds
+          COUNT'LAST.  
+
+    function PAGE(FILE : in FILE_TYPE) return POSITIVE_COUNT;
+    function PAGE return POSITIVE_COUNT;   
+
+          Returns the current page number. 
+
+          The exception LAYOUT_ERROR  is  raised  if  this  number  exceeds
+          COUNT'LAST.  
+</pre>
+<P>
+The  column  number,  line  number,  or  page  number are allowed to exceed
+COUNT'LAST (as a consequence of the input or output  of  sufficiently  many
+characters,  lines,  or pages).  These events do not cause any exception to  
+be raised.  However, a call of COL, LINE,  or  PAGE  raises  the  exception
+LAYOUT_ERROR if the corresponding number exceeds COUNT'LAST.                                              
+<P>
+Note: 
+<P>
+A  page terminator is always skipped whenever the preceding line terminator
+is skipped.  An implementation  may  represent  the  combination  of  these
+terminators  by a single character, provided that it is properly recognized
+at input. 
+<P>
+<b>References:</b>  <A HREF="#14.3">current column number</A>,
+<A HREF="#14.3">current default file</A>,
+<A HREF="#14.3">current line number</A>,
+<A HREF="#14.3">current page number</A>,
+<A HREF="lrm-14-04.html#14.4">end_error exception</A>,
+<A HREF="lrm-14-01.html#14.1">file</A>,
+<A HREF="#14.3">file   terminator</A>,
+<A HREF="#14.3.5">get  procedure</A>,
+<A HREF="lrm-14-01.html#14.1">in_file</A>,
+<A HREF="lrm-14-04.html#14.4">layout_error exception</A>,
+<A HREF="#14.3">line</A>,
+<A HREF="#14.3">line number</A>,
+<A HREF="#14.3">line  terminator</A>,
+<A HREF="#14.3">maximum page length</A>,
+<A HREF="lrm-14-04.html#14.4">mode_error exception</A>,
+<A HREF="lrm-14-01.html#14.1">open file</A>,
+<A HREF="#14.3">page</A>,
+<A HREF="#14.3">page length</A>,
+<A HREF="#14.3">page terminator</A>,
+<A HREF="#14.3">positive  count</A>,
+<A HREF="lrm-14-04.html#14.4">status_error exception</A>.
+
+<H3><A NAME="14.3.5">14.3.5</A>.  Get and Put Procedures  </H3>
+<A HREF="#14.3.4"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#14.3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#14.3.6"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The  procedures  GET  and  PUT  for  items  of the types CHARACTER, STRING,
+numeric types, and enumeration types are described in subsequent  sections.
+Features  of  these  procedures  that are common to most of these types are
+described in this section.  The GET and PUT procedures for  items  of  type
+CHARACTER  and  STRING  deal with individual character values;  the GET and
+PUT procedures for numeric and enumeration types treat the items as lexical
+elements. 
+<P>
+All procedures GET and PUT have forms with a file parameter, written first.
+Where this parameter is omitted, the appropriate (input or output)  current
+default file is understood to be specified.  Each procedure GET operates on
+a  file  of  mode  IN_FILE.   Each procedure PUT operates on a file of mode   
+OUT_FILE. 
+<P>
+All procedures GET and PUT maintain the  current  column,  line,  and  page
+numbers of the specified file:  the effect of each of these procedures upon
+these  numbers  is  the resultant of the effects of individual transfers of
+characters and of individual  output  or  skipping  of  terminators.   Each
+transfer of a character adds one to the current column number.  Each output
+of  a line terminator sets the current column number to one and adds one to
+the current line number.   Each  output  of  a  page  terminator  sets  the
+current  column  and  line  numbers to one and adds one to the current page
+number.  For input, each skipping of a line  terminator  sets  the  current
+column  number  to  one  and  adds  one  to  the current line number;  each
+skipping of a page terminator sets the current column and line  numbers  to
+one  and adds one to the current page number.  Similar considerations apply
+to the procedures GET_LINE, PUT_LINE, and SET_COL. 
+<P>
+Several GET and PUT procedures, for numeric  and  enumeration  types,  have
+format parameters which specify field lengths;  these parameters are of the
+nonnegative subtype FIELD of the type INTEGER. 
+<P>
+Input-output  of  enumeration  values  uses the syntax of the corresponding
+lexical elements.  Any GET procedure for  an  enumeration  type  begins  by
+skipping  any  leading  blanks, or line or page terminators;  a blank being  
+defined as a space or a horizontal tabulation character.  Next,  characters
+are  input  only so long as the sequence input is an initial sequence of an
+identifier or of a character literal (in particular, input  ceases  when  a
+line  terminator  is  encountered).   The character or line terminator that
+causes input to cease remains available for subsequent input. 
+<P>
+For a numeric type, the GET  procedures  have  a  format  parameter  called   
+WIDTH.   If  the  value given for this parameter is zero, the GET procedure
+proceeds in the same manner as for enumeration types, but using the  syntax
+of  numeric literals instead of that of enumeration literals.  If a nonzero
+value is given, then exactly WIDTH characters are input, or the  characters
+up to a line terminator, whichever comes first;  any skipped leading blanks
+are  included  in  the  count.   The syntax used for numeric literals is an
+extended syntax that allows a leading sign (but no intervening  blanks,  or
+line or page terminators).                                                         
+<P>
+Any PUT procedure, for an item of a numeric or an enumeration type, outputs
+the  value  of  the  item  as  a  numeric literal, identifier, or character
+literal, as appropriate.  This is preceded by leading spaces if required by
+the format parameters WIDTH or FORE (as described in later  sections),  and
+then  a  minus  sign  for  a  negative value;  for an enumeration type, the
+spaces follow instead of leading.  The format given for a PUT procedure  is
+overridden if it is insufficiently wide. 
+<P>
+Two  further  cases  arise  for  PUT procedures for numeric and enumeration
+types, if the line length of the specified output file is bounded (that is,
+if it does not have  the  conventional  value  zero).   If  the  number  of
+characters  to  be  output  does not exceed the maximum line length, but is
+such that they cannot fit on the current line, starting  from  the  current
+column,  then (in effect) NEW_LINE is called (with a spacing of one) before
+output of the item.  Otherwise, if the number  of  characters  exceeds  the
+maximum  line  length,  then  the  exception  LAYOUT_ERROR is raised and no
+characters are output. 
+<P>
+The exception  STATUS_ERROR  is  raised  by  any  of  the  procedures  GET,
+GET_LINE,  PUT,  and  PUT_LINE  if  the  file  to be used is not open.  The
+exception MODE_ERROR is raised by the procedures GET and  GET_LINE  if  the
+mode  of the file to be used is not IN_FILE;  and by the procedures PUT and
+PUT_LINE, if the mode is not OUT_FILE. 
+<P>
+The exception END_ERROR is raised by a GET procedure if an attempt is  made
+to  skip  a  file  terminator.  The exception DATA_ERROR is raised by a GET
+procedure  if  the  sequence  finally  input  is  not  a  lexical   element
+corresponding  to the type, in particular if no characters were input;  for
+this test, leading blanks are ignored;  for an item of a numeric type, when
+a sign is input, this rule applies to the succeeding numeric literal.   The
+exception  LAYOUT_ERROR  is  raised  by  a  PUT procedure that outputs to a
+parameter  of  type  STRING,  if  the  length  of  the  actual  string   is
+insufficient for the output of the item. 
+<P>
+Examples: 
+<P>
+In  the examples, here and in sections <a href="#14.3.7">14.3.7</a> and <a href="#14.3.8">14.3.8</a>, the string quotes
+and the lower case letter b are not transferred:  they are  shown  only  to
+reveal the layout and spaces. 
+<pre>
+    N : INTEGER;
+       ...
+    GET(N); 
+
+    -- Characters at input       Sequence input       Value of N 
+
+    --      bb-12535b            -12535               -12535
+    --      bb12_535E1b           12_535E1             125350
+    --      bb12_535E;            12_535E             (none) DATA_ERROR raised
+</pre>
+<P>
+Example of overridden width parameter: 
+<pre>
+    PUT(ITEM =&gt; -23, WIDTH =&gt; 2);  --  "-23"    
+</pre>
+<P>
+<b>References:</b>   <A HREF="#14.3.9">blank</A>,
+<A HREF="#14.3">column number</A>,
+<A HREF="#14.3">current default file</A>,
+<A HREF="lrm-14-04.html#14.4">data_error exception</A>,
+<A HREF="lrm-14-04.html#14.4">end_error  exception</A>,
+<A HREF="lrm-14-01.html#14.1">file</A>,
+<A HREF="#14.3.8">fore</A>,
+<A HREF="#14.3.6">get   procedure</A>,
+ and <A HREF="#14.3.7">14.3.7</A>,
+ and <A HREF="#14.3.8">14.3.8</A>,
+ and <A HREF="#14.3.9">14.3.9</A>,
+<A HREF="lrm-14-01.html#14.1">in_file</A>,
+<A HREF="lrm-14-04.html#14.4">layout_error exception</A>,
+<A HREF="lrm-14-01.html#14.1">line  number</A>,
+<A HREF="lrm-14-01.html#14.1">line  terminator</A>,
+<A HREF="#14.3">maximum  line  length</A>,
+<A HREF="lrm-14-01.html#14.1">mode</A>,
+<A HREF="lrm-14-04.html#14.4">mode_error exception</A>,
+<A HREF="#14.3.4">new_file procedure</A>,
+<A HREF="lrm-14-01.html#14.1">out_file</A>,
+<A HREF="lrm-14-01.html#14.1">page number</A>,
+<A HREF="lrm-14-01.html#14.1">page  terminator</A>,
+<A HREF="#14.3.6">put  procedure</A>,
+ and <A HREF="#14.3.7">14.3.7</A>,
+ and <A HREF="#14.3.8">14.3.8</A>,
+ and <A HREF="#14.3.9">14.3.9</A>,
+<A HREF="#14.3.7">skipping</A>,
+ and <A HREF="#14.3.8">14.3.8</A>,
+ and <A HREF="#14.3.9">14.3.9</A>,
+<A HREF="lrm-14-04.html#14.4">status_error exception</A>,
+<A HREF="#14.3.5">width</A>,
+ and <A HREF="#14.3.7">14.3.7</A>,
+ and <A HREF="#14.3.9">14.3.9</A>.
+
+<H3><A NAME="14.3.6">14.3.6</A>.  Input-Output of Characters and Strings  </H3>
+<A HREF="#14.3.5"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#14.3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#14.3.7"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+For an item of type CHARACTER the following procedures are provided: 
+<pre>
+    procedure GET(FILE : in FILE_TYPE; ITEM : out CHARACTER);
+    procedure GET(ITEM : out CHARACTER); 
+
+          After skipping any line terminators  and  any  page  terminators,
+          reads  the  next  character  from  the  specified  input file and
+          returns the value of this character in the out parameter ITEM. 
+
+          The exception END_ERROR is raised if an attempt is made to skip a
+          file terminator.  
+
+    procedure PUT(FILE : in FILE_TYPE; ITEM : in CHARACTER);
+    procedure PUT(ITEM : in CHARACTER); 
+
+          If the line length of the specified output file is bounded  (that
+          is,  does  not have the conventional value zero), and the current
+          column number exceeds it, has the effect of calling NEW_LINE with
+          a  spacing  of  one.   Then,  or  otherwise,  outputs  the  given
+          character to the file.  
+</pre>
+<P>
+For an item of type STRING the following procedures are provided: 
+<pre>
+    procedure GET(FILE : in FILE_TYPE; ITEM : out STRING);
+    procedure GET(ITEM : out STRING); 
+
+          Determines  the  length  of  the  given  string and attempts that
+          number of GET operations for successive characters of the  string
+          (in particular, no operation is performed if the string is null).  
+
+    procedure PUT(FILE : in FILE_TYPE; ITEM : in STRING);
+    procedure PUT(ITEM : in STRING); 
+
+          Determines  the  length  of  the  given  string and attempts that
+          number of PUT operations for successive characters of the  string
+          (in particular, no operation is performed if the string is null).  
+
+    procedure GET_LINE(FILE : in FILE_TYPE; ITEM : out STRING; LAST : out NATURAL);
+    procedure GET_LINE(ITEM : out STRING;   LAST : out NATURAL);
+
+          Replaces   successive  characters  of  the  specified  string  by
+          successive  characters  read  from  the  specified  input   file.
+          Reading  stops  if  the end of the line is met, in which case the
+          procedure SKIP_LINE is then called (in effect) with a spacing  of
+          one;   reading  also  stops  if  the  end  of  the string is met.
+          Characters not replaced are left undefined.    
+
+          If characters are read, returns in LAST the index value such that
+          ITEM(LAST) is the last character replaced (the index of the first
+          character replaced is ITEM'FIRST).  If no  characters  are  read,
+          returns  in LAST an index value that is one less than ITEM'FIRST. 
+          The exception END_ERROR is raised if an attempt is made to skip a
+          file terminator.                                                       
+
+    procedure PUT_LINE(FILE : in FILE_TYPE; ITEM : in STRING);
+    procedure PUT_LINE(ITEM : in STRING);    
+
+          Calls the procedure PUT  for  the  given  string,  and  then  the
+          procedure NEW_LINE with a spacing of one. 
+</pre>
+<P>
+Notes: 
+<P>
+In  a  literal  string  parameter  of  PUT,  the  enclosing  string bracket
+characters are not output.  Each doubled string bracket  character  in  the
+enclosed  string  is  output  as  a  single  string bracket character, as a
+consequence of the rule for string literals (see <a href="lrm-02-06.html#2.6">2.6</a>). 
+<P>
+A string read by GET or written by PUT can extend over several lines. 
+<P>
+<b>References:</b>  <A HREF="#14.3">current column number</A>,
+<A HREF="lrm-14-04.html#14.4">end_error  exception</A>,
+<A HREF="lrm-14-01.html#14.1">file</A>,
+<A HREF="#14.3">file  terminator</A>,
+<A HREF="#14.3.5">get procedure</A>,
+<A HREF="#14.3">line</A>,
+<A HREF="#14.3">line length</A>,
+<A HREF="#14.3.4">new_line  procedure</A>,
+<A HREF="#14.3">page  terminator</A>,
+<A HREF="#14.3.4">put  procedure</A>,
+<A HREF="#14.3.5">skipping</A>.
+
+<H3><A NAME="14.3.7">14.3.7</A>.  Input-Output for Integer Types  </H3>
+<A HREF="#14.3.6"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#14.3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#14.3.8"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The  following  procedures  are  defined in the generic package INTEGER_IO.
+This must be instantiated for the appropriate integer  type  (indicated  by
+NUM in the specification). 
+<P>
+Values   are  output  as  decimal  or  based  literals,  without  underline
+characters or exponent, and preceded by a  minus  sign  if  negative.   The
+format  (which includes any leading spaces and minus sign) can be specified
+by an optional field width parameter.  Values of widths of fields in output
+formats are of the nonnegative integer subtype FIELD.  Values of bases  are
+of the integer subtype NUMBER_BASE. 
+<pre>
+    subtype NUMBER_BASE is INTEGER range 2 .. 16; 
+</pre>
+<P>
+The  default  field  width  and  base  to  be used by output procedures are
+defined by the following variables that are declared in the generic package
+INTEGER_IO:
+<pre>
+    DEFAULT_WIDTH : FIELD := NUM'WIDTH;
+    DEFAULT_BASE  : NUMBER_BASE := 10; 
+</pre>
+<P>
+The following procedures are provided: 
+<pre>
+   procedure GET(FILE : in FILE_TYPE; ITEM : out NUM; WIDTH : in FIELD := 0);
+   procedure GET(ITEM : out NUM; WIDTH : in FIELD := 0);
+
+          If the value of the parameter WIDTH is zero,  skips  any  leading
+          blanks,  line terminators, or page terminators, then reads a plus
+          or a minus sign if present, then reads according to the syntax of
+          an integer literal (which may be a based literal).  If a  nonzero  
+          value  of  WIDTH  is  supplied, then exactly WIDTH characters are
+          input, or the characters (possibly none) up to a line terminator,
+          whichever comes first;  any skipped leading blanks  are  included
+          in the count. 
+
+          Returns,  in  the  parameter  ITEM,  the  value  of type NUM that
+          corresponds to the sequence input. 
+
+          The exception DATA_ERROR is raised if the sequence input does not
+          have the required syntax or if the value obtained is not  of  the
+          subtype NUM.                                                            
+
+    procedure PUT(FILE  : in FILE_TYPE;
+                  ITEM  : in NUM;
+                  WIDTH : in FIELD := DEFAULT_WIDTH;
+                  BASE  : in NUMBER_BASE := DEFAULT_BASE); 
+
+    procedure PUT(ITEM  : in NUM;
+                  WIDTH : in FIELD := DEFAULT_WIDTH;
+                  BASE  : in NUMBER_BASE := DEFAULT_BASE); 
+
+          Outputs  the  value  of the parameter ITEM as an integer literal,
+          with no underlines, no exponent, and  no  leading  zeros  (but  a
+          single zero for the value zero), and a preceding minus sign for a
+          negative value. 
+
+          If  the  resulting  sequence of characters to be output has fewer
+          than WIDTH characters, then leading spaces are  first  output  to  
+          make up the difference. 
+
+          Uses the syntax for decimal literal if the parameter BASE has the
+          value   ten   (either   explicitly   or   through  DEFAULT_BASE);
+          otherwise, uses the syntax for based literal, with any letters in
+          upper case.  
+
+    procedure GET(FROM : in STRING; ITEM : out NUM; LAST : out POSITIVE); 
+
+          Reads an integer value from the beginning of  the  given  string,
+          following  the  same  rules  as  the  GET procedure that reads an
+          integer value from a file, but treating the end of the string  as
+          a  file terminator.  Returns, in the parameter ITEM, the value of
+          type NUM that corresponds to the sequence input.  Returns in LAST
+          the index value such that FROM(LAST) is the last character  read. 
+
+          The exception DATA_ERROR is raised if the sequence input does not
+          have  the  required syntax or if the value obtained is not of the
+          subtype NUM.  
+
+    procedure PUT(TO   : out STRING;
+                  ITEM : in NUM;
+                  BASE : in NUMBER_BASE := DEFAULT_BASE); 
+
+          Outputs the value of the parameter  ITEM  to  the  given  string,
+          following the same rule as for output to a file, using the length
+          of the given string as the value for WIDTH.  
+</pre>
+<P>
+Examples: 
+<pre>
+    package INT_IO is new INTEGER_IO(SMALL_INT); use INT_IO;
+    -- default format used at instantiation,
+         DEFAULT_WIDTH = 4, DEFAULT_BASE = 10
+
+    PUT(126);                            -- "b126"
+    PUT(-126, 7);                        -- "bbb-126"
+    PUT(126, WIDTH =&gt; 13, BASE =&gt; 2);    -- "bbb2#1111110#"  
+</pre>
+<P>
+<b>References:</b>   <A HREF="lrm-02-04.html#2.4.2">based literal</A>,
+<A HREF="#14.3.5">blank</A>,
+<A HREF="lrm-14-04.html#14.4">data_error exception</A>,
+<A HREF="lrm-02-04.html#2.4.1">decimal literal</A>,
+<A HREF="#14.3.5">field subtype</A>,
+<A HREF="lrm-14-01.html#14.1">file_type</A>,
+<A HREF="#14.3.5">get  procedure</A>,
+<A HREF="#14.3.10">integer_io  package</A>,
+<A HREF="lrm-02-04.html#2.4">integer  literal</A>,
+<A HREF="lrm-14-04.html#14.4">layout_error exception</A>,
+<A HREF="#14.3">line  terminator</A>,
+<A HREF="#14.3.5">put  procedure</A>,
+<A HREF="#14.3.5">skipping</A>,
+<A HREF="#14.3.5">width</A>.
+
+<H3><A NAME="14.3.8">14.3.8</A>.  Input-Output for Real Types  </H3>
+<A HREF="#14.3.7"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#14.3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#14.3.9"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The  following  procedures are defined in the generic packages FLOAT_IO and
+FIXED_IO, which must be instantiated for the appropriate floating point  or
+fixed point type respectively (indicated by NUM in the specifications). 
+<P>
+Values  are  output  as decimal literals without underline characters.  The
+format of each value output consists of a FORE field, a decimal  point,  an
+AFT field, and (if a nonzero EXP parameter is supplied) the letter E and an
+EXP field.  The two possible formats thus correspond to: 
+<pre>
+    FORE  .  AFT 
+</pre>
+<P>
+and to: 
+<pre>
+    FORE  .  AFT  E  EXP 
+</pre>
+<P>
+without  any  spaces  between  these  fields.   The  FORE field may include
+leading spaces, and a minus sign  for  negative  values.    The  AFT  field
+includes only decimal digits (possibly with trailing zeros).  The EXP field
+includes  the  sign (plus or minus) and the exponent (possibly with leading
+zeros). 
+<P>
+For floating point types, the default lengths of these fields  are  defined
+by  the  following  variables  that  are  declared  in  the generic package
+FLOAT_IO:
+<pre>
+    DEFAULT_FORE : FIELD := 2;
+    DEFAULT_AFT  : FIELD := NUM'DIGITS-1;
+    DEFAULT_EXP  : FIELD := 3; 
+</pre>
+<P>
+For fixed point types, the default lengths of these fields are  defined  by
+the  following variables that are declared in the generic package FIXED_IO:  
+<pre>
+    DEFAULT_FORE : FIELD := NUM'FORE;
+    DEFAULT_AFT  : FIELD := NUM'AFT;
+    DEFAULT_EXP  : FIELD := 0;  
+</pre>
+<P>
+The following procedures are provided: 
+<pre>
+    procedure GET(FILE : in FILE_TYPE; ITEM : out NUM; WIDTH : in FIELD := 0);
+    procedure GET(ITEM : out NUM; WIDTH : in FIELD := 0); 
+
+          If the value of the parameter WIDTH is zero,  skips  any  leading
+          blanks,  line terminators, or page terminators, then reads a plus
+          or a minus sign if present, then reads according to the syntax of
+          a real literal (which may be a  based  literal).   If  a  nonzero
+          value  of  WIDTH  is  supplied, then exactly WIDTH characters are
+          input, or the characters (possibly none) up to a line terminator,
+          whichever comes first;  any skipped leading blanks  are  included
+          in the count.    
+
+          Returns,  in  the  parameter  ITEM,  the  value  of type NUM that
+          corresponds to the sequence input. 
+
+          The exception DATA_ERROR is raised if the sequence input does not
+          have the required syntax or if the value obtained is not  of  the
+          subtype NUM.                                                             
+
+    procedure PUT(FILE : in FILE_TYPE;
+                  ITEM : in NUM;
+                  FORE : in FIELD := DEFAULT_FORE;
+                  AFT  : in FIELD := DEFAULT_AFT;
+                  EXP  : in FIELD := DEFAULT_EXP); 
+
+    procedure PUT(ITEM : in NUM;
+                  FORE : in FIELD := DEFAULT_FORE;
+                  AFT  : in FIELD := DEFAULT_AFT;
+                  EXP  : in FIELD := DEFAULT_EXP); 
+
+          Outputs the value of the parameter ITEM as a decimal literal with   
+          the  format  defined  by  FORE,  AFT  and  EXP.   If the value is
+          negative, a minus sign is included in the integer part.   If  EXP
+          has  the  value  zero,  then the integer part to be output has as
+          many digits as are needed to represent the integer  part  of  the
+          value  of  ITEM, overriding FORE if necessary, or consists of the
+          digit zero if the value of ITEM has no integer part. 
+
+          If EXP has a value greater than zero, then the integer part to be
+          output has a single digit, which is nonzero except for the  value
+          0.0 of ITEM. 
+
+          In  both  cases,  however,  if  the integer part to be output has
+          fewer than  FORE  characters,  including  any  minus  sign,  then
+          leading  spaces  are first output to make up the difference.  The
+          number of digits of the fractional part is given by  AFT,  or  is
+          one  if  AFT  equals  zero.   The  value  is rounded;  a value of
+          exactly one half in the last place may be rounded  either  up  or
+          down. 
+
+          If EXP has the value zero, there is no exponent part.  If EXP has
+          a  value  greater  than zero, then the exponent part to be output
+          has as many digits as are needed to represent the  exponent  part
+          of  the  value  of ITEM (for which a single digit integer part is
+          used), and includes an initial  sign (plus  or  minus).   If  the
+          exponent  part  to  be  output  has  fewer  than  EXP characters,
+          including the sign, then leading zeros  precede  the  digits,  to
+          make  up the difference.  For the value 0.0 of ITEM, the exponent
+          has the value zero.  
+
+    procedure GET(FROM : in STRING; ITEM : out NUM; LAST : out POSITIVE); 
+
+          Reads a real value  from  the  beginning  of  the  given  string, 
+          following  the  same  rule as the GET procedure that reads a real
+          value from a file, but treating the end of the string as  a  file
+          terminator.   Returns,  in  the parameter ITEM, the value of type
+          NUM that corresponds to the sequence input.  Returns in LAST  the
+          index value such that FROM(LAST) is the last character read. 
+
+          The exception DATA_ERROR is raised if the sequence input does not
+          have  the required syntax, or if the value obtained is not of the
+          subtype NUM.  
+
+    procedure PUT(TO   : out STRING;
+                  ITEM : in NUM;
+                  AFT  : in FIELD := DEFAULT_AFT;
+                  EXP  : in INTEGER := DEFAULT_EXP); 
+
+          Outputs the value of the parameter  ITEM  to  the  given  string,
+          following  the  same  rule as for output to a file, using a value
+          for FORE such that the  sequence  of  characters  output  exactly
+          fills the string, including any leading spaces.                                               
+</pre>
+<P>
+Examples: 
+<pre>
+    package REAL_IO is new FLOAT_IO(REAL); use REAL_IO;
+    -- default format used at instantiation, DEFAULT_EXP = 3 
+
+    X : REAL := -123.4567;  --  digits 8      (see <a href="lrm-03-05.html#3.5.7">3.5.7</a>) 
+
+    PUT(X); -- default format                   "-1.2345670E+02"
+    PUT(X, FORE =&gt; 5, AFT =&gt; 3, EXP =&gt; 2);  --  "bbb-1.235E+2"
+    PUT(X, 5, 3, 0);                        --  "b-123.457"
+</pre>
+<P>
+Note: 
+<P>
+For  an item with a positive value, if output to a string exactly fills the
+string without leading spaces, then output of  the  corresponding  negative
+value will raise LAYOUT_ERROR.   
+<P>
+<b>References:</b>   <A HREF="lrm-03-05.html#3.5.10">aft  attribute</A>,
+<A HREF="lrm-02-04.html#2.4.2">based  literal</A>,
+<A HREF="#14.3.5">blank</A>,
+<A HREF="#14.3.5">data_error exception</A>,
+<A HREF="lrm-02-04.html#2.4.1">decimal literal</A>,
+<A HREF="#14.3.5">field  subtype</A>,
+<A HREF="lrm-14-01.html#14.1">file_type</A>,
+<A HREF="#14.3.10">fixed_io package</A>,
+<A HREF="#14.3.10">floating_io package</A>,
+<A HREF="lrm-03-05.html#3.5.10">fore attribute</A>,
+<A HREF="#14.3.5">get   procedure</A>,
+<A HREF="#14.3.5">layout_error</A>,
+<A HREF="#14.3.5">line terminator</A>,
+<A HREF="#14.3.5">put procedure</A>,
+<A HREF="lrm-02-04.html#2.4">real literal</A>,
+<A HREF="#14.3.5">skipping</A>,
+<A HREF="#14.3.5">width</A>.
+
+<H3><A NAME="14.3.9">14.3.9</A>.  Input-Output for Enumeration Types  </H3>
+<A HREF="#14.3.8"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#14.3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#14.3.10"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The following procedures are defined in the generic package ENUMERATION_IO,
+which must be instantiated for the appropriate enumeration type  (indicated
+by ENUM in the specification). 
+<P>
+Values are output using either upper or lower case letters for identifiers.
+This  is  specified  by the parameter SET, which is of the enumeration type
+TYPE_SET. 
+<pre>
+    type TYPE_SET is (LOWER_CASE, UPPER_CASE); 
+</pre>
+<P>
+The format (which includes any trailing spaces)  can  be  specified  by  an
+optional  field  width  parameter.  The default field width and letter case
+are defined by the following variables that are  declared  in  the  generic
+package ENUMERATION_IO: 
+<pre>
+    DEFAULT_WIDTH   : FIELD := 0;
+    DEFAULT_SETTING : TYPE_SET := UPPER_CASE; 
+</pre>
+<P>
+The following procedures are provided: 
+<pre>
+    procedure GET(FILE : in FILE_TYPE; ITEM : out ENUM);
+    procedure GET(ITEM : out ENUM); 
+
+          After  skipping  any  leading  blanks,  line terminators, or page
+          terminators, reads an identifier according to the syntax of  this  
+          lexical   element   (lower   and   upper  case  being  considered
+          equivalent), or a character literal according to  the  syntax  of
+          this  lexical  element  (including the apostrophes).  Returns, in
+          the parameter ITEM, the value of type ENUM  that  corresponds  to
+          the sequence input.    
+
+          The exception DATA_ERROR is raised if the sequence input does not
+          have  the  required  syntax,  or  if  the identifier or character
+          literal does not correspond to a value of the subtype ENUM.                                                
+
+    procedure PUT(FILE  : in FILE_TYPE;
+                  ITEM  : in ENUM;
+                  WIDTH : in FIELD := DEFAULT_WIDTH;
+                  SET   : in TYPE_SET := DEFAULT_SETTING); 
+
+    procedure PUT(ITEM  : in ENUM;
+                  WIDTH : in FIELD := DEFAULT_WIDTH;
+                  SET   : in TYPE_SET := DEFAULT_SETTING); 
+
+          Outputs the value of the parameter ITEM as an enumeration literal
+          (either an identifier or  a  character  literal).   The  optional
+          parameter  SET indicates whether lower case or upper case is used
+          for identifiers;  it has no effect for  character  literals.   If
+          the   sequence  of  characters  produced  has  fewer  than  WIDTH
+          characters, then trailing spaces are finally output  to  make  up
+          the difference.  
+
+    procedure GET(FROM : in STRING; ITEM : out ENUM; LAST : out POSITIVE); 
+
+          Reads  an  enumeration  value  from  the  beginning  of the given
+          string, following the same rule as the GET  procedure that  reads
+          an  enumeration  value  from  a file, but treating the end of the
+          string as a file terminator.  Returns, in the parameter ITEM, the
+          value of type  ENUM  that  corresponds  to  the  sequence  input.
+          Returns  in LAST the index value such that FROM(LAST) is the last 
+          character read.
+
+          The exception DATA_ERROR is raised if the sequence input does not  
+          have the required syntax,  or  if  the  identifier  or  character
+          literal does not correspond to a value of the subtype ENUM.  
+
+    procedure PUT(TO   : out STRING;
+                  ITEM : in ENUM;
+                  SET  : in TYPE_SET := DEFAULT_SETTING); 
+
+          Outputs  the  value  of  the  parameter ITEM to the given string,
+          following the same rule as for output to a file, using the length
+          of the given string as the value for WIDTH.  
+</pre>
+<P>
+Although the  specification  of  the  package  ENUMERATION_IO  would  allow
+instantiation for an integer type, this is not the intended purpose of this
+generic  package,  and  the effect of such instantiations is not defined by
+the language. 
+<P>
+Notes: 
+<P>
+There  is  a  difference  between  PUT  defined  for  characters,  and  for
+enumeration values.  Thus 
+<pre>
+    TEXT_IO.PUT('A');  --  outputs the character A    
+
+    package CHAR_IO is new TEXT_IO.ENUMERATION_IO(CHARACTER);
+    CHAR_IO.PUT('A');  --  outputs the character 'A', between single quotes 
+</pre>
+<P>
+The  type  BOOLEAN  is  an  enumeration  type,  hence ENUMERATION_IO can be
+instantiated for this type. 
+<P>
+<b>References:</b>   <A HREF="#14.3.5">blank</A>,
+<A HREF="#14.3.5">data_error</A>,
+<A HREF="#14.3.10">enumeration_io   package</A>,
+<A HREF="#14.3.5">field  subtype</A>,
+<A HREF="lrm-14-01.html#14.1">file_type</A>,
+<A HREF="#14.3.5">get procedure</A>,
+<A HREF="#14.3.5">line terminator</A>,
+<A HREF="#14.3.5">put procedure</A>,
+<A HREF="#14.3.5">skipping</A>,
+<A HREF="#14.3.5">width</A>.
+
+<H3><A NAME="14.3.10">14.3.10</A>.  Specification of the Package Text_IO   </H3>
+<A HREF="#14.3.9"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#14.3"><img src="lrm-up.gif" alt="[UP]"></A>
+<pre>
+    with IO_EXCEPTIONS;
+    package TEXT_IO is 
+
+       type FILE_TYPE is limited private; 
+
+       type FILE_MODE is (IN_FILE, OUT_FILE);  
+
+       type COUNT is range 0 .. implementation defined;
+       subtype POSITIVE_COUNT is COUNT range 1 .. COUNT'LAST;
+       UNBOUNDED : constant COUNT := 0; -- line and page length 
+
+       subtype FIELD       is INTEGER range 0 .. implementation defined;
+       subtype NUMBER_BASE is INTEGER range 2 .. 16; 
+
+       type TYPE_SET is (LOWER_CASE, UPPER_CASE); 
+
+       -- File Management 
+
+       procedure CREATE (FILE : in out FILE_TYPE;
+                         MODE : in FILE_MODE := OUT_FILE;
+                         NAME : in STRING    := "";
+                         FORM : in STRING    := ""); 
+
+       procedure OPEN   (FILE : in out FILE_TYPE;
+                         MODE : in FILE_MODE;
+                         NAME : in STRING;
+                         FORM : in STRING := ""); 
+
+       procedure CLOSE  (FILE : in out FILE_TYPE);
+       procedure DELETE (FILE : in out FILE_TYPE);
+       procedure RESET  (FILE : in out FILE_TYPE; MODE : in FILE_MODE);
+       procedure RESET  (FILE : in out FILE_TYPE); 
+
+       function  MODE   (FILE : in FILE_TYPE) return FILE_MODE;
+       function  NAME   (FILE : in FILE_TYPE) return STRING;
+       function  FORM   (FILE : in FILE_TYPE) return STRING; 
+
+       function  IS_OPEN(FILE : in FILE_TYPE) return BOOLEAN; 
+
+       -- Control of default input and output files 
+
+       procedure SET_INPUT (FILE : in FILE_TYPE);
+       procedure SET_OUTPUT(FILE : in FILE_TYPE);  
+
+       function STANDARD_INPUT  return FILE_TYPE;
+       function STANDARD_OUTPUT return FILE_TYPE; 
+
+       function CURRENT_INPUT   return FILE_TYPE;
+       function CURRENT_OUTPUT  return FILE_TYPE;                                     
+
+       -- Specification of line and page lengths 
+
+       procedure SET_LINE_LENGTH(FILE : in FILE_TYPE; TO : in COUNT);
+       procedure SET_LINE_LENGTH(TO : in COUNT);  
+
+       procedure SET_PAGE_LENGTH(FILE : in FILE_TYPE; TO : in COUNT);
+       procedure SET_PAGE_LENGTH(TO : in COUNT); 
+
+       function  LINE_LENGTH(FILE : in FILE_TYPE) return COUNT;
+       function  LINE_LENGTH return COUNT; 
+
+       function  PAGE_LENGTH(FILE : in FILE_TYPE) return COUNT;
+       function  PAGE_LENGTH return COUNT; 
+
+       -- Column, Line, and Page Control 
+
+       procedure NEW_LINE   (FILE : in FILE_TYPE; SPACING : in POSITIVE_COUNT := 1);
+       procedure NEW_LINE   (SPACING : in POSITIVE_COUNT := 1);
+
+       procedure SKIP_LINE  (FILE : in FILE_TYPE; SPACING : in POSITIVE_COUNT := 1);
+       procedure SKIP_LINE  (SPACING : in POSITIVE_COUNT := 1);
+
+       function  END_OF_LINE(FILE : in FILE_TYPE) return BOOLEAN;
+       function  END_OF_LINE return BOOLEAN; 
+
+       procedure NEW_PAGE   (FILE : in FILE_TYPE);
+       procedure NEW_PAGE; 
+
+       procedure SKIP_PAGE  (FILE : in FILE_TYPE);
+       procedure SKIP_PAGE; 
+
+       function  END_OF_PAGE(FILE : in FILE_TYPE) return BOOLEAN;
+       function  END_OF_PAGE return BOOLEAN; 
+
+       function  END_OF_FILE(FILE : in FILE_TYPE) return BOOLEAN;
+       function  END_OF_FILE return BOOLEAN;  
+
+       procedure SET_COL (FILE : in FILE_TYPE; TO : in POSITIVE_COUNT);
+       procedure SET_COL (TO   : in POSITIVE_COUNT); 
+
+       procedure SET_LINE(FILE : in FILE_TYPE; TO : in POSITIVE_COUNT);
+       procedure SET_LINE(TO   : in POSITIVE_COUNT);  
+
+       function COL (FILE : in FILE_TYPE) return POSITIVE_COUNT;
+       function COL  return POSITIVE_COUNT; 
+
+       function LINE(FILE : in FILE_TYPE) return POSITIVE_COUNT;
+       function LINE return POSITIVE_COUNT; 
+
+       function PAGE(FILE : in FILE_TYPE) return POSITIVE_COUNT;
+       function PAGE return POSITIVE_COUNT;                                           
+
+       -- Character Input-Output    
+
+       procedure GET(FILE : in  FILE_TYPE; ITEM : out CHARACTER);
+       procedure GET(ITEM : out CHARACTER);
+       procedure PUT(FILE : in  FILE_TYPE; ITEM : in CHARACTER);
+       procedure PUT(ITEM : in  CHARACTER); 
+
+       -- String Input-Output 
+
+       procedure GET(FILE : in  FILE_TYPE; ITEM : out STRING);
+       procedure GET(ITEM : out STRING);
+       procedure PUT(FILE : in  FILE_TYPE; ITEM : in STRING);
+       procedure PUT(ITEM : in  STRING); 
+
+       procedure GET_LINE(FILE : in  FILE_TYPE; ITEM : out STRING; LAST :
+         out NATURAL);
+       procedure GET_LINE(ITEM : out STRING; LAST : out NATURAL);
+       procedure PUT_LINE(FILE : in  FILE_TYPE; ITEM : in STRING);
+       procedure PUT_LINE(ITEM : in  STRING); 
+
+       -- Generic package for Input-Output of Integer Types
+
+       generic
+          type NUM is range &lt;&gt;;
+       package INTEGER_IO is 
+
+          DEFAULT_WIDTH : FIELD := NUM'WIDTH;
+          DEFAULT_BASE  : NUMBER_BASE := 10; 
+
+          procedure GET(FILE : in  FILE_TYPE; ITEM : out NUM; WIDTH : in FIELD := 0);
+          procedure GET(ITEM : out NUM; WIDTH : in FIELD := 0);
+
+          procedure PUT(FILE  : in FILE_TYPE;
+                        ITEM  : in NUM;
+                        WIDTH : in FIELD := DEFAULT_WIDTH;
+                        BASE  : in NUMBER_BASE := DEFAULT_BASE);
+          procedure PUT(ITEM  : in NUM;
+                        WIDTH : in FIELD := DEFAULT_WIDTH;
+                        BASE  : in NUMBER_BASE := DEFAULT_BASE); 
+          procedure GET(FROM : in  STRING; ITEM : out NUM; LAST : out POSITIVE);
+          procedure PUT(TO   : out STRING;
+                        ITEM : in NUM;
+                        BASE : in NUMBER_BASE := DEFAULT_BASE); 
+
+     end INTEGER_IO;                                                                      
+
+       -- Generic packages for Input-Output of Real Types 
+
+       generic
+          type NUM is digits &lt;&gt;;
+       package FLOAT_IO is 
+
+          DEFAULT_FORE : FIELD := 2;
+          DEFAULT_AFT  : FIELD := NUM'DIGITS-1;
+          DEFAULT_EXP  : FIELD := 3; 
+
+          procedure GET(FILE : in FILE_TYPE; ITEM : out NUM; WIDTH : in FIELD := 0);
+          procedure GET(ITEM : out NUM; WIDTH : in FIELD := 0); 
+
+          procedure PUT(FILE : in FILE_TYPE;
+                        ITEM : in NUM;
+                        FORE : in FIELD := DEFAULT_FORE;
+                        AFT  : in FIELD := DEFAULT_AFT;
+                        EXP  : in FIELD := DEFAULT_EXP);
+          procedure PUT(ITEM : in NUM;
+                        FORE : in FIELD := DEFAULT_FORE;
+                        AFT  : in FIELD := DEFAULT_AFT;
+                        EXP  : in FIELD := DEFAULT_EXP); 
+
+          procedure GET(FROM : in STRING; ITEM : out NUM; LAST : out POSITIVE);
+          procedure PUT(TO   : out STRING;
+                        ITEM : in NUM;
+                        AFT  : in FIELD := DEFAULT_AFT;
+                        EXP  : in FIELD := DEFAULT_EXP);
+       end FLOAT_IO; 
+
+       generic
+          type NUM is delta &lt;&gt;;
+       package FIXED_IO is 
+
+          DEFAULT_FORE : FIELD := NUM'FORE;
+          DEFAULT_AFT  : FIELD := NUM'AFT;
+          DEFAULT_EXP  : FIELD := 0; 
+
+          procedure GET(FILE : in FILE_TYPE; ITEM : out NUM; WIDTH : in FIELD := 0);
+          procedure GET(ITEM : out NUM; WIDTH : in FIELD := 0); 
+
+          procedure PUT(FILE : in FILE_TYPE;
+                        ITEM : in NUM;
+                        FORE : in FIELD := DEFAULT_FORE;
+                        AFT  : in FIELD := DEFAULT_AFT;
+                        EXP  : in FIELD := DEFAULT_EXP);
+          procedure PUT(ITEM : in NUM;
+                        FORE : in FIELD := DEFAULT_FORE;   
+                        AFT  : in FIELD := DEFAULT_AFT;
+                        EXP  : in FIELD := DEFAULT_EXP); 
+
+        procedure GET(FROM : in  STRING; ITEM : out NUM; LAST : out POSITIVE);
+          procedure PUT(TO   : out STRING;
+                        ITEM : in NUM;
+                        AFT  : in FIELD := DEFAULT_AFT;  
+                        EXP  : in FIELD := DEFAULT_EXP); 
+       end FIXED_IO;                                                                
+
+       -- Generic package for Input-Output of Enumeration Types 
+
+       generic
+          type ENUM is (&lt;&gt;);
+       package ENUMERATION_IO is 
+
+          DEFAULT_WIDTH   : FIELD := 0;
+          DEFAULT_SETTING : TYPE_SET := UPPER_CASE; 
+
+          procedure GET(FILE  : in FILE_TYPE; ITEM : out ENUM);
+          procedure GET(ITEM  : out ENUM); 
+
+          procedure PUT(FILE  : in FILE_TYPE;
+                        ITEM  : in ENUM;
+                        WIDTH : in FIELD    := DEFAULT_WIDTH;
+                        SET   : in TYPE_SET := DEFAULT_SETTING);
+          procedure PUT(ITEM  : in ENUM;
+                        WIDTH : in FIELD    := DEFAULT_WIDTH;
+                        SET   : in TYPE_SET := DEFAULT_SETTING); 
+
+      procedure GET(FROM : in  STRING; ITEM : out ENUM; LAST : out POSITIVE);
+          procedure PUT(TO   : out STRING;
+                        ITEM : in  ENUM;
+                        SET  : in  TYPE_SET := DEFAULT_SETTING);
+       end ENUMERATION_IO; 
+
+    -- Exceptions 
+
+       STATUS_ERROR : exception renames IO_EXCEPTIONS.STATUS_ERROR; 
+       MODE_ERROR   : exception renames IO_EXCEPTIONS.MODE_ERROR;
+       NAME_ERROR   : exception renames IO_EXCEPTIONS.NAME_ERROR;
+       USE_ERROR    : exception renames IO_EXCEPTIONS.USE_ERROR;
+       DEVICE_ERROR : exception renames IO_EXCEPTIONS.DEVICE_ERROR;
+       END_ERROR    : exception renames IO_EXCEPTIONS.END_ERROR;
+       DATA_ERROR   : exception renames IO_EXCEPTIONS.DATA_ERROR;
+       LAYOUT_ERROR : exception renames IO_EXCEPTIONS.LAYOUT_ERROR; 
+
+    private
+       -- implementation-dependent
+    end TEXT_IO;    
+</pre>
+<P>
+
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-03-02.html#3.2.2">3.2.2&nbsp;Type Names</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-04-02.html#4.2.2">4.2.2&nbsp;Nested Packages</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

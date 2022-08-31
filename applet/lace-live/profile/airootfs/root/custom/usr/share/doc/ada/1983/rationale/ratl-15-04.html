@@ -1,0 +1,339 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 15.4: Presentation of the Data Representation Facility</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 15: Representation Clauses and Machine Dependences</H2>
+
+<H3><a name="15.4">15.4 Presentation of the Data Representation Facility</a></H3>
+
+The  language   provides  two   possible   degrees   of   control   of
+representation. The first degree is provided by representation pragmas
+such as  PACK. The  compiler is  merely provided with criteria for the
+selection of  a representation:  the pragma expresses the intent only,
+and the  program remains  portable. The  second degree  is provided by
+representation clauses,  in which  case the compiler is left no choice
+and must adopt the specified representation (if at all feasible).
+
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#15.4.1">15.4.1 Representation Pragmas</a><BR>
+<a href="#15.4.2">15.4.2 Length Clauses</a><BR>
+<a href="#15.4.3">15.4.3 Record Representation Clauses</a><BR>
+<a href="#15.4.4">15.4.4 Address Clauses</a><BR>
+<a href="#15.4.5">15.4.5 Enumeration Representation Clauses</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="15.4.1">15.4.1 Representation Pragmas</a></H3>
+
+The pragma PACK is used to request a packed representation for objects
+of the  type specified  by its argument. The use of this pragma is for
+situations in  which we  try to  minimize the storage space of a given
+composite type,  even at  the  cost  of  complicating  the  access  to
+components; but  in which  the exact  mapping  used  by  the  compiler
+remains unimportant.
+<p>
+Consider the  case of  an array  of a  given component  type. For each
+component the  compiler must  allocate a  storage field with a certain
+number of  bits. There  may also  be some  gaps (that  is, unused  bit
+fields) between  two consecutive  components. The effect of the pragma
+PACK is  to instruct  the compiler to minimize such gaps. For example,
+to request  a packed  representation for  boolean matrices,  one would
+write:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type BIT_MAP is array (1 .. 100, 1 .. 100) of BOOLEAN;
+...
+pragma PACK(BIT_MAP);
+</pre></td></tr></table>
+<p>
+On the  other hand,  if the component type is itself a composite type,
+it may  also contain  internal gaps:  these gaps are unaffected by the
+packing specification  given for  the array type. Minimization of such
+gaps could  be achieved by a prior packing specification given for the
+component type itself.
+<p>
+The language  also provides  the representation  pragma OPTIMIZE, with
+the argument values SPACE and TIME, to inform the compiler about which
+of these  two criteria  is more  important in  a  given  part  of  the
+program.
+
+<H3><BR><a name="15.4.2">15.4.2 Length Clauses</a></H3>
+
+The simplest  kind of  representation clause  is a  length clause. Its
+form is as follows:
+<p>
+<PRE>    for representation_attribute use expression;</PRE>
+<p>
+where the  expression specifies  a value  for the given representation
+attribute. For  example, it  is possible  to use  a length  clause  to
+specify the  size to  be used  for objects  of a given type: for cases
+where a  user wants  to optimize access time to frequently used record
+components of  this type,  without having to specify the entire record
+layout.
+<p>
+<table border cellpadding=6><tr><td><pre>
+type NIBBLE is range 0 .. 15;
+for NIBBLE'SIZE use 4;
+</pre></td></tr></table>
+<p>
+For a fixed point type, a length clause can be used to specify exactly
+the representation of the smallest representable value. For example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type WEIGHT is delta 0.01 range 0 .. 250;
+for WEIGHT'SMALL use WEIGHT'DELTA;
+</pre></td></tr></table>
+<p>
+Without  the  length  clause,  the  compiler  would  use  a  value  of
+WEIGHT'SMALL that  was a power of 2 - in fact 1/128 - and this has the
+advantage of  simplifying multiplications  by other fixed point types,
+since rescaling  reduces to  shift operations. Should weights actually
+be obtained  from a sensor for which a value of 2#0000 0000 0000 0001#
+corresponds to  exactly a  centigram, then  the  above  length  clause
+instructs the  compiler to use this representation - even if it causes
+multiplications to be less efficient.
+<p>
+For task  types a  length clause can be used to provide an upper bound
+for the  storage needed  by the  execution  of  a  corresponding  task
+object; for  example, if  the task contains recursive procedure calls,
+dynamic arrays,  or local  access types.  Note that such a clause does
+not dictate the actual allocation strategy used for tasks: it could be
+at the  time of  task activation  or at the time of elaboration of the
+task declaration. The length clause only supplies information for this
+allocation.
+<p>
+<PRE>    for LINE_TO_CHAR'STORAGE_SIZE use 200;</PRE>
+<p>
+For access  types, a  length clause  provides the  size of the storage
+space to  be reserved  for all  dynamically allocated  objects of  the
+designated type  (and of  any types  derived from  it). The collection
+associated with an access type that has such a length specification is
+allocated all  at once (upon elaboration of the representation clause)
+and is reclaimed all at once, as for an array declaration given at the
+place of  the access  type declaration.  Hence it  permits the  use of
+access  types   with  their   notational  and   efficiency  advantages
+(component selection  is cheaper  than array  indexing for  arrays  of
+records) without  necessarily incurring  the potential costs of a more
+dynamic allocation strategy. (See <a href="ratl-06.html#6">Chapter 6</a> for further explanation.)
+<p>
+To define sufficient storage space it is necessary to know the storage
+size required  for one element. For a type T, the attribute T'SIZE can
+be used  for this  purpose. For example the size of a collection large
+enough to  contain approximately  400 dynamically allocated PLACEs can
+be expressed as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type PLACE;
+type LIST is access PLACE;
+
+type PLACE is
+  record
+    SUCC, PRED :  LIST;
+    VALUE      :  INTEGER;
+  end record;
+
+for LIST'STORAGE_SIZE use
+  (400 &#42; PLACE'SIZE) / SYSTEM.STORAGE_UNIT;
+</pre></td></tr></table>
+<p>
+The number  of dynamically  allocated records  is  only  known  as  an
+approximation, since  the storage allocator may need some extra space,
+and also because records with variant parts may not all be of the same
+size.
+<p>
+A length  clause can  also be  used to achieve a biased representation
+for an  integer type.  For example,  if we  have a  type ranging  from
+10_000 to  10_127, any value of this type can be represented in only 8
+bits (including  the sign bit). Specifying a length of 8 bits for this
+type will  result in  the compiler  using a biased representation. For
+example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type SKEWED is new INTEGER range 10_000 .. 10_127;
+for SKEWED'SIZE use 8;
+</pre></td></tr></table>
+
+<H3><BR><a name="15.4.3">15.4.3 Record Representation Clauses</a></H3>
+
+A record  representations clause  allows one  to specify the layout of
+the components  of a  record type. This is done by giving the order of
+the record  components, their  positions, and  their sizes in machine-
+dependent terms. All the expressions included in such a representation
+clause must  be static  expressions: their  values must  be  known  at
+compilation time. A global alignment clause can also be specified.
+<p>
+<H4>Storage Units:</H4>
+<p>
+The storage unit is a configuration-dependent quantity that represents
+the machine's  quantum of  storage. Its  value is  given by  the named
+number SYSTEM.STORAGE_UNIT;  it is  the unit  of addressing implicitly
+used to denote the position of a component.
+<p>
+<H4>Bit Ranges:</H4>
+<p>
+A bit  range is  used to  specify the position of a component inside a
+storage unit. The two expressions in the range represent the positions
+of the  first and  last bits  respectively. This  implies that the bit
+ordering inside  a storage  unit must  be known  to the  user; such an
+ordering is implementation-defined. The first bit of a storage unit is
+always numbered 0. For example, the component clause:
+<p>
+<PRE>    SYSTEM_MASK at 0 range 0 .. 7;</PRE>
+<p>
+specifies that  the component  SYSTEM_MASK needs  8 bits  of  storage,
+starting from  the beginning  of the  storage unit.  The storage  size
+specified for  a component  must of  course be  large enough  for  the
+component.  The  compiler  must  check  that  the  specified  size  is
+compatible with the minimum needed for the representation of values of
+the component type.
+<p>
+Bit numbering  may extend  through consecutive storage units; thus the
+component clause:
+<p>
+<PRE>    PROTECTION_KEY at 0 range 8 .. 11;</PRE>
+<p>
+may be  legal, even  if the storage unit has eight bits on the machine
+considered.
+<p>
+<H4>At Clauses:</H4>
+<p>
+The at  clause specifies  the position  of a  component by  giving the
+position of  the storage  unit relative  to which  the  bit  range  is
+counted. This position is itself relative to the first storage unit of
+the record, which is numbered 0. For example,
+<p>
+<PRE>    TRACK at 2 range 0 .. 15</PRE>
+<p>
+means that the component TRACK occupies 16 bits starting with bit 0 of
+the storage  unit numbered 2. If the value of SYSTEM.STORAGE_UNIT were
+8, the  last bit  of TRACK  could actually  be bit  7 in  the adjacent
+storage unit  numbered 3, depending on the implementation. Overlapping
+components are allowed only when they belong to distinct variants, and
+the compiler  must actually  check the  absence of overlap within each
+variant. For  example, the  overlap of  LINE_COUNT and CYLINDER in the
+following clause is legal because they belong to different variants:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type DEVICE is (PRINTER, DISK, DRUM);
+type PERIPHERAL(UNIT :  DEVICE :=  DISK) is
+  record
+    case UNIT is
+      when PRINTER =&gt;
+        LINE_COUNT :  INTEGER range 1 .. 50;
+      when others =&gt;
+        CYLINDER  :  CYLINDER_INDEX;
+        TRACK     :  TRACK_NUMBER;
+    end case;
+  end record;
+
+-- assuming SYSTEM.STORAGE_UNIT = 8 bits
+
+for PERIPHERAL use
+  record at mod 4;
+    UNIT        at 0 range 0 .. 7;
+    LINE_COUNT  at 1 range 0 .. 7;
+    CYLINDER    at 1 range 0 .. 7;
+    TRACK       at 2 range 0 .. 15;
+  end record;
+</pre></td></tr></table>
+<p>
+When the  record representation  clause is incomplete - that is, if it
+does not  specify the layout for all components - the compiler is free
+to map  the unspecified  components in any way that is consistent with
+the logic  of the record type declaration. Compilers should be able to
+produce listings of record mappings upon request.
+<p>
+<H4>Alignment Clauses:</H4>
+<p>
+When it  is important  that the  objects of  a given  record  type  be
+allocated on  a given storage boundary, this can be specified by means
+of an  alignment clause.  The alignment  is expressed  as a  number of
+storage units,  and all  addresses at  which the objects are allocated
+must be  exact multiples of the specified number of storage units (the
+address modulo the alignment expression must be zero).
+<p>
+<PRE>    for PAGE_BUFFER use at mod 512;</PRE>
+
+<H3><BR><a name="15.4.4">15.4.4 Address Clauses</a></H3>
+
+An address  clause can  be used  to force the storage space of a given
+variable to  be allocated  at a  given address,  which is specified in
+storage units:
+<p>
+<PRE>    for TTY_STATUS_REGISTER use at 16#40#;</PRE>
+<p>
+This form of clause can also be used for specifying the address of the
+code of  a subprogram, or to link an interrupt with a given entry. The
+address given after the reserved word at has the system-dependent type
+SYSTEM.ADDRESS (assumed to be an integer type in the above example).
+
+<H3><BR><a name="15.4.5">15.4.5 Enumeration Representation Clauses</a></H3>
+
+An enumeration representation clause is used to specify the mapping of
+the values  of an  enumeration type  onto the  specific internal codes
+used to represent the elements.
+<p>
+The mapping is specified using an aggregate in which the values of the
+type are  enumerated one  by one.  The type  of such an aggregate is a
+one-dimensional array  whose component  type is  universal_integer and
+whose index  subtype is  the enumeration  type  itself.  For  example,
+consider a  program that generates object code for a given machine and
+in which  the operation  codes for  the  machine  are  defined  by  an
+enumeration type.  It is  necessary to map the enumeration values into
+actual operation codes and this can be achieved as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type MIX_CODE is (ADD, SUB, MUL, LDA, STA, STZ);
+
+for MIX_CODE use
+  (ADD =&gt;  1, SUB =&gt;  2, MUL =&gt;  3, LDA =&gt;  8, STA =&gt;  24, STZ =&gt; 33);
+</pre></td></tr></table>
+<p>
+In this example the array aggregate is of type
+<p>
+<PRE>    array (MIX_CODE) of universal_integer</PRE>
+<p>
+All enumeration  values  must  be  provided  with  distinct  universal
+integer codes  and these  codes must  be known  at  compilation  time.
+Moreover, in  order  to  get  an  efficient  implementation  of  order
+relations, the  internal codes  must follow  the same  ordering as the
+enumeration values.  The order  relations are  then known  through the
+internal codes,  and there  is no  need for  the compiler  to generate
+tables that contain the order relation.
+<p>
+As illustrated  above,  the  specified  internal  codes  need  not  be
+successive integers.  We discuss the implications of this issue in the
+next section.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-15-05.html#15.5"><b>NEXT</b></a>
+&#128; <a href="ratl-15-03.html#15.3"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-15.html#15"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>

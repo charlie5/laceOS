@@ -1,0 +1,1076 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Two - Chapter 10
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-9.html> Previous </a> |
+<a href=rat95-p2-11.html> Next </a>
+<hr>
+
+<h1>
+10   Program Structure and Compilation Issues
+</h1>
+
+<p>
+There are a number of important changes in this overall structural area
+of the language.  These include the introduction of the hierarchical
+library which was discussed in some detail in Part One.  In this chapter
+we provide some more examples and also discuss other topics of a
+structural nature.  The main changes are
+</p>
+<ul>
+<li>
+    The introduction of the hierarchical library provides decomposition
+     of a library unit with possibly distinct views of the hierarchy for
+     the client and implementor.
+<li>
+    The overall program structure is enhanced by the concept of
+     partitions.
+<li>
+    More control of elaboration order is provided.
+<li>
+    A library package is only permitted to have a body if one is
+     required by language rules.
+<li>
+    The mechanism of the program library is no longer specified so
+     precisely.  The main issue is that partitions must be consistent.
+<li>
+    Minor changes include the relaxation of a restriction on subunit
+     names.
+</ul>
+<p>
+In addition to the core language changes which introduce the concept of
+partitions, the Distributed Systems annex describes the concepts of
+active and passive partitions plus various packages which provide
+communication between partitions.  These are discussed in detail in Part
+Three.
+</p>
+
+<h2>
+<a name=1>
+10.1  The Hierarchical Library
+</a>
+</h2>
+
+<p>
+This topic has already been discussed in Sections II.7 and II.8 of Part
+One where we saw how the introduction of a hierarchical library with
+public and private child units overcame a number of problems.  We
+recapitulate some of that discussion here in order to bring further
+insight into the ways in which the hierarchical library may be used.
+</p>
+<p>
+   In Ada 83, there were a number of situations where relatively small
+changes result in large numbers of recompilations.  For example, it was
+not possible to define an additional operation for a private type without
+recompiling the package where the type was declared.  This forced all
+clients of the package to become obsolete and thus also need recompiling,
+even if they did not use the new operation.  Massive recompilations could
+result from what was fundamentally a very small change.
+</p>
+<p>
+   As we have seen, this is overcome in Ada 95 by allowing a library unit
+package to be effectively extended with child library units.  A child
+library unit is an independent library unit in that it is not visible
+unless referenced in a with clause.  However, a child library unit may be
+used to define new operations on types defined in the parent package,
+because the private part and body of the child unit have visibility onto
+the private declarations of the parent package.
+</p>
+<p>
+   The name of a child library unit indicates its position in the
+hierarchy.  Its name is an expanded name, with the prefix identifying its
+parent package.  Furthermore, when a child library unit is referenced in
+a with clause, it "looks like" a unit nested in its parent package.  This
+allows the existing naming and visibility rules of nested units to be
+carried over directly when using child library units.
+</p>
+<p>
+   If a child library unit is not mentioned in a with clause, it is as if
+it did not exist at all.  Adding a new child library unit never causes
+any immediate recompilation of existing compilation units.  Of course,
+eventually some number of other library units will come to depend on this
+child library unit, and then recompiling the child will affect these
+client units.  But by distributing the set of operations across multiple
+children, the number of clients affected by any single change can be kept
+to a minimum.  Furthermore, the with clause provides explicit and
+detailed indications of interdependences, helping to document the overall
+structure of the system.
+</p>
+<p>
+   Separate compilation of program unit specifications and bodies is a
+powerful facility in Ada.  It supports good software engineering practice
+by separating the abstract interface of the unit from its implementation.
+Clients of the program unit need only know about its specification -
+changes to the body do not affect such clients, and do not necessitate a
+client's recompilation.  This separation of interface from implementation
+also applies to private types.  Private types have an interface in the
+visible part of the package in which they are declared and an
+implementation in the private part of that package.  Declarations in the
+private part were only visible within that private part and in the
+package body in Ada 83.
+</p>
+<p>
+   For very complex type definitions, the relationship between private
+types and packages in Ada 83 introduced an unnecessary coupling between
+abstractions.  Consider, for example, a system that implements two
+private types, File_Descriptor and Executable_File_Descriptor.  The first
+supports general file operations, and the second supports special file
+operations for executable files.  Thus Executable_File_Descriptor might
+have a write operation that uses scattering writes to write out an entire
+executable file very quickly.
+</p>
+<p>
+   In Ada 83, if Executable_File_Descriptor must have access to the
+implementation of File_Descriptor, perhaps for reasons of performance,
+then both File_Descriptor and Executable_File_Descriptor must be defined
+in the same package.  Clients of either File_Descriptor or
+Executable_File_Descriptor will depend on this package.  If the
+definition of Executable_File_Descriptor is changed, all units that
+depend on the common package must be recompiled, even those that only
+utilize File_Descriptor.  The unnecessary coupling between
+Executable_File_Descriptor and File_Descriptor forces more recompilations
+than are logically necessary.
+</p>
+<p>
+   The following example shows how to alleviate this situation using
+child library units
+<pre>
+   package File_IO is
+      type File_Descriptor is private;
+      -- Operations on File_Descriptor...
+   private
+      ...
+   end File_IO;
+
+   package File_IO.Executable_IO is
+      type Executable_File_Descriptor is private;
+      -- Operations on Executable_File_Descriptor...
+   private
+      ...
+   end File_IO.Executable_IO;
+</pre>
+</p>
+<p>
+   As a child of package File_IO, File_IO.Executable_IO can use the full
+declaration of the private type File_Descriptor in the declaration of the
+private type Executable_File_Descriptor.  Clients of the package File_IO
+do not require recompilation if a child package changes, and new child
+units can be added without disturbing existing clients.
+</p>
+<p>
+   Another way of looking at the example above is to observe a
+distinction between the different clients of a package.  The traditional
+clients of a package use the package's visible definitions as their
+interface.  There are other clients that extend the package's
+abstractions.  These extending clients may add functionality to the
+original abstraction, or export a different interface, or do both.
+Extending clients will require details of the original package's
+implementation.  Packages that are extending clients are tightly coupled
+to the original package in terms of implementation, but their logical
+coupling may be looser - the extending client may be an alternative to
+the original for other clients.  It should be possible to use either
+package independently.  In Ada 95, one or more child library units can
+share access to the declarations of their parent's private part - to
+extend their parent's visible interface or provide an alternate view of
+it.
+</p>
+<p>
+   The distinction between packages that extend another package and
+packages that simply use the definitions of another package gives rise to
+the notion of subsystems.  A set of packages that share a set of private
+types can be viewed as a subsystem or subassembly.  This concept is
+recognized by many design methodologies [Booch 87] and is supported by
+several implementations in their program library facilities.  Subsystems
+are a useful tool for structured code reuse - very large software systems
+can be designed and built by decomposing the total system into more
+manageable-sized pieces that are related, but independent, components.
+</p>
+<p>
+   In summary, child library units provide a combination of compilation
+independence and hierarchical structuring.  This combination results in
+an extremely flexible building block for constructing subsystems of
+library units that collectively implement complex abstractions and
+directly model the structure of the subsystems within the language.  As
+an example, the package OS in II.8 illustrates the use of a hierarchy of
+library units in implementing a subsystem representing an operating
+system interface.
+</p>
+
+<h3>
+<a name=1-1>
+10.1.1  Summary of Mechanism  
+</a>
+</h3>
+
+<p>
+In Ada 95, a library package (or a generic library package) may have
+child library units.  Child library units have the following properties
+</p>
+<ul>
+<li>
+    Child units are logically dependent on their parent and have
+     visibility of their parent's visible and private parts.
+<li>
+    Child library units are named like nested units; with an expanded
+     name consisting of a unique identifier and their parent's name as
+     prefix.
+<li>
+    A child may be any kind of library unit including a generic unit or
+     instantiation.
+<li>
+    This structure may be iterated - child units that are packages (or
+     generic packages) may themselves have children, yielding a tree-like
+     hierarchical structure, beginning at a root library unit.  Note
+     however that a generic unit may only have generic children.
+</ul>
+<p>
+Child library units may be separately compiled.  They may also be
+separately "withed" by clients.  A context clause that names a child unit
+necessarily names all of the child unit's ancestors as well (with clauses
+are hence implicit for the ancestors).  Within the private part of
+File_IO.Executable_IO, declarations in the private part of File_IO are
+visible.  Hence the definition of Executable_File_Descriptor can use the
+full declaration of File_Descriptor.
+</p>
+<p>
+   There are two kinds of child units - private child units and public
+child units.  Private children are those declared using the reserved word
+private.
+<pre>
+   private package File_IO.System_File_IO is
+      type System_File_Descriptor is private;
+   private
+      ...
+   end File_IO.System_File_IO;
+</pre>
+</p>
+<p>
+   The visibility rules for private child units are designed such that
+they cannot be used outside the subsystem defined by their parent.  A
+unit's specification may depend on a private child unit only if the unit
+is itself private and it is a descendant of the original private child's
+parent.  A unit body may depend on a private child unit if it is a
+descendant of the private child unit's parent.
+</p>
+<p>
+   Public child packages are intended to provide facilities that are
+available outside the subsystems defined by their parent packages.  In
+the example, File_IO.Executable_IO is a public child generally available
+to clients.  Private child packages are intended "for internal use" in a
+larger definition.  In the example, File_IO.System_File_IO is meant to be
+private to the hierarchy of units rooted at File_IO.
+</p>
+<p>
+   Child library units observe the following visibility rules.
+</p>
+<ul>
+<li>
+    A parent unit's visible definitions are visible everywhere in any
+     child unit, whether the unit is public or private.
+<li>
+    A parent unit's private definitions are visible in the private part
+     of a child unit, whether the child unit is public or private.
+<li>
+    A parent unit's private definitions are visible everywhere in a
+     private child unit, since the child package is never visible outside
+     of the parent.
+<li>
+    The entities in a parent's body are never visible in a child unit.
+</ul>
+<p>
+   A principal design consideration for child library units was that it
+should not be possible for a private view to be violated by indirect
+means such as renaming.  As can be seen this has been achieved since a
+child unit cannot export a parent unit's private definition by renaming
+it in the visible part.
+</p>
+<p>
+   Note that for root units, private has the effect of making them
+invisible to the specifications of public root units.  Thus private root
+units concern the internal implementation of the total system and not its
+public interface.  Moreover, we anticipate that some implementations may
+provide means for one program library to be referenced from another
+program library, and in this case the private marking might naturally be
+used to limit visibility across program libraries.  See 10.1.5.
+</p>
+<p>
+   In conclusion, the ability to mark a library unit private is extremely
+valuable in establishing the same separation between interface and
+implementation at the subsystem level as is provided in Ada 83 at the
+individual program unit level.  The private library units of a hierarchy,
+plus the bodies of both the private and public library units of the
+hierarchy, make up the "implementation" of a subsystem.  The "interface"
+to the subsystem is the declaration of the root package in the hierarchy,
+plus all of the public descendant child library units.
+</p>
+
+<h3>
+<a name=1-2>
+10.1.2  Context Clauses and Renaming    
+</a>
+</h3>
+
+<p>
+As in Ada 83, a with clause is used to make other library units visible
+within a compilation unit.  In Ada 95, in order to support the
+identification of a child library unit, the with clause syntax is
+augmented to allow the use of an expanded name (the familiar dotted
+notation) rather than just a single identifier.
+</p>
+<p>
+   Once the child library unit has been identified with its full name in
+the with clause, normal renaming or use clauses may be used within the
+compilation unit to shorten the name needed to refer to the child.
+</p>
+<p>
+   In addition to renaming from within a unit, renaming may be used at
+the library unit level to provide a shorter name for a child library
+unit, or to hide the hierarchical position of a child unit when
+appropriate.  For example, a library unit may be defined as a child unit
+to gain special visibility on a parent unit, but this visibility may be
+irrelevant to most users of the child unit.
+</p>
+<p>
+   Other reasons for library unit renaming are
+</p>
+<ul>
+<li>
+    Essentially all hierarchical naming systems provide some kind of
+     "alias" capability, because of the advantages of allowing the same
+     entity to appear in multiple places within the hierarchy (such as
+     symbolic links in Unix file systems);
+<li>
+    Helper packages that use unchecked conversion to overcome the
+     restrictions on private types may already exist; through the use of
+     library unit renaming, such helper packages can remain available by
+     their current root library unit names, while moving their actual
+     definition into the appropriate place in the library unit hierarchy
+     reflecting their access patterns;
+<li>
+    It is a common practice to establish standard package renaming
+     conventions throughout a project; without library-level renaming,
+     each unit that withs a package must include a copy of the
+     appropriate renaming declaration for the package; this introduces
+     the possibility of nonconformities, and, if done in the
+     specification, overrides the useful lack of transitivity provided
+     for names introduced by with clauses; the program library manager
+     keeps a central record of the project-wide renaming declarations;
+<li>
+    When integrating independently developed libraries into a single
+     library, the hierarchical name space may be used to avoid
+     collisions, and renaming may be used to selectively "export" units
+     from their local name spaces into the root name space for a given
+     user's library;
+<li>
+    Given a large program library, it may be useful to have a flexible
+     subsystem that includes withs for a certain set of units, and then
+     use renaming to select the particular implementations of those units
+     to be used in the particular subsystem configuration appropriate at
+     a given time;
+<li>
+    Renaming can be used to hide from clients the parent child
+     relationship between two packages.  Withing a child via a root-level
+     renaming does not give visibility of the parent.
+<li>
+    Renaming is used in the predefined library so that compatibility is
+     preserved for Ada 83 programs.  Thus Ada.Text_IO is renamed as
+     Text_IO as mentioned in II.13.
+</ul>
+<p>
+Some of the capabilities provided by library unit renaming are
+currently supported by some proprietary program library managers.
+However, by standardizing these renaming capabilities, very large systems
+can be built and maintained and rehosted without becoming overly
+dependent on non-standard program library features.
+</p>
+
+<h3>
+<a name=1-3>
+10.1.3  Children of Generic Packages
+</a>
+</h3>
+
+<p>
+As mentioned in II.8, a child may also be generic.  However there are a
+number of important rules to be remembered.
+</p>
+<p>
+   Children of a nongeneric unit may be generic or not but children of a
+generic unit must always be generic.  One of the main problems to be
+solved in the design of the interaction between genericity and children
+is the impact of new children on existing instantiations.  One
+possibility would be to say that adding a new child automatically added
+further corresponding children to all the existing instantiations; this
+would undoubtedly lead to many surprises and would typically not be what
+was required since at the time of instantiation the children did not
+exist and presumably the existing instantiation met the requirements at
+the time.  On the other hand one might decide that existing
+instantiations did not become extended; however, this would sometimes not
+be what was wanted either.
+</p>
+<p>
+   Clearly a means is required to enable the user to specify just which
+units of the hierarchy are to be instantiated.  Insisting that all
+children of a generic unit are themselves generic makes this particularly
+straightforward and natural; the user just instantiates the units
+required.  The existence of nongeneric children would be a problem
+because there would not be a natural means to indicate that they were
+required.  One consequence is that it is very common for generic children
+not to have any generic parameters of their own.  See for example the
+package Sets in 3.7.1.
+</p>
+<p>
+   So a typical pattern is
+<pre>
+   generic
+      type T is private;
+   package Parent is
+      ...
+   end Parent;
+
+   generic
+   package Parent.Child is
+      ...
+   end Parent.Child;
+</pre>
+</p>
+<p>
+   Since the child has visibility of the formal parameters of its parent
+it is necessary that the instantiation of the child also has visibility
+of the corresponding actual parameter of the instantiation of the parent.
+There are two situations to be considered, instantiation within the
+parent hierarchy and instantiation outside the hierarchy.
+</p>
+<p>
+   Instantiation inside the parent hierarchy poses no problem since the
+instantiation has visibility of the parent's formal parameters in the
+usual way.
+</p>
+<p>
+   Instantiation outside requires that the actual parameter corresponding
+to the formal parameter of the parent is correspondingly visible to the
+instantiation of the child.  This is assured by requiring that the child
+is instantiated using the name of the instance of the parent; a with
+clause for the generic child is necessary in order for the child to be
+visible.  So we might write
+<pre>
+   with Parent;
+   package Parent_Instance is new Parent(T => Integer);
+
+   with Parent.Child;
+   package Child_Instance is new Parent_Instance.Child;
+</pre>
+In a sense the with clause for the child makes the generic child visible
+in every instantiation of the parent and so we can then instantiate it in
+the usual way.
+</p>
+<p>
+   Note carefully that the instantiations need not be at the library
+level.  An earlier version of Ada 95 did require all instantiations to be
+at the library level but this was very restrictive for many applications.
+Of course if we do make the instantiations at the libraray level then the
+instantiations can themselves form a child hierarchy.  However it will be
+necessary for the child names to be different to those in the generic
+hierarchy.  So we might have
+<pre>
+   with Parent.Child;
+   package Parent_Instance.Child_Instance is new Parent_Instance.Child;
+</pre>
+</p>
+<p>
+   Finally note that there are no restrictions on the instantiation of a
+generic child of a non-generic parent.
+</p>
+
+<h3>
+<a name=1-4>
+10.1.4  Examples of Interfaces
+</a>
+</h3>
+
+<p>
+Programs may use child library units to implement several different kinds
+of structures.  Some possibilities which will now be illustrated are
+</p>
+<ul>
+<li>
+    A child package may be used to create specialized interfaces to, or
+     views of, an abstraction.  This allows independent abstractions to
+     be combined into larger subsystems.  The bit-vector and list-based
+     sets example below illustrates this.
+<li>
+    The interface to a system may be organized into subsystems if it is
+     too large to be conveniently implemented as a single package, or if
+     clients do not often need all of the facilities that the package
+     provides.  See the discussion of CAIS-A below.
+<li>
+    A hierarchical organization of library units may be used to permit
+     vendor extensions.  The form of such extensions can distinguish
+     clearly by package names which parts are standard, and which parts
+     are vendor extensions.
+<li>
+    Child library units may be used to define an extensible, reusable,
+     library of components.  Users are encouraged to extend or modify the
+     components by adding new children.  An example of this was shown in
+     II.7 as part of a windowing system.
+</ul>
+<p>
+Our first example could be part of a transaction control system for a
+database.  It shows how to use child library units to structure
+definitions in order to reduce recompilation.
+<pre>
+   package Transaction_Mgt is
+      type Transaction is limited private;
+      procedure Start_Transaction(Trans: out Transaction);
+      procedure Complete_Transaction(Trans: in  Transaction);
+      procedure Abort_Transaction(Trans: in  Transaction);
+   private
+      ...
+   end Transaction_Mgt;
+
+   package Transaction_Mgt.Auditing is
+      type Transaction_Record is private;
+      procedure Log(Rec: in Transaction_Record);
+   private
+      ...
+   end Transaction_Mgt.Auditing;
+</pre>
+</p>
+<p>
+In the example, some clients require facilities for controlling
+transactions.  Other clients need to be able to log a record of each
+transaction for auditing purposes.  These facilities are logically
+separate, but transaction records require intimate knowledge of the full
+structure of a transaction.  The solution with child library units is to
+make a child library unit to support the type Transaction_Record.  Each
+unit may be compiled separately.  Changes to Transaction_Mgt.Auditing do
+not require recompilation of the parent, Transaction_Mgt, nor its
+clients.  But note that withing the child implicitly withs the parent; if
+this is not desired then, as mentioned above, the child could be renamed
+thus
+<pre>
+   package Transaction_Auditing renames Transaction_Mgt.Auditing;
+</pre>
+and then withing Transaction_Auditing will not give visibility of
+Transaction_Mgt.
+</p>
+<p>
+   The next example illustrates how child library units can be used to
+add new interfaces to an existing abstraction.  This is useful, for
+example, when conversion functions are needed between types in
+independently developed abstractions.
+</p>
+<p>
+   Imagine that two packages exist implementing sets, one using bit
+vectors, and the other linked lists.  The bit vector abstraction may not
+have an iterator in its interface (a means of taking one element from the
+set), and hence a function cannot be written to convert from the bit
+vector set to the linked list set.  A child package can be added to the
+bit vector set package that provides an iterator.  A new package could
+then be written to provide the conversion functions, implemented using
+the iterator interface.
+<pre>
+   package Bit_Vector_Set is
+
+      type Set is private;
+
+      function Union(A, B: Set) return Set;
+      function Intersect(A, B: Set) return Set;
+      function Unit(E: Element) return Set;
+      function Empty return Set;
+   private
+       ...
+   end Bit_Vector_Set;
+
+   package List_Set is
+      type Set is private;
+
+      function Union(A, B: Set) return Set;
+      function Intersect(A, B: Set) return Set;
+      function Unit(E: Element) return Set
+      function Empty return Set;
+
+      procedure Take(S: in out Set; E: out Element);
+      function Is_Empty(S: Set) return Boolean;
+   private
+      ...
+   end List_Set;
+
+   package Bit_Vector_Set.Iterator is
+
+      procedure Take(S: in out Set; E: out Element);
+      function Is_Empty(S: Set) return Boolean;
+
+   end Bit_Vector_Set.Iterator;
+
+   with List_Set;
+   with Bit_Vector_Set;
+   package Set_Conversion is
+
+      function Convert(From: in List_Set.Set)
+         return Bit_Vector_Set.Set;
+      function Convert(From: in Bit_Vector_Set.Set)
+         return List_Set.Set;
+
+   end Set_Conversion;
+</pre>
+</p>
+<p>
+   The child package Bit_Vector_Set.Iterator adds the two missing
+subprograms needed in order to iterate over the set.  The body of the
+child package has visibility of the private part of its parent and thus
+can access the details of the set.  This example should be compared with
+that in 4.4.3 which used class-wide types.  Note also that it might be
+infeasible to modify the body of Bit_Vector_Set anyway since it might
+have been supplied by a third party in encrypted form (such as object
+code!).
+</p>
+<p>
+   A larger example is provided by CAIS-A [DoD 89b]; this is an interface
+that provides operating system services in a portable way.  The CAIS has
+a very large specification, with hundreds of packages.  The central type,
+which is manipulated by much of the system, is called Node_Type.  It is a
+limited private type defined in a package called Cais_Definitions.  It is
+needed throughout the CAIS, but its implementation should be hidden from
+CAIS application developers.  The implementation uses
+Unchecked_Conversion inside packages that manipulate the type.  There are
+a number of subsystems, the largest of which are for manipulating Nodes,
+Attributes, and I/O.  These subsystems also share common types.  These
+common types are implemented using visible types declared in support
+packages.  Only packages in the subsystem are supposed to depend on these
+support packages.
+</p>
+<p>
+   Using Unchecked_Conversion has several disadvantages.  First, the
+replicated type definitions must match exactly, which creates a
+maintenance problem.  Secondly, the compiler must represent each type
+definition in the same way, which would require a representation clause
+or good luck.  Finally, if the data type is a record, the components may
+themselves be private types whose definitions may need to be replicated.
+This propagated need for visibility may cause many or all private type
+definitions to be replicated in several places.
+</p>
+<p>
+   Child library units could be used to restructure these definitions.
+The type Node_Type might be defined at the root of the hierarchy.
+Packages that contain types and operations for manipulating Nodes, I/O,
+and Attributes might be child packages of the root library package.  The
+common types would be private, and the support packages would be child
+packages of the packages that contain the type definitions.
+</p>
+<p>
+   The Ada binding to POSIX [IEEE 92] is another system with many
+packages and many types. Some of these types are system independent, and
+some are explicitly system defined.  When designing portable programs it
+is useful to know when programs depend on system defined definitions, to
+eliminate such dependencies where possible, and to contain them when they
+are necessary.
+</p>
+<p>
+   The POSIX-Ada binding attempts to preserve the principle of with list
+portability: users should be able to determine if a program depends on
+system defined features by examining the names of the packages in its
+with clauses. At the same time, the system dependent packages often
+require visibility on the private types of the standard packages, and in
+Ada 83 this could only be accomplished by nesting them within the
+standard packages.  Since a nested package never appears in a with
+clause, the visibility needs of such system dependent packages is in
+conflict with the principle of with list portability.  Child library
+units offer precisely what is needed to resolve this conflict.
+</p>
+
+
+<h3>
+<a name=1-5>
+10.1.5  Existing Program Libraries 
+</a>
+</h3>
+
+<p>
+We anticipate that implementations will continue to support library unit
+references between program libraries.  The hierarchical library unit
+naming may allow these inter-library references to be handled more
+naturally within the language, for example, by treating the library units
+of one program library as child units of an empty package within the
+referencing library.  This would provide automatic name-space separation
+between the two libraries, since the names of the units of the referenced
+library would all be prefixed by a hypothetical parent package
+identifier.  This approach would eliminate any need for global uniqueness
+of library unit names when two or more program libraries are
+(conceptually) combined in this way.  It should also be noted that this
+provides a good use for private top level library units.  Marking a top
+level library unit as private such as
+<pre>
+   private package PP is ...
+</pre>
+means that it is not visible to the specifications of public units in the
+library but only to their bodies.  Hence it cannot be accessed directly
+but only as a slave to other units.  Considering the whole library as a
+hypothetical unit such as Your_Lib means that in effect the package
+becomes
+<pre>
+   private package Your_Lib.PP is ...
+</pre>
+and then (correctly) cannot be accessed from outside the package
+Your_Lib.
+</p>
+<p>
+   We have avoided specifying standard mechanisms for such inter-program-
+library references, as implementations vary widely in what they choose to
+provide in this area.  However, the universal availability of
+hierarchical library unit naming will ensure that a program built out of
+units from multiple libraries will have a natural and portable
+representation by using a hierarchical naming approach.
+</pre>
+
+<h3>
+<a name=1-6>
+10.1.6  Relationship with Previous Work 
+</a>
+</h3>
+
+<p>
+We conclude our discussion of hierarchical libraries by mentioning three
+alternative approaches which were considered and rejected:
+</p>
+<ul>
+<li>
+Voyeurism.  (The term "voyeurism" is due to D. Emery.)  This allows
+     packages to request visibility on another package's private
+     declarations via some kind of enhanced context clause (such as with
+     all X; or with private X;)
+<li>
+Friends.  This allows packages to specify exactly which other packages
+     may have enhanced visibility.
+<li>
+DAG Inheritance.  This allows a more general form of hierarchical
+     organization, where packages can, in effect, "nest" within several
+     other packages, without an explicit indication in the parent.  This
+     is called "DAG inheritance", since the dependence graph must be a
+     directed acyclic graph.
+</ul>
+<p>
+The voyeur approach has the unsettling characteristic of making the
+privacy of types a property of other packages' context clauses, instead
+of a feature of the package that is declaring the type.  This inverts the
+Ada 83 notion of privacy.  With child library units, privacy becomes a
+feature of package hierarchies, which is a generalization of Ada 83's
+subunit facility.  Although many of the same effects can be achieved with
+either approach, the mechanisms are fundamentally different, and child
+library units are consistent with this Ada model.
+</p>
+<p>
+   There are serious problems with the with private approach - without
+additional rules, private declarations may be easily reexported to units
+that do not have a with private clause for the unit.  This could happen,
+for example, via a renaming declaration or deriving from a private type
+as in the following example
+<pre>
+   package Closed is
+      type T is private;
+   private
+      type T is Full_Implementation;
+   end Closed;
+
+   with private Closed;       -- not Ada 95
+   package Open is
+      type D is new Closed.T;
+      -- from full declaration of T
+   end Open;
+
+   with Open;
+   package Surprise is
+      type S is new Open.D;
+      -- gets full type declaration of T via D
+   end Surprise;
+</pre>
+whereby the package Surprise gets visibility of the full declaration of T
+via the type D declared in the package Open.
+</p>
+<p>
+   The real difficulty with the with private approach is that dependence
+can subsequently become diffused.
+</p>
+<p>
+   One of the important advantages of using private types in a package is
+that the compiler ensures that clients of the package do not become
+dependent on the details of the type's implementation.  This makes it
+much easier to safely maintain and enhance the implementation of the
+package, even if the set of clients is large.  With child units, if a
+given client needs more operations on a private type, they must identify
+those operations and declare them in a public child of the package.  When
+the private type's implementation is revised, only the children of the
+package need be checked and updated as necessary.
+</p>
+<p>
+   The with private approach results in a very different scenario.  If a
+client needs additional access to a private type, they need not
+separately declare operations on that type in some child.  Instead they
+can simply change their with to with private.  This means that the
+dependence is now open ended rather than being encapsulated in a child.
+After a period of use, it is clear that there could be sufficiently
+widespread and diffuse dependence on the implementation of the private
+type so that any change will be unacceptably expensive to the clients
+(since the amount of client code can easily exceed the size of the
+package), thereby totally defeating the original purpose of private
+types.
+</p>
+<p>
+   The "friends" approach is used in C++.  This solution was considered
+and was rejected because it does not allow for unplanned extension of a
+package without requiring modification and recompilation of that package,
+conflicting with the requirement to reduce recompilation.  In the X and
+CAIS-A examples above we discussed situations where unplanned extension
+is desirable.  It is highly advantageous that Ada 95 support it with this
+same mechanism.
+</p>
+<p> 
+  Furthermore, the "friends" approach inverts Ada's usual client/server
+philosophy.  In general it is not possible to tell at the point of a
+particular declaration where that declaration will be used.  For example,
+the declaration of a type does not specify the type's users, a task
+declaration does not specify the task's callers, a library unit's
+declaration does not specify which other units depend on it, and a
+generic unit's declaration does not specify where the generic will be
+instantiated.  Allowing a package's declaration to specify which other
+units may extend that package is inconsistent with this model.
+</p>
+<p>
+   Although on the surface the voyeurism and friends concepts appear
+simple, the issue of transitivity is problematical.  In Ada, context
+clauses are not transitive.  Presumably this would also be the case for
+voyeur context clauses as well.  In that case the meaning of the
+following program becomes unclear.
+<pre>
+   with private X;           -- not Ada 95
+   package Y is
+      ...
+   end Y;
+
+   with private Y;
+   with X;
+   package Q is
+      ...
+   end Q;
+</pre>
+</p>
+<p>
+Here Q has visibility to Y's private declarations which in turn may refer
+to X's private declarations.  However, Q does not have visibility to X's
+private declarations through its context clause.  Any proposal would have
+to address in this case whether or not Q has visibility to X.
+</p>
+<p>
+   The DAG inheritance approach has characteristics of both child library
+units and voyeurism.  If there is more than one private type involved, it
+is possible that a tree structured hierarchy cannot provide the exact
+visibility needed. However, the DAG approach is complex and its
+ramifications far-reaching.  We concluded that such a solution was too
+ambitious for the Ada 9X revision.
+</p>
+
+<h2>
+<a name=2>
+10.2  Program Structure  
+</a>
+</h2>
+
+<p>
+In Ada 83, an executable program consisted of a main subprogram and all
+other library units reachable from this main subprogram.  Execution
+proceeded by elaborating the entire program, running the main subprogram
+to completion, waiting for all library-level tasks to complete, and then
+terminating. Although this model for a program was appropriate in some
+environments, for many programming environments, a much more dynamic and
+distributed model is preferable.
+</p>
+<p>
+   In Ada 95, a program may be formed from a cooperating set of
+partitions.  The core language simply says that partitions elaborate
+independently, communicate, and then terminate in some implementation-
+defined manner.  Each partition has its own environment task to act as
+the thread of control for library-level elaboration, and to act as the
+master for library-level tasks.
+</p>
+<p>
+   The description in the core language is kept purposefully non-specific
+to allow for many different approaches to dynamic and distributed program
+construction.  However, the Distributed Systems annex describes
+additional standard pragmas and attributes which form the basis for a
+standard, portable approach to distribution.
+</p>
+
+<h2>
+<a name=3>
+10.3  Elaboration
+</a>
+</h2>
+
+<p>
+Because Ada allows essentially arbitrary code to execute during the
+elaboration of library units, it is difficult for the user to ensure that
+no subprogram is called before it is elaborated.  Ada 83 required that
+access before elaboration be detected, and Program_Error raised.  This
+could incur significant overhead at run-time.
+</p>
+<p>
+   Ada 95 addresses both the problem of controlling library unit
+elaboration order, and the run-time overhead of access-before-elaboration
+checks.
+</p>
+<p> 
+  In Ada 95 the Elaborate pragma is effectively replaced by the
+transitive Elaborate_All pragma.  Elaborate_All on a library unit causes
+not only the body of that library unit to be elaborated, but also causes
+the bodies of the library units reachable from that library unit's body
+to be elaborated.  This ensures that any call performed during
+elaboration on a subprogram defined in the unit to which pragma
+Elaborate_All applies, will not result in an access-before-elaboration
+error.
+</p>
+<p>
+   The pragma Elaborate_Body in a package specifies that the body of the
+package must be elaborated immediately after its declaration.  No
+intervening elaborations are permitted.  This allows the compiler to know
+whether or not any elaboration-time code exists between a visible
+subprogram declaration and its body.  If there is no such elaboration-
+time code, or it can be proved to not call the subprogram, then there is
+no opportunity for access-before-elaboration, and the check may be
+completely eliminated for the subprogram. Without this pragma, the
+compiler must assume that other library units might be elaborated between
+the elaboration of the library unit's declaration and its body, meaning
+that the check in a visible subprogram cannot be removed by the compiler.
+</p>
+<p>
+   Ada 95 also contains two further pragmas concerned with elaboration.
+The pragma Pure in a package specifies that the package does not have any
+library-level "state", and may depend only on other pure packages.  Pure
+packages are important for distributed systems.
+</p>
+<p>
+   Finally, the pragma Preelaborate indicates that a unit is to be
+preelaborated; that is elaborated before other units not so indicated;
+there are restrictions on the actions of a unit which is preelaborated.
+A unit marked as Pure is also preelaborated.  The general intent is that
+certain structures can be set up at link-time (before program execution
+begins) and then perhaps loaded into RAM.
+</p>
+<p>
+   It is good advice to give all library units one of the  pragmas Pure,
+Preelaborate, or Elaborate_Body in that order of preference, wherever
+possible.  This will ensure the benefits of possible check eliminations
+as mentioned above.
+</p>
+<p>
+   Further support for preelaboration is described in the Systems
+Programming annex.
+</p>
+
+<h2>
+<a name=4>
+10.4  Library Package Bodies
+</a>
+</h2>
+
+<p>
+In Ada 83, if a package does not require a body, but has one nevertheless
+(perhaps to do some initialization), its body can become out-of-date, and
+be silently omitted from a subsequent build of an executable program.
+This can lead to mysterious run-time failures due to the lack of the
+package body.  Ada 95 overcomes this difficulty by allowing a library
+package to have a body only if a body is required by some language rule.
+An obvious rule requiring a body is that a subprogram specification in a
+package specification requires a corresponding subprogram body in the
+package body.  Another rule which is more convenient for ensuring that a
+body is required in cases where we wish to use the body just for
+initialization is that the pragma Elaborate_Body rather obviously
+requires a body.
+</p>
+<p>
+   Note that an early version of Ada 95 proposed that a library package
+always have a body; this was eventually rejected because of the
+irritating incompatibility problems that would have arisen in moving
+programs from Ada 83.
+</p>
+
+<h2>
+<a name=5>
+10.5  Other Improvements
+</a>
+</h2>
+
+<p>
+Child library units take over some of the applications of subunits.
+However, subunits remain the only way for separately compiling a unit
+that has visibility to the declarative part of the enclosing unit's body.
+They are also appropriate for providing bodies for individual units that
+may be undergoing more active development or maintenance than surrounding
+units.
+</p>
+<p>
+   To simplify the use of subunits, Ada 95 eliminates the requirement on
+uniqueness of their simple name within an enclosing library unit.  Only
+the expanded name need be unique.  Thus subunits P.Q.T and P.S.T where P
+is the library package name are allowed in Ada 95 whereas this was
+forbidden in Ada 83.  This is in line with the rules for naming child
+units.
+</p>
+
+<h2>
+<a name=6>
+10.6  Requirements Summary
+</a>
+</h2>
+
+<p>
+The requirements includes two study topics
+<pre>
+     S4.3-A(1) - Reducing the Need for Recompilation
+
+     S4.3-C(1) - Enhanced Library Support
+</pre>
+which are specifically addressed and well satisfied by the hierarchical
+library mechanism.  In addition the further study topic
+<pre>
+     S4.3-B(1) - Programming by Specialization/Extension
+</pre>
+is also addressed by the hierarchical library in conjunction with type
+extension.
+</p>
+<p>
+   The requirements
+<pre>
+     R8.1-A(1) - Facilitating Software Distribution
+
+     R8.2-A(1) - Dynamic Reconfiguration
+</pre>
+are addressed by the concept of partitions described in 10.2 and
+elaboration discussed in 10.3.  However, this is really the domain of the
+Distributed Systems annex and the reader is thus referred to Part Three
+of this rationale for further details.
+</p>
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-9.html> Previous </a> |
+<a href=rat95-p2-11.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

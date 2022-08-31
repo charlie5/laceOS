@@ -1,0 +1,334 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Tagged Types and Type Extensions</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Hanging-Body {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 7.2em; margin-top: 0em; margin-bottom: 0.6em}
+    DIV.Hanging-Term {float: left; font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-top: 0em; margin-bottom: 0em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-3-8-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-3-9-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>3.9 Tagged Types and Type Extensions</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal"><A NAME="I2005"></A><A NAME="I2006"></A><A NAME="I2007"></A><A NAME="I2008"></A><A NAME="I2009"></A>Tagged 
+types and type extensions support object-oriented programming, based 
+on inheritance with extension and run-time polymorphism via <I>dispatching 
+operations</I>. <A NAME="I2010"></A><A NAME="I2011"></A><A NAME="I2012"></A></DIV>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">2/2</DIV>
+<DIV Class="Normal"><A NAME="I2013"></A>A record type or private type 
+that has the reserved word <B>tagged</B> in its declaration is called 
+a <I>tagged</I> type. In addition, an interface type is a tagged type, 
+as is a task or protected type derived from an interface (see <A HREF="RM-3-9-4.html">3.9.4</A>). 
+When deriving from a tagged type, as for any derived type, additional 
+primitive subprograms may be defined, and inherited primitive subprograms 
+may be overridden. <A NAME="I2014"></A><A NAME="I2015"></A>The derived 
+type is called an <I>extension</I> of its ancestor types, or simply a 
+<I>type extension</I>.</DIV>
+<DIV Class="paranum">2.1/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;<A NAME="I2016"></A><A NAME="I2017"></A><A NAME="I2018"></A>Every 
+type extension is also a tagged type, and is a <I>record extension</I> 
+or a <I>private extension</I> of some other tagged type, or a non-interface 
+synchronized tagged type (see <A HREF="RM-3-9-4.html">3.9.4</A>). A record 
+extension is defined by a <SPAN Class="swiss"><A HREF="RM-3-4.html#S0035">derived_type_definition</A></SPAN> 
+with a <SPAN Class="swiss"><A HREF="RM-3-9-1.html#S0075">record_extension_part</A></SPAN> 
+(see <A HREF="RM-3-9-1.html">3.9.1</A>), which may include the definition 
+of additional components. A private extension, which is a partial view 
+of a record extension or of a synchronized tagged type, can be declared 
+in the visible part of a package (see <A HREF="RM-7-3.html">7.3</A>) 
+or in a generic formal part (see <A HREF="RM-12-5-1.html">12.5.1</A>). 
+</DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Normal"><A NAME="I2019"></A>An object of a tagged type has 
+an associated (run-time) <I>tag</I> that identifies the specific tagged 
+type used to create the object originally. The tag of an operand of a 
+class-wide tagged type <I>T</I>'Class controls which subprogram body 
+is to be executed when a primitive subprogram of type <I>T</I> is applied 
+to the operand (see <A HREF="RM-3-9-2.html">3.9.2</A>); <A NAME="I2020"></A>using 
+a tag to control which body to execute is called <I>dispatching</I>. 
+<A NAME="I2021"></A><A NAME="I2022"></A><A NAME="I2023"></A><A NAME="I2024"></A></DIV>
+<DIV Class="paranum">4/2</DIV>
+<DIV Class="Normal">The tag of a specific tagged type identifies the 
+<SPAN Class="swiss"><A HREF="RM-3-2-1.html#S0024">full_type_declaration</A></SPAN> 
+of the type, and for a type extension, is sufficient to uniquely identify 
+the type among all descendants of the same ancestor. If a declaration 
+for a tagged type occurs within a <SPAN Class="swiss"><A HREF="RM-12-1.html#S0254">generic_package_declaration</A></SPAN>, 
+then the corresponding type declarations in distinct instances of the 
+generic package are associated with distinct tags. For a tagged type 
+that is local to a generic package body and with all of its ancestors 
+(if any) also local to the generic body, the language does not specify 
+whether repeated instantiations of the generic body result in distinct 
+tags.<A NAME="I2025"></A>&nbsp;</DIV>
+<DIV Class="paranum">5</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The following language-defined 
+library package exists:&nbsp;</DIV>
+<DIV Class="paranum">6/2</DIV>
+<DIV Class="Examples"><A NAME="I2026"></A><B>package</B>&nbsp;Ada.Tags&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Tags);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I2027"></A>Tag&nbsp;<B>is</B>&nbsp;<B>private</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(Tag);</DIV>
+<DIV Class="paranum">6.1/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I2028"></A>No_Tag&nbsp;:&nbsp;<B>constant</B>&nbsp;Tag;</DIV>
+<DIV Class="paranum">7/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I2029"></A>Expanded_Name(T&nbsp;:&nbsp;Tag)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I2030"></A>Wide_Expanded_Name(T&nbsp;:&nbsp;Tag)&nbsp;<B>return</B>&nbsp;Wide_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I2031"></A>Wide_Wide_Expanded_Name(T&nbsp;:&nbsp;Tag)&nbsp;<B>return</B>&nbsp;Wide_Wide_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I2032"></A>External_Tag(T&nbsp;:&nbsp;Tag)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I2033"></A>Internal_Tag(External&nbsp;:&nbsp;String)&nbsp;<B>return</B>&nbsp;Tag;</DIV>
+<DIV Class="paranum">7.1/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I2034"></A>Descendant_Tag(External&nbsp;:&nbsp;String;&nbsp;Ancestor&nbsp;:&nbsp;Tag)&nbsp;<B>return</B>&nbsp;Tag;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I2035"></A>Is_Descendant_At_Same_Level(Descendant,&nbsp;Ancestor&nbsp;:&nbsp;Tag)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">7.2/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I2036"></A>Parent_Tag&nbsp;(T&nbsp;:&nbsp;Tag)&nbsp;<B>return</B>&nbsp;Tag;</DIV>
+<DIV Class="paranum">7.3/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I2037"></A>Tag_Array&nbsp;<B>is&nbsp;array</B>&nbsp;(Positive&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;<B>of</B>&nbsp;Tag;</DIV>
+<DIV Class="paranum">7.4/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I2038"></A>Interface_Ancestor_Tags&nbsp;(T&nbsp;:&nbsp;Tag)&nbsp;<B>return</B>&nbsp;Tag_Array;</DIV>
+<DIV Class="paranum">8</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I2039"></A>Tag_Error&nbsp;:&nbsp;<B>exception</B>;</DIV>
+<DIV Class="paranum">9</DIV>
+<DIV Class="Examples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;Ada.Tags;</DIV>
+<DIV Class="paranum">9.1/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;No_Tag is the default initial value of type Tag. 
+</DIV>
+<DIV Class="paranum">10/2</DIV>
+<DIV Class="Normal">&nbsp;The function Wide_Wide_Expanded_Name returns the 
+full expanded name of the first subtype of the specific type identified 
+by the tag, in upper case, starting with a root library unit. The result 
+is implementation defined if the type is declared within an unnamed <SPAN Class="swiss"><A HREF="RM-5-6.html#S0145">block_statement</A></SPAN>. 
+</DIV>
+<DIV Class="paranum">10.1/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The function Expanded_Name (respectively, Wide_Expanded_Name) 
+returns the same sequence of graphic characters as that defined for Wide_Wide_Expanded_Name, 
+if all the graphic characters are defined in Character (respectively, 
+Wide_Character); otherwise, the sequence of characters is implementation 
+defined, but no shorter than that returned by Wide_Wide_Expanded_Name 
+for the same value of the argument.&nbsp;</DIV>
+<DIV Class="paranum">11</DIV>
+<DIV Class="Normal">The function External_Tag returns a string to be 
+used in an external representation for the given tag. The call External_Tag(S'Tag) 
+is equivalent to the <SPAN Class="swiss"><A HREF="RM-4-1-4.html#S0100">attribute_reference</A></SPAN> 
+S'External_Tag (see <A HREF="RM-13-3.html">13.3</A>).&nbsp;</DIV>
+<DIV Class="paranum">11.1/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The string returned by the functions Expanded_Name, 
+Wide_Expanded_Name, Wide_Wide_Expanded_Name, and External_Tag has lower 
+bound 1.</DIV>
+<DIV Class="paranum">12/2</DIV>
+<DIV Class="Normal">&nbsp;The function Internal_Tag returns a tag that corresponds 
+to the given external tag, or raises Tag_Error if the given string is 
+not the external tag for any specific type of the partition. Tag_Error 
+is also raised if the specific type identified is a library-level type 
+whose tag has not yet been created (see <A HREF="RM-13-14.html">13.14</A>).</DIV>
+<DIV Class="paranum">12.1/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The function Descendant_Tag returns the (internal) 
+tag for the type that corresponds to the given external tag and is both 
+a descendant of the type identified by the Ancestor tag and has the same 
+accessibility level as the identified ancestor. Tag_Error is raised if 
+External is not the external tag for such a type. Tag_Error is also raised 
+if the specific type identified is a library-level type whose tag has 
+not yet been created.</DIV>
+<DIV Class="paranum">12.2/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The function Is_Descendant_At_Same_Level returns 
+True if the Descendant tag identifies a type that is both a descendant 
+of the type identified by Ancestor and at the same accessibility level. 
+If not, it returns False.</DIV>
+<DIV Class="paranum">12.3/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The function Parent_Tag returns the tag of the 
+parent type of the type whose tag is T. If the type does not have a parent 
+type (that is, it was not declared by a derived_type_declaration), then 
+No_Tag is returned.</DIV>
+<DIV Class="paranum">12.4/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The function Interface_Ancestor_Tags returns an 
+array containing the tag of each interface ancestor type of the type 
+whose tag is T, other than T itself. The lower bound of the returned 
+array is 1, and the order of the returned tags is unspecified. Each tag 
+appears in the result exactly once. If the type whose tag is T has no 
+interface ancestors, a null array is returned.<A NAME="I2040"></A></DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Normal">For every subtype S of a tagged type <I>T</I> (specific 
+or class-wide), the following attributes are defined:&nbsp;</DIV>
+<DIV Class="paranum">14</DIV>
+<DIV Class="Hanging-Term">S'Class</DIV><DIV Class="Hanging-Body">
+<A NAME="I2041"></A><A NAME="I2042"></A>S'Class denotes a subtype of 
+the class-wide type (called <I>T</I>'Class in this International Standard) 
+for the class rooted at <I>T</I> (or if S already denotes a class-wide 
+subtype, then S'Class is the same as S).</DIV>
+<DIV Class="paranum">15</DIV>
+<DIV Class="Hanging-Body"><A NAME="I2043"></A><A NAME="I2044"></A>S'Class 
+is unconstrained. However, if S is constrained, then the values of S'Class 
+are only those that when converted to the type <I>T</I> belong to S. 
+</DIV>
+<DIV Class="paranum">16</DIV>
+<DIV Class="Hanging-Term">S'Tag</DIV><DIV Class="Hanging-Body">
+<A NAME="I2045"></A><A NAME="I2046"></A>S'Tag denotes the tag of the 
+type <I>T</I> (or if <I>T</I> is class-wide, the tag of the root type 
+of the corresponding class). The value of this attribute is of type Tag. 
+</DIV>
+<DIV Class="paranum">17</DIV>
+<DIV Class="Normal">Given a <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+X that is of a class-wide tagged type (after any implicit dereference), 
+the following attribute is defined:&nbsp;</DIV>
+<DIV Class="paranum">18</DIV>
+<DIV Class="Hanging-Term">X'Tag</DIV><DIV Class="Hanging-Body">
+<A NAME="I2047"></A><A NAME="I2048"></A>X'Tag denotes the tag of X. The 
+value of this attribute is of type Tag.&nbsp;</DIV>
+<DIV Class="paranum">18.1/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;The following language-defined 
+generic function exists:</DIV>
+<DIV Class="paranum">18.2/2</DIV>
+<DIV Class="Examples"><A NAME="I2049"></A><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;(&lt;&gt;)&nbsp;<B>is&nbsp;abstract&nbsp;tagged&nbsp;limited&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Parameters&nbsp;(&lt;&gt;)&nbsp;<B>is&nbsp;limited&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Constructor&nbsp;(Params&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;Parameters)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;T&nbsp;<B>is&nbsp;abstract</B>;<BR>
+<B>function</B>&nbsp;Ada.Tags.Generic_Dispatching_Constructor<BR>
+&nbsp;&nbsp;&nbsp;(The_Tag&nbsp;:&nbsp;Tag;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Params&nbsp;&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;Parameters)&nbsp;<B>return</B>&nbsp;T'Class;<BR>
+<B>pragma</B>&nbsp;Preelaborate(Generic_Dispatching_Constructor);<BR>
+<B>pragma</B>&nbsp;Convention(Intrinsic,&nbsp;Generic_Dispatching_Constructor);</DIV>
+<DIV Class="paranum">18.3/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;Tags.Generic_Dispatching_Constructor provides 
+a mechanism to create an object of an appropriate type from just a tag 
+value. The function Constructor is expected to create the object given 
+a reference to an object of type Parameters.</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">19</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The tag associated 
+with an object of a tagged type is determined as follows:&nbsp;</DIV>
+<DIV Class="paranum">20</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I2050"></A>The tag of a stand-alone 
+object, a component, or an <SPAN Class="swiss"><A HREF="RM-4-3.html#S0104">aggregate</A></SPAN> 
+of a specific tagged type <I>T</I> identifies <I>T</I>.&nbsp;</LI></UL>
+<DIV Class="paranum">21</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I2051"></A>The tag of an 
+object created by an allocator for an access type with a specific designated 
+tagged type <I>T</I>, identifies <I>T</I>.&nbsp;</LI></UL>
+<DIV Class="paranum">22</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I2052"></A>The tag of an 
+object of a class-wide tagged type is that of its initialization expression. 
+</LI></UL>
+<DIV Class="paranum">23</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I2053"></A>The tag of the 
+result returned by a function whose result type is a specific tagged 
+type <I>T</I> identifies <I>T</I>.&nbsp;</LI></UL>
+<DIV Class="paranum">24/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I2054"></A>The tag of the 
+result returned by a function with a class-wide result type is that of 
+the return object.&nbsp;</LI></UL>
+<DIV Class="paranum">25</DIV>
+<DIV Class="Normal"><A NAME="I2055"></A>The tag is preserved by type 
+conversion and by parameter passing. The tag of a value is the tag of 
+the associated object (see <A HREF="RM-6-2.html">6.2</A>).</DIV>
+<DIV Class="paranum">25.1/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;Tag_Error is raised by a call of Descendant_Tag, 
+Expanded_Name, External_Tag, Interface_Ancestor_Tag, Is_Descendant_At_Same_Level, 
+or Parent_Tag if any tag passed is No_Tag.</DIV>
+<DIV Class="paranum">25.2/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;An instance of Tags.Generic_Dispatching_Constructor 
+raises Tag_Error if The_Tag does not represent a concrete descendant 
+of T or if the innermost master (see <A HREF="RM-7-6-1.html">7.6.1</A>) 
+of this descendant is not also a master of the instance. Otherwise, it 
+dispatches to the primitive function denoted by the formal Constructor 
+for the type identified by The_Tag, passing Params, and returns the result. 
+Any exception raised by the function is propagated.</DIV>
+
+<H4 Class="centered">Erroneous Execution</H4>
+<DIV Class="paranum">25.3/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<A NAME="I2056"></A>If an internal tag provided 
+to an instance of Tags.Generic_Dispatching_Constructor or to any subprogram 
+declared in package Tags identifies either a type that is not library-level 
+and whose tag has not been created (see <A HREF="RM-13-14.html">13.14</A>), 
+or a type that does not exist in the partition at the time of the call, 
+then execution is erroneous.</DIV>
+
+<H4 Class="centered">Implementation Permissions</H4>
+<DIV Class="paranum">26/2</DIV>
+<DIV Class="Normal">&nbsp;The implementation of Internal_Tag and Descendant_Tag 
+may raise Tag_Error if no specific type corresponding to the string External 
+passed as a parameter exists in the partition at the time the function 
+is called, or if there is no such type whose innermost master is a master 
+of the point of the function call.&nbsp;</DIV>
+
+<H4 Class="centered">Implementation Advice</H4>
+<DIV Class="paranum">26.1/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;Internal_Tag should return the tag of a type whose 
+innermost master is the master of the point of the function call.&nbsp;</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">27</DIV>
+<DIV Class="Notes">64&nbsp;&nbsp;A type declared with the reserved word 
+<B>tagged</B> should normally be declared in a <SPAN Class="swiss"><A HREF="RM-7-1.html#S0174">package_specification</A></SPAN>, 
+so that new primitive subprograms can be declared for it.</DIV>
+<DIV Class="paranum">28</DIV>
+<DIV Class="Notes">65&nbsp;&nbsp;Once an object has been created, its 
+tag never changes.</DIV>
+<DIV Class="paranum">29</DIV>
+<DIV Class="Notes">66&nbsp;&nbsp;Class-wide types are defined to have 
+unknown discriminants (see <A HREF="RM-3-7.html">3.7</A>). This means 
+that objects of a class-wide type have to be explicitly initialized (whether 
+created by an <SPAN Class="swiss"><A HREF="RM-3-3-1.html#S0032">object_declaration</A></SPAN> 
+or an <SPAN Class="swiss"><A HREF="RM-4-8.html#S0129">allocator</A></SPAN>), 
+and that <SPAN Class="swiss"><A HREF="RM-4-3.html#S0104">aggregate</A></SPAN>s 
+have to be explicitly qualified with a specific type when their expected 
+type is class-wide.</DIV>
+<DIV Class="paranum">30/2</DIV>
+<DIV Class="Notes"><SPAN STYLE="font-size: 80%"><I>This paragraph was 
+deleted.</I></SPAN></DIV>
+<DIV Class="paranum">30.1/2</DIV>
+<DIV Class="Notes">67&nbsp;&nbsp;The capability provided by Tags.Generic_Dispatching_Constructor 
+is sometimes known as a <I>factory</I>.<A NAME="I2057"></A><A NAME="I2058"></A> 
+</DIV>
+
+<H4 Class="centered">Examples</H4>
+<DIV Class="paranum">31</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><I>Examples of tagged 
+record types:</I>&nbsp;</DIV>
+<DIV Class="paranum">32</DIV>
+<DIV Class="Examples"><B>type</B>&nbsp;Point&nbsp;<B>is&nbsp;tagged</B><BR>
+&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;X,&nbsp;Y&nbsp;:&nbsp;Real&nbsp;:=&nbsp;0.0;<BR>
+&nbsp;&nbsp;<B>end&nbsp;record</B>;</DIV>
+<DIV Class="paranum">33</DIV>
+<DIV Class="Examples"><B>type</B>&nbsp;Expression&nbsp;<B>is&nbsp;tagged&nbsp;null&nbsp;record</B>;<BR>
+&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;Components&nbsp;will&nbsp;be&nbsp;added&nbsp;by&nbsp;each&nbsp;extension</I></SPAN></DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-3-8-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-3-9-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

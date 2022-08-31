@@ -1,0 +1,422 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Downward closures</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>3.4 Downward closures</H1>
+<div class="Normal">This section is really about access to subprogram 
+types in general but the title downward closures has come to epitomize 
+the topic. <A NAME="I1117"></A><A NAME="I1118"></A></div>
+<div class="Normal">The requirements for Ada 83, (Strawman .. Steelman) 
+were strangely silent about whether parameters of subprograms could themselves 
+be subprograms as was the case in Algol 60 and Pascal. Remember that 
+Pascal was one of the languages on which the designs for the DoD language 
+were to be based.</div>
+<div class="Normal">The predictability aspects of the requirements were 
+interpreted as implying that all subprogram calls should be identified 
+at compilation time on the grounds that if you didn't know what was being 
+called than you couldn't know what the program was going to do. This 
+was a particularly stupid attitude to take. The question of predictability 
+(presumably in some safety or security context) really concerns the behaviour 
+of particular programs rather than the universe of all programs that 
+can be constructed in a language.</div>
+<div class="Normal">In any event the totality of subprograms that might 
+be called in a program is finite and closed. It simply consists of the 
+subprograms in the program. Languages such as Ada are not able to construct 
+totally new subprograms out of lesser components in the way that they 
+can create say floating point values.</div>
+<div class="Normal">So the world had to use generics for many applications 
+that were natural for subprograms as parameters of other subprograms. 
+Thankfully many implementers avoided the explosion that might occur with 
+generics by clever code sharing which in a sense hid the parameterization 
+behind the scenes.</div>
+<div class="Normal">The types of applications for which subprograms are 
+natural as parameters are any where one subroutine is parameterized by 
+another. They include many mathematical applications such as integration 
+and maximization and more logical applications such as sorting and searching 
+and iterating.</div>
+<div class="Normal">As outlined in the Introduction, the matter was partly 
+improved in Ada 95 by the introduction of named access-to-subprogram 
+types. This was essentially done to allow program call back to be implemented.</div>
+<div class="Normal">Program call back is when one program passes the 
+&quot;address&quot; of a subprogram within it to another program so that 
+this other program can later respond by calling back to the first program 
+using the subprogram address supplied. This is often used for communication 
+between an Ada application program and some other software such as an 
+operating system which might even be written in another language such 
+as C.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Named access to subprogram 
+types certainly work for call back (especially with languages such as 
+C that do not have nested subprograms) but the accessibility rules which 
+followed those for general access to object types were restrictive. For 
+example, suppose we have a general library level function for integration 
+using a named access to subprogram type to pass the function to be integrated 
+thus<A NAME="I1119"></A>&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Integrand&nbsp;<B>is&nbsp;access&nbsp;function</B>&nbsp;(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Integrate(Fn:&nbsp;Integrand;&nbsp;Lo,&nbsp;Hi:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then we cannot even 
+do the simplest integration of our own function in a natural way. For 
+example, suppose we wish to integrate a function such as <SPAN Class="swiss">Exp(X**2)</SPAN>. 
+We can try&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Integrate;<BR>
+<B>procedure</B>&nbsp;Main&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;F(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Exp(X**2);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;F;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;Result,&nbsp;L,&nbsp;H:&nbsp;Float;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>set&nbsp;bounds&nbsp;in&nbsp;L&nbsp;and&nbsp;H&nbsp;say</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;Result&nbsp;:=&nbsp;Integrate(F'Access,&nbsp;L,&nbsp;H);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal&nbsp;in&nbsp;Ada&nbsp;95</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Main;</div>
+<div class="Normal" style="margin-bottom: 0.4em">But this is illegal 
+because of the accessibility check necessary to prevent us from writing 
+something like&nbsp;</div>
+<div class="SwissExamples">Evil:&nbsp;Integrand;<BR>
+X:&nbsp;Float;<BR>
+...<BR>
+<B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;Y:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;F(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y&nbsp;:=&nbsp;X;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>assign&nbsp;to&nbsp;Y&nbsp;in&nbsp;local&nbsp;block</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;F;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Evil&nbsp;:=&nbsp;F'Access:&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+<B>end</B>;<BR>
+&nbsp;&nbsp;&nbsp;X&nbsp;:=&nbsp;Evil(X);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>call&nbsp;function&nbsp;out&nbsp;of&nbsp;context</I></SPAN></div>
+<div class="Normal">Here we have attempted to assign an access to the 
+local function <SPAN Class="swiss">F</SPAN> in the global variable <SPAN Class="swiss">Evil</SPAN>. 
+If this assignment had been permitted then the call of <SPAN Class="swiss">Evil</SPAN> 
+would indirectly have called the function <SPAN Class="swiss">F</SPAN> 
+when the context in which <SPAN Class="swiss">F</SPAN> was declared no 
+longer existed;<SPAN Class="swiss">&nbsp;F</SPAN> would then have attempted 
+to assign to the variable <SPAN Class="swiss">Y</SPAN> which no longer 
+existed and whose storage space might now be used for something else. 
+We can summarise this perhaps by saying that we are attempting to call 
+<SPAN Class="swiss">F</SPAN> when it no longer exists.</div>
+<div class="Normal">Ada 2005 overcomes the problem by introducing anonymous 
+access to subprogram types. This was actually considered during the design 
+of Ada 95 but it was not done at the time for two main reasons. Firstly, 
+the implementation problems for those who were using display vectors 
+rather than static links were considered a hurdle. And secondly, a crafty 
+technique was available using the newly introduced tagged types. And 
+of course one could continue to use generics. But further thought showed 
+that the implementation burden was not so great provided the uses were 
+kept simple &mdash; and anyway nobody understood the tagged type technique 
+which was really incredibly contorted. Moreover, the continued use of 
+generics when other languages forty years ago had included a more natural 
+mechanism was tiresome. So at long last Ada 2005 includes anonymous access 
+to subprogram types.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We rewrite the integration 
+function much as follows&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Integrate(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fn:&nbsp;<B>access&nbsp;function</B>&nbsp;(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lo,&nbsp;Hi:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Total:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;N:&nbsp;<B>constant</B>&nbsp;Integer&nbsp;:=&nbsp;...&nbsp;;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>no&nbsp;of&nbsp;subdivisions</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;Step:&nbsp;Float&nbsp;:=&nbsp;(Hi&nbsp;&ndash;&nbsp;Lo)&nbsp;/&nbsp;Float(N);<BR>
+&nbsp;&nbsp;&nbsp;X:&nbsp;Float&nbsp;:=&nbsp;Lo;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>current&nbsp;point</I></SPAN><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Total&nbsp;:=&nbsp;0.5&nbsp;*&nbsp;Fn(Lo);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>value&nbsp;at&nbsp;low&nbsp;bound</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>for</B>&nbsp;I&nbsp;<B>in</B>&nbsp;1&nbsp;..&nbsp;N&ndash;1&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X&nbsp;:=&nbsp;X&nbsp;+&nbsp;Step;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>add&nbsp;values&nbsp;at</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Total&nbsp;:=&nbsp;Total&nbsp;+&nbsp;Fn(X);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>intermediate&nbsp;points</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;loop</B>;<BR>
+&nbsp;&nbsp;&nbsp;Total&nbsp;:=&nbsp;Total&nbsp;+&nbsp;0.5&nbsp;*&nbsp;Fn(Hi);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>add&nbsp;final&nbsp;value</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Total&nbsp;*&nbsp;Step;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>normalize</I></SPAN><BR>
+<B>end</B>&nbsp;Integrate;</div>
+<div class="Normal">The important thing to notice is the profile of <SPAN Class="swiss">Integrate</SPAN> 
+in which the parameter <SPAN Class="swiss">Fn</SPAN> is of an anonymous 
+access to subprogram type. We have also shown a simple body which uses 
+the trapezium/trapezoid method and so calls the actual function corresponding 
+to <SPAN Class="swiss">Fn</SPAN> at the two end points of the range and 
+at a number of equally spaced intermediate points.</div>
+<div class="Normal">(NB It is time for a linguistic interlude. Roughly 
+speaking English English trapezium equals US English trapezoid. They 
+both originate from the Greek &#964;&#961;&#945;&#960;&#949;&#950;&#945; 
+meaning a table (literally with four feet). Both originally meant a quadrilateral 
+with no pairs of sides parallel. In the late 17th century, trapezium 
+came to mean having one pair of sides parallel. In the 18th century trapezoid 
+came to mean the same as trapezium but promptly faded out of use in England 
+whereas in the US it continues in use. Meanwhile in the US, trapezium 
+reverted to its original meaning of totally irregular. Trapezoid is rarely 
+used in the UK but if used has reverted to its original meaning of totally 
+irregular. A standard language would be useful. Anyway, the integration 
+is using quadrilateral strips with one pair of sides parallel.)</div>
+<div class="Normal">With this new declaration of <SPAN Class="swiss">Integrate</SPAN>, 
+the accessibility problems are overcome and we are allowed to write <SPAN Class="swiss">Integrate(F'Access, 
+... )</SPAN> just as we could write<SPAN Class="swiss">&nbsp;P(X'Access)</SPAN> 
+in the example in the previous section where we discussed anonymous access 
+to object types.</div>
+<div class="Normal">We still have to consider how a type conversion which 
+would permit an assignment to a global variable is prevented. The following 
+text illustrates both access to object and access to subprogram parameters.</div>
+<div class="SwissExamples"><B>type</B>&nbsp;AOT&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Integer;<BR>
+<B>type</B>&nbsp;APT&nbsp;<B>is&nbsp;access&nbsp;procedure</B>&nbsp;(X:&nbsp;in&nbsp;out&nbsp;Float);</div>
+<div class="SwissExamples">Evil_Obj:&nbsp;AOT;<BR>
+Evil_Proc:&nbsp;APT;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Objptr:&nbsp;<B>access</B>&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Procptr:&nbsp;<B>access&nbsp;procedure</B>&nbsp;(X:&nbsp;<B>in&nbsp;out</B>&nbsp;Float))&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Evil_Obj&nbsp;:=&nbsp;AOT(Objptr);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>fails&nbsp;at&nbsp;run&nbsp;time</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;Evil_Proc&nbsp;:=&nbsp;APT(Procptr);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>fails&nbsp;at&nbsp;compile&nbsp;time</I></SPAN><BR>
+<B>end</B>&nbsp;P;</div>
+<div class="SwissExamples"><B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;An_Obj:&nbsp;<B>aliased</B>&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;A_Proc(X:<B>&nbsp;in&nbsp;out</B>&nbsp;Float)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B>&nbsp;...&nbsp;<B>end</B>&nbsp;A_Proc;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;P(An_Obj'Access,&nbsp;A_Proc'Access);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal</I></SPAN><BR>
+<B>end</B>;</div>
+<div class="SwissExamples">Evil_Obj.<B>all</B>&nbsp;:=&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>assign&nbsp;to&nbsp;nowhere</I></SPAN><BR>
+Evil_Proc.<B>all</B>(&nbsp;...&nbsp;);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>call&nbsp;nowhere</I></SPAN></div>
+<div class="Normal">This repeats some of the structure of the previous 
+section. The procedure <SPAN Class="swiss">P</SPAN> has an access to 
+object parameter <SPAN Class="swiss">Objptr</SPAN> and an access to subprogram 
+parameter <SPAN Class="swiss">Procptr</SPAN>; they are both of anonymous 
+type. The call of <SPAN Class="swiss">P</SPAN> in the local block passes 
+the addresses of a local object <SPAN Class="swiss">An_Obj</SPAN> and 
+a local procedure <SPAN Class="swiss">A_Proc</SPAN> to <SPAN Class="swiss">P</SPAN>. 
+This is permitted. We now attempt to assign the parameter values from 
+within <SPAN Class="swiss">P</SPAN> to global objects <SPAN Class="swiss">Evil_Obj 
+</SPAN>and <SPAN Class="swiss">Evil_Proc</SPAN> with the intent of assigning 
+indirectly via <SPAN Class="swiss">Evil_Obj</SPAN> and calling indirectly 
+via <SPAN Class="swiss">Evil_Proc</SPAN> after the object and procedure 
+referred to no longer exist.</div>
+<div class="Normal">Both of these wicked deeds are prevented by the accessibility 
+rules.</div>
+<div class="Normal">In the case of the object parameter <SPAN Class="swiss">Objptr</SPAN> 
+it knows the accessibility level of the actual <SPAN Class="swiss">An_Obj</SPAN> 
+and this is seen to be greater than that of the type <SPAN Class="swiss">AOT</SPAN> 
+and so the conversion is prevented at run time and in fact <SPAN Class="swiss">Program_Error</SPAN> 
+is raised. But if <SPAN Class="swiss">An_Obj</SPAN> had been declared 
+at the same level as <SPAN Class="swiss">AOT</SPAN> and not within an 
+inner block then the conversion would have been permitted.</div>
+<div class="Normal">However, somewhat different rules apply to anonymous 
+access to subprogram parameters. They do not carry an indication of the 
+accessibility level of the actual parameter but simply treat it as if 
+it were infinite (strictly &ndash; deeper than anything else). This of 
+course prevents the conversion to the type <SPAN Class="swiss">APT</SPAN> 
+and all is well; this is detected at compile time. But note that if the 
+procedure <SPAN Class="swiss">A_Proc</SPAN> had been declared at the 
+same level as <SPAN Class="swiss">APT</SPAN> then the conversion would 
+still have failed because the accessibility level is treated as infinite.</div>
+<div class="Normal">There are a number of reasons for the different treatment 
+of anonymous access to subprogram types. A big problem is that named 
+access to subprogram types are implemented in the same way as C *func 
+in almost all compilers. Permitting the conversion from anonymous access 
+to subprogram types to named ones would thus have caused problems because 
+that model does not work especially for display based implementations. 
+Carrying the accessibility level around would not have prevented these 
+conversions. The key goal was simply to provide a facility corresponding 
+to that in Pascal and not to encourage too much fooling about with access 
+to subprogram types. Recall that the attribute <SPAN Class="swiss">Unchecked_Access</SPAN> 
+is permitted for access to object types but was considered far too dangerous 
+for access to subprogram types for similar reasons.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The reader may be feeling 
+both tired and that there are other ways around the problems of accessibility 
+anyway. Thus the double integration presented in the Introduction can 
+easily be circumvented in many cases. We computed&nbsp;</div>
+<DIV Style="text-align: left; margin-bottom: 0.4em"><IMG src="form-2.png" height="65" width="130" alt="Integrate xy" border="0"></DIV>
+<div class="Normal" style="margin-bottom: 0.4em">using the following 
+program&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Integrate;<BR>
+<B>procedure</B>&nbsp;Main&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;G(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;F(Y:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;X*Y;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;F;<BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Integrate(F'Access,&nbsp;0.0,&nbsp;1.0);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;G;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;Result:&nbsp;Float;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Result:=&nbsp;Integrate(G'Access,&nbsp;0.0,&nbsp;1.0);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Main;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The essence of the 
+problem was that <SPAN Class="swiss">F</SPAN> had to be declared inside 
+<SPAN Class="swiss">G</SPAN> because it needed access to the parameter 
+<SPAN Class="swiss">X</SPAN> of <SPAN Class="swiss">G</SPAN>. But the 
+astute reader will note that this example is not very convincing because 
+the integrals can be separated and the functions both declared at library 
+level thus&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;F(Y:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Y;<BR>
+<B>end</B>&nbsp;F;</div>
+<div class="SwissExamples">...</div>
+<div class="SwissExamples"><B>function</B>&nbsp;G(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;X;<BR>
+<B>end</B>&nbsp;G;</div>
+<div class="SwissExamples">Result:=&nbsp;Integrate(F'Access,&nbsp;0.0,&nbsp;1.0)&nbsp;*&nbsp;Integrate(G'Access,&nbsp;0.0,&nbsp;1.0);</div>
+<div class="Normal">and so it all works using the Ada 95 version of <SPAN Class="swiss">Integrate</SPAN> 
+anyway.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, if the two 
+integrals had been more convoluted or perhaps the region had not been 
+square but triangular so that the bound of the inner integral depended 
+on the outer variable as in</div>
+<DIV Style="text-align: left; margin-bottom: 0.4em"><IMG src="form-3.png" height="65" width="130" alt="Integrate xy" border="0"></DIV>
+<div class="Normal">then nested functions would be vital.</div>
+<div class="Normal">We will now consider a more elegant example which 
+illustrates how we might integrate an arbitrary function of two variables 
+<I>F</I>(<I>x</I>, <I>y</I>) over a rectangular region.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Assume that we have 
+the function <SPAN Class="swiss">Integrate</SPAN> for one dimension as 
+before&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Integrate(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fn:&nbsp;<B>access&nbsp;function</B>(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lo,&nbsp;Hi:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now consider&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Integrate(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fn:&nbsp;<B>access&nbsp;function</B>(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LoX,&nbsp;HiX:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LoY,&nbsp;HiY:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;FnX(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;FnY(Y:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Fn(X,&nbsp;Y);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;FnY;<BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Integrate(FnY'Access,&nbsp;LoY,&nbsp;HiY);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;FnX;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Integrate(FnX'Access,&nbsp;LoX,&nbsp;HiX);<BR>
+<B>end</B>&nbsp;integrate;</div>
+<div class="Normal">The new function <SPAN Class="swiss">Integrate</SPAN> 
+for two dimensions overloads and uses the function <SPAN Class="swiss">Integrate</SPAN> 
+for one dimension (a good example of overloading). With this generality 
+it is again impossible to arrange the structure in a manner which is 
+legal in Ada 95.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We might use the two-dimensional 
+integration routine to solve the original trivial problem as follows 
+</div>
+<div class="SwissExamples"><B>function</B>&nbsp;F(X,&nbsp;Y:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;X*Y;<BR>
+<B>end</B>&nbsp;F;<BR>
+...</div>
+<div class="SwissExamples">Result&nbsp;:=&nbsp;Integrate(F'Access,&nbsp;0.0,&nbsp;1.0,&nbsp;0.0,&nbsp;1.0);</div>
+<div class="Normal" style="margin-bottom: 0.4em">As an exercise the 
+reader might like to rewrite the two dimensional function to work on 
+a non-rectangular domain. The trick is to pass the bounds of the inner 
+integral also as functions. The profile then becomes&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Integrate(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fn:&nbsp;<B>access&nbsp;function</B>&nbsp;(X,&nbsp;Y:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LoX,&nbsp;HiX:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LoY,&nbsp;HiY:&nbsp;<B>access&nbsp;function</B>(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Float;</div>
+<div class="Normal">In case the reader should think that this topic is 
+all too mathematical it should be pointed out that anonymous access to 
+subprogram parameters are widely used in the new container library thereby 
+saving the unnecessary use of generics.</div>
+<div class="Normal" style="margin-bottom: 0.4em">For example the package 
+<SPAN Class="swiss">Ada.Containers.Vectors</SPAN> declares procedures 
+such as&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Update_Element<BR>
+&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in</B>&nbsp;Vector;&nbsp;Index:&nbsp;<B>in</B>&nbsp;Index_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;<B>procedure&nbsp;</B>(Element:&nbsp;<B>in&nbsp;out</B>&nbsp;Element_Type));</div>
+<div class="Normal" style="margin-bottom: 0.4em">This updates the element 
+of the vector <SPAN Class="swiss">Container</SPAN> whose index is <SPAN Class="swiss">Index</SPAN> 
+by calling the procedure <SPAN Class="swiss">Process</SPAN> with that 
+element as parameter. Thus if we have a vector of integers <SPAN Class="swiss">V</SPAN> 
+and we need to double the value of those with index in the range 5 to 
+10, then we would first declare a procedure such as&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Double(E:&nbsp;<B>in&nbsp;out</B>&nbsp;Integer)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;E&nbsp;:=&nbsp;2&nbsp;*&nbsp;E;<BR>
+<B>end</B>&nbsp;Double;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then write&nbsp;</div>
+<div class="SwissExamples"><B>for</B>&nbsp;I&nbsp;<B>in</B>&nbsp;5&nbsp;..&nbsp;10&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;Update_Element(V,&nbsp;I,&nbsp;Double'Access);<BR>
+<B>end</B>&nbsp;<B>loop</B>;</div>
+<div class="Normal">Further details of the use of access to subprogram 
+types with containers will be found in a later chapter (see <A HREF="Rat-8-2.html">8.2</A>).</div>
+<div class="Normal">Finally it should be noted that anonymous access 
+to subprogram types can also be used in all those places where anonymous 
+access to object types are allowed. That is as stand-alone objects, as 
+components of arrays and records, as function results, in renamings, 
+and in access discriminants.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The reader who likes 
+long sequences of reserved words should realise by now that there is 
+no limit in Ada 2005. This is because a function without parameters can 
+return an access to function as its result and this in turn could be 
+of a similar kind. So we would have&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;FF<B>&nbsp;is&nbsp;access&nbsp;function&nbsp;return&nbsp;access&nbsp;function&nbsp;return&nbsp;access&nbsp;function</B>&nbsp;...</div>
+<div class="Normal">Attempts to compile such an access to function type 
+will inevitably lead to madness.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

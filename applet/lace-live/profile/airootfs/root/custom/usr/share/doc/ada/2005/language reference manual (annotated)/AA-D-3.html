@@ -1,0 +1,331 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Priority Ceiling Locking</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    SPAN.insert1 {text-decoration: underline; color: rgb(0,51,51) }
+    SPAN.delete1 {text-decoration: line-through; color: rgb(0,51,51) }
+    SPAN.insert2 {text-decoration: underline; color: rgb(0,102,0) }
+    SPAN.delete2 {text-decoration: line-through; color: rgb(0,102,0) }
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 6.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.SyntaxIndented {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-bottom: 0.4em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><B><SPAN Style="font-size:200%; color: rgb(0,51,153)">Annotated</SPAN><SPAN Style="font-size:200%; color: rgb(0,0,102)">&nbsp;Ada Reference Manual</SPAN></B> &mdash; <A HREF="AA-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-D-2-6.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-D-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>D.3 Priority Ceiling Locking</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal">[This clause specifies the interactions between priority 
+task scheduling and protected object ceilings. This interaction is based 
+on the concept of the <I>ceiling priority</I> of a protected object.] 
+</DIV>
+
+<H4 Class="centered">Syntax</H4>
+<DIV Class="paranum">2</DIV>
+<DIV Class="SyntaxIndented" Style="margin-bottom: 0.2em">The form of 
+a <SPAN Class="swiss"><A HREF="AA-2-8.html#S0019">pragma</A></SPAN> Locking_Policy 
+is as follows:&nbsp;</DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="SyntaxIndented">&nbsp;&nbsp;<B>pragma</B> <A NAME="I7480"></A><A NAME="I7481"></A>Locking_Policy(<I>policy_</I><A NAME="I7482"></A><SPAN Class="swiss"><A HREF="AA-2-3.html#S0002">identifier</A></SPAN>); 
+</DIV>
+
+<H4 Class="centered">Legality Rules</H4>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Normal">The <I>policy_</I><A NAME="I7483"></A><SPAN Class="swiss"><A HREF="AA-2-3.html#S0002">identifier</A></SPAN> 
+shall either be Ceiling_Locking or an implementation-defined <A NAME="I7484"></A><SPAN Class="swiss"><A HREF="AA-2-3.html#S0002">identifier</A></SPAN>. 
+</DIV>
+<DIV Class="paranum">4.a</DIV>
+<DIV Class="Annotations"><B>Implementation defined:&nbsp;</B>Implementation-defined 
+<I>policy_</I><A NAME="I7485"></A><SPAN Class="swiss"><A HREF="AA-2-3.html#S0002">identifier</A></SPAN>s 
+allowed in a <SPAN Class="swiss"><A HREF="AA-2-8.html#S0019">pragma</A></SPAN> 
+Locking_Policy.</DIV>
+
+<H4 Class="centered">Post-Compilation Rules</H4>
+<DIV Class="paranum">5</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>configuration pragma 
+(Locking_Policy)</I> [partial]}</SPAN> <A NAME="I7486"></A><SPAN STYLE="font-size: 80%">{<I>pragma, 
+configuration (Locking_Policy)</I> [partial]}</SPAN> <A NAME="I7487"></A>A 
+Locking_Policy pragma is a configuration pragma.</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">6/2</DIV>
+<DIV Class="Normal">{<I><A HREF="defect1.html#8652/0073">8652/0073</A></I>} 
+{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00091.TXT">AI95-00091-01</A></I>} 
+{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00327.TXT">AI95-00327-01</A></I>} 
+<SPAN STYLE="font-size: 80%">{<I>locking policy</I>}</SPAN> <A NAME="I7488"></A>[A 
+locking policy specifies the details of protected object locking. <SPAN class="insert2">All 
+protected objects have a priority. The locking policy specifies the meaning 
+of the priority of a</SPAN><SPAN class="delete2">&nbsp;These rules specify 
+whether or not</SPAN> protected <SPAN class="insert2">object</SPAN><SPAN class="delete2">&nbsp;objects 
+have priorities</SPAN>, and the relationships between these priorities 
+and task priorities. In addition, the policy specifies the state of a 
+task when it executes a protected action, and how its active priority 
+is affected by the locking.] The <I>locking policy</I> is specified by 
+a Locking_Policy pragma. For implementation-defined locking policies, 
+the <SPAN class="insert2">meaning of the priority of</SPAN><SPAN class="delete2">&nbsp;effect 
+of a Priority or Interrupt_Priority pragma on</SPAN> a protected object 
+is implementation defined. If no Locking_Policy pragma <SPAN class="insert1">applies 
+to</SPAN><SPAN class="delete1">&nbsp;appears in</SPAN> any of the program 
+units comprising a partition, the locking policy for that partition, 
+as well as the <SPAN class="insert2">meaning of the priority of</SPAN><SPAN class="delete2">&nbsp;effect 
+of specifying either a Priority or Interrupt_Priority pragma for</SPAN> 
+a protected object, are implementation defined. <SPAN class="insert2"><SPAN STYLE="font-size: 80%">{<I>Priority 
+(of a protected object)</I>}</SPAN> <A NAME="I7489"></A></SPAN></DIV>
+<DIV Class="paranum">6.a/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Implementation defined: 
+</B></SPAN><SPAN class="insert2">The locking policy if no Locking_Policy 
+pragma applies to any unit of a partition.</SPAN></DIV>
+<DIV Class="paranum">6.1/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00327.TXT">AI95-00327-01</A></I>} 
+<SPAN class="insert2">The <SPAN Class="swiss"><A HREF="AA-4-4.html#S0115">expression</A></SPAN> 
+of a Priority or Interrupt_Priority pragma (see <A HREF="AA-D-1.html">D.1</A>) 
+is evaluated as part of the creation of the corresponding protected object 
+and converted to the subtype System.Any_Priority or System.Interrupt_Priority, 
+respectively. The value of the expression is the initial priority of 
+the corresponding protected object. If no Priority or Interrupt_Priority 
+pragma applies to a protected object, the initial priority is specified 
+by the locking policy. <SPAN STYLE="font-size: 80%">{<I>implicit subtype 
+conversion (pragma Priority)</I> [partial]}</SPAN> <A NAME="I7490"></A><SPAN STYLE="font-size: 80%">{<I>implicit 
+subtype conversion (pragma Interrupt_Priority)</I> [partial]}</SPAN> 
+<A NAME="I7491"></A></SPAN></DIV>
+<DIV Class="paranum">7</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">There is one predefined 
+locking policy, Ceiling_Locking; this policy is defined as follows:&nbsp;</DIV>
+<DIV Class="paranum">8/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00327.TXT">AI95-00327-01</A></I>} 
+<SPAN STYLE="font-size: 80%">{<I>ceiling priority (of a protected object)</I>}</SPAN> 
+<A NAME="I7492"></A>Every protected object has a <I>ceiling priority</I>, 
+which is determined by either a Priority or Interrupt_Priority pragma 
+as defined in <A HREF="AA-D-1.html">D.1</A><SPAN class="insert2">, or 
+by assignment to the Priority attribute as described in <A HREF="AA-D-5-2.html">D.5.2</A></SPAN>. 
+The ceiling priority of a protected object (or ceiling, for short) is 
+an upper bound on the active priority a task can have when it calls protected 
+operations of that protected object.</LI></UL>
+<DIV Class="paranum">9/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00327.TXT">AI95-00327-01</A></I>} 
+The <SPAN class="insert2">initial ceiling priority of a</SPAN><SPAN class="delete2"><SPAN Class="swiss"><A HREF="AA-4-4.html#S0115">&nbsp;expression</A></SPAN> 
+of a Priority or Interrupt_Priority pragma is evaluated as part of the 
+creation of the corresponding</SPAN> protected object <SPAN class="insert2">is 
+equal to the initial priority for that object.</SPAN><SPAN class="delete2">&nbsp;and 
+converted to the subtype System.Any_Priority or System.Interrupt_Priority, 
+respectively. The value of the <SPAN Class="swiss"><A HREF="AA-4-4.html#S0115">expression</A></SPAN> 
+is the ceiling priority of the corresponding protected object. <SPAN STYLE="font-size: 80%">{<I>implicit 
+subtype conversion (pragma Priority)</I> [partial]}</SPAN> <A NAME="I7493"></A><SPAN STYLE="font-size: 80%">{<I>implicit 
+subtype conversion (pragma Interrupt_Priority)</I> [partial]}</SPAN> 
+<A NAME="I7494"></A></SPAN></LI></UL>
+<DIV Class="paranum">10/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00327.TXT">AI95-00327-01</A></I>} 
+If an Interrupt_Handler or Attach_Handler pragma (see <A HREF="AA-C-3-1.html">C.3.1</A>) 
+appears in a <SPAN Class="swiss"><A HREF="AA-9-4.html#S0195">protected_definition</A></SPAN> 
+without an Interrupt_Priority pragma, the <SPAN class="insert2">initial</SPAN><SPAN class="delete2">&nbsp;ceiling</SPAN> 
+priority of protected objects of that type is implementation defined, 
+but in the range of the subtype System.Interrupt_Priority.&nbsp;</LI></UL>
+<DIV Class="paranum">10.a</DIV>
+<DIV Class="Annotations"><B>Implementation defined:&nbsp;</B>Default ceiling 
+priorities.</DIV>
+<DIV Class="paranum">11/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00327.TXT">AI95-00327-01</A></I>} 
+If no <SPAN Class="swiss"><A HREF="AA-2-8.html#S0019">pragma</A></SPAN> 
+Priority, Interrupt_Priority, Interrupt_Handler, or Attach_Handler is 
+specified in the <SPAN Class="swiss"><A HREF="AA-9-4.html#S0195">protected_definition</A></SPAN>, 
+then the <SPAN class="insert2">initial</SPAN><SPAN class="delete2">&nbsp;ceiling</SPAN> 
+priority of the corresponding protected object is System.Priority'Last.</LI></UL>
+<DIV Class="paranum">12</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>While a task executes a protected 
+action, it inherits the ceiling priority of the corresponding protected 
+object.</LI></UL>
+<DIV Class="paranum">13</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><SPAN STYLE="font-size: 80%">{<I>Ceiling_Check</I> 
+[partial]}</SPAN> <A NAME="I7495"></A><SPAN STYLE="font-size: 80%">{<I>check, 
+language-defined (Ceiling_Check)</I>}</SPAN> <A NAME="I7496"></A><SPAN STYLE="font-size: 80%">{<I>Program_Error 
+(raised by failure of run-time check)</I>}</SPAN> <A NAME="I7497"></A>When 
+a task calls a protected operation, a check is made that its active priority 
+is not higher than the ceiling of the corresponding protected object; 
+Program_Error is raised if this check fails.</LI></UL>
+
+<H4 Class="centered">Bounded (Run-Time) Errors</H4>
+<DIV Class="paranum">13.1/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00327.TXT">AI95-00327-01</A></I>} 
+<SPAN class="insert2">Following any change of priority, it is a bounded 
+error for the active priority of any task with a call queued on an entry 
+of a protected object to be higher than the ceiling priority of the protected 
+object. <SPAN STYLE="font-size: 80%">{<I>bounded error (cause)</I> [partial]}</SPAN> 
+<A NAME="I7498"></A>In this case one of the following applies:</SPAN></DIV>
+<DIV Class="paranum">13.2/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><SPAN class="insert2">at any time 
+prior to executing the entry body Program_Error is raised in the calling 
+task; <SPAN STYLE="font-size: 80%">{<I>Program_Error (raised by failure 
+of run-time check)</I>}</SPAN> <A NAME="I7499"></A></SPAN></LI></UL>
+<DIV Class="paranum">13.3/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><SPAN class="insert2">when the entry 
+is open the entry body is executed at the ceiling priority of the protected 
+object;</SPAN></LI></UL>
+<DIV Class="paranum">13.4/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><SPAN class="insert2">when the entry 
+is open the entry body is executed at the ceiling priority of the protected 
+object and then Program_Error is raised in the calling task; or <SPAN STYLE="font-size: 80%">{<I>Program_Error 
+(raised by failure of run-time check)</I>}</SPAN> <A NAME="I7500"></A></SPAN></LI></UL>
+<DIV Class="paranum">13.5/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><SPAN class="insert2">when the entry 
+is open the entry body is executed at the ceiling priority of the protected 
+object that was in effect when the entry call was queued.</SPAN>&nbsp;</LI></UL>
+<DIV Class="paranum">13.a.1/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Ramification:&nbsp;</B>Note 
+that the error is &ldquo;blamed&rdquo; on the task that did the entry 
+call, not the task that changed the priority of the task or protected 
+object. This seems to make sense for the case of changing the priority 
+of a task blocked on a call, since if the Set_Priority had happened a 
+little bit sooner, before the task queued a call, the entry-calling task 
+would get the error. Similarly, there is no reason not to raise the priority 
+of a task that is executing in an <SPAN Class="swiss"><A HREF="AA-9-7-4.html#S0226">abortable_part</A></SPAN>, 
+so long as its priority is lowered before it gets to the end and needs 
+to cancel the call. The priority might need to be lowered to allow it 
+to remove the call from the entry queue, in order to avoid violating 
+the ceiling. This seems relatively harmless, since there is an error, 
+and the task is about to start raising an exception anyway.</SPAN>&nbsp;</DIV>
+
+<H4 Class="centered">Implementation Permissions</H4>
+<DIV Class="paranum">14</DIV>
+<DIV Class="Normal">The implementation is allowed to round all ceilings 
+in a certain subrange of System.Priority or System.Interrupt_Priority 
+up to the top of that subrange, uniformly.&nbsp;</DIV>
+<DIV Class="paranum">14.a</DIV>
+<DIV Class="Annotations"><B>Discussion:&nbsp;</B>For example, an implementation 
+might use Priority'Last for all ceilings in Priority, and Interrupt_Priority'Last 
+for all ceilings in Interrupt_Priority. This would be equivalent to having 
+two ceiling priorities for protected objects, &ldquo;nonpreemptible&rdquo; 
+and &ldquo;noninterruptible&rdquo;, and is an allowed behavior.</DIV>
+<DIV Class="paranum">14.b</DIV>
+<DIV Class="Annotations">Note that the implementation cannot choose a 
+subrange that crosses the boundary between normal and interrupt priorities. 
+</DIV>
+<DIV Class="paranum">15/2</DIV>
+<DIV Class="Normal">&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00256.TXT">AI95-00256-01</A></I>} 
+Implementations are allowed to define other locking policies, but need 
+not support more than one <SPAN class="insert2">locking</SPAN><SPAN class="delete2">&nbsp;such</SPAN> 
+policy per partition.</DIV>
+<DIV Class="paranum">16</DIV>
+<DIV Class="Normal">[Since implementations are allowed to place restrictions 
+on code that runs at an interrupt-level active priority (see <A HREF="AA-C-3-1.html">C.3.1</A> 
+and <A HREF="AA-D-2-1.html">D.2.1</A>), the implementation may implement 
+a language feature in terms of a protected object with an implementation-defined 
+ceiling, but the ceiling shall be no less than Priority'Last.]&nbsp;</DIV>
+<DIV Class="paranum">16.a</DIV>
+<DIV Class="Annotations"><B>Implementation defined:&nbsp;</B>The ceiling of 
+any protected object used internally by the implementation.</DIV>
+<DIV Class="paranum">16.b</DIV>
+<DIV Class="Annotations"><B>Proof:&nbsp;</B>This permission follows from the 
+fact that the implementation can place restrictions on interrupt handlers 
+and on any other code that runs at an interrupt-level active priority.</DIV>
+<DIV Class="paranum">16.c</DIV>
+<DIV Class="Annotations">The implementation might protect a storage pool 
+with a protected object whose ceiling is Priority'Last, which would cause 
+<SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN>s 
+to fail when evaluated at interrupt priority. Note that the ceiling of 
+such an object has to be at least Priority'Last, since there is no permission 
+for <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN>s 
+to fail when evaluated at a non-interrupt priority.&nbsp;</DIV>
+
+<H4 Class="centered">Implementation Advice</H4>
+<DIV Class="paranum">17</DIV>
+<DIV Class="Normal">The implementation should use names that end with 
+&ldquo;_Locking&rdquo; for implementation-defined locking policies.</DIV>
+<DIV Class="paranum">17.a/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Implementation Advice: 
+</B></SPAN><SPAN class="insert2">Names that end with &ldquo;_Locking&rdquo; 
+should be used for implementation-defined locking policies.</SPAN></DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">18</DIV>
+<DIV Class="Notes">23&nbsp;&nbsp;While a task executes in a protected 
+action, it can be preempted only by tasks whose active priorities are 
+higher than the ceiling priority of the protected object.</DIV>
+<DIV Class="paranum">19</DIV>
+<DIV Class="Notes">24&nbsp;&nbsp;If a protected object has a ceiling 
+priority in the range of Interrupt_Priority, certain interrupts are blocked 
+while protected actions of that object execute. In the extreme, if the 
+ceiling is Interrupt_Priority'Last, all blockable interrupts are blocked 
+during that time.</DIV>
+<DIV Class="paranum">20</DIV>
+<DIV Class="Notes">25&nbsp;&nbsp;The ceiling priority of a protected 
+object has to be in the Interrupt_Priority range if one of its procedures 
+is to be used as an interrupt handler (see <A HREF="AA-C-3.html">C.3</A>).</DIV>
+<DIV Class="paranum">21</DIV>
+<DIV Class="Notes">26&nbsp;&nbsp;When specifying the ceiling of a protected 
+object, one should choose a value that is at least as high as the highest 
+active priority at which tasks can be executing when they call protected 
+operations of that object. In determining this value the following factors, 
+which can affect active priority, should be considered: the effect of 
+Set_Priority, nested protected operations, entry calls, task activation, 
+and other implementation-defined factors.</DIV>
+<DIV Class="paranum">22</DIV>
+<DIV Class="Notes">27&nbsp;&nbsp;Attaching a protected procedure whose 
+ceiling is below the interrupt hardware priority to an interrupt causes 
+the execution of the program to be erroneous (see <A HREF="AA-C-3-1.html">C.3.1</A>).</DIV>
+<DIV Class="paranum">23</DIV>
+<DIV Class="Notes">28&nbsp;&nbsp;On a single processor implementation, 
+the ceiling priority rules guarantee that there is no possibility of 
+deadlock involving only protected subprograms (excluding the case where 
+a protected operation calls another protected operation on the same protected 
+object).</DIV>
+
+<H4 Class="centered">Extensions to Ada 95</H4>
+<DIV Class="paranum">23.a/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00327.TXT">AI95-00327-01</A></I>} 
+<SPAN class="insert2">{<I>extensions to Ada 95</I>} <A NAME="I7501"></A>All 
+protected objects now have a priority, which is the value of the Priority 
+attribute of <A HREF="AA-D-5-2.html">D.5.2</A>. How this value is interpreted 
+depends on the locking policy; for instance, the ceiling priority is 
+derived from this value when the locking policy is Ceiling_Locking.</SPAN> 
+</DIV>
+
+<H4 Class="centered">Wording Changes from Ada 95</H4>
+<DIV Class="paranum">23.b/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="defect1.html#8652/0073">8652/0073</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00091.TXT">AI95-00091-01</A></I>} 
+<SPAN class="insert2"><B>Corrigendum:</B> Corrected the wording to reflect 
+that pragma Locking_Policy cannot be inside of a program unit.</SPAN></DIV>
+<DIV Class="paranum">23.c/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00256.TXT">AI95-00256-01</A></I>} 
+<SPAN class="insert2">Clarified that an implementation need support only 
+one locking policy (of any kind, language-defined or otherwise) per partition.</SPAN></DIV>
+<DIV Class="paranum">23.d/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00327.TXT">AI95-00327-01</A></I>} 
+<SPAN class="insert2">The bounded error for the priority of a task being 
+higher than the ceiling of an object it is currently in was moved here 
+from <A HREF="AA-D-5.html">D.5</A>, so that it applies no matter how 
+the situation arises.</SPAN>&nbsp;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-D-2-6.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-D-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="font-size: 125%">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

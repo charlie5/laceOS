@@ -1,0 +1,307 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Iterators, pools, etc.</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Indented3MediumHanging-Body {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 6.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DIV.Indented3MediumHanging-Term {float: left; font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-top: 0em; margin-bottom: 0em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale Update</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="RCorr-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RCorr-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RCorr-0-2.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RCorr-0-1.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RCorr-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RCorr-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>Chapter 6: Iterators, pools, etc.</H1>
+<div class="Normal">This area covers the new iterators introduced in 
+Ada 2012 plus access types and storage pools but also various miscellaneous 
+features.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The following Ada Issues 
+cover this area:</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0003-1.TXT">3</A></div><div class="Indented3MediumHanging-Body">
+Specifying the standard storage pool</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0027-1.TXT">27</A></div><div class="Indented3MediumHanging-Body">
+Access values should never designate unaliased components</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0036-1.TXT">36</A></div><div class="Indented3MediumHanging-Body">
+The actual for an untagged formal derived type cannot be tagged</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0038-1.TXT">38</A></div><div class="Indented3MediumHanging-Body">
+<SPAN Class="swiss">Shared_Passive</SPAN> package restrictions</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0043-1.TXT">43</A></div><div class="Indented3MediumHanging-Body">
+Details of the storage pool used when <SPAN Class="swiss">Storage_Size</SPAN> 
+is specified</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0046-1.TXT">46</A></div><div class="Indented3MediumHanging-Body">
+Enforcing legality for anonymous access components in record aggregates</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0047-1.TXT">47</A></div><div class="Indented3MediumHanging-Body">
+Generalized iterators and discriminant-dependent components</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0067-1.TXT">67</A></div><div class="Indented3MediumHanging-Body">
+Accessibility of explicitly aliased parameters of procedures and entries</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0070-1.TXT">70</A></div><div class="Indented3MediumHanging-Body">
+9.3(2) does not work for anonymous access types</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0072-1.TXT">72</A></div><div class="Indented3MediumHanging-Body">
+Missing rules for <SPAN Class="swiss">Discard_Names</SPAN> aspect</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0076-1.TXT">76</A></div><div class="Indented3MediumHanging-Body">
+Variable state in pure packages</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0085-1.TXT">85</A></div><div class="Indented3MediumHanging-Body">
+Missing aspect cases for <SPAN Class="swiss">Remote_Types</SPAN></div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0089-1.TXT">89</A></div><div class="Indented3MediumHanging-Body">
+Accessibility rules need to take into account that a generic function 
+is not a function</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0093-1.TXT">93</A></div><div class="Indented3MediumHanging-Body">
+Iterator with indefinite cursor</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0120-1.TXT">120</A></div><div class="Indented3MediumHanging-Body">
+Legality and exceptions of generalized loop iteration</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0124-1.TXT">124</A></div><div class="Indented3MediumHanging-Body">
+Add <SPAN Class="swiss">Object'Image</SPAN></div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0136-1.TXT">136</A></div><div class="Indented3MediumHanging-Body">
+Language-defined packages and aspect <SPAN Class="swiss">Default_Storage_Pool</SPAN></div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0138-1.TXT">138</A></div><div class="Indented3MediumHanging-Body">
+Iterators of formal derived types</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0142-1.TXT">142</A></div><div class="Indented3MediumHanging-Body">
+Bad subpool implementations</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0145-1.TXT">145</A></div><div class="Indented3MediumHanging-Body">
+<SPAN Class="swiss">Pool_of_Subpool</SPAN> returns null when called too 
+early</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0148-1.TXT">148</A></div><div class="Indented3MediumHanging-Body">
+Dangling references</div>
+<div class="Indented3MediumHanging-Term"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0151-1.TXT">151</A></div><div class="Indented3MediumHanging-Body">
+Meaning of subtype_indication in array component iterators&nbsp;</div>
+<div class="Normal">These changes can be grouped as follows.</div>
+<div class="Normal">A number of issues concern default and standard storage 
+pools in general (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0003-1.TXT">3</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0043-1.TXT">43</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0136-1.TXT">136</A>) 
+and some issues concern the newly introduced subpools (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0142-1.TXT">142</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0145-1.TXT">145</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0148-1.TXT">148</A>).</div>
+<div class="Normal">Several issues concern clarifications and omissions 
+regarding generalized iterators (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0047-1.TXT">47</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0093-1.TXT">93</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0120-1.TXT">120</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0138-1.TXT">138</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0151-1.TXT">151</A>).</div>
+<div class="Normal">As ever there are issues regarding accessibility 
+rules, anonymous access types and related topics (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0027-1.TXT">27</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0046-1.TXT">46</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0067-1.TXT">67</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0070-1.TXT">70</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0089-1.TXT">89</A>).</div>
+<div class="Normal">There are some clarifications and omissions about 
+package state such as <SPAN Class="swiss">Pure</SPAN> and <SPAN Class="swiss">Shared_Passive</SPAN> 
+(<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0038-1.TXT">38</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0076-1.TXT">76</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0085-1.TXT">85</A>).</div>
+<div class="Normal">Finally, there are miscellaneous issues on derived 
+types (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0036-1.TXT">36</A>), 
+<SPAN Class="swiss">Discard_Names</SPAN> (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0072-1.TXT">72</A>), 
+and <SPAN Class="swiss">Object'Image</SPAN> (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0124-1.TXT">124</A>).</div>
+
+<HR SIZE=1>
+
+<div class="Normal" style="margin-bottom: 0.4em">Remember that when 
+we declare an access type we can specify which storage pool it is to 
+use. If we do not specify one then the default is used. Originally this 
+default was just the &quot;standard pool&quot;. The pragma <SPAN Class="swiss">Default_Storage_Pool</SPAN> 
+was introduced in Ada 2012. It enables the user to specify which pool 
+is to be used by default if none is specified for the access type. Thus 
+we might write <A NAME="I1059"></A><A NAME="I1060"></A><A NAME="I1061"></A></div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Default_Storage_Pool(My_Pool);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Moreover, the parameter 
+can be null thus</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Default_Storage_Pool(<B>null</B>);</div>
+<div class="Normal" style="margin-bottom: 0.4em">which ensures that 
+we must always specify the pool to be used and prevents any allocation 
+by default. <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0003-1.TXT">AI-3</A> 
+enables us to go back to the standard pool by writing</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Default_Storage_Pool(Standard);</div>
+<div class="Normal" style="margin-bottom: 0.4em">This additional argument 
+means that there is a minor syntax change thus</div>
+<div class="SwissExamples"><SPAN Class="swiss">storage_pool_indicator&nbsp;::=</SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>storage_pool_</I></SPAN><SPAN Class="swiss">name&nbsp;|</SPAN>&nbsp;<SPAN Class="roman"><B>null</B></SPAN>&nbsp;<SPAN Class="swiss">|</SPAN>&nbsp;<SPAN Class="roman">Standard</SPAN></div>
+<div class="Normal">Note that the indicator <SPAN Class="roman">Standard</SPAN> 
+has nothing to do with the package <SPAN Class="swiss">Standard</SPAN> 
+as such.</div>
+<div class="Normal" style="margin-bottom: 0.4em"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0043-1.TXT">AI-43</A> 
+makes subtle changes to the behaviour of the aspect <SPAN Class="swiss">Storage_Size</SPAN> 
+as applied to storage pools. Briefly, the pool used by an access type 
+that has <SPAN Class="swiss">Storage_Size</SPAN> given must not allocate 
+additional storage when the original amount is exhausted and no other 
+type can use the same pool unless requested. So we might have <A NAME="I1062"></A><A NAME="I1063"></A></div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is</B>&nbsp;<B>access</B>&nbsp;...<BR>
+<B>for</B>&nbsp;T'Storage_Size&nbsp;<B>use</B>&nbsp;1000;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;S&nbsp;<B>is</B>&nbsp;<B>access</B>&nbsp;...<BR>
+<B>for</B>&nbsp;S'Storage_Pool&nbsp;<B>use</B>&nbsp;T'Storage_Pool;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>share&nbsp;pools</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that if we do 
+give the aspect <SPAN Class="swiss">Storage_Size</SPAN> for a type then 
+that implies the (implementation-defined) storage pool for the type and 
+so we cannot also give the aspect <SPAN Class="swiss">Storage_Pool</SPAN> 
+for that type. Contrariwise if we do give the pool explicitly by for 
+example <A NAME="I1064"></A><A NAME="I1065"></A></div>
+<div class="SwissExamples"><B>for</B>&nbsp;T'Storage_Pool&nbsp;<B>use</B>&nbsp;My_Pool;</div>
+<div class="Normal">then the storage size is determined by the behaviour 
+of <SPAN Class="swiss">My_Pool</SPAN> and the aspect <SPAN Class="swiss">Storage_Size</SPAN> 
+cannot be given explicitly (the writer of the pool will have had to declare 
+a function <SPAN Class="swiss">Storage_Size</SPAN> as part of the implementation 
+of the pool and that will act as the attribute.)</div>
+<div class="Normal"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0136-1.TXT">AI-136</A> 
+concerns the use of default storage pools with language defined generic 
+units. After some discussion it is concluded that the effect of specifying 
+the aspect <SPAN Class="swiss">Default_Storage_Pool</SPAN> on an instance 
+of a language-defined generic unit is implementation-defined. One consequence 
+of this is that one cannot rely upon using the aspect <SPAN Class="swiss">Default_Storage_Pool</SPAN> 
+to change the storage pool used by a container such as a linked list 
+if the container is an instance of the language-defined container <SPAN Class="swiss">Doubly_Linked_List</SPAN>.</div>
+<div class="Normal">Three AIs concern subpools which were introduced 
+in Ada 2012 and clarify a number of omissions. <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0142-1.TXT">AI-142</A> 
+simply says that <SPAN Class="swiss">Allocate_From_Subpool</SPAN> could 
+be erroneous if not implemented in accordance with the given rules. <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0145-1.TXT">AI-145</A> 
+says that the function <SPAN Class="swiss">Pool_Of_Subpool</SPAN> returns 
+<B>null</B> if called before calling the procedure <SPAN Class="swiss">Set_Pool_Of_Subpool</SPAN> 
+(pretty obvious). <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0148-1.TXT">AI-148</A> 
+tidies up the loose wording regarding what happens when we deallocate 
+subpools (all objects that were in them cease to exist of course so beware 
+dangling references as usual).<A NAME="I1066"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">There are some omissions 
+regarding iterators which were added in Ada 2012. <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0138-1.TXT">AI-138</A> 
+concerns the inheritance of aspects such as <SPAN Class="swiss">Constant_Indexing</SPAN> 
+and <SPAN Class="swiss">Iterator_Element</SPAN>. Remember that a type 
+such as <SPAN Class="swiss">List</SPAN> in <SPAN Class="swiss">Doubly_Linked_Lists</SPAN> 
+has aspects thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;List&nbsp;<B>is&nbsp;tagged&nbsp;private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Constant_Indexing&nbsp;=&gt;&nbsp;Constant_Reference,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Variable_Indexing&nbsp;=&gt;&nbsp;Reference,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default_Iterator&nbsp;=&gt;&nbsp;Iterate,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Iterator_Element&nbsp;=&gt;&nbsp;Element_Type;</div>
+<div class="Normal">If we derive a type from <SPAN Class="swiss">List</SPAN> 
+then we cannot change <SPAN Class="swiss">Iterator_Element</SPAN> into 
+something other than <SPAN Class="swiss">Element_Type</SPAN>. We say 
+that these aspects are non-overridable (they could be confirmed). <A NAME="I1067"></A><A NAME="I1068"></A><A NAME="I1069"></A></div>
+<div class="Normal">The other AIs in this group (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0047-1.TXT">47</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0093-1.TXT">93</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0120-1.TXT">120</A>, 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0151-1.TXT">151</A>) 
+concern the new generalized iterators and address a number of curious 
+omissions.<A NAME="I1070"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">It might be recalled 
+that if we have an array of type <SPAN Class="swiss">T</SPAN> thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;ATT&nbsp;<B>is&nbsp;array</B>&nbsp;(1&nbsp;..&nbsp;N)&nbsp;<B>of</B>&nbsp;T;<BR>
+The_Array:&nbsp;ATT;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then rather than express 
+iteration as</div>
+<div class="SwissExamples"><B>for</B>&nbsp;I&nbsp;<B>in</B>&nbsp;The_Array'Range&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;The_Array(I)&nbsp;:=&nbsp;99;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;to&nbsp;The_Array(I)</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">we can more briefly 
+use <B>of</B> rather than <B>in</B> and write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;E&nbsp;<B>of</B>&nbsp;The_Array&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;E&nbsp;:=&nbsp;99;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;to&nbsp;component&nbsp;E</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Optionally we can give 
+the subtype of <SPAN Class="swiss">E</SPAN> thus</div>
+<div class="SwissExamples"><B>for</B>&nbsp;E:&nbsp;T&nbsp;<B>of</B>&nbsp;The_Array&nbsp;<B>loop</B>&nbsp;...</div>
+<div class="Normal"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0151-1.TXT">AI-151</A> 
+says that any subtype given must statically match that of the component 
+of the array (obvious really). Adding <SPAN Class="swiss">T</SPAN> is 
+essentially a comment to aid the reader but the kindly compiler checks 
+that it is correct.</div>
+<div class="Normal">The other AIs of this group essentially come down 
+to the same thing. Generalized iteration enables us to write something 
+in a shorthand way. When the shorthand is expanded, what is done using 
+the resulting long form must not be illegal. For example AI-<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0047-1.TXT">AI-47</A> 
+shows how we might appear to make the array object vanish, <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0093-1.TXT">AI-93</A> 
+says that exceptions might be raised and <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0120-1.TXT">120</A> 
+covers problems with limitedness and constantness.</div>
+<div class="Normal">Access types and particularly the anonymous access 
+types introduced in Ada 2005 are often a source of problems. <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0027-1.TXT">AI-27</A> 
+clarifies the behaviour of value conversions of composite objects. <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0067-1.TXT">AI-67</A> 
+clarifies the accessibility of explicitly aliased parameters. <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0046-1.TXT">AI-46</A> 
+addresses the issue of the legality of record components of anonymous 
+access types. <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0070-1.TXT">70</A> 
+covers issues of the master of tasks created by anonymous access types.<A NAME="I1071"></A></div>
+<div class="Normal"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0089-1.TXT">AI-89</A> 
+is more interesting. It suggests that Ada programmers should carefully 
+remember the golden rules &quot;a generic function is not a function&quot;, 
+&quot;a generic procedure is not a procedure&quot;, and &quot;a generic 
+package is not a package&quot;. The details of the AI are a bit elusive 
+but revolve around the above rules.</div>
+<div class="Normal">Another group of issues concern matters such as the 
+state of packages. <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0076-1.TXT">AI-76</A> 
+shows how an apparently pure package could seem to have its state changed 
+via tricks such as using a self-referential type. Such trickery is deemed 
+erroneous.<A NAME="I1072"></A></div>
+<div class="Normal"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0085-1.TXT">AI-85</A> 
+notes that we cannot permit giving the aspects <SPAN Class="swiss">Storage_Size</SPAN> 
+or <SPAN Class="swiss">Storage_Pool</SPAN> for remote access to class 
+wide types which are given in a package with the aspect <SPAN Class="swiss">Remote_Types</SPAN>.</div>
+<div class="Normal"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0038-1.TXT">AI-38</A> 
+concerns packages that are <SPAN Class="swiss">Shared_Passive</SPAN>. 
+Various rules concerning the misuse of access types are strengthened.<A NAME="I1073"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">A curious error in 
+the matching rules for generic parameters has long been overlooked and 
+is corrected by <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0036-1.TXT">AI-36</A>. 
+If a formal parameter of a generic unit is derived untagged, then a corresponding 
+actual parameter must also be untagged. Thus if we have</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;TT<B>&nbsp;is&nbsp;new</B>&nbsp;T;<BR>
+<B>package</B>&nbsp;P&nbsp;...</div>
+<div class="Normal">then we cannot instantiate<SPAN Class="swiss">&nbsp;P</SPAN> 
+with a tagged type for <SPAN Class="swiss">TT</SPAN>. This has been wrong 
+ever since Ada 95.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The pragma <SPAN Class="swiss">Discard_Names</SPAN> 
+was introduced in Ada 95. It tells the compiler to throw away tedious 
+tables of names at runtime associated with things such as <SPAN Class="swiss">Image</SPAN> 
+and <SPAN Class="swiss">Value</SPAN>. <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0072-1.TXT">AI-72</A> 
+points out that Ada 2012 forgot to say that <SPAN Class="swiss">Discard_Names</SPAN> 
+is now an aspect and can be given as such. So if we have an enumeration 
+type with lots of long identifiers such as <A NAME="I1074"></A><A NAME="I1075"></A></div>
+<div class="SwissExamples"><B>type</B>&nbsp;Greek&nbsp;<B>is</B>&nbsp;(alpha,&nbsp;beta,&nbsp;gamma,&nbsp;...&nbsp;,&nbsp;omega);</div>
+<div class="Normal" style="margin-bottom: 0.4em">then rather than separately 
+giving</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Discard_Names(Greek);</div>
+<div class="Normal" style="margin-bottom: 0.4em">we can add the aspect 
+when the type is declared thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Greek&nbsp;<B>is</B>&nbsp;(alpha,&nbsp;beta,&nbsp;gamma,&nbsp;...&nbsp;,&nbsp;omega)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Discard_Names;</div>
+<div class="Normal">Finally, <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0124-1.TXT">AI-124</A> 
+proudly announces the extension of the attribute <SPAN Class="swiss">Image</SPAN> 
+to apply to objects as well as to types.</div>
+<div class="Normal" style="margin-bottom: 0.4em">At the moment if a 
+slovenly programmer wants to avoid the majesty of the full might of <SPAN Class="swiss">Integer_Text_IO</SPAN> 
+to print out the value of <SPAN Class="swiss">N</SPAN> of some integer 
+type such as <SPAN Class="swiss">My_Nice_Integer_Type</SPAN> (perhaps 
+for diagnostic purposes) then they write</div>
+<div class="SwissExamples">Put(My_Nice_Integer_Type'Image(N));</div>
+<div class="Normal" style="margin-bottom: 0.4em">And now thanks to <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0124-1.TXT">AI-124</A>, 
+this becomes</div>
+<div class="SwissExamples">Put(N'Image);</div>
+<div class="Normal">Note that GNAT users have been writing <SPAN Class="swiss">N'Img</SPAN> 
+for a long time.&nbsp;</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RCorr-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RCorr-0-2.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RCorr-0-1.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RCorr-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RCorr-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2016 John Barnes Informatics.</DIV>
+</BODY>
+</HTML>

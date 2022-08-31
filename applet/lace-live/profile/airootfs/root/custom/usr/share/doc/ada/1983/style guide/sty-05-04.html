@@ -1,0 +1,241 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 5.4: Data Structures
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 5: Programming Practices</H2>
+
+<H3><a name="5.4">5.4     Data Structures</a></H3>
+The data structuring capabilities of Ada are a powerful resource; therefore, 
+use them to model the data as closely as possible. It is possible to group 
+logically related data and let the language control the abstraction and 
+operations on the data rather than requiring the programmer or maintainer to 
+do so. Data can also be organized in a building block fashion. In addition to 
+showing how a data structure is organized (and possibly giving the reader an 
+indication as to why it was organized that way), creating the data structure 
+from smaller components allows those components to be reused themselves. Using 
+the features that Ada provides can increase the maintainability of your code.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><br>
+<a href="#5.4.1">5.4.1   Heterogeneous Data</a><BR>
+<a href="#5.4.2">5.4.2   Nested Records</a><BR>
+<a href="#5.4.3">5.4.3   Dynamic Data</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-05-10.html#5.10.4"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="5.4.1">5.4.1   Heterogeneous Data</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use records to group heterogeneous but related data. 
+<li>Consider records to map to I/O device data. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>type Propulsion_Method is (Sail, Diesel, Nuclear);
+
+type Craft is 
+   record 
+      Name   : Common_Name; 
+      Plant  : Propulsion_Method; 
+      Length : Feet; 
+      Beam   : Feet; 
+      Draft  : Feet; 
+   end record;
+   
+type Fleet is array (1 .. Fleet_Size) of Craft;</pre></td></tr></table>
+
+<H4>rationale</H4>
+You help the maintainer find all of the related data by gathering it into the  
+same construct, simplifying any modifications that apply to all rather than  
+part. This in turn increases reliability. Neither you nor an unknown maintainer  
+are liable to forget to deal with all the pieces of information in the  
+executable statements, especially if updates are done with aggregate  
+assignments whenever possible.<P>
+The idea is to put the information a maintainer needs to know where it can be 
+found with the minimum of effort. For example, if all information relating to 
+a given <CODE>Craft</CODE> is in the same place, the relationship is clear both in the 
+declarations and especially in the code accessing and updating that 
+information. But, if it is scattered among several data structures, it is less 
+obvious that this is an intended relationship as opposed to a coincidental 
+one.  In the latter case, the declarations may be grouped together to imply 
+intent, but it may not be possible to group the accessing and updating code 
+that way.  Ensuring the use of the same index to access the corresponding 
+element in each of several parallel arrays is difficult if the accesses are at 
+all scattered.<P>
+If the application must interface directly to hardware, the use of records,  
+especially in conjunction with record representation clauses, could be useful  
+to map onto the layout of the hardware in question.
+
+<H4>note</H4>
+It may seem desirable to store heterogeneous data in parallel arrays in what  
+amounts to a FORTRAN-like style. This style is an artifact of FORTRAN's data 
+structuring limitations. FORTRAN only has facilities for constructing  
+homogeneous arrays. Ada's variant record types offer one way to specify what  
+are called nonhomogeneous arrays or heterogeneous arrays.
+
+<H4>exceptions</H4>
+If the application must interface directly to hardware, and the hardware  
+requires that information be distributed among various locations, then it may  
+not be possible to use records.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-07.html#3.7">3.7&nbsp;Record Types</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-F.html#F">F&nbsp;Implementation-Dependent Characteristics</A>
+
+
+<H3><BR><a name="5.4.2">5.4.2   Nested Records</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Record structures should not always be flat. Factor out common parts. 
+<li>For a large record structure, group related components into smaller  
+subrecords. 
+<li>For nested records, pick element names that read well when inner  
+elements are referenced. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>type Coordinate is 
+   record 
+      Row    : Local_Float; 
+      Column : Local_Float; 
+   end record;
+   
+type Window is 
+   record 
+      Top_Left     : Coordinate; 
+      Bottom_Right : Coordinate; 
+   end record;</pre></td></tr></table>
+
+<H4>rationale</H4>
+You can make complex data structures understandable and comprehensible by 
+composing them of familiar building blocks. This technique works especially 
+well for large record types with parts which fall into natural groupings. The 
+components factored into separately declared records, based on a common 
+quality or purpose, correspond to a lower level of abstraction than that 
+represented by the larger record.
+
+<H4>note</H4>
+A carefully chosen name for the component of the larger record that is used to  
+select the smaller enhances readability, for example: 
+<table border cellpadding=6><tr><td><pre>if Window1.Bottom_Right.Row &gt; Window2.Top_Left.Row then . . . </pre></td></tr></table>
+<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-07.html#3.7">3.7&nbsp;Record Types</A>
+
+
+<H3><BR><a name="5.4.3">5.4.3   Dynamic Data</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Differentiate between static and dynamic data. Use dynamically  
+allocated objects with caution. 
+<li>Use dynamically allocated data structures only when it is necessary to  
+create and destroy them dynamically or to be able to reference them by  
+different names. 
+<li>Do not drop pointers to undeallocated objects. 
+<li>Do not leave dangling references to deallocated objects. 
+<li>Initialize all access variables and components within a record. 
+<li>Do not rely on memory deallocation. 
+<li>Deallocate explicitly. 
+<li>Use length clauses to specify total allocation size. 
+<li>Provide handlers for <CODE>Storage_Error</CODE>. 
+</UL>
+
+<H4>example</H4>
+These lines show how a dangling reference might be created:
+<table border cellpadding=6><tr><td><pre>P1 := new Object; 
+P2 := P1; 
+Unchecked_Object_Deallocation(P2);</pre></td></tr></table>
+<P>
+This line can raise an exception due to referencing the deallocated object:
+<table border cellpadding=6><tr><td><pre>X := P1.all;</pre></td></tr></table>
+<P>
+In the following three lines, if there is no intervening assignment of the  
+value of <CODE>P1</CODE> to any other pointer, the object created on the first line is no  
+longer accessible after the third line. The only pointer to the allocated  
+object has been dropped.
+<table border cellpadding=6><tr><td><pre>P1 := new Object; 
+... 
+P1 := P2;</pre></td></tr></table>
+
+<H4>rationale</H4>
+See also Guidelines <a href="sty-05-09.html#5.9.1">5.9.1</a>, <a href="sty-05-09.html#5.9.2">5.9.2</a>, and <a href="sty-06-01.html#6.1.3">6.1.3</a> for variations on these problems. A dynamically 
+allocated object is an object created by the execution of an allocator 
+(&quot;new&quot;).  Allocated objects referenced by access variables allow you to 
+generate aliases, which are multiple references to the same object. Anomalous 
+behavior can arise when you reference a deallocated object by another name. 
+This is called a dangling reference. Totally disassociating a still-valid 
+object from all names is called dropping a pointer. A dynamically allocated 
+object that is not associated with a name cannot be referenced or explicitly 
+deallocated.<P>
+A dropped pointer depends on an implicit memory manager for reclamation of 
+space. It also raises questions for the reader as to whether the loss of 
+access to the object was intended or accidental.<P>
+An Ada environment is not required to provide deallocation of dynamically  
+allocated objects. If provided, it may be provided implicitly (objects are  
+deallocated when their access type goes out of scope), explicitly (objects are  
+deallocated when <CODE>Unchecked_Deallocation</CODE> is called), or both. To increase the  
+likelihood of the storage space being reclaimed, it is best to call  
+<CODE>Unchecked_Deallocation</CODE> explicitly for each dynamically object when you are  
+finished using it. Calls to <CODE>Unchecked_Deallocation</CODE> also document a deliberate  
+decision to abandon an object, making the code easier to read and understand.  
+To be absolutely certain that space is reclaimed and reused, manage your own  
+&quot;free list.&quot; Keep track of which objects you are finished with, and reuse them 
+instead of dynamically allocating new objects later.<P>
+The dangers of dangling references are that you may attempt to use them, 
+thereby accessing memory which you have released to the memory manager, and 
+which may have been subsequently allocated for another purpose in another part 
+of your program. When you read from such memory, unexpected errors may occur 
+because the other part of your program may have previously written totally 
+unrelated data there. Even worse, when you write to such memory you can cause 
+errors in an apparently unrelated part of the code by changing values of 
+variables dynamically allocated by that code. This type of error can be very 
+difficult to find. Finally, such errors may be triggered in parts of your 
+environment that you didn't write, for example, in the memory management 
+system itself which may dynamically allocate memory to keep records about your 
+dynamically allocated memory.<P>
+Keep in mind that any uninitialized or unreset component of a record or array  
+can also be a dangling reference or carry a bit pattern representing  
+inconsistent data. <P>
+Whenever you use dynamic allocation it is possible to run out of space. Ada  
+provides a facility (a length clause) for requesting the size of the pool of  
+allocation space at compile time. Anticipate that you can still run out at run  
+time. Prepare handlers for the exception <CODE>Storage_Error</CODE>, and consider carefully  
+what alternatives you may be able to include in the program for each such  
+situation.<P>
+There is a school of thought that dictates avoidance of all dynamic 
+allocation.  It is largely based on the fear of running out of memory during 
+execution.  Facilities such as length clauses and exception handlers for 
+<CODE>Storage_Error</CODE> provide explicit control over memory partitioning and error 
+recovery, making this fear unfounded.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-07.html#3.7">3.7&nbsp;Record Types</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-08.html#3.8">3.8&nbsp;Access Types</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-08.html#3.8.1">3.8.1&nbsp;Incomplete Type Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-08.html#4.8">4.8&nbsp;Allocators</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-01.html#11.1">11.1&nbsp;Exception Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-13-02.html#13.2">13.2&nbsp;Length Clauses</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-13-10.html#13.10.1">13.10.1&nbsp;Unchecked Storage Deallocation</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

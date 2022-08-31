@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 9.3: Task Execution - Task Activation</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="9.3">9.3</A>.  Task Execution - Task Activation  </H2>
+<A HREF="lrm-09-02.html#9.2"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-09.html#9"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-09-04.html#9.4"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+A  task body defines the execution of any task that is designated by a task
+object of the corresponding task type.  The initial part of this  execution
+is  called  the  activation  of  the  task  object,  and  also  that of the
+designated task;  it consists of the elaboration of the  declarative  part,
+if  any, of the task body.  The execution of different tasks, in particular
+their activation, proceeds in parallel. 
+<P>
+If an object declaration that declares a  task  object  occurs  immediately
+within  a  declarative  part, then the activation of the task object starts
+after the elaboration of the declarative part (that is, after  passing  the
+reserved  word  begin following the declarative part);  similarly if such a
+declaration  occurs  immediately  within  a  package   specification,   the
+activation  starts  after  the  elaboration  of the declarative part of the
+package body.  The same holds for the activation of a task object that is a
+subcomponent of an object declared immediately within a declarative part or
+package specification.  The first statement following the declarative  part
+is  executed only after conclusion of the activation of these task objects. 
+<P>
+Should an exception be raised by the activation of one of these tasks, that
+task becomes a completed task (see <a href="lrm-09-04.html#9.4">9.4</a>);   other  tasks  are  not  directly 
+affected.   Should  one  of  these  tasks  thus become completed during its
+activation, the exception TASKING_ERROR is raised upon  conclusion  of  the
+activation  of  all  of  these  tasks  (whether  successfully or not);  the
+exception is raised at  a  place  that  is  immediately  before  the  first
+statement  following  the  declarative part (immediately after the reserved
+word begin).  Should several of these tasks thus  become  completed  during
+their activation, the exception TASKING_ERROR is raised only once. 
+<P>
+Should  an  exception be raised by the elaboration of a declarative part or
+package  specification,  then  any  task  that  is  created  (directly   or
+indirectly)  by  this  elaboration  and  that  is not yet activated becomes
+terminated and is therefore  never  activated  (see  section  <a href="lrm-09-04.html#9.4">9.4</a>  for  the
+definition of a terminated task). 
+<P>
+For  the  above  rules,  in  any  package  body  without statements, a null
+statement is assumed.  For any package without a package body, an  implicit
+package  body  containing a single null statement is assumed.  If a package
+without a package body is declared immediately within some program unit  or
+block  statement,  the  implicit  package  body  occurs  at  the end of the
+declarative part of the program unit or  block  statement;   if  there  are
+several  such  packages,  the  order  of  the  implicit  package  bodies is
+undefined. 
+<P>
+A task object that is the object, or a subcomponent of the object,  created
+by  the  evaluation  of  an allocator is activated by this evaluation.  The
+activation starts after any initialization for the object  created  by  the
+allocator;   if  several subcomponents are task objects, they are activated
+in parallel.  The access value designating such an object  is  returned  by
+the allocator only after the conclusion of these activations. 
+<P>
+Should an exception be raised by the activation of one of these tasks, that 
+task  becomes  a  completed  task;   other tasks are not directly affected.  
+Should one of these tasks thus become completed during its activation,  the
+exception  TASKING_ERROR is raised upon conclusion of the activation of all
+of these tasks (whether successfully or not);  the exception is  raised  at
+the  place where the allocator is evaluated.  Should several of these tasks
+thus become completed during their activation, the exception  TASKING_ERROR
+is raised only once. 
+<P>
+Should  an  exception be raised by the initialization of the object created
+by an allocator (hence before  the  start  of  any  activation),  any  task
+designated  by  a  subcomponent  of  this  object becomes terminated and is
+therefore never activated.                                                        
+<P>
+Example: 
+<pre>
+    procedure P is
+       A, B : RESOURCE;  --  elaborate the task objects A, B
+       C    : RESOURCE;  --  elaborate the task object C
+    begin
+       --  the tasks A, B, C are activated in parallel before the first statement
+       ...
+    end; 
+</pre>
+<P>
+Notes: 
+<P>
+An entry of a task can be called before the task has  been  activated.   If
+several  tasks  are  activated  in  parallel, the execution of any of these
+tasks need not await the end of the activation  of the other tasks.  A task
+may become completed during its activation either because of  an  exception
+or because it is aborted (see <a href="lrm-09-10.html#9.10">9.10</a>). 
+<P>
+<b>References:</b>   <A HREF="lrm-04-08.html#4.8">allocator</A>,
+<A HREF="lrm-09-04.html#9.4">completed  task</A>,
+<A HREF="lrm-03-09.html#3.9">declarative part</A>,
+<A HREF="lrm-03-09.html#3.9">elaboration</A>,
+<A HREF="lrm-09-05.html#9.5">entry</A>,
+<A HREF="lrm-11.html#11">exception</A>,
+<A HREF="lrm-11-04.html#11.4">handling  an  exception</A>,
+<A HREF="lrm-07-01.html#7.1">package body</A>,
+<A HREF="lrm-09.html#9">parallel execution</A>,
+<A HREF="lrm-05.html#5">statement</A>,
+<A HREF="lrm-03-03.html#3.3">subcomponent</A>,
+<A HREF="lrm-09-01.html#9.1">task   body</A>,
+<A HREF="lrm-09-02.html#9.2">task  object</A>,
+<A HREF="lrm-09-04.html#9.4">task  termination</A>,
+<A HREF="lrm-09-01.html#9.1">task  type</A>,
+<A HREF="lrm-11-01.html#11.1">tasking_error exception</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-13-02.html#13.2.2">13.2.2&nbsp;Task Execution</a>
+<p>
+
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-01.html#6.1.3">6.1.3&nbsp;Dynamic Tasks</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-01.html#6.1.4">6.1.4&nbsp;Priorities</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-01.html#6.1.5">6.1.5&nbsp;Delay Statements</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-03.html#6.3.2">6.3.2&nbsp;Normal Termination</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-04.html#7.4.1">7.4.1&nbsp;Task Activation Order</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-04.html#7.4.2">7.4.2&nbsp;Delay Statements</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-04.html#7.4.5">7.4.5&nbsp;Task Scheduling Algorithm</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-02.html#8.2.6">8.2.6&nbsp;Hidden Tasks</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

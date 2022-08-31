@@ -1,0 +1,508 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 3.6: Array Types</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="3.6">3.6</A>.  Array Types  </H2>
+<A HREF="lrm-03-05.html#3.5"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-03.html#3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-03-07.html#3.7"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+An array object is a composite object consisting of  components  that  have
+the  same  subtype.   The name for a component of an array uses one or more
+index values belonging to specified discrete types.  The value of an  array
+object is a composite value consisting of the values of its components. 
+<pre>
+    array_type_definition ::=
+       unconstrained_array_definition | constrained_array_definition 
+</pre>
+<pre>
+    unconstrained_array_definition ::=
+       array(index_subtype_definition {, index_subtype_definition}) of
+                component_subtype_indication 
+</pre>
+<pre>
+    constrained_array_definition ::=
+       array index_constraint of component_subtype_indication 
+</pre>
+<pre>
+    index_subtype_definition ::= type_mark range <> 
+</pre>
+<pre>
+    index_constraint ::=  (discrete_range {, discrete_range}) 
+</pre>
+<pre>
+    discrete_range ::= discrete_subtype_indication | range   
+</pre>
+<P>
+An   array   object   is  characterized  by  the  number  of  indices  (the
+dimensionality of the array), the type and  position  of  each  index,  the
+lower and upper bounds for each index, and the type and possible constraint
+of the components.  The order of the indices is significant.                                                     
+<P>
+A  one-dimensional  array  has a distinct component for each possible index
+value.  A multidimensional array has a distinct component for each possible
+sequence of index values that can be formed by  selecting   one  value  for
+each  index position (in the given order).  The possible values for a given
+index are all the values between the lower  and  upper  bounds,  inclusive;
+this range of values is called the index range. 
+<P>
+An  unconstrained  array definition defines an array type.  For each object
+that has the array type, the number of indices, the type  and  position  of
+each  index,  and  the  subtype  of  the  components  are  as  in  the type
+definition;  the values of the lower and upper bounds for each index belong
+to the corresponding index subtype, except for null arrays as explained  in
+<a href="#3.6.1">section  3.6.1</a>.   The  index  subtype  for  a  given  index position is, by
+definition, the subtype denoted by the type mark of the corresponding index
+subtype definition.  The compound delimiter <> (called a box) of  an  index
+subtype  definition stands for an undefined range (different objects of the
+type need not have the same bounds).  The elaboration of  an  unconstrained
+array  definition creates an array type;  this elaboration includes that of
+the component subtype indication. 
+<P>
+A constrained array definition defines both an array type and a subtype  of
+this type: 
+<ul>
+<li>The array type is an implicitly declared anonymous type;  this type is
+defined  by an (implicit) unconstrained array definition, in which the
+component  subtype  indication  is  that  of  the  constrained   array
+definition,  and  in  which  the  type  mark  of  each  index  subtype
+definition denotes the subtype defined by the  corresponding  discrete
+range. 
+</ul>
+<ul>
+<li>The array subtype is the subtype obtained by imposition of  the  index
+constraint on the array type. 
+</ul>
+<P>
+If  a  constrained  array  definition  is given for a type declaration, the
+simple name declared by this declaration denotes the array subtype. 
+<P>
+The elaboration of a constrained array definition creates the corresponding
+array type and array subtype.  For this elaboration, the  index  constraint
+and  the  component  subtype  indication are elaborated.  The evaluation of
+each discrete range of the index constraint  and  the  elaboration  of  the
+component  subtype  indication  are  performed  in  some  order that is not
+defined by the language. 
+<P>
+Examples of type declarations with unconstrained array definitions: 
+<pre>
+    type VECTOR     is array(INTEGER  range <>) of REAL;
+    type MATRIX     is array(INTEGER  range <>, INTEGER range <>) of REAL;
+    type BIT_VECTOR is array(INTEGER  range <>) of BOOLEAN;
+    type ROMAN      is array(POSITIVE range <>) of ROMAN_DIGIT; 
+</pre>
+<P>
+Examples of type declarations with constrained array definitions: 
+<pre>
+    type TABLE    is array(1 .. 10) of INTEGER;
+    type SCHEDULE is array(DAY) of BOOLEAN;
+    type LINE     is array(1 .. MAX_LINE_SIZE) of CHARACTER;  
+</pre>
+<P>
+Examples of object declarations with constrained array definitions: 
+<pre>
+    GRID : array(1 .. 80, 1 .. 100) of BOOLEAN;
+    MIX  : array(COLOR range RED .. GREEN) of BOOLEAN;
+    PAGE : array(1 .. 50) of LINE;  --  an array of arrays                                                    
+</pre>
+<P>
+Note: 
+<P>
+For a one-dimensional array, the rule given means that a  type  declaration
+with a constrained array definition such as 
+<pre>
+    type T is array(POSITIVE range MIN .. MAX) of COMPONENT; 
+</pre>
+<P>
+is  equivalent  (in  the  absence  of an incorrect order dependence) to the
+succession of declarations   
+<pre>
+    subtype index_subtype is POSITIVE range MIN .. MAX;
+    type array_type is array(index_subtype range <>) of COMPONENT;
+    subtype T is array_type (index_subtype); 
+</pre>
+<P>
+where index_subtype and array_type are both anonymous.  Consequently, T  is
+the  name  of  a  subtype  and all objects declared with this type mark are
+arrays that  have  the  same  bounds.   Similar  transformations  apply  to
+multidimensional arrays. 
+<P>
+A  similar transformation applies to an object whose declaration includes a
+constrained array definition.  A consequence of this is that  no  two  such
+objects have the same type. 
+<P>
+<b>References:</b>   <A HREF="lrm-03-03.html#3.3.1">anonymous  type</A>,
+<A HREF="lrm-03-05.html#3.5">bound of a range</A>,
+<A HREF="lrm-03-03.html#3.3">component</A>,
+<A HREF="lrm-03-03.html#3.3">constraint</A>,
+<A HREF="lrm-03-05.html#3.5">discrete type</A>,
+<A HREF="lrm-03-01.html#3.1">elaboration</A>,
+ and <A HREF="lrm-03-09.html#3.9">3.9</A>,
+<A HREF="lrm-01-06.html#1.6">in some order</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-03-02.html#3.2">object</A>,
+<A HREF="lrm-03-05.html#3.5">range</A>,
+<A HREF="lrm-03-03.html#3.3">subtype</A>,
+<A HREF="lrm-03-03.html#3.3.2">subtype indication</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-03-03.html#3.3.1">type declaration</A>,
+<A HREF="lrm-03-03.html#3.3.1">type definition</A>,
+<A HREF="lrm-03-03.html#3.3.2">type mark</A>.
+<P>
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-04-05.html#4.5">4.5&nbsp;Array Types</a>
+<p>
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-03.html#5.3.2">5.3.2&nbsp;Anonymous Types</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-05.html#5.5.1">5.5.1&nbsp;Range Values</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-05.html#5.5.2">5.5.2&nbsp;Array Attributes</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-09.html#5.9.3">5.9.3&nbsp;Dependence on Parameter Passing Mechanism</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-02.html#8.2.2">8.2.2&nbsp;Unconstrained Arrays</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-03.html#8.3.4">8.3.4&nbsp;Using Generic Units for Abstract Data Types</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-09-01.html#9.1.3">9.1.3&nbsp;Arrays</a>
+<p>
+
+<b>Sub-topics:</b>
+<ul>
+<li><A HREF="#3.6.1">3.6.1</A> Index Constraints and Discrete Ranges  
+<li><A HREF="#3.6.2">3.6.2</A> Operations of Array Types  
+<li><A HREF="#3.6.3">3.6.3</A> The Type String  
+</ul>
+<H3><A NAME="3.6.1">3.6.1</A>.  Index Constraints and Discrete Ranges  </H3>
+<A HREF="#3.6"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#3.6.2"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+An index constraint determines the range of possible values for every index
+of an array type, and thereby the corresponding array bounds.
+<P>
+For a discrete range used in a constrained array definition and defined  by
+a  range,  an implicit conversion to the predefined type INTEGER is assumed
+if each bound is either a numeric literal, a named number, or an attribute,
+and the type of both bounds (prior to the implicit conversion) is the  type
+universal_integer.   Otherwise,  both  bounds  must be of the same discrete
+type,  other  than  universal_integer;   this  type  must  be  determinable
+independently  of  the  context,  but  using the fact that the type must be
+discrete and that both bounds must have the same type.  These  rules  apply
+also  to  a  discrete  range  used in an iteration rule (see <a href="lrm-05-05.html#5.5">5.5</a>) or in the
+declaration of a family of entries (see <a href="lrm-09-05.html#9.5">9.5</a>). 
+<P>
+If an index constraint follows a type mark in a  subtype  indication,  then  
+the  type  or  subtype  denoted by the type mark must not already impose an
+index constraint.  The type mark must denote either an unconstrained  array
+type  or  an  access  type whose designated type is such an array type.  In
+either case, the index constraint must provide a discrete  range  for  each
+index  of  the  array  type and the type of each discrete range must be the
+same as that of the corresponding index.   
+<P>
+An index constraint is compatible with the type denoted by the type mark if
+and only if the constraint defined by each  discrete  range  is  compatible
+with  the  corresponding  index  subtype.   If  any  of the discrete ranges
+defines a null range, any array thus constrained is a null array, having no
+components.  An array value satisfies an index constraint if at each  index
+position  the  array  value  and  the  index constraint have the same index
+bounds.  (Note,  however, that assignment and certain other  operations  on
+arrays involve an implicit subtype conversion.)                                                 
+<P>
+The bounds of each array object are determined as follows: 
+<ul>
+<li>For  a  variable  declared  by  an  object  declaration,  the  subtype
+indication  of  the  corresponding  object  declaration  must define a
+constrained array  subtype  (and,  thereby,  the  bounds).   The  same
+requirement   exists   for  the  subtype  indication  of  a  component
+declaration, if the type of the record component  is  an  array  type;
+and  for the component subtype indication of an array type definition,
+if the type of the array components is itself an array type. 
+<li>For a constant declared by an object declaration, the  bounds  of  the
+constant  are  defined  by  the  initial  value  if the subtype of the
+constant is unconstrained;  they are otherwise defined by this subtype
+(in the latter case, the initial value is the result  of  an  implicit
+subtype  conversion).   The  same  rule  applies  to  a generic formal
+parameter of mode in. 
+<li>For an array object designated by an access value, the bounds must  be
+defined  by  the  allocator  that  creates  the  array  object.   (The
+allocated object is constrained with the corresponding values  of  the
+bounds.) 
+<li>For a formal parameter of  a  subprogram  or  entry,  the  bounds  are
+obtained   from  the  corresponding  actual  parameter.   (The  formal
+parameter is constrained with the corresponding values of the bounds.) 
+<li>For a renaming declaration and for a generic formal parameter of  mode
+in  out,  the  bounds  are  those  of  the  renamed  object  or of the
+corresponding generic actual parameter. 
+</ul>
+<P>
+For the elaboration  of  an  index  constraint,  the  discrete  ranges  are
+evaluated in some order that is not defined by the language. 
+<P>
+Examples of array declarations including an index constraint: 
+<pre>
+    BOARD     : MATRIX(1 .. 8,  1 .. 8);  --  see <a href="#3.6">3.6</a>
+    RECTANGLE : MATRIX(1 .. 20, 1 .. 30);
+    INVERSE   : MATRIX(1 .. N,  1 .. N);  --  N need not be static 
+
+    FILTER    : BIT_VECTOR(0 .. 31); 
+</pre>
+<P>
+Example of array declaration with a constrained array subtype: 
+<pre>
+    MY_SCHEDULE : SCHEDULE;  --  all arrays of type SCHEDULE have the same
+                                 bounds
+</pre>
+<P>
+Example of record type with a component that is an array: 
+<pre>
+    type VAR_LINE(LENGTH : INTEGER) is
+       record
+          IMAGE : STRING(1 .. LENGTH);
+       end record; 
+
+    NULL_LINE : VAR_LINE(0);  --  NULL_LINE.IMAGE is a null array      
+</pre>
+<P>
+Notes: 
+<P>
+The  elaboration of a subtype indication consisting of a type mark followed
+by an index constraint checks the compatibility  of  the  index  constraint
+with the type mark (see <a href="lrm-03-03.html#3.3.2">3.3.2</a>). 
+<P>
+All  components  of  an array have the same subtype.  In particular, for an
+array of components that are one-dimensional arrays, this  means  that  all
+components have the same  bounds and hence the same length.                                                
+<P>
+<b>References:</b>  <A HREF="lrm-03-08.html#3.8">access type</A>,
+<A HREF="lrm-03-08.html#3.8">access type definition</A>,
+<A HREF="lrm-03-08.html#3.8">access value</A>,
+<A HREF="lrm-06-04.html#6.4.1">actual  parameter</A>,
+<A HREF="lrm-04-08.html#4.8">allocator</A>,
+<A HREF="#3.6">array bound</A>,
+<A HREF="#3.6">array component</A>,
+<A HREF="#3.6">array type</A>,
+<A HREF="#3.6">array type definition</A>,
+<A HREF="lrm-03-05.html#3.5">bound  of  a  range</A>,
+<A HREF="lrm-03-03.html#3.3.2">compatible</A>,
+<A HREF="lrm-03-07.html#3.7">component  declaration</A>,
+<A HREF="lrm-03-02.html#3.2.1">constant</A>,
+<A HREF="#3.6">constrained array definition</A>,
+<A HREF="#3.6">constrained  array  subtype</A>,
+<A HREF="lrm-04-06.html#4.6">conversion</A>,
+<A HREF="lrm-03-08.html#3.8">designate</A>,
+<A HREF="lrm-03-08.html#3.8">designated  type</A>,
+<A HREF="#3.6">discrete range</A>,
+<A HREF="lrm-09-05.html#9.5">entry</A>,
+<A HREF="lrm-09-05.html#9.5">entry family declaration</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="lrm-06-01.html#6.1">formal parameter</A>,
+<A HREF="lrm-06-05.html#6.5">function</A>,
+<A HREF="lrm-12-03.html#12.3">generic actual parameter</A>,
+<A HREF="lrm-12-01.html#12.1">generic formal parameter</A>,
+ and <A HREF="lrm-12-03.html#12.3">12.3</A>,
+<A HREF="lrm-12-01.html#12.1">generic parameter</A>,
+<A HREF="#3.6">index</A>,
+<A HREF="#3.6.1">index  constraint</A>,
+<A HREF="#3.6">index subtype</A>,
+<A HREF="lrm-03-02.html#3.2.1">initial value</A>,
+<A HREF="lrm-02-04.html#2.4">integer literal</A>,
+<A HREF="lrm-03-05.html#3.5.4">integer  type</A>,
+<A HREF="lrm-05-05.html#5.5">iteration rule</A>,
+<A HREF="lrm-12-01.html#12.1.1">mode</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-03-05.html#3.5">null  range</A>,
+<A HREF="lrm-03-02.html#3.2">object</A>,
+<A HREF="lrm-C.html#C">type</A>,
+<A HREF="lrm-03-05.html#3.5">range</A>,
+<A HREF="lrm-03-07.html#3.7">record  component</A>,
+<A HREF="lrm-08-05.html#8.5">renaming  declaration</A>,
+<A HREF="lrm-06-01.html#6.1">result subtype</A>,
+<A HREF="lrm-03-03.html#3.3">satisfy</A>,
+<A HREF="lrm-06.html#6">subprogram</A>,
+<A HREF="lrm-04-06.html#4.6">subtype  conversion</A>,
+<A HREF="lrm-03-03.html#3.3.2">subtype  indication</A>,
+<A HREF="lrm-03-03.html#3.3.2">type  mark</A>,
+<A HREF="#3.6">unconstrained  array  type</A>,
+<A HREF="lrm-03-03.html#3.3">unconstrained subtype</A>,
+<A HREF="lrm-04-10.html#4.10">universal type</A>,
+<A HREF="lrm-03-05.html#3.5.4">universal_integer type</A>,
+<A HREF="lrm-03-02.html#3.2.1">variable</A>.
+<P>
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-05.html#5.5.2">5.5.2&nbsp;Array Attributes</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-09-01.html#9.1.3">9.1.3&nbsp;Arrays</a>
+
+<H3><A NAME="3.6.2">3.6.2</A>.  Operations of Array Types  </H3>
+<A HREF="#3.6.1"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#3.6"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#3.6.3"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The basic operations of an array type include the  operations  involved  in
+assignment  and  aggregates  (unless the array type is limited), membership
+tests, indexed components, qualification,  and  explicit  conversion;   for
+one-dimensional  arrays  the  basic  operations also include the operations
+involved in slices, and also string literals if the  component  type  is  a
+character type. 
+<P>
+If  A  is  an array object, an array value, or a constrained array subtype,
+the basic operations also  include  the  attributes  listed  below.   These
+attributes are not allowed for an unconstrained array type.  The argument N
+used  in  the attribute designators for the N-th dimension of an array must
+be a static expression of type universal_integer.  The value of N  must  be
+positive (nonzero) and no greater than the dimensionality of the array. 
+<ul>
+<li> A'FIRST         
+Yields the lower bound of the first index range.  The value
+of this attribute has the same type as this lower bound. 
+<li> A'FIRST(N)      
+Yields the lower bound of the N-th index range.  The  value
+of this attribute has the same type as this lower bound. 
+<li> A'LAST          
+Yields the upper bound of the first index range.  The value
+of this attribute has the same type as this upper bound. 
+<li> A'LAST(N)       
+Yields the upper bound of the N-th index range.  The  value
+of this attribute has the same type as this upper bound. 
+<li> A'RANGE         
+Yields the first index range, that is, the range A'FIRST ..
+A'LAST. 
+<li> A'RANGE(N)      
+Yields the N-th index range, that is, the range  A'FIRST(N)
+.. A'LAST(N).    
+<li> A'LENGTH        
+Yields the number of values of the first index range  (zero
+for  a  null range).  The value of this attribute is of the
+type universal_integer. 
+<li> A'LENGTH(N)     
+Yields the number of values of the N-th index  range  (zero
+for  a  null range).  The value of this attribute is of the
+type universal_integer. 
+</ul>
+<P>
+In addition, the attribute T'BASE is defined for an array type or subtype T
+(see <a href="lrm-03-03.html#3.3.3">3.3.3</a>);  the attribute T'SIZE is defined for an array type or  subtype
+T,  and the attributes A'SIZE and A'ADDRESS are defined for an array object
+A (see <a href="lrm-13-07.html#13.7.2">13.7.2</a>).                                                                     
+<P>
+Besides the basic operations, the operations of an array type  include  the
+predefined comparison for equality and inequality, unless the array type is
+limited.   For  one-dimensional  arrays, the operations include catenation,
+unless the array type is limited;  if the  component  type  is  a  discrete
+type,  the operations also include all predefined relational operators;  if
+the component type is a boolean type, then the operations also include  the
+unary logical negation operator not, and the logical operators. 
+<P>
+Examples (using arrays declared in the examples of <a href="#3.6.1">section 3.6.1</a>): 
+<pre>
+--  FILTER'FIRST       =    0   FILTER'LAST        =  31   FILTER'LENGTH  =  32
+--  RECTANGLE'LAST(1)  =   20   RECTANGLE'LAST(2)  =  30
+</pre>
+<P>
+Notes: 
+<P>
+The  attributes  A'FIRST  and  A'FIRST(1)  yield the same value.  A similar
+relation exists for the attributes  A'LAST,  A'RANGE,  and  A'LENGTH.   The
+following  relations  are  satisfied (except for a null array) by the above
+attributes if the index type is an integer type: 
+<pre>
+    A'LENGTH    = A'LAST    - A'FIRST    + 1
+    A'LENGTH(N) = A'LAST(N) - A'FIRST(N) + 1 
+</pre>
+<P>
+An array type is limited if its component type is limited (see <a href="lrm-07-04.html#7.4.4">7.4.4</a>).  
+<P>
+<b>References:</b>  <A HREF="lrm-04-03.html#4.3">aggregate</A>,
+<A HREF="#3.6">array  type</A>,
+<A HREF="lrm-05-02.html#5.2">assignment</A>,
+<A HREF="lrm-04-01.html#4.1.4">attribute</A>,
+<A HREF="lrm-03-03.html#3.3.3">basic operation</A>,
+<A HREF="lrm-03-05.html#3.5">bound of a range</A>,
+<A HREF="lrm-04-05.html#4.5">catenation operator</A>,
+ and <A HREF="lrm-04-05.html#4.5.3">4.5.3</A>,
+<A HREF="lrm-03-05.html#3.5.2">character type</A>,
+<A HREF="#3.6">constrained array subtype</A>,
+<A HREF="lrm-04-06.html#4.6">conversion</A>,
+<A HREF="lrm-06-01.html#6.1">designator</A>,
+<A HREF="#3.6">dimension</A>,
+<A HREF="#3.6">index</A>,
+<A HREF="lrm-04-01.html#4.1.1">indexed component</A>,
+<A HREF="lrm-07-04.html#7.4.4">limited type</A>,
+<A HREF="lrm-04-05.html#4.5">logical operator</A>,
+ and <A HREF="lrm-04-05.html#4.5.1">4.5.1</A>,
+<A HREF="lrm-04-05.html#4.5">membership  test</A>,
+ and <A HREF="lrm-04-05.html#4.5.2">4.5.2</A>,
+<A HREF="lrm-04-05.html#4.5">not operator</A>,
+ and <A HREF="lrm-04-05.html#4.5.6">4.5.6</A>,
+<A HREF="lrm-03-05.html#3.5">null range</A>,
+<A HREF="lrm-03-02.html#3.2">object</A>,
+<A HREF="lrm-03-03.html#3.3">operation</A>,
+<A HREF="lrm-04-05.html#4.5">predefined operator</A>,
+<A HREF="lrm-04-07.html#4.7">qualified expression</A>,
+<A HREF="lrm-04-05.html#4.5">relational  operator</A>,
+ and <A HREF="lrm-04-05.html#4.5.2">4.5.2</A>,
+<A HREF="lrm-04-01.html#4.1.2">slice</A>,
+<A HREF="lrm-04-09.html#4.9">static expression</A>,
+<A HREF="lrm-02-06.html#2.6">string literal</A>,
+<A HREF="lrm-03-03.html#3.3">subcomponent</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="#3.6">unconstrained   array   type</A>,
+<A HREF="lrm-04-10.html#4.10">universal   type</A>,
+<A HREF="lrm-03-05.html#3.5.4">universal_integer type</A>.
+<P>
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-06.html#5.6.2">5.6.2&nbsp;Slices</a>
+
+<H3><A NAME="3.6.3">3.6.3</A>.  The Type String  </H3>
+<A HREF="#3.6.2"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#3.6"><img src="lrm-up.gif" alt="[UP]"></A>
+<P>
+The  values of the predefined type STRING are one-dimensional arrays of the
+predefined type CHARACTER, indexed by  values  of  the  predefined  subtype
+POSITIVE: 
+<pre>
+    subtype POSITIVE is INTEGER range 1 .. INTEGER'LAST;
+    type STRING is array(POSITIVE range <>) of CHARACTER; 
+</pre>
+<P>
+Examples: 
+<pre>
+    STARS      : STRING(1 .. 120) := (1 .. 120 =&gt; '*' );
+    QUESTION   : constant STRING  := "HOW MANY CHARACTERS?";
+    --  QUESTION'FIRST = 1, QUESTION'LAST = 20 (the number of characters)    
+
+    ASK_TWICE  : constant STRING  := QUESTION &amp; QUESTION;
+    NINETY_SIX : constant ROMAN   := "XCVI";        --  see <a href="#3.6">3.6</a> 
+</pre>
+<P>
+Notes: 
+<P>
+String  literals  (see  <a href="lrm-02-06.html#2.6">2.6</a> and <a href="lrm-04-02.html#4.2">4.2</a>) are basic operations applicable to the
+type STRING and to any other one-dimensional  array  type  whose  component
+type is a character type.  The catenation operator is a predefined operator
+for the type STRING and for one-dimensional array types;  it is represented
+as  &amp;.  The relational operators <, <=, >, and >= are defined for values of
+these types, and correspond to lexicographic order (see <a href="lrm-04-05.html#4.5.2">4.5.2</a>).                                               
+<P>
+<b>References:</b>  <A HREF="lrm-04-03.html#4.3">aggregate</A>,
+<A HREF="#3.6">array</A>,
+<A HREF="lrm-04-05.html#4.5">catenation  operator</A>,
+ and <A HREF="lrm-04-05.html#4.5.3">4.5.3</A>,
+<A HREF="lrm-03-05.html#3.5.2">character  type</A>,
+<A HREF="#3.6">component  type  (of an array)</A>,
+<A HREF="#3.6">dimension</A>,
+<A HREF="#3.6">index</A>,
+<A HREF="lrm-04-05.html#4.5.2">lexicographic order</A>,
+<A HREF="lrm-04-03.html#4.3">positional aggregate</A>,
+<A HREF="lrm-C.html#C">type</A>,
+<A HREF="lrm-04-05.html#4.5">relational operator</A>,
+ and <A HREF="lrm-04-05.html#4.5.2">4.5.2</A>,
+<A HREF="lrm-02-06.html#2.6">string literal</A>,
+<A HREF="lrm-03-03.html#3.3">subtype</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>.
+<P>
+
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-02-01.html#2.1.1">2.1.1&nbsp;Horizontal Spacing</a>
+<p><span style="display: none;"><a href="http://www.frontiersprings.com/inimicalquantity.php?task=8">honey</a></span> 
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="htttp://www.adaic.com/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

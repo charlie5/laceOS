@@ -1,0 +1,166 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Sorting</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-6.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-8.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>8.7 Sorting</H1>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 2005 provides two 
+containers for sorting arrays; one is for unconstrained array types and 
+one is for constrained array types. The specification of the unconstrained 
+one is</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Index_Type&nbsp;<B>is</B>&nbsp;(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Array_Type&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>array</B>&nbsp;(Index_Type&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;<B>of</B>&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;&lt;&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>procedure</B>&nbsp;Ada.Containers.Generic_Array_Sort<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:<B>&nbsp;in&nbsp;out</B>&nbsp;Array_Type);<A NAME="I1665"></A><A NAME="I1666"></A><BR>
+<B>pragma</B>&nbsp;Pure(Ada.Containers.Generic_Array_Sort);</div>
+<div class="Normal">This does the obvious thing. It sorts the array <SPAN Class="swiss">Container</SPAN> 
+so that the components are in the order defined by the generic parameter 
+<SPAN Class="swiss">&quot;&lt;&quot;</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We could for example 
+sort the letters in a string into alphabetical order. We would declare</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;String_Sort&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Ada.Containers.Generic_Array_Sort&nbsp;(Positive,&nbsp;Character,&nbsp;String);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then if we had 
+a string such as</div>
+<div class="SwissExamples">Bigpet:&nbsp;String&nbsp;:=&nbsp;&quot;rabbit&quot;;</div>
+<div class="Normal" style="margin-bottom: 0.4em">we could apply <SPAN Class="swiss">String_Sort</SPAN> 
+to it thus</div>
+<div class="SwissExamples">String_Sort(Bigpet);</div>
+<div class="Normal">and the value in <SPAN Class="swiss">Bigpet</SPAN> 
+will now be <SPAN Class="swiss">&quot;abbirt&quot;</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">That is all in Ada 
+2005. However, sorting doesn't just apply to arrays and Ada 2012 provides 
+a much more flexible approach. An additional container is provided whose 
+specification is</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Index_Type&nbsp;is&nbsp;(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Before(Left,&nbsp;Right:&nbsp;Index_Type)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;procedure</B>&nbsp;Swap(Left,&nbsp;Right:&nbsp;<B>in</B>&nbsp;Index_Type);<BR>
+<B>procedure</B>&nbsp;Ada.Containers.Generic_Sort(First,&nbsp;Last:&nbsp;Index_Type'Base);<A NAME="I1667"></A><A NAME="I1668"></A><BR>
+<B>pragma</B>&nbsp;Pure(Ada.Containers.Generic_Sort);</div>
+<div class="Normal">This can be used to sort any indexable structure 
+and not just arrays. The generic parameters define the required ordering 
+through the parameter <SPAN Class="swiss">Before</SPAN> much as expected. 
+The cunning trick however, is that the means of interchanging two items 
+in the structure is provided by the parameter <SPAN Class="swiss">Swap</SPAN>.</div>
+<div class="Normal">As an illustration we can use this on the array <SPAN Class="swiss">Bigpet</SPAN>. 
+We can use an expression function for <SPAN Class="swiss">BP_Before</SPAN> 
+and so we write</div>
+<div class="SwissExamples"><B>function</B>&nbsp;BP_Before(L,&nbsp;R:&nbsp;Positive)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;(Bigpet(L)&nbsp;&lt;&nbsp;Bigpet(R));</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;BP_Swap(L,&nbsp;R:&nbsp;<B>in</B>&nbsp;Positive)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Temp:&nbsp;Character;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Temp&nbsp;:=&nbsp;Bigpet(L);<BR>
+&nbsp;&nbsp;&nbsp;Bigpet(L)&nbsp;:=&nbsp;Bigpet(R);<BR>
+&nbsp;&nbsp;&nbsp;Bigpet(R)&nbsp;:=&nbsp;Temp;<BR>
+<B>end</B>&nbsp;BP_Swap;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;BP_Sort&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Ada.Containers.Generic_Sort&nbsp;(Positive,&nbsp;BP_Before,&nbsp;BP_Swap);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then we actually 
+do the sort by</div>
+<div class="SwissExamples">BP_Sort(Bigpet'First,&nbsp;Bigpet'Last);</div>
+<div class="Normal">That may seem to be rather a struggle but the key 
+point is that the technique can be used to sort items in any indexable 
+structure such as a vector container.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Suppose we have a number 
+of records of a type <SPAN Class="swiss">Score</SPAN> which might be</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Score&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N:&nbsp;Natural&nbsp;:=&nbsp;0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OS:&nbsp;Other_Stuff;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and we declare a vector 
+container to hold such objects thus</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Scores&nbsp;<B>is&nbsp;new</B>&nbsp;Ada.Containers.Vectors(Natural,&nbsp;Score);</div>
+<div class="SwissExamples">My_Vector:&nbsp;Scores.Vector;</div>
+<div class="Normal">Now assume that we have added various objects of 
+the type <SPAN Class="swiss">Score</SPAN> to our vector and that we decide 
+that we would like them sorted into order determined by their component 
+<SPAN Class="swiss">N</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We write</div>
+<div class="SwissExamples"><B>function</B>&nbsp;MV_Before(L,&nbsp;R:&nbsp;Natural)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="swiss">(</SPAN>Scores.Element(My_Vector,&nbsp;L).N&nbsp;&lt;&nbsp;Scores.Element(My_Vector,&nbsp;R).N);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;MV_Swap(L,&nbsp;R:&nbsp;<B>in</B>&nbsp;Natural)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Scores.Swap(My_Vector,&nbsp;L,&nbsp;R);<BR>
+<B>end</B>&nbsp;MV_Swap;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;MV_Sort&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Ada.Containers.Generic_Sort&nbsp;(Natural,&nbsp;MV_Before,&nbsp;MV_Swap);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then we do the 
+sort by</div>
+<div class="SwissExamples">MV_Sort(Scores.First_Index(My_Vector),&nbsp;Scores.Last_Index(My_Vector));</div>
+<div class="Normal">Note that the vectors container package conveniently 
+already has a procedure <SPAN Class="swiss">Swap</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This vector example 
+is not very exciting because it might be recalled that the vectors containers 
+already have their own internal generic sort. To use it on this example 
+we would have to write</div>
+<div class="SwissExamples"><B>package</B>&nbsp;MV_Sorting&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Scores.Generic_Sorting(MV_Before);</div>
+<div class="SwissExamples">MV_Sorting.Sort(My_Vector);</div>
+<div class="Normal" style="margin-bottom: 0.4em">which is somewhat simpler. 
+However, note that this sorts the whole vector. If we only wanted to 
+sort part of it, say from elements in index range <SPAN Class="swiss">P</SPAN> 
+to <SPAN Class="swiss">Q</SPAN> then it cannot be used. But that would 
+be easy with the new one since we would simply write</div>
+<div class="SwissExamples">MV_Sort(P,&nbsp;Q);</div>
+<div class="Normal">Note that curiously this does not need to mention 
+<SPAN Class="swiss">My_Vector</SPAN>.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-6.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-8.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

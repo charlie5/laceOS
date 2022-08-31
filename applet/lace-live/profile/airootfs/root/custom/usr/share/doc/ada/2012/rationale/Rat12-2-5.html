@@ -1,0 +1,380 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Subtype predicates</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>2.5 Subtype predicates</H1>
+<div class="Normal">The final major facility to be discussed here is 
+subtype predicates. These are not really contractual in the sense that 
+preconditions, postconditions and invariants are contractual but are 
+more akin to constraints.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Subtype predicates 
+are of two kinds, <SPAN Class="swiss">Static_Predicate</SPAN> and <SPAN Class="swiss">Dynamic_Predicate</SPAN>. 
+They can be applied to subtype declarations and to type declarations 
+using aspect specifications. For example, in the Introduction we met 
+<A NAME="I1290"></A><A NAME="I1291"></A><A NAME="I1292"></A><A NAME="I1293"></A><A NAME="I1294"></A><A NAME="I1295"></A><A NAME="I1296"></A><A NAME="I1297"></A><A NAME="I1298"></A></div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Even&nbsp;<B>is</B>&nbsp;Integer<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Dynamic_Predicate&nbsp;=&gt;&nbsp;Even&nbsp;<B>mod</B>&nbsp;2&nbsp;=&nbsp;0;</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Winter&nbsp;<B>is</B>&nbsp;Month<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;&nbsp;Winter&nbsp;<B>in</B>&nbsp;Dec&nbsp;|&nbsp;Jan&nbsp;|&nbsp;Feb;</div>
+<div class="Normal">The predicates take an expression of a Boolean type 
+and again we note the use of the subtype name to denote the current instance. 
+In the case of <SPAN Class="swiss">Dynamic_Predicate</SPAN>, the expression 
+can be any Boolean expression.</div>
+<div class="Normal">However, in the case of <SPAN Class="swiss">Static_Predicate</SPAN>, 
+the expression is restricted and can only be</div>
+<div class="Bulleted">a static membership test where the choice is selected 
+by the current instance,</div>
+<div class="Bulleted">a case expression whose dependent expressions are 
+static and selected by the current instance,</div>
+<div class="Bulleted">a call of the predefined operations <SPAN Class="swiss">=</SPAN>, 
+<SPAN Class="swiss">/=</SPAN>, <SPAN Class="swiss">&lt;</SPAN>, <SPAN Class="swiss">&lt;=</SPAN>, 
+<SPAN Class="swiss">&gt;</SPAN>, <SPAN Class="swiss">&gt;=</SPAN> where 
+one operand is the current instance,</div>
+<div class="Bulleted">an ordinary static expression,&nbsp;</div>
+<div class="Normal">and, in addition, a call of a Boolean logical operator 
+<B>and</B>, <B>or</B>, <B>xor</B>, <B>not</B> whose operands are such 
+static predicate expressions, and, a static predicate expression in parentheses.</div>
+<div class="Normal">So we see that the predicate in the subtype <SPAN Class="swiss">Even</SPAN> 
+cannot be a static predicate because the operator <B>mod</B> is not permitted 
+with the current instance. But <B>mod</B> could be used in an inner static 
+expression.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, the predicate 
+in the subtype <SPAN Class="swiss">Winter</SPAN> can be a static predicate 
+because it takes the from of a membership test where the choice is selected 
+by the current instance and whose individual items are static. Note that 
+membership tests are considerably enhanced in Ada 2012; further details 
+will be given in Section <A HREF="Rat12-3-6.html">3.6</A>. Another useful 
+example of this kind is</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Letter&nbsp;<B>is</B>&nbsp;Character<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;&nbsp;Letter&nbsp;<B>in</B>&nbsp;'A'&nbsp;..&nbsp;'Z'&nbsp;|&nbsp;'a'&nbsp;..&nbsp;'z';</div>
+<div class="Normal" style="margin-bottom: 0.4em">Static case expressions 
+are valuable because they provide the comfort of covering all values 
+of the current instance. Suppose we have a type <SPAN Class="swiss">Animal</SPAN></div>
+<div class="SwissExamples"><B>type</B>&nbsp;Animal&nbsp;<B>is</B><BR>
+&nbsp;(Bear,&nbsp;Cat,&nbsp;Dog,&nbsp;Horse,&nbsp;Wolf);</div>
+<div class="Normal" style="margin-bottom: 0.4em">We could then declare 
+a subtype of friendly animals</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Pet&nbsp;<B>is</B>&nbsp;Animal<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;&nbsp;Pet&nbsp;<B>in</B>&nbsp;Cat&nbsp;|&nbsp;Dog&nbsp;|&nbsp;Horse;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and perhaps</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Predator&nbsp;<B>is</B>&nbsp;Animal<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;(Predator&nbsp;<B>in</B>&nbsp;Pet);</div>
+<div class="Normal" style="margin-bottom: 0.4em">or equivalently</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Predator&nbsp;<B>is</B>&nbsp;Animal<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;&nbsp;Predator&nbsp;<B>not&nbsp;in</B>&nbsp;Pet;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose we add 
+<SPAN Class="swiss">Rabbit</SPAN> to the type <SPAN Class="swiss">Animal</SPAN>. 
+Assuming that we consider that rabbits are pets and not food, we should 
+change <SPAN Class="swiss">Pet</SPAN> to correspond but we might forget 
+with awkward results. Maybe we have a procedure <SPAN Class="swiss">Hunt</SPAN> 
+which aims to eliminate predators</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Hunt(P:&nbsp;<B>in&nbsp;out</B>&nbsp;Predator);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and we will find that 
+our poor rabbit is hunted rather than petted!</div>
+<div class="Normal" style="margin-bottom: 0.4em">What we should have 
+done is use a case expression controlled by the current instance thus</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Pet&nbsp;<B>is</B>&nbsp;Animal<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<B>case</B>&nbsp;Pet&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Cat&nbsp;|&nbsp;Dog&nbsp;|&nbsp;Horse&nbsp;=&gt;&nbsp;True,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Bear&nbsp;|&nbsp;Wolf&nbsp;=&gt;&nbsp;False);</div>
+<div class="Normal">and now if we add <SPAN Class="swiss">Rabbit</SPAN> 
+to <SPAN Class="swiss">Animal</SPAN> and forget to update <SPAN Class="swiss">Pet</SPAN> 
+to correspond then the program will fail to compile.</div>
+<div class="Normal">Note that a similar form of if expression where the 
+current instance has to be of a Boolean type would not be useful and 
+so is excluded.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Static subtypes with 
+static predicates can also be used in case statements. Thus elsewhere 
+in the program we might have</div>
+<div class="SwissExamples"><B>case</B>&nbsp;Animal&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Pet&nbsp;=&gt;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>feed&nbsp;it</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Predator&nbsp;=&gt;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>feed&nbsp;on&nbsp;it</I></SPAN><BR>
+<B>end&nbsp;case</B>;</div>
+<div class="Normal">Observe that we do not have to list all the individual 
+animals and naturally there is no others clause. If other animals are 
+added to Pet or Predator then this case statement will not need changing. 
+Thus not only do we get the benefit of full coverage checking, but the 
+code is also maintenance free. Of course if we add an animal that is 
+neither a Pet nor Predator (Sloth perhaps?) then the case statement will 
+need updating.</div>
+<div class="Normal">Subtype predicates, like pre- and postconditions 
+and type invariants are similarly monitored by the pragma <SPAN Class="swiss">Assertion_Policy</SPAN>. 
+If a predicate fails (that is, has value <SPAN Class="swiss">False</SPAN>) 
+then <SPAN Class="swiss">Assertion_Error</SPAN> is raised. <A NAME="I1299"></A><A NAME="I1300"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Subtype predicates 
+are checked in much the same sort of places as type invariants. Thus</div>
+<div class="Bulleted">on a subtype conversion,</div>
+<div class="Bulleted">on parameter passing (which covers expressions 
+in general),</div>
+<div class="Bulleted">on default initialization of an object.&nbsp;</div>
+<div class="Normal">Note an important difference from type invariants. 
+If a type invariant is violated then the damage has been done. But subtype 
+predicates are checked before any damage is done. This difference essentially 
+arises because type invariants apply to private types and can become 
+temporarily false inside the defining package as we saw with the procedure 
+<SPAN Class="swiss">Flip</SPAN> applying to the type <SPAN Class="swiss">Disc_Pt</SPAN>.</div>
+<div class="Normal">If an object is declared without initialization and 
+no default applies then any subtype predicate might be false in the same 
+way that a subtype constraint might be violated.</div>
+<div class="Normal">Beware that subtype predicates like type invariants 
+are not foolproof. Thus in the case of a record type they apply to the 
+record as a whole but they are not checked if an individual component 
+is modified.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Subtype predicates 
+can be given for all types in principle. Thus we might have</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Date&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;D:&nbsp;Integer&nbsp;<B>range</B>&nbsp;1&nbsp;..&nbsp;31;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;M:&nbsp;Month;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Winter_Date&nbsp;<B>is</B>&nbsp;Date<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Dynamic_Predicate&nbsp;=&gt;&nbsp;Winter_Date.M&nbsp;<B>in</B>&nbsp;Winter;</div>
+<div class="Normal">Note how this uses the subtype <SPAN Class="swiss">Winter</SPAN> 
+which was itself defined by a subtype predicate. However, <SPAN Class="swiss">Winter_Date</SPAN> 
+has to have a <SPAN Class="swiss">Dynamic_Predicate</SPAN> because the 
+selector is not simply the current instance but a component of it.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can now declare 
+and manipulate a <SPAN Class="swiss">Winter_Date</SPAN></div>
+<div class="SwissExamples">WD:&nbsp;Winter_Date&nbsp;:=&nbsp;(25,&nbsp;Dec,&nbsp;2011);<BR>
+...<BR>
+Do_Date(WD);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and the subtype predicate 
+will be checked on the call of <SPAN Class="swiss">Do_Date</SPAN>. However, 
+beware that if we write</div>
+<div class="SwissExamples">WD.Month&nbsp;:=&nbsp;Jun;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>dodgy</I></SPAN></div>
+<div class="Normal">then the subtype predicate is not checked because 
+we are modifying an individual component and not the record as a whole.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Subtype predicates 
+can be given with type declarations as well as with subtype declarations. 
+Consider for example declaring a type whose only allowed values are the 
+possible scores for an individual throw when playing darts. These are 
+1 to 20 and doubles and trebles plus 50 and 25 for an inner and outer 
+bull's eye. We could write these all out explicitly</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Score&nbsp;<B>is&nbsp;new</B>&nbsp;Integer<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;<B>=&gt;</B>&nbsp;Score&nbsp;<B>in</B>&nbsp;1&nbsp;|&nbsp;2&nbsp;|&nbsp;3&nbsp;|&nbsp;4&nbsp;|&nbsp;5&nbsp;|&nbsp;6&nbsp;|&nbsp;7&nbsp;|&nbsp;8&nbsp;|&nbsp;9&nbsp;|&nbsp;10&nbsp;|&nbsp;11&nbsp;|&nbsp;12<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;13&nbsp;|&nbsp;14&nbsp;|&nbsp;15&nbsp;|&nbsp;16&nbsp;|&nbsp;17&nbsp;|&nbsp;18&nbsp;|&nbsp;19&nbsp;|&nbsp;20&nbsp;|&nbsp;21<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;22&nbsp;|&nbsp;24&nbsp;|&nbsp;25&nbsp;|&nbsp;26&nbsp;|&nbsp;27&nbsp;|&nbsp;28&nbsp;|&nbsp;30&nbsp;|&nbsp;32&nbsp;|&nbsp;33<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;34&nbsp;|&nbsp;36&nbsp;|&nbsp;38&nbsp;|&nbsp;39&nbsp;|&nbsp;40&nbsp;|&nbsp;42&nbsp;|&nbsp;45&nbsp;|&nbsp;48&nbsp;|&nbsp;50<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;51&nbsp;|&nbsp;54&nbsp;|&nbsp;57&nbsp;|&nbsp;60;</div>
+<div class="Normal" style="margin-bottom: 0.4em">But that is rather 
+boring and obscures the nature of the predicate. We can split it down 
+by first defining individual subtypes for single, doubles and trebles 
+as follows</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Single&nbsp;<B>is</B>&nbsp;Integer&nbsp;<B>range</B>&nbsp;1&nbsp;..&nbsp;20;</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Double&nbsp;<B>is</B>&nbsp;Integer<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Double&nbsp;<B>in</B>&nbsp;2&nbsp;|&nbsp;4&nbsp;|&nbsp;6&nbsp;|&nbsp;8&nbsp;|&nbsp;10&nbsp;|&nbsp;12&nbsp;|&nbsp;14&nbsp;|&nbsp;16&nbsp;|&nbsp;18&nbsp;|&nbsp;20&nbsp;|&nbsp;22&nbsp;|&nbsp;24&nbsp;|&nbsp;26&nbsp;|&nbsp;28&nbsp;|&nbsp;30&nbsp;|&nbsp;32&nbsp;|&nbsp;34&nbsp;|&nbsp;36&nbsp;|&nbsp;38&nbsp;|&nbsp;40;</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Treble&nbsp;<B>is</B>&nbsp;Integer<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Treble&nbsp;<B>in</B>&nbsp;3&nbsp;|&nbsp;6&nbsp;|&nbsp;9&nbsp;|&nbsp;12&nbsp;|&nbsp;15&nbsp;|&nbsp;18&nbsp;|&nbsp;21&nbsp;|&nbsp;24&nbsp;|&nbsp;27&nbsp;|&nbsp;30&nbsp;|&nbsp;33&nbsp;|&nbsp;36&nbsp;|&nbsp;39&nbsp;|&nbsp;42&nbsp;|&nbsp;45&nbsp;|&nbsp;48&nbsp;|&nbsp;51&nbsp;|&nbsp;54&nbsp;|&nbsp;57&nbsp;|&nbsp;60;</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Score&nbsp;<B>is</B>&nbsp;Integer<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Score&nbsp;<B>in</B>&nbsp;Single&nbsp;<B>or</B>&nbsp;Score&nbsp;<B>in</B>&nbsp;Double&nbsp;<B>or</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Score&nbsp;<B>in</B>&nbsp;Treble&nbsp;<B>or</B>&nbsp;Score&nbsp;<B>in</B>&nbsp;25&nbsp;|&nbsp;50;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that it would 
+be neater to write</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Score&nbsp;<B>is</B>&nbsp;Integer<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Score&nbsp;<B>in</B>&nbsp;Single&nbsp;|&nbsp;Double&nbsp;|&nbsp;Treble&nbsp;|&nbsp;25&nbsp;|&nbsp;50;</div>
+<div class="Normal">Observe that it does not matter that the individual 
+predicates overlap. That is a score such as <SPAN Class="swiss">12</SPAN> 
+is a <SPAN Class="swiss">Single</SPAN>, a <SPAN Class="swiss">Double</SPAN> 
+and a <SPAN Class="swiss">Treble</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we do not mind the 
+predicates being dynamic then we can write</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Double&nbsp;<B>is</B>&nbsp;Integer<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Dynamic_Predicate&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Double&nbsp;<B>mod</B>&nbsp;2&nbsp;=&nbsp;0&nbsp;<B>and</B>&nbsp;Double&nbsp;/&nbsp;2&nbsp;<B>in</B>&nbsp;Single;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and so on. Or we could 
+even use a quantified expression</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Double&nbsp;<B>is</B>&nbsp;Integer<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Dynamic_Predicate&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<B>for&nbsp;some</B>&nbsp;K&nbsp;<B>in</B>&nbsp;Single&nbsp;=&gt;&nbsp;Double&nbsp;=&nbsp;2*K);</div>
+<div class="Normal" style="margin-bottom: 0.4em">or go all the way in 
+one lump</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Dyn_Score&nbsp;<B>is&nbsp;new</B>&nbsp;Integer<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Dynamic_Predicate&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<B>for&nbsp;some</B>&nbsp;K&nbsp;<B>in</B>&nbsp;1&nbsp;..&nbsp;20&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Score&nbsp;=&nbsp;K&nbsp;<B>or</B>&nbsp;Score&nbsp;=&nbsp;2*K&nbsp;<B>or</B>&nbsp;Score&nbsp;=&nbsp;3*K)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>or</B>&nbsp;Score&nbsp;<B>in</B>&nbsp;25&nbsp;|&nbsp;50;</div>
+<div class="Normal">There are some restrictions on the use of subtypes 
+with predicates.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If a subtype has a 
+static or dynamic predicate then it cannot be used as an array index 
+subtype. This is to avoid arrays with holes. So we cannot write</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Winter_Hours&nbsp;<B>is&nbsp;array</B>&nbsp;(Winter)&nbsp;<B>of</B>&nbsp;Hours;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="SwissExamples"><B>type</B>&nbsp;Hits&nbsp;<B>is&nbsp;array</B>&nbsp;(Score&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;<B>of</B>&nbsp;Integer;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">Similarly, we cannot 
+use a subtype with a predicate to declare the range of an array object 
+or to select a slice. So if we have</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Month_Days&nbsp;<B>is&nbsp;array</B>&nbsp;(Month&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;<B>of</B>&nbsp;Integer;<BR>
+The_Days:&nbsp;Month_Days&nbsp;:=&nbsp;(31,&nbsp;28,&nbsp;31,&nbsp;30,&nbsp;...&nbsp;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">then we cannot write</div>
+<div class="SwissExamples">Winter_Days:&nbsp;Month_Days(Winter);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal&nbsp;array</I></SPAN></div>
+<div class="SwissExamples">The_Days(Winter)&nbsp;:=&nbsp;(Jan&nbsp;|&nbsp;Dec&nbsp;=&gt;&nbsp;31,&nbsp;Feb&nbsp;=&gt;&nbsp;29);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>really&nbsp;nasty&nbsp;illegal&nbsp;slice</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">However, a subtype 
+with a static predicate can be used in a for loop thus</div>
+<div class="SwissExamples"><B>for</B>&nbsp;W&nbsp;<B>in</B>&nbsp;Winter&nbsp;<B>loop</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">and in a named aggregate 
+such as</div>
+<div class="SwissExamples">(Winter&nbsp;=&gt;&nbsp;10.0,&nbsp;<B>others</B>&nbsp;=&gt;&nbsp;14.0);&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>OK</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">but a subtype with 
+a dynamic predicate cannot be used in these ways. Actually the restriction 
+is slightly more complicated. If the original subtype is not static such 
+as</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;To_N&nbsp;<B>is</B>&nbsp;Integer&nbsp;<B>range</B>&nbsp;1&nbsp;..&nbsp;N;</div>
+<div class="Normal">then even if <SPAN Class="swiss">To_N</SPAN> has 
+a static predicate it still cannot be used in a for loop or named aggregate.</div>
+<div class="Normal" style="margin-bottom: 0.4em">These rules can also 
+be illustrated by considering the dartboard. We might like to accumulate 
+a count of the number of times each particular score has been achieved. 
+So we might like to declare</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Hit_Count&nbsp;<B>is</B>&nbsp;<B>array</B>&nbsp;(Score)&nbsp;<B>of</B>&nbsp;Integer;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">but sadly this would 
+result in an array with holes and so is forbidden. However, we could 
+declare an array from <SPAN Class="swiss">1</SPAN> to <SPAN Class="swiss">60</SPAN> 
+and then initialize it with<SPAN Class="swiss">&nbsp;0</SPAN> for those components 
+used for hits and <SPAN Class="swiss">&ndash;1</SPAN> for the unused 
+components. Of course, we ought not to repeat literals such as 1 and 
+60 because of potential maintenance problems. But, we can use new attributes 
+<SPAN Class="swiss">First_Valid</SPAN> and <SPAN Class="swiss">Last_Valid</SPAN> 
+thus <A NAME="I1301"></A><A NAME="I1302"></A><A NAME="I1303"></A><A NAME="I1304"></A></div>
+<div class="SwissExamples"><B>type</B>&nbsp;Hit_Count&nbsp;<B>is&nbsp;array</B>&nbsp;(Score'First_Valid&nbsp;..&nbsp;Score'Last_Valid)&nbsp;<B>of</B>&nbsp;Integer&nbsp;:=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Score&nbsp;=&gt;&nbsp;0,&nbsp;<B>others</B>&nbsp;=&gt;&nbsp;&ndash;1);</div>
+<div class="Normal">which uses <SPAN Class="swiss">Score</SPAN> to indicate 
+the used components. The attributes <SPAN Class="swiss">First_Valid</SPAN> 
+and <SPAN Class="swiss">Last_Valid</SPAN> can be applied to any static 
+subtype but are particularly useful with static predicates.</div>
+<div class="Normal">In detail, First_Valid returns the smallest valid 
+value of the subtype. It takes any range and/or predicate into account 
+whereas First only takes the range into account. Similarly Last_Valid 
+returns the largest value. Incidentally, they are illegal on null subtypes 
+(because null subtypes have no valid values at all).</div>
+<div class="Normal" style="margin-bottom: 0.4em">The <SPAN Class="swiss">Hit_Count</SPAN> 
+array can then be updated by the value of each hit as expected</div>
+<div class="SwissExamples">A_Hit:&nbsp;Score&nbsp;:=&nbsp;...&nbsp;;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>next&nbsp;dart</I></SPAN></div>
+<div class="SwissExamples">Hit_Count(A_Hit)&nbsp;:=&nbsp;Hit_Count(A_Hit)&nbsp;+&nbsp;1;</div>
+<div class="Normal">If we attempt to assign a value of type <SPAN Class="swiss">Integer</SPAN> 
+which is not in the subtype <SPAN Class="swiss">Score</SPAN> to <SPAN Class="swiss">A_Hit</SPAN> 
+then <SPAN Class="swiss">Assertion_Error</SPAN> is raised.</div>
+<div class="Normal" style="margin-bottom: 0.4em">After the game, we 
+can now loop through the subtype <SPAN Class="swiss">Score</SPAN> and 
+print out the number of times each hit has been achieved and perhaps 
+accumulate the total at the same time thus</div>
+<div class="SwissExamples"><B>for</B>&nbsp;K&nbsp;<B>in</B>&nbsp;Score&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;New_Line;&nbsp;&nbsp;Put(Hit);&nbsp;&nbsp;Put(Hit_Count(K));<BR>
+&nbsp;&nbsp;&nbsp;Total&nbsp;:=&nbsp;Total&nbsp;+&nbsp;K&nbsp;*&nbsp;Hit_Count(K);<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The reason for the 
+distinction between static and dynamic predicates is that the static 
+form can be implemented as small sets with static operations on the small 
+sets. Hence the loop</div>
+<div class="SwissExamples"><B>for</B>&nbsp;K&nbsp;<B>in</B>&nbsp;Score&nbsp;<B>loop</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">can be implemented 
+simply as a sequence of 43 iterations. However, a loop such as</div>
+<div class="SwissExamples"><B>for</B>&nbsp;X&nbsp;<B>in</B>&nbsp;Even&nbsp;<B>loop</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">which might look innocuous 
+requires iterating over the whole set of integers. Thus we insist on 
+having to write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;X&nbsp;<B>in</B>&nbsp;Integer&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;X&nbsp;<B>in</B>&nbsp;Even&nbsp;<B>then</B>&nbsp;...</div>
+<div class="Normal">which makes the situation quite clear.</div>
+<div class="Normal">Another restriction on the use of subtypes with predicates 
+is that the attributes <SPAN Class="swiss">First</SPAN>, <SPAN Class="swiss">Last</SPAN> 
+and <SPAN Class="swiss">Range</SPAN> cannot be applied. But <SPAN Class="swiss">Pred</SPAN> 
+and <SPAN Class="swiss">Succ</SPAN> are permitted because they apply 
+to the underlying type. As a consequence, if a generic body uses <SPAN Class="swiss">First</SPAN>, 
+<SPAN Class="swiss">Last</SPAN> or <SPAN Class="swiss">Range</SPAN> on 
+a formal type and the actual type has a subtype predicate then <SPAN Class="swiss">Program_Error</SPAN> 
+is raised.</div>
+<div class="Normal">Subtype predicates can be applied to abstract types 
+but not to incomplete types.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Subtype predicates 
+are inherited as expected on derivation. Thus if we have</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is</B><BR>
+&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;&nbsp;SP(T);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then</div>
+<div class="SwissExamples"><B>type</B>&nbsp;NT&nbsp;<B>is&nbsp;new</B>&nbsp;T<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Dynamic_Predicate&nbsp;=&gt;&nbsp;DP(NT);</div>
+<div class="Normal">the result is that both predicates apply to <SPAN Class="swiss">NT</SPAN> 
+rather as if we had written the predicate as <SPAN Class="swiss">SP(NT)</SPAN> 
+<B>and</B> <SPAN Class="swiss">DP(NT)</SPAN>. So if several apply they 
+are anded together. If any one is dynamic then restrictions on the use 
+of subtypes with a dynamic predicate apply.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There is no need for 
+special predicates for class wide types in the way that we have both 
+<SPAN Class="swiss">Type_Invariant</SPAN> and <SPAN Class="swiss">Type_Invariant'Class</SPAN>. 
+So in the general case where a tagged type is derived from a parent and 
+several progenitors</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is&nbsp;new</B>&nbsp;P&nbsp;<B>and</B>&nbsp;G1&nbsp;<B>and</B>&nbsp;G2&nbsp;<B>with</B>&nbsp;...</div>
+<div class="Normal">where <SPAN Class="swiss">P</SPAN> is the parent 
+and <SPAN Class="swiss">G1</SPAN> and <SPAN Class="swiss">G2</SPAN> are 
+progenitors, the subtype predicate applicable to <SPAN Class="swiss">T</SPAN> 
+is simply those for <SPAN Class="swiss">P</SPAN>, <SPAN Class="swiss">G1</SPAN> 
+and <SPAN Class="swiss">G2</SPAN> all anded together.</div>
+<div class="Normal">A number of improvements were made in this area after 
+ISO standardization as described in Section <A HREF="Rat12-9-5.html">9.5</A> 
+of the Epilogue. These concern a new aspect Predicate_Failure which enables 
+specific messages to be associated with a failure and rules regarding 
+the order of evaluation of predicates if several apply.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

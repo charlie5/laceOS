@@ -1,0 +1,213 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 4.6: Type Conversions</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="4.6">4.6</A>.  Type Conversions  </H2>
+<A HREF="lrm-04-05.html#4.5"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-04.html#4"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-04-07.html#4.7"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The evaluation of an  explicit type  conversion  evaluates  the  expression
+given  as  the  operand,  and  converts  the resulting value to a specified
+target type.  Explicit type conversions are allowed between closely related
+types as defined below. 
+<pre>
+    type_conversion ::= type_mark(expression)    
+</pre>
+<P>
+The target type of a type conversion is the base type  of  the  type  mark.
+The  type  of  the  operand  of  a  type  conversion  must  be determinable
+independently of the context (in particular, independently  of  the  target
+type).   Furthermore, the operand of a type conversion is not allowed to be
+a literal null, an allocator,  an  aggregate,  or  a  string  literal;   an
+expression  enclosed  by  parentheses  is  allowed as the operand of a type
+conversion only if the expression alone is allowed. 
+<P>
+A conversion to a subtype consists of  a  conversion  to  the  target  type
+followed  by  a  check  that  the  result  of the conversion belongs to the
+subtype.  A conversion of an operand of a given type to the type itself  is
+allowed.                                                                                   
+<P>
+The  other  allowed  explicit  type conversions correspond to the following
+three cases: 
+<ol>
+<li>Numeric types 
+<P>
+The operand can be of any numeric type;  the value of the  operand  is
+converted  to  the target type which must also be a numeric type.  For
+conversions involving real types, the result is within the accuracy of
+the specified subtype (see <a href="lrm-04-05.html#4.5.7">4.5.7</a>).  The conversion of a real value  to
+an  integer  type  rounds  to  the nearest integer;  if the operand is
+halfway between two integers (within the accuracy of the real subtype)
+rounding may be either up or down. 
+<br><br>
+<li>Derived types 
+<P>
+The conversion is allowed if one of the target type  and  the  operand
+type  is  derived  from the other, directly or indirectly, or if there
+exists a third type from which both types  are  derived,  directly  or
+indirectly. 
+<br><br>
+<li>Array types  
+<P>
+The  conversion is allowed if the operand type and the target type are
+array types that satisfy the following conditions:   both  types  must
+have the same dimensionality;  for each index position the index types
+must  either  be  the  same  or  be  convertible  to  each other;  the
+component types must be the same;  finally, if the component type is a
+type with discriminants or an access type, the component subtypes must
+be either both constrained or both unconstrained.  If  the  type  mark
+denotes  an  unconstrained  array type, then, for each index position,
+the bounds of the result are obtained by converting the bounds of  the
+operand  to  the  corresponding index type of the target type.  If the
+type mark denotes a constrained array subtype, then the bounds of  the
+result  are those imposed by the type mark.  In either case, the value
+of each component of the result is that of the matching  component  of
+the operand (see <a href="lrm-04-05.html#4.5.2">4.5.2</a>). 
+</ol>
+In  the  case  of  conversions  of  numeric  types  and  derived types, the
+exception CONSTRAINT_ERROR is raised by the evaluation of a type conversion
+if the result of the conversion fails to satisfy a  constraint  imposed  by
+the type mark. 
+<P>
+In  the  case  of  array  types, a check is made that any constraint on the
+component subtype is the same for the operand array type as for the  target
+array  type.   If  the type mark denotes an unconstrained array type and if
+the operand is not a null array, then, for each index position, a check  is
+made  that  the  bounds  of  the  result  belong to the corresponding index
+subtype of the target type.  If the type mark denotes a  constrained  array
+subtype,  a check is made that for each component of the operand there is a
+matching component of the target subtype, and vice  versa.   The  exception
+CONSTRAINT_ERROR is raised if any of these checks fails.  
+<P>
+If a conversion is allowed from one type to another, the reverse conversion
+is  also allowed. This reverse conversion is used where an actual parameter
+of mode in out or out has the form of a type  conversion  of  a  (variable)  
+name as explained in section <a href="lrm-06-04.html#6.4.1">6.4.1</a>. 
+<P>
+Apart  from  the  explicit  type conversions, the only allowed form of type
+conversion  is  the  implicit  conversion  of   a   value   of   the   type
+universal_integer or universal_real into another numeric type.  An implicit
+conversion of an operand of type universal_integer to another integer type,
+or  of  an operand of type universal_real to another real type, can only be
+applied if the operand is either a numeric literal, a named number,  or  an
+attribute;   such  an  operand is called a convertible universal operand in
+this section.  An implicit conversion of a convertible universal operand is
+applied if and only if the innermost complete context (see <a href="lrm-08-07.html#8.7">8.7</a>)  determines
+a unique (numeric) target type for the implicit conversion, and there is no
+legal interpretation of this context without this conversion.                                            
+<P>
+Notes: 
+<P>
+The  rules  for  implicit  conversions imply that no implicit conversion is
+ever applied to the operand of an  explicit  type  conversion.   Similarly,
+implicit  conversions  are  not  applied  if  both operands of a predefined
+relational operator are convertible universal operands. 
+<P>
+The language allows implicit subtype conversions in the case of array types
+(see <a href="lrm-05-02.html#5.2.1">5.2.1</a>).  An explicit type conversion can have the effect of  a  change
+of  representation (in particular see <a href="lrm-13-06.html#13.6">13.6</a>).  Explicit conversions are also  
+used for actual parameters (see <a href="lrm-06-04.html#6.4">6.4</a>). 
+<P>
+Examples of numeric type conversion: 
+<pre>
+    REAL(2*J)      --  value is converted to floating point
+    INTEGER(1.6)   --  value is 2
+    INTEGER(-0.4)  --  value is 0
+</pre>
+<P>
+Example of conversion between derived types: 
+<pre>
+    type A_FORM is new B_FORM; 
+
+    X : A_FORM;
+    Y : B_FORM; 
+
+    X := A_FORM(Y);
+    Y := B_FORM(X);  --  the reverse conversion 
+</pre>
+<P>
+Examples of conversions between array types: 
+<pre>
+    type SEQUENCE is array (INTEGER range <>) of INTEGER;
+    subtype DOZEN is SEQUENCE(1 .. 12);
+    LEDGER : array(1 .. 100) of INTEGER;
+
+    SEQUENCE(LEDGER)            --  bounds are those of LEDGER
+    SEQUENCE(LEDGER(31 .. 42))  --  bounds are 31 and 42
+    DOZEN(LEDGER(31 .. 42))     --  bounds are those of DOZEN 
+</pre>
+<P>
+Examples of implicit conversions: 
+<pre>
+    X : INTEGER := 2; 
+
+    X + 1 + 2              -- implicit conversion of each integer literal
+    1 + 2 + X              -- implicit conversion of each integer literal
+    X + (1 + 2)            -- implicit conversion of each integer literal 
+
+    2 = (1 + 1)            -- no implicit conversion:  the type is uni-
+                              versal_integer
+    A'LENGTH = B'LENGTH    -- no implicit conversion:  the type is uni-
+                              versal_integer
+    C : constant := 3 + 2; -- no implicit conversion:  the type is uni-
+                              versal_integer
+
+    X = 3 and 1 = 2        -- implicit conversion of 3, but not of 1 and 2 
+</pre>
+<P>
+<b>References:</b>  <A HREF="lrm-06-04.html#6.4.1">actual parameter</A>,
+<A HREF="lrm-03-06.html#3.6">array type</A>,
+<A HREF="lrm-04-01.html#4.1.4">attribute</A>,
+<A HREF="lrm-03-03.html#3.3">base type</A>,
+<A HREF="lrm-03-03.html#3.3">belong to a subtype</A>,
+<A HREF="lrm-03-03.html#3.3">component</A>,
+<A HREF="lrm-03-06.html#3.6">constrained array subtype</A>,
+<A HREF="lrm-11-01.html#11.1">constraint_error  exception</A>,
+<A HREF="lrm-03-04.html#3.4">derived  type</A>,
+<A HREF="lrm-03-06.html#3.6">dimension</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="lrm-03-05.html#3.5.7">floating point type</A>,
+<A HREF="lrm-03-06.html#3.6">index</A>,
+<A HREF="lrm-03-06.html#3.6">index  subtype</A>,
+<A HREF="lrm-03-06.html#3.6">index  type</A>,
+<A HREF="lrm-03-05.html#3.5.4">integer  type</A>,
+<A HREF="lrm-04-05.html#4.5.2">matching component</A>,
+<A HREF="lrm-06-01.html#6.1">mode</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-03-02.html#3.2">named number</A>,
+<A HREF="lrm-03-06.html#3.6.1">null array</A>,
+<A HREF="lrm-02-04.html#2.4">numeric literal</A>,
+<A HREF="lrm-03-05.html#3.5">numeric type</A>,
+<A HREF="lrm-11.html#11">raising of exceptions</A>,
+<A HREF="lrm-03-05.html#3.5.6">real type</A>,
+<A HREF="lrm-13-01.html#13.1">representation</A>,
+<A HREF="lrm-05.html#5">statement</A>,
+<A HREF="lrm-03-03.html#3.3">subtype</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-03-03.html#3.3.2">type mark</A>,
+<A HREF="lrm-03-06.html#3.6">unconstrained  array type</A>,
+<A HREF="lrm-03-05.html#3.5.4">universal_integer type</A>,
+<A HREF="lrm-03-05.html#3.5.6">universal_real type</A>,
+<A HREF="lrm-03-02.html#3.2.1">variable</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-04-03.html#4.3">4.3&nbsp;Type Equivalence</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-15-08.html#15.8">15.8&nbsp;Unchecked Conversions</a>
+<p>
+
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-09.html#5.9.1">5.9.1&nbsp;Unchecked Conversion</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

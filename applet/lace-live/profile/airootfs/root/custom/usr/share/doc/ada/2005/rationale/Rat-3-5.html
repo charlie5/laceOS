@@ -1,0 +1,290 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Access types and discriminants</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>3.5 Access types and discriminants</H1>
+<div class="Normal">This final topic concerns two matters. The first 
+is about accessing components of discriminated types that might vanish 
+or change mysteriously and the second is about type conversions. <A NAME="I1120"></A><A NAME="I1121"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Recall that we can 
+have a mutable variant record such as&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Gender&nbsp;<B>is</B>&nbsp;(Male,&nbsp;Female,&nbsp;Neuter);</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Mutant(Sex:&nbsp;Gender&nbsp;:=&nbsp;Neuter)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>case</B>&nbsp;Sex&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Male&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bearded:&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Female&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Children:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Neuter&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>null</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;case</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This represents a world 
+in which there are three sexes, males which can have beards, females 
+which can bear children, and neuters which are fairly useless. Note the 
+default value for the discriminant. This means that if we declare an 
+unconstrained object thus&nbsp;</div>
+<div class="SwissExamples">The_Thing:&nbsp;Mutant;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then <SPAN Class="swiss">The_Thing</SPAN> 
+is neuter by default but could have its sex changed by a whole record 
+assignment thus&nbsp;</div>
+<div class="SwissExamples">The_Thing&nbsp;:=&nbsp;(Sex&nbsp;=&gt;&nbsp;Male,&nbsp;Bearded&nbsp;=&gt;&nbsp;True);</div>
+<div class="Normal">It now is <SPAN Class="swiss">Male</SPAN> and has 
+a beard.</div>
+<div class="Normal">The problem with this sort of object is that components 
+can disappear. If it were changed to be <SPAN Class="swiss">Female</SPAN> 
+then the beard would vanish and be replaced by children. Because of this 
+ghostly behaviour certain operations on mutable objects are forbidden.</div>
+<div class="Normal" style="margin-bottom: 0.4em">One obvious rule is 
+that it is not permissible to rename components which might vanish. So 
+</div>
+<div class="SwissExamples">Hairy:&nbsp;Boolean&nbsp;<B>renames</B>&nbsp;The_Thing.Bearded;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal">is not permitted. This was an Ada 83 rule. It was 
+probably the case that the rules were watertight in Ada 83. However, 
+Ada 95 introduced many more possibilities. Objects and components could 
+be marked as <B>aliased</B> and the <SPAN Class="swiss">Access</SPAN> 
+attribute could be applied. Additional rules were then added to prevent 
+creating references to things that could vanish.</div>
+<div class="Normal">However, it was then discovered that the rules in 
+Ada 95 regarding access types were not watertight. Accordingly various 
+attempts were made to fix them in a somewhat piecemeal fashion. The problems 
+are subtle and do not seem worth describing in their entirety in this 
+general presentation. We will content ourselves with just a couple of 
+examples.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 95 we can declare 
+types such as&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Mutant_Name&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Mutant;<BR>
+<B>type</B>&nbsp;Things_Name&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Mutant(Neuter);</div>
+<div class="Normal">Naturally enough an object of type <SPAN Class="swiss">Things_Name</SPAN> 
+can only be permitted to reference a <SPAN Class="swiss">Mutant</SPAN> 
+whose <SPAN Class="swiss">Sex</SPAN> is <SPAN Class="swiss">Neuter</SPAN>.</div>
+<div class="SwissExamples">Some_Thing:&nbsp;<B>aliased</B>&nbsp;Mutant;<BR>
+Thing_Ptr:&nbsp;Things_Name&nbsp;:=&nbsp;Some_Thing'Access;</div>
+<div class="Normal">Things would now go wrong if we allowed <SPAN Class="swiss">Some_Thing</SPAN> 
+to have a sex change. Accordingly there is a rule in Ada 95 that says 
+that an aliased object such as <SPAN Class="swiss">Some_Thing</SPAN> 
+is considered to be constrained. So that is quite safe.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, matters get 
+more difficult when a type such as <SPAN Class="swiss">Mutant</SPAN> 
+is used for a component of another type such as&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Monster&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Head:&nbsp;Mutant(Female);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tail:&nbsp;<B>aliased</B>&nbsp;Mutant;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Here we are attempting 
+to declare a nightmare monster whose head is a female but whose tail 
+is deceivingly mutable. Those with a decent education might find that 
+this reminds them of the Sirens who tempted Odysseus by their beautiful 
+voices on his trip past the monster Scylla and the whirlpool Charybdis. 
+Those with an indecent education can compare it to a pantomime theatre 
+horse (or mare, maybe indeed a nightmare). We could then write&nbsp;</div>
+<div class="SwissExamples">M:&nbsp;Monster;<BR>
+Thing_Ptr&nbsp;:=&nbsp;Monster.Tail'Access;</div>
+<div class="Normal">However, there is an Ada 95 rule that says that the 
+<SPAN Class="swiss">Tail</SPAN> has to be constrained since it is aliased 
+so the type <SPAN Class="swiss">Monster</SPAN> is not allowed. So far 
+so good.</div>
+<div class="Normal" style="margin-bottom: 0.4em">But now consider the 
+following very nasty example&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;Before,&nbsp;After:&nbsp;T;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Name&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;T;<BR>
+&nbsp;&nbsp;&nbsp;A_Name:&nbsp;<B>in&nbsp;out</B>&nbsp;Name;<BR>
+<B>package</B>&nbsp;Sex_Change&nbsp;<B>is&nbsp;end</B>;</div>
+<div class="SwissExamples"><B>package&nbsp;body</B>&nbsp;Sex_Change&nbsp;is<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Single&nbsp;<B>is&nbsp;array&nbsp;</B>(1..1)&nbsp;<B>of&nbsp;aliased</B>&nbsp;T;<BR>
+&nbsp;&nbsp;&nbsp;X:&nbsp;Single&nbsp;:=&nbsp;(1&nbsp;=&gt;&nbsp;Before);<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;A_Name&nbsp;:=&nbsp;X(1)'Access;<BR>
+&nbsp;&nbsp;&nbsp;X&nbsp;:=&nbsp;(1&nbsp;=&gt;&nbsp;After);<BR>
+<B>end</B>&nbsp;Sex_Change;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then&nbsp;</div>
+<div class="SwissExamples">A_Neuter:&nbsp;Mutant_Name(Neuter);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>fixed&nbsp;neuter</I></SPAN></div>
+<div class="SwissExamples"><B>package</B>&nbsp;Surgery&nbsp;<B>is&nbsp;new</B>&nbsp;Sex_Change(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T&nbsp;=&gt;&nbsp;Mutant,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;=&gt;&nbsp;(Sex&nbsp;=&gt;&nbsp;Neuter),<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After&nbsp;=&gt;&nbsp;(Sex&nbsp;=&gt;&nbsp;Male,&nbsp;Bearded&nbsp;=&gt;&nbsp;True),<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name&nbsp;=&gt;&nbsp;Mutant_Name,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A_Name&nbsp;=&gt;&nbsp;A_Neuter);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>instantiation&nbsp;of&nbsp;Surgery&nbsp;makes&nbsp;A_Neuter&nbsp;hairy</I></SPAN></div>
+<div class="Normal">The problem here is that there are loopholes in the 
+checks when the package <SPAN Class="swiss">Sex_Change</SPAN> is elaborated. 
+The object <SPAN Class="swiss">A_Name</SPAN> is assigned an access to 
+the single component of the array <SPAN Class="swiss">X</SPAN> whose 
+value is <SPAN Class="swiss">Before</SPAN>. When this is done there is 
+a check that the component of the array has the correct subtype. However 
+the subsequent assignment to the whole array changes the value of the 
+component to <SPAN Class="swiss">After</SPAN> and this can change the 
+subtype of <SPAN Class="swiss">X(1)</SPAN> surreptitiously and there 
+is no check concerning <SPAN Class="swiss">A_Name</SPAN>. The key point 
+is that the generic doesn't know that the type <SPAN Class="swiss">T</SPAN> 
+is mutable; this information is not part of the generic contract.</div>
+<div class="Normal">So when we instantiate <SPAN Class="swiss">Surgery</SPAN> 
+(at the same level as the type <SPAN Class="swiss">Mutant_Name</SPAN> 
+so that accessibility succeeds), the object <SPAN Class="swiss">A_Neuter</SPAN> 
+suddenly finds that it has grown a beard!</div>
+<div class="Normal" style="margin-bottom: 0.4em">A similar difficulty 
+occurs when private types are involved because the partial view and full 
+view might disagree about whether the type is constrained or not. Consider 
+</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Beings&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Mutant&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Mutant_Name&nbsp;<B>is&nbsp;access</B>&nbsp;Mutant;<BR>
+&nbsp;&nbsp;&nbsp;F,&nbsp;M:&nbsp;<B>constant</B>&nbsp;Mutant;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Mutant(Sex:&nbsp;Gender&nbsp;:=&nbsp;Neuter)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>as&nbsp;above</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;F:&nbsp;<B>constant</B>&nbsp;Mutant&nbsp;:=&nbsp;(Female,&nbsp;...&nbsp;);<BR>
+&nbsp;&nbsp;&nbsp;M:&nbsp;<B>constant</B>&nbsp;Mutant&nbsp;:=&nbsp;(Male,&nbsp;...&nbsp;);<BR>
+<B>end</B>&nbsp;Beings;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose some innocent 
+user (who has not peeked at the private part) writes&nbsp;</div>
+<div class="SwissExamples">Chris:&nbsp;Mutant_Name&nbsp;:=&nbsp;<B>new</B>&nbsp;Mutant'(F);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>OK</I></SPAN><BR>
+...<BR>
+Chris.<B>all</B>&nbsp;:=&nbsp;M;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>raises&nbsp;Constraint_Error</I></SPAN></div>
+<div class="Normal">This is very surprising. The user cannot see that 
+the type <SPAN Class="swiss">Mutant</SPAN> is mutable and in particular 
+cannot see that <SPAN Class="swiss">M</SPAN> and <SPAN Class="swiss">F</SPAN> 
+are different in some way. From the outside they just look like constants 
+of the same type. The big trouble is that there is a rule in Ada 95 that 
+says that an object created by an allocator is constrained. So the new 
+object referred to by <SPAN Class="swiss">Chris</SPAN> is permanently 
+<SPAN Class="swiss">Female</SPAN> and therefore the attempt to assign 
+the value of <SPAN Class="swiss">M</SPAN> with its <SPAN Class="swiss">Bearded</SPAN> 
+component to her is doomed.</div>
+<div class="Normal">Attempting to fix these and related problems with 
+a number of minimal rules seemed fated not to succeed. So a different 
+approach has been taken. Rather than saying that aliased and allocated 
+objects are always treated as constrained so that accessed components 
+do not disappear, Ada 2005 takes the approach of preventing the <SPAN Class="swiss">Access</SPAN> 
+attribute from being applied in certain circumstances by disallowing 
+certain access subtypes at all. In particular, general access subtypes 
+which refer to types with defaults for their discriminants are forbidden.</div>
+<div class="Normal">The net outcome is that the declaration of <SPAN Class="swiss">A_Neuter</SPAN> 
+is illegal because we cannot write <SPAN Class="swiss">Mutant_Name(Neuter)</SPAN> 
+and so the <SPAN Class="swiss">Surgery</SPAN> cannot be applied to constrained 
+mutants. On the other hand, Chris is allowed to change sex because the 
+allocated objects are no longer automatically constrained in the case 
+of private types whose partial view does not have discriminants.</div>
+<div class="Normal">These changes introduce some minor incompatibilities 
+which are explained with further examples in the Epilogue.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The other change in 
+this area concerns type conversions. A variation on the gender theme 
+is illustrated by the following&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Gender&nbsp;<B>is</B>&nbsp;(Male,&nbsp;Female);</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Person(Sex:&nbsp;Gender)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>case</B>&nbsp;Sex&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Male&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bearded:&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Female&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Children:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;case</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal">Note that this type is not mutable so all persons 
+are stuck with their sex from birth.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We might now declare 
+some access types&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Person_Name<B>&nbsp;is&nbsp;access&nbsp;all</B>&nbsp;Person;<BR>
+<B>type</B>&nbsp;Mans_Name&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Person(Male);<BR>
+<B>type</B>&nbsp;Womans_Name<B>&nbsp;is&nbsp;access&nbsp;all</B>&nbsp;Person(Female);</div>
+<div class="Normal" style="margin-bottom: 0.4em">so that we can manipulate 
+various names of people. We would naturally use <SPAN Class="swiss">Person_Name</SPAN> 
+if we did not know the sex of the person and otherwise use <SPAN Class="swiss">Mans_Name</SPAN> 
+or <SPAN Class="swiss">Womans_Name</SPAN> as appropriate. We might have 
+</div>
+<div class="SwissExamples">It:&nbsp;Person_Name&nbsp;:=&nbsp;Chris'Access;<BR>
+Him:&nbsp;Mans_Name&nbsp;:=&nbsp;Jack'Access;<BR>
+Her:&nbsp;Womans_Name&nbsp;:=&nbsp;Jill'Access;</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we later discover 
+that Chris is actually Christine then we might like to assign the value 
+in <SPAN Class="swiss">It</SPAN> to a more appropriate variable such 
+as <SPAN Class="swiss">Her</SPAN>. So we would like to write&nbsp;</div>
+<div class="SwissExamples">Her&nbsp;:=&nbsp;Womans_Name(It);</div>
+<div class="Normal" style="margin-bottom: 0.4em">But curiously enough 
+this is not permitted in Ada 95 although the reverse conversion&nbsp;</div>
+<div class="SwissExamples">It&nbsp;:=&nbsp;Person_Name(Her);</div>
+<div class="Normal">is permitted. The Ada 95 rule is that any constraints 
+have to statically match or the conversion has to be to an unconstrained 
+type. Presumably the reason was to avoid checks at run time. But this 
+lack of symmetry is unpleasant and the rule has been changed in Ada 2005 
+to allow conversion in both directions with a run time check as necessary.</div>
+<div class="Normal">The above example is actually Exercise 19.8(1) in 
+the textbook <A HREF="Rat-0-2.html#R6">[6]</A>. The poor student was 
+invited to solve an impossible problem. But they will be successful in 
+Ada 2005.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

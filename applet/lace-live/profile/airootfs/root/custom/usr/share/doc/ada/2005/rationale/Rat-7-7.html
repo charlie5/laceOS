@@ -1,0 +1,263 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Categorization of library units</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-6.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-8.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>7.7 Categorization of library units</H1>
+<div class="Normal" style="margin-bottom: 0.4em">It will be recalled 
+that library units in Ada 95 are categorized into a hierarchy by a number 
+of pragmas thus<A NAME="I1374"></A>&nbsp;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Pure(&nbsp;...&nbsp;);<BR>
+<B>pragma</B>&nbsp;Shared_Passive(&nbsp;...&nbsp;);<BR>
+<B>pragma</B>&nbsp;Remote_Types(&nbsp;...&nbsp;);<BR>
+<B>pragma</B>&nbsp;Remote_Call_Interface(&nbsp;...&nbsp;);</div>
+<div class="Normal">Each category imposes restrictions on what the unit 
+can contain. An important rule is that a unit can only depend on units 
+in the same or higher categories (the bodies of the last two are not 
+restricted).</div>
+<div class="Normal">The pragmas <SPAN Class="swiss">Shared_Passive</SPAN>, 
+<SPAN Class="swiss">Remote_Types</SPAN>, and <SPAN Class="swiss">Remote_Call_Interface</SPAN> 
+concern distributed systems and thus are rather specialized. A minor 
+change made in the 2001 Corrigendum was that the pragma <SPAN Class="swiss">Remote_Types</SPAN> 
+was added to the package <SPAN Class="swiss">Ada.Finalization</SPAN> 
+in order to support the interchange of controlled types between partitions 
+in a distributed system.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that the pragma 
+<SPAN Class="swiss">Preelaborate</SPAN> does not fit into this hierarchy. 
+In fact there is another hierarchy thus&nbsp;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Pure(&nbsp;...&nbsp;);<BR>
+<B>pragma</B>&nbsp;Preelaborate(&nbsp;...&nbsp;);</div>
+<div class="Normal">and again we have the same rule that a unit can only 
+depend upon units in the same or higher category. Thus a pure unit can 
+only depend upon other pure units and a preelaborable unit can only depend 
+upon other preelaborable or pure units.</div>
+<div class="Normal">A consequence of this dual hierarchy is that a shared 
+passive unit cannot depend upon a preelaborable unit &ndash; the units 
+upon which it depends have to be pure or shared passive and so on for 
+the others. However, there is a separate rule that a unit which is shared 
+passive, remote types or RCI must itself be preelaborable and so has 
+to also have the pragma <SPAN Class="swiss">Preelaborate</SPAN>.</div>
+<div class="Normal">The categorization of individual predefined units 
+is intended to make them as useful as possible. The stricter the category 
+the more useful the unit because it can be used in more circumstances.</div>
+<div class="Normal">The categorization was unnecessarily weak in Ada 
+95 in some cases and some changes are made in Ada 2005.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The following packages 
+which had no categorization in Ada 95 have pragma <SPAN Class="swiss">Preelaborate</SPAN> 
+in Ada 2005&nbsp;</div>
+<div class="SwissExamples">Ada.Asynchronous_Task_Control<BR>
+Ada.Dynamic_Priorities<BR>
+Ada.Exceptions<BR>
+Ada.Synchronous_Task_Control<BR>
+Ada.Tags<BR>
+Ada.Task_Identification</div>
+<div class="Normal" style="margin-bottom: 0.4em">The following which 
+had pragma <SPAN Class="swiss">Preelaborate</SPAN> in Ada 1995 have been 
+promoted to pragma <SPAN Class="swiss">Pure</SPAN> in Ada 2005&nbsp;</div>
+<div class="SwissExamples">Ada.Characters.Handling<BR>
+Ada.Strings.Maps<BR>
+Ada.Strings.Maps.Constants<BR>
+System<BR>
+System.Storage_Elements</div>
+<div class="Normal">These changes mean that certain facilities such as 
+the ability to analyse exceptions are now available to preelaborable 
+units. Note however, that <SPAN Class="swiss">Wide_Maps</SPAN> and <SPAN Class="swiss">Wide_Maps.Wide_Constants</SPAN> 
+stay as preelaborable because they may be implemented using access types.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Just for the record 
+the following packages (and functions, <SPAN Class="swiss">Hash</SPAN> 
+is a function) which are new to Ada 2005 have the pragma <SPAN Class="swiss">Pure</SPAN> 
+</div>
+<div class="SwissExamples">Ada.Assertions<BR>
+Ada.Characters.Conversions<BR>
+Ada.Containers<BR>
+Ada.Containers.Generic_Array_Sort<BR>
+Ada.Containers.Generic_Constrained_Array_Sort<BR>
+Ada.Dispatching<BR>
+Ada.Numerics.Generic_Real_Arrays<BR>
+Ada.Numerics.Generic_Complex_Arrays<BR>
+Ada.Strings.Hash</div>
+<div class="Normal" style="margin-bottom: 0.4em">And the following new 
+packages and functions have the pragma <SPAN Class="swiss">Preelaborate</SPAN> 
+</div>
+<div class="SwissExamples">Ada.Containers.Doubly_Linked_Lists<BR>
+Ada.Containers.Hashed_Maps<BR>
+Ada.Containers.Hashed_Sets<BR>
+Ada.Containers.Ordered_Maps<BR>
+Ada.Containers.Ordered_Sets<BR>
+Ada.Containers.Vectors<BR>
+Ada.Environment_Variables<BR>
+Ada.Strings.Unbounded_Hash<BR>
+Ada.Strings.Wide_Wide_Maps<BR>
+Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants<BR>
+Ada.Tags.Generic_Dispatching_Constructor<BR>
+Ada.Task_Termination</div>
+<div class="Normal">plus the indefinite containers as well.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A problem with preelaborable 
+units in Ada 95 is that there are restrictions on declaring default initialized 
+objects in a unit with the pragma <SPAN Class="swiss">Preelaborate</SPAN>. 
+For example, we cannot declare objects of a private type at the library 
+level in such a unit. This is foolish for consider&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(P);<BR>
+&nbsp;&nbsp;&nbsp;X:&nbsp;Integer&nbsp;:=&nbsp;7;<BR>
+&nbsp;&nbsp;&nbsp;B:&nbsp;Boolean&nbsp;:=&nbsp;True;<BR>
+<B>end</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Clearly these declarations 
+can be preelaborated and so the package <SPAN Class="swiss">P</SPAN> 
+can have the pragma <SPAN Class="swiss">Preelaborate</SPAN>. However, 
+now consider&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Q&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Q);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;private</B>;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X:&nbsp;Integer&nbsp;:=&nbsp;7;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;B:&nbsp;Boolean&nbsp;:=&nbsp;True;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+<B>end</B>&nbsp;Q;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Q;<BR>
+<B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(P);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;Obj:&nbsp;Q.T;<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal">The package <SPAN Class="swiss">Q</SPAN> is preelaborable 
+because it does not declare any objects. However, the package <SPAN Class="swiss">P</SPAN> 
+is not preelaborable because it declares an object of the private type 
+<SPAN Class="swiss">T</SPAN> &ndash; the theory being of course that 
+since the type is private we do not know that its default initial value 
+is static.</div>
+<div class="Normal" style="margin-bottom: 0.4em"><A NAME="I1375"></A><A NAME="I1376"></A>This 
+is overcome in Ada 2005 by the introduction of the pragma <SPAN Class="swiss">Preelaborable_Initialization</SPAN>. 
+Its syntax is&nbsp;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Preelaborable_Initialization(direct_name);</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can now write&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Q&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Q);<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(T);<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X:&nbsp;Integer&nbsp;:=&nbsp;7;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;B:&nbsp;Boolean&nbsp;:=&nbsp;True;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+<B>end</B>&nbsp;Q;</div>
+<div class="Normal">The pragma promises that the full type will have 
+preelaborable initialization and the declaration of the package <SPAN Class="swiss">P</SPAN> 
+above is now legal.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The following predefined 
+private types which existed in Ada 95 have the pragma <SPAN Class="swiss">Preelaborable_Initialization</SPAN> 
+in Ada 2005&nbsp;</div>
+<div class="SwissExamples">Ada.Exceptions.Exception_Id<BR>
+Ada.Exceptions.Exception_Occurrence<BR>
+Ada.Finalization.Controlled<BR>
+Ada.Finalization.Limited_Controlled<BR>
+Ada.Numerics.Generic_Complex_Types.Imaginary<BR>
+Ada.Streams.Root_Stream_Type<BR>
+Ada.Strings.Maps.Character_Mapping<BR>
+Ada.Strings.Maps.Character_Set<BR>
+Ada.Strings.Unbounded.Unbounded_String<BR>
+Ada.Tags.Tag<BR>
+Ada.Task_Identification.Task_Id<BR>
+Interfaces.C.Strings.chars_ptr<BR>
+System.Address<BR>
+System.Storage_Pool.Root_Storage_Pool</div>
+<div class="Normal">Wide and wide-wide versions also have the pragma 
+as appropriate. Note that it was not possible to apply the pragma to 
+<SPAN Class="swiss">Ada.Strings.Bounded.Generic_Bounded_Length.Bounded_String</SPAN> 
+because it would have made it impossible to instantiate <SPAN Class="swiss">Generic_Bounded_Length</SPAN> 
+with a non-static expression for the parameter <SPAN Class="swiss">Max</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The following private 
+types which are new in Ada 2005 also have the pragma <SPAN Class="swiss">Preeleborable_Initialization</SPAN> 
+</div>
+<div class="SwissExamples">Ada.Containers.Vectors.Vector<BR>
+Ada.Containers.Vectors.Cursor<BR>
+Ada.Containers.Doubly_Linked_Lists.List<BR>
+Ada.Containers.Doubly_Linked_Lists.Cursor<BR>
+Ada.Containers.Hashed_Maps.Map<BR>
+Ada.Containers.Hashed_Maps.Cursor<BR>
+Ada.Containers.Ordered_Maps.Map<BR>
+Ada.Containers.Ordered_Maps.Cursor<BR>
+Ada.Containers.Hashed_Sets.Set<BR>
+Ada.Containers.Hashed_Sets.Cursor<BR>
+Ada.Containers.Ordered_Sets.Set<BR>
+Ada.Containers.Ordered_Sets.Cursor</div>
+<div class="Normal">and similarly for the indefinite containers.</div>
+<div class="Normal">A related change concerns the definition of pure 
+units. In Ada 2005, pure units can now use access to subprogram and access 
+to object types provided that no storage pool is created.</div>
+<div class="Normal">Finally, we mention a small but important change 
+regarding the partition communication subsystem <SPAN Class="swiss">System.RPC</SPAN>. 
+Implementations conforming to the Distributed Systems annex are not required 
+to support this predefined interface if another interface would be more 
+appropriate &ndash; to interact with CORBA for example.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-6.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-8.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

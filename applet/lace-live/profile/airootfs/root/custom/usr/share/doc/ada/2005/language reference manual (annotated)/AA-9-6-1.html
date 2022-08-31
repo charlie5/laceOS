@@ -1,0 +1,653 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Formatting, Time Zones, and other operations for Time</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    SPAN.insert2 {text-decoration: underline; color: rgb(0,102,0) }
+    SPAN.delete2 {text-decoration: line-through; color: rgb(0,102,0) }
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 6.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.CodeIndented {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 5.2em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><B><SPAN Style="font-size:200%; color: rgb(0,51,153)">Annotated</SPAN><SPAN Style="font-size:200%; color: rgb(0,0,102)">&nbsp;Ada Reference Manual</SPAN></B> &mdash; <A HREF="AA-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-9-6.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-9-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>&nbsp;9.6.1 <SPAN class="insert2">Formatting, Time Zones, and other operations for Time</SPAN> <SPAN class="delete2"></SPAN></H1>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">1/2</DIV>
+<DIV Class="Normal">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00427.TXT">AI95-00427-01</A></I>} 
+<SPAN class="insert2">The following language-defined library packages 
+exist:</SPAN></DIV>
+<DIV Class="paranum">2/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><A NAME="I4144"></A><B>package</B>&nbsp;Ada.Calendar.Time_Zones&nbsp;<B>is</B></SPAN></DIV>
+<DIV Class="paranum">3/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Time&nbsp;zone&nbsp;manipulation:</I></SPAN></SPAN></DIV>
+<DIV Class="paranum">4/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I4145"></A>Time_Offset&nbsp;<B>is&nbsp;range</B>&nbsp;-28*60&nbsp;..&nbsp;28*60;</SPAN></DIV>
+<DIV Class="paranum">4.a/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Reason:&nbsp;</B>We want 
+to be able to specify the difference between any two arbitrary time zones. 
+You might think that 1440 (24 hours) would be enough, but there are places 
+(like Tonga, which is UTC+13hr) which are more than 12 hours than UTC. 
+Combined with summer time (known as daylight saving time in some parts 
+of the world) &ndash; which switches opposite in the northern and souther 
+hemispheres &ndash; and even greater differences are possible. We know 
+of cases of a 26 hours difference, so we err on the safe side by selecting 
+28 hours as the limit.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">5/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<A NAME="I4146"></A>Unknown_Zone_Error&nbsp;:&nbsp;<B>exception</B>;</SPAN></DIV>
+<DIV Class="paranum">6/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4147"></A>UTC_Time_Offset&nbsp;(Date&nbsp;:&nbsp;Time&nbsp;:=&nbsp;Clock)&nbsp;<B>return</B>&nbsp;Time_Offset;</SPAN></DIV>
+<DIV Class="paranum">7/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>end</B>&nbsp;Ada.Calendar.Time_Zones;</SPAN></DIV>
+<DIV Class="paranum">8/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><A NAME="I4148"></A><BR>
+<B>package</B>&nbsp;Ada.Calendar.Arithmetic&nbsp;<B>is</B></SPAN></DIV>
+<DIV Class="paranum">9/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Arithmetic&nbsp;on&nbsp;days:</I></SPAN></SPAN></DIV>
+<DIV Class="paranum">10/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I4149"></A>Day_Count&nbsp;<B>is&nbsp;range</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-366*(1+Year_Number'Last&nbsp;-&nbsp;Year_Number'First)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;..<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;366*(1+Year_Number'Last&nbsp;-&nbsp;Year_Number'First);</SPAN></DIV>
+<DIV Class="paranum">11/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;<A NAME="I4150"></A>Leap_Seconds_Count&nbsp;<B>is</B>&nbsp;Integer&nbsp;<B>range</B>&nbsp;-2047&nbsp;..&nbsp;2047;</SPAN></DIV>
+<DIV Class="paranum">11.a/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Reason:&nbsp;</B>The maximum 
+number of leap seconds is likely to be much less than this, but we don't 
+want to reach the limit too soon if the earth's behavior suddenly changes. 
+We believe that the maximum number is 1612, based on the current rules, 
+but that number is too weird to use here.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">12/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I4151"></A>Difference&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Days&nbsp;:&nbsp;<B>out</B>&nbsp;Day_Count;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Seconds&nbsp;:&nbsp;<B>out</B>&nbsp;Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leap_Seconds&nbsp;:&nbsp;<B>out</B>&nbsp;Leap_Seconds_Count);</SPAN></DIV>
+<DIV Class="paranum">13/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;+&quot;&nbsp;(Left&nbsp;:&nbsp;Time;&nbsp;Right&nbsp;:&nbsp;Day_Count)&nbsp;<B>return</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;+&quot;&nbsp;(Left&nbsp;:&nbsp;Day_Count;&nbsp;Right&nbsp;:&nbsp;Time)&nbsp;<B>return</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;-&quot;&nbsp;(Left&nbsp;:&nbsp;Time;&nbsp;Right&nbsp;:&nbsp;Day_Count)&nbsp;<B>return</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;-&quot;&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;Time)&nbsp;<B>return</B>&nbsp;Day_Count;</SPAN></DIV>
+<DIV Class="paranum">14/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>end</B>&nbsp;Ada.Calendar.Arithmetic;</SPAN></DIV>
+<DIV Class="paranum">15/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><A NAME="I4152"></A><BR>
+<B>with</B>&nbsp;Ada.Calendar.Time_Zones;<BR>
+<B>package</B>&nbsp;Ada.Calendar.Formatting&nbsp;<B>is</B></SPAN></DIV>
+<DIV Class="paranum">16/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Day&nbsp;of&nbsp;the&nbsp;week:</I></SPAN></SPAN></DIV>
+<DIV Class="paranum">17/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I4153"></A>Day_Name&nbsp;<B>is</B>&nbsp;(<A NAME="I4154"></A>Monday,&nbsp;<A NAME="I4155"></A>Tuesday,&nbsp;<A NAME="I4156"></A>Wednesday,&nbsp;<A NAME="I4157"></A>Thursday,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I4158"></A>Friday,&nbsp;<A NAME="I4159"></A>Saturday,&nbsp;<A NAME="I4160"></A>Sunday);</SPAN></DIV>
+<DIV Class="paranum">18/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4161"></A>Day_of_Week&nbsp;(Date&nbsp;:&nbsp;Time)&nbsp;<B>return</B>&nbsp;Day_Name;</SPAN></DIV>
+<DIV Class="paranum">19/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Hours:Minutes:Seconds&nbsp;access:</I></SPAN></SPAN></DIV>
+<DIV Class="paranum">20/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;<A NAME="I4162"></A>Hour_Number&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>is</B>&nbsp;Natural&nbsp;<B>range</B>&nbsp;0&nbsp;..&nbsp;23;<BR>
+&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;<A NAME="I4163"></A>Minute_Number&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>is</B>&nbsp;Natural&nbsp;<B>range</B>&nbsp;0&nbsp;..&nbsp;59;<BR>
+&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;<A NAME="I4164"></A>Second_Number&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>is</B>&nbsp;Natural&nbsp;<B>range</B>&nbsp;0&nbsp;..&nbsp;59;<BR>
+&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;<A NAME="I4165"></A>Second_Duration&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>is</B>&nbsp;Day_Duration&nbsp;<B>range</B>&nbsp;0.0&nbsp;..&nbsp;1.0;</SPAN></DIV>
+<DIV Class="paranum">21/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4166"></A>Year&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Date&nbsp;:&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Year_Number;</SPAN></DIV>
+<DIV Class="paranum">22/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4167"></A>Month&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Date&nbsp;:&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Month_Number;</SPAN></DIV>
+<DIV Class="paranum">23/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4168"></A>Day&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Date&nbsp;:&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Day_Number;</SPAN></DIV>
+<DIV Class="paranum">24/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4169"></A>Hour&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Date&nbsp;:&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Hour_Number;</SPAN></DIV>
+<DIV Class="paranum">25/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4170"></A>Minute&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Date&nbsp;:&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Minute_Number;</SPAN></DIV>
+<DIV Class="paranum">26/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4171"></A>Second&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Date&nbsp;:&nbsp;Time)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Second_Number;</SPAN></DIV>
+<DIV Class="paranum">27/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4172"></A>Sub_Second&nbsp;(Date&nbsp;:&nbsp;Time)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Second_Duration;</SPAN></DIV>
+<DIV Class="paranum">28/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4173"></A>Seconds_Of&nbsp;(Hour&nbsp;&nbsp;&nbsp;:&nbsp;&nbsp;Hour_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minute&nbsp;:&nbsp;Minute_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second&nbsp;:&nbsp;Second_Number&nbsp;:=&nbsp;0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sub_Second&nbsp;:&nbsp;Second_Duration&nbsp;:=&nbsp;0.0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Day_Duration;</SPAN></DIV>
+<DIV Class="paranum">29/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I4174"></A>Split&nbsp;(Seconds&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Day_Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hour&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Hour_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minute&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Minute_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Second_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sub_Second&nbsp;:&nbsp;<B>out</B>&nbsp;Second_Duration);</SPAN></DIV>
+<DIV Class="paranum">30/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4175"></A>Time_Of&nbsp;(Year&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Year_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Month&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Month_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Day&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Day_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hour&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Hour_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minute&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Minute_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Second_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sub_Second&nbsp;:&nbsp;Second_Duration&nbsp;:=&nbsp;0.0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leap_Second:&nbsp;Boolean&nbsp;:=&nbsp;False;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Time;</SPAN></DIV>
+<DIV Class="paranum">31/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4176"></A>Time_Of&nbsp;(Year&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Year_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Month&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Month_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Day&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Day_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Seconds&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Day_Duration&nbsp;:=&nbsp;0.0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leap_Second:&nbsp;Boolean&nbsp;:=&nbsp;False;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Time;</SPAN></DIV>
+<DIV Class="paranum">32/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I4177"></A>Split&nbsp;(Date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Year&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Year_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Month&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Month_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Day&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Day_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hour&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Hour_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minute&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Minute_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Second_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sub_Second&nbsp;:&nbsp;<B>out</B>&nbsp;Second_Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0);</SPAN></DIV>
+<DIV Class="paranum">33/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I4178"></A>Split&nbsp;(Date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Year&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Year_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Month&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Month_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Day&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Day_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hour&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Hour_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minute&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Minute_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Second_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sub_Second&nbsp;:&nbsp;<B>out</B>&nbsp;Second_Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leap_Second:&nbsp;<B>out</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0);</SPAN></DIV>
+<DIV Class="paranum">34/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I4179"></A>Split&nbsp;(Date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Year&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Year_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Month&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Month_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Day&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Day_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Seconds&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Day_Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leap_Second:&nbsp;<B>out</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0);</SPAN></DIV>
+<DIV Class="paranum">35/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Simple&nbsp;image&nbsp;and&nbsp;value:</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4180"></A>Image&nbsp;(Date&nbsp;:&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Include_Time_Fraction&nbsp;:&nbsp;Boolean&nbsp;:=&nbsp;False;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)&nbsp;<B>return</B>&nbsp;String;</SPAN></DIV>
+<DIV Class="paranum">36/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4181"></A>Value&nbsp;(Date&nbsp;:&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)&nbsp;<B>return</B>&nbsp;Time;</SPAN></DIV>
+<DIV Class="paranum">37/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4182"></A>Image&nbsp;(Elapsed_Time&nbsp;:&nbsp;Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Include_Time_Fraction&nbsp;:&nbsp;Boolean&nbsp;:=&nbsp;False)&nbsp;<B>return</B>&nbsp;String;</SPAN></DIV>
+<DIV Class="paranum">38/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I4183"></A>Value&nbsp;(Elapsed_Time&nbsp;:&nbsp;String)&nbsp;<B>return</B>&nbsp;Duration;</SPAN></DIV>
+<DIV Class="paranum">39/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>end</B>&nbsp;Ada.Calendar.Formatting;</SPAN></DIV>
+<DIV Class="paranum">40/2</DIV>
+<DIV Class="Normal">&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">Type Time_Offset represents the number of minutes 
+difference between the implementation-defined time zone used by Calendar 
+and another time zone.</SPAN></DIV>
+<DIV Class="paranum">41/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;UTC_Time_Offset&nbsp;(Date&nbsp;:&nbsp;Time&nbsp;:=&nbsp;Clock)&nbsp;<B>return</B>&nbsp;Time_Offset;</SPAN></DIV>
+<DIV Class="paranum">42/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">Returns, as a number of minutes, the difference 
+between the implementation-defined time zone of Calendar, and UTC time, 
+at the time Date. If the time zone of the Calendar implementation is 
+unknown, then Unknown_Zone_Error is raised.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">42.a/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Discussion:&nbsp;</B>The 
+Date parameter is needed to take into account time differences caused 
+by daylight-savings time and other time changes. This parameter is measured 
+in the time zone of Calendar, if any, not necessarily the UTC time zone.</SPAN></DIV>
+<DIV Class="paranum">42.b/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2">Other time zones can be 
+supported with a child package. We don't define one because of the lack 
+of agreement on the definition of a time zone.</SPAN></DIV>
+<DIV Class="paranum">42.c/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2">The accuracy of this routine 
+is not specified; the intent is that the facilities of the underlying 
+target operating system are used to implement it.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">43/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>procedure</B>&nbsp;Difference&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;<B>in</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Days&nbsp;:&nbsp;<B>out</B>&nbsp;Day_Count;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Seconds&nbsp;:&nbsp;<B>out</B>&nbsp;Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leap_Seconds&nbsp;:&nbsp;<B>out</B>&nbsp;Leap_Seconds_Count);</SPAN></DIV>
+<DIV Class="paranum">44/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00427.TXT">AI95-00427-01</A></I>} 
+<SPAN class="insert2">Returns the difference between Left and Right. 
+Days is the number of days of difference, Seconds is the remainder seconds 
+of difference excluding leap seconds, and Leap_Seconds is the number 
+of leap seconds. If Left &lt; Right, then Seconds &lt;= 0.0, Days &lt;= 
+0, and Leap_Seconds &lt;= 0. Otherwise, all values are nonnegative. The 
+absolute value of Seconds is always less than 86_400.0. For the returned 
+values, if Days = 0, then Seconds + Duration(Leap_Seconds) = Calendar.&quot;&ndash;&quot; 
+(Left, Right).</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">44.a/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Discussion:&nbsp;</B>Leap_Seconds, 
+if any, are not included in Seconds. However, Leap_Seconds should be 
+included in calculations using the operators defined in Calendar, as 
+is specified for &quot;&ndash;&quot; above.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">45/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;&quot;+&quot;&nbsp;(Left&nbsp;:&nbsp;Time;&nbsp;Right&nbsp;:&nbsp;Day_Count)&nbsp;<B>return</B>&nbsp;Time;<BR>
+<B>function</B>&nbsp;&quot;+&quot;&nbsp;(Left&nbsp;:&nbsp;Day_Count;&nbsp;Right&nbsp;:&nbsp;Time)&nbsp;<B>return</B>&nbsp;Time;</SPAN></DIV>
+<DIV Class="paranum">46/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">Adds a number of days to a time value. Time_Error 
+is raised if the result is not representable as a value of type Time.</SPAN></DIV>
+<DIV Class="paranum">47/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;&quot;-&quot;&nbsp;(Left&nbsp;:&nbsp;Time;&nbsp;Right&nbsp;:&nbsp;Day_Count)&nbsp;<B>return</B>&nbsp;Time;</SPAN></DIV>
+<DIV Class="paranum">48/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">Subtracts a number of days from a time value. Time_Error 
+is raised if the result is not representable as a value of type Time.</SPAN></DIV>
+<DIV Class="paranum">49/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;&quot;-&quot;&nbsp;(Left,&nbsp;Right&nbsp;:&nbsp;Time)&nbsp;<B>return</B>&nbsp;Day_Count;</SPAN></DIV>
+<DIV Class="paranum">50/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">Subtracts two time values, and returns the number 
+of days between them. This is the same value that Difference would return 
+in Days.</SPAN></DIV>
+<DIV Class="paranum">51/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;Day_of_Week&nbsp;(Date&nbsp;:&nbsp;Time)&nbsp;<B>return</B>&nbsp;Day_Name;</SPAN></DIV>
+<DIV Class="paranum">52/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">Returns the day of the week for Time. This is based 
+on the Year, Month, and Day values of Time.</SPAN></DIV>
+<DIV Class="paranum">53/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;Year&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Date&nbsp;:&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Year_Number;</SPAN></DIV>
+<DIV Class="paranum">54/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00427.TXT">AI95-00427-01</A></I>} 
+<SPAN class="insert2">Returns the year for Date, as appropriate for the 
+specified time zone offset.</SPAN></DIV>
+<DIV Class="paranum">55/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;Month&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Date&nbsp;:&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Month_Number;</SPAN></DIV>
+<DIV Class="paranum">56/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00427.TXT">AI95-00427-01</A></I>} 
+<SPAN class="insert2">Returns the month for Date, as appropriate for 
+the specified time zone offset.</SPAN></DIV>
+<DIV Class="paranum">57/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;Day&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Date&nbsp;:&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Day_Number;</SPAN></DIV>
+<DIV Class="paranum">58/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00427.TXT">AI95-00427-01</A></I>} 
+<SPAN class="insert2">Returns the day number for Date, as appropriate 
+for the specified time zone offset.</SPAN></DIV>
+<DIV Class="paranum">59/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;Hour&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Date&nbsp;:&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Hour_Number;</SPAN></DIV>
+<DIV Class="paranum">60/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">Returns the hour for Date, as appropriate for the 
+specified time zone offset.</SPAN></DIV>
+<DIV Class="paranum">61/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;Minute&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Date&nbsp;:&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Minute_Number;</SPAN></DIV>
+<DIV Class="paranum">62/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">Returns the minute within the hour for Date, as 
+appropriate for the specified time zone offset.</SPAN></DIV>
+<DIV Class="paranum">63/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;Second&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Date&nbsp;:&nbsp;Time)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Second_Number;</SPAN></DIV>
+<DIV Class="paranum">64/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00427.TXT">AI95-00427-01</A></I>} 
+<SPAN class="insert2">Returns the second within the hour and minute for 
+Date.</SPAN></DIV>
+<DIV Class="paranum">65/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;Sub_Second&nbsp;(Date&nbsp;:&nbsp;Time)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Second_Duration;</SPAN></DIV>
+<DIV Class="paranum">66/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00427.TXT">AI95-00427-01</A></I>} 
+<SPAN class="insert2">Returns the fraction of second for Date (this has 
+the same accuracy as Day_Duration). The value returned is always less 
+than 1.0.</SPAN></DIV>
+<DIV Class="paranum">67/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;Seconds_Of&nbsp;(Hour&nbsp;&nbsp;&nbsp;:&nbsp;Hour_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minute&nbsp;:&nbsp;Minute_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second&nbsp;:&nbsp;Second_Number&nbsp;:=&nbsp;0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sub_Second&nbsp;:&nbsp;Second_Duration&nbsp;:=&nbsp;0.0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Day_Duration;</SPAN></DIV>
+<DIV Class="paranum">68/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00427.TXT">AI95-00427-01</A></I>} 
+<SPAN class="insert2">Returns a Day_Duration value for the combination 
+of the given Hour, Minute, Second, and Sub_Second. This value can be 
+used in Calendar.Time_Of as well as the argument to Calendar.&quot;+&quot; 
+and Calendar.&quot;&ndash;&quot;. If Seconds_Of is called with a Sub_Second 
+value of 1.0, the value returned is equal to the value of Seconds_Of 
+for the next second with a Sub_Second value of 0.0.</SPAN></DIV>
+<DIV Class="paranum">69/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>procedure</B>&nbsp;Split&nbsp;(Seconds&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Day_Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hour&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Hour_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minute&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Minute_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Second_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sub_Second&nbsp;:&nbsp;<B>out</B>&nbsp;Second_Duration);</SPAN></DIV>
+<DIV Class="paranum">70/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00427.TXT">AI95-00427-01</A></I>} 
+<SPAN class="insert2">Splits Seconds into Hour, Minute, Second and Sub_Second 
+in such a way that the resulting values all belong to their respective 
+subtypes. The value returned in the Sub_Second parameter is always less 
+than 1.0.</SPAN></DIV>
+<DIV Class="paranum">70.a/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Ramification:&nbsp;</B>There 
+is only one way to do the split which meets all of the requirements.</SPAN> 
+</DIV>
+<DIV Class="paranum">71/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;Time_Of&nbsp;(Year&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Year_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Month&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Month_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Day&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Day_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hour&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Hour_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minute&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Minute_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Second_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sub_Second&nbsp;:&nbsp;Second_Duration&nbsp;:=&nbsp;0.0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leap_Second:&nbsp;Boolean&nbsp;:=&nbsp;False;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Time;</SPAN></DIV>
+<DIV Class="paranum">72/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00427.TXT">AI95-00427-01</A></I>} 
+<SPAN class="insert2">If Leap_Second is False, returns a Time built from 
+the date and time values, relative to the specified time zone offset. 
+If Leap_Second is True, returns the Time that represents the time within 
+the leap second that is one second later than the time specified by the 
+other parameters. Time_Error is raised if the parameters do not form 
+a proper date or time. If Time_Of is called with a Sub_Second value of 
+1.0, the value returned is equal to the value of Time_Of for the next 
+second with a Sub_Second value of 0.0.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">72.a/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Discussion:&nbsp;</B>Time_Error 
+should be raised if Leap_Second is True, and the date and time values 
+do not represent the second before a leap second. A leap second always 
+occurs at midnight UTC, and is 23:59:60 UTC in ISO notation. So, if the 
+time zone is UTC and Leap_Second is True, if any of Hour /= 23, Minute 
+/= 59, or Second /= 59, then Time_Error should be raised. However, we 
+do not say that, because other time zones will have different values 
+where a leap second is allowed.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">73/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;Time_Of&nbsp;(Year&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Year_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Month&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Month_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Day&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Day_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Seconds&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Day_Duration&nbsp;:=&nbsp;0.0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leap_Second:&nbsp;Boolean&nbsp;:=&nbsp;False;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Time;</SPAN></DIV>
+<DIV Class="paranum">74/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00427.TXT">AI95-00427-01</A></I>} 
+<SPAN class="insert2">If Leap_Second is False, returns a Time built from 
+the date and time values, relative to the specified time zone offset. 
+If Leap_Second is True, returns the Time that represents the time within 
+the leap second that is one second later than the time specified by the 
+other parameters. Time_Error is raised if the parameters do not form 
+a proper date or time. If Time_Of is called with a Seconds value of 86_400.0, 
+the value returned is equal to the value of Time_Of for the next day 
+with a Seconds value of 0.0.</SPAN></DIV>
+<DIV Class="paranum">75/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>procedure</B>&nbsp;Split&nbsp;(Date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Year&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Year_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Month&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Month_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Day&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Day_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hour&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Hour_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minute&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Minute_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Second_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sub_Second&nbsp;:&nbsp;<B>out</B>&nbsp;Second_Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leap_Second:&nbsp;<B>out</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0);</SPAN></DIV>
+<DIV Class="paranum">76/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00427.TXT">AI95-00427-01</A></I>} 
+<SPAN class="insert2">If Date does not represent a time within a leap 
+second, splits Date into its constituent parts (Year, Month, Day, Hour, 
+Minute, Second, Sub_Second), relative to the specified time zone offset, 
+and sets Leap_Second to False. If Date represents a time within a leap 
+second, set the constituent parts to values corresponding to a time one 
+second earlier than that given by Date, relative to the specified time 
+zone offset, and sets Leap_Seconds to True. The value returned in the 
+Sub_Second parameter is always less than 1.0.</SPAN></DIV>
+<DIV Class="paranum">77/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>procedure</B>&nbsp;Split&nbsp;(Date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Year&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Year_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Month&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Month_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Day&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Day_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hour&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Hour_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minute&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Minute_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Second_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sub_Second&nbsp;:&nbsp;<B>out</B>&nbsp;Second_Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0);</SPAN></DIV>
+<DIV Class="paranum">78/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00427.TXT">AI95-00427-01</A></I>} 
+<SPAN class="insert2">Splits Date into its constituent parts (Year, Month, 
+Day, Hour, Minute, Second, Sub_Second), relative to the specified time 
+zone offset. The value returned in the Sub_Second parameter is always 
+less than 1.0.</SPAN></DIV>
+<DIV Class="paranum">79/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>procedure</B>&nbsp;Split&nbsp;(Date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Year&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Year_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Month&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Month_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Day&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Day_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Seconds&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Day_Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leap_Second:&nbsp;<B>out</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0);</SPAN></DIV>
+<DIV Class="paranum">80/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00427.TXT">AI95-00427-01</A></I>} 
+<SPAN class="insert2">If Date does not represent a time within a leap 
+second, splits Date into its constituent parts (Year, Month, Day, Seconds), 
+relative to the specified time zone offset, and sets Leap_Second to False. 
+If Date represents a time within a leap second, set the constituent parts 
+to values corresponding to a time one second earlier than that given 
+by Date, relative to the specified time zone offset, and sets Leap_Seconds 
+to True. The value returned in the Seconds parameter is always less than 
+86_400.0.</SPAN></DIV>
+<DIV Class="paranum">81/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;Image&nbsp;(Date&nbsp;:&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Include_Time_Fraction&nbsp;:&nbsp;Boolean&nbsp;:=&nbsp;False;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)&nbsp;<B>return</B>&nbsp;String;</SPAN></DIV>
+<DIV Class="paranum">82/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">Returns a string form of the Date relative to the 
+given Time_Zone. The format is &quot;Year-Month-Day Hour:Minute:Second&quot;, 
+where the Year is a 4-digit value, and all others are 2-digit values, 
+of the functions defined in Calendar and Calendar.Formatting, including 
+a leading zero, if needed. The separators between the values are a minus, 
+another minus, a colon, and a single space between the Day and Hour. 
+If Include_Time_Fraction is True, the integer part of Sub_Seconds*100 
+is suffixed to the string as a point followed by a 2-digit value.</SPAN> 
+</DIV>
+<DIV Class="paranum">82.a/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Discussion:&nbsp;</B>The 
+Image provides a string in ISO 8601 format, the international standard 
+time format. Alternative representations allowed in ISO 8601 are not 
+supported here.</SPAN></DIV>
+<DIV Class="paranum">82.b/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2">ISO 8601 allows 24:00:00 
+for midnight; and a seconds value of 60 for leap seconds. These are not 
+allowed here (the routines mentioned above cannot produce those results).</SPAN> 
+</DIV>
+<DIV Class="paranum">82.c/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Ramification:&nbsp;</B>The 
+fractional part is truncated, not rounded. It would be quite hard to 
+define the result with proper rounding, as it can change all of the values 
+of the image. Values can be rounded up by adding an appropriate constant 
+(0.5 if Include_Time_Fraction is False, 0.005 otherwise) to the time 
+before taking the image.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">83/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;Value&nbsp;(Date&nbsp;:&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone&nbsp;&nbsp;:&nbsp;Time_Zones.Time_Offset&nbsp;:=&nbsp;0)&nbsp;<B>return</B>&nbsp;Time;</SPAN></DIV>
+<DIV Class="paranum">84/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">Returns a Time value for the image given as Date, 
+relative to the given time zone. Constraint_Error is raised if the string 
+is not formatted as described for Image, or the function cannot interpret 
+the given string as a Time value.</SPAN></DIV>
+<DIV Class="paranum">84.a/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Discussion:&nbsp;</B>The 
+intent is that the implementation enforce the same range rules on the 
+string as the appropriate function Time_Of, except for the hour, so &ldquo;cannot 
+interpret the given string as a Time value&rdquo; happens when one of 
+the values is out of the required range. For example, &quot;2005-08-31 
+24:0:0&quot; should raise Constraint_Error (the hour is out of range).</SPAN> 
+</DIV>
+<DIV Class="paranum">85/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;Image&nbsp;(Elapsed_Time&nbsp;:&nbsp;Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Include_Time_Fraction&nbsp;:&nbsp;Boolean&nbsp;:=&nbsp;False)&nbsp;<B>return</B>&nbsp;String;</SPAN></DIV>
+<DIV Class="paranum">86/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">Returns a string form of the Elapsed_Time. The 
+format is &quot;Hour:Minute:Second&quot;, where all values are 2-digit 
+values, including a leading zero, if needed. The separators between the 
+values are colons. If Include_Time_Fraction is True, the integer part 
+of Sub_Seconds*100 is suffixed to the string as a point followed by a 
+2-digit value. If Elapsed_Time &lt; 0.0, the result is Image (<B>abs</B> 
+Elapsed_Time, Include_Time_Fraction) prefixed with a minus sign. If <B>abs</B> 
+Elapsed_Time represents 100 hours or more, the result is implementation-defined.</SPAN> 
+</DIV>
+<DIV Class="paranum">86.a/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Implementation defined: 
+</B></SPAN><SPAN class="insert2">The result of Calendar.Formating.Image 
+if its argument represents more than 100 hours.</SPAN></DIV>
+<DIV Class="paranum">86.b/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Implementation Note: 
+</B>This cannot be implemented (directly) by calling Calendar.Formatting.Split, 
+since it may be out of the range of Day_Duration, and thus the number 
+of hours may be out of the range of Hour_Number.</SPAN></DIV>
+<DIV Class="paranum">86.c</DIV>
+<DIV Class="Annotations"><SPAN class="insert2">If a Duration value can 
+represent more then 100 hours, the implementation will need to define 
+a format for the return of Image.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">87/2</DIV>
+<DIV Class="Examples"><SPAN class="insert2"><B>function</B>&nbsp;Value&nbsp;(Elapsed_Time&nbsp;:&nbsp;String)&nbsp;<B>return</B>&nbsp;Duration;</SPAN></DIV>
+<DIV Class="paranum">88/2</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">Returns a Duration value for the image given as 
+Elapsed_Time. Constraint_Error is raised if the string is not formatted 
+as described for Image, or the function cannot interpret the given string 
+as a Duration value.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">88.a/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Discussion:&nbsp;</B>The 
+intent is that the implementation enforce the same range rules on the 
+string as the appropriate function Time_Of, except for the hour, so &ldquo;cannot 
+interpret the given string as a Time value&rdquo; happens when one of 
+the values is out of the required range. For example, &quot;10:23:60&quot; 
+should raise Constraint_Error (the seconds value is out of range).</SPAN> 
+</DIV>
+
+<H4 Class="centered">Implementation Advice</H4>
+<DIV Class="paranum">89/2</DIV>
+<DIV Class="Normal">&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">An implementation should support leap seconds if 
+the target system supports them. If leap seconds are not supported, Difference 
+should return zero for Leap_Seconds, Split should return False for Leap_Second, 
+and Time_Of should raise Time_Error if Leap_Second is True.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">89.a/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Implementation Advice: 
+</B></SPAN><SPAN class="insert2">Leap seconds should be supported if 
+the target system supports them. Otherwise, operations in Calendar.Formatting 
+should return results consistent with no leap seconds.</SPAN></DIV>
+<DIV Class="paranum">89.b/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Discussion:&nbsp;</B>An 
+implementation can always support leap seconds when the target system 
+does not; indeed, this isn't particularly hard (all that is required 
+is a table of when leap seconds were inserted). As such, leap second 
+support isn't &ldquo;impossible or impractical&rdquo; in the sense of 
+<A HREF="AA-1-1-3.html">1.1.3</A>. However, for some purposes, it may 
+be important to follow the target system's lack of leap second support 
+(if the target is a GPS satellite, which does not use leap seconds, leap 
+second support would be a handicap to work around). Thus, this Implementation 
+Advice should be read as giving permission to not support leap seconds 
+on target systems that don't support leap seconds. Implementers should 
+use the needs of their customers to determine whether or not support 
+leap seconds on such targets.</SPAN>&nbsp;</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">90/2</DIV>
+<DIV Class="Notes">37&nbsp;&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">The implementation-defined time zone of package 
+Calendar may, but need not, be the local time zone. UTC_Time_Offset always 
+returns the difference relative to the implementation-defined time zone 
+of package Calendar. If UTC_Time_Offset does not raise Unknown_Zone_Error, 
+UTC time can be safely calculated (within the accuracy of the underlying 
+time-base).</SPAN></DIV>
+<DIV Class="paranum">90.a/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Discussion:&nbsp;</B></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">The time in the time zone known as Greenwich Mean 
+Time (GMT) is generally very close to UTC time; for most purposes they 
+can be treated the same. GMT is the time based on the rotation of the 
+Earth; UTC is the time based on atomic clocks, with leap seconds periodically 
+inserted to realign with GMT (because most human activities depend on 
+the rotation of the Earth). At any point in time, there will be a sub-second 
+difference between GMT and UTC.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">91/2</DIV>
+<DIV Class="Notes">38&nbsp;&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2">Calling Split on the results of subtracting Duration(UTC_Time_Offset*60) 
+from Clock provides the components (hours, minutes, and so on) of the 
+UTC time. In the United States, for example, UTC_Time_Offset will generally 
+be negative.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">91.a/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Discussion:&nbsp;</B>This 
+is an illustration to help specify the value of UTC_Time_Offset. A user 
+should pass UTC_Time_Offset as the Time_Zone parameter of Split, rather 
+than trying to make the above calculation.</SPAN>&nbsp;</DIV>
+
+<H4 Class="centered">Extensions to Ada 95</H4>
+<DIV Class="paranum">91.b/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00351.TXT">AI95-00351-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00428.TXT">AI95-00428-01</A></I>} 
+<SPAN class="insert2">{<I>extensions to Ada 95</I>} <A NAME="I4184"></A>Packages 
+Calendar.Time_Zones, Calendar.Arithmetic, and Calendar.Formatting are 
+new.</SPAN>&nbsp;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-9-6.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-9-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="font-size: 125%">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

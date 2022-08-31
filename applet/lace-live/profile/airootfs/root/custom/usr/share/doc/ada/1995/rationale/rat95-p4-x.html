@@ -1,0 +1,624 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Four - Chapter X
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p4.html> Previous </a> |
+<a href=rat95-p4-y.html> Next </a>
+<hr>
+
+<h1>
+Appendix X   Upward Compatibility
+</h1>
+
+<p>
+A major design goal of Ada 95 was to avoid or at least minimize the need
+for modifying the existing base of Ada 83 software to make it compatible
+with Ada 95.  This involves not only pursuing upward compatibility but
+also preserving implementation-dependent behavior that can currently be
+relied upon.  In common with the experience of revising other language
+standards, it is infeasible to guarantee 100% compatibility.
+</p>
+<p>
+Other languages have been more or less successful in meeting this
+goal.  For example, COBOL 83 has been very successful in achieving upward
+compatibility with COBOL 74.  Nevertheless some minor incompatibilities
+were introduced which affect existing programs.  For example,
+IS_ALPHABETIC, accepts upper and lower case in the new COBOL standard.
+The transition from C to ANSI C and from there to C++ has also caused
+incompatibilities, for example C++ requires all procedure definitions in
+old-style C to be modified.
+</p>
+<p>
+   In the design of Ada 95, a very conservative approach has been
+adopted.  The few incompatibilities that exist can be dealt with in a
+simple mechanical way.  For example, the introduction of a small number
+of reserved words requires their replacement in any program using them as
+identifiers.  Extensive surveys of existing code show few programs to be
+affected.  Most of the other incompatibilities involve obscure or
+pathological programming styles which are expected to appear very
+infrequently in existing code.
+</p>
+<p>
+   The great majority of programs will not be significantly affected by
+these changes - the most likely incompatibilities being automatically
+detected at compilation time.  Moreover, tools are being developed to aid
+in the reliable detection of any problems and thereby smooth the process
+of transition.
+</p>
+<p>
+   Only three incompatibilities are considered likely to occur in normal
+programs.  They are as follows:
+</p>
+<ul>
+<li>
+New reserved words - In Ada 95, six new reserved words have been added to
+     the language.
+<li>
+Type Character has 256 positions - In Ada 95, the type Character has 256
+     positions.  In Ada 83, it had 128 positions.
+<li>
+Unconstrained generic parameters - In Ada 95, different syntax must be
+     used in a generic formal parameter to allow unconstrained actual
+     parameters.
+</ul>
+<p>
+The following further two incompatibilities might occur in normal
+programs but are less likely:
+</p>
+<ul>
+<li>
+Library package bodies illegal if not required - In Ada 95, it is illegal
+     to provide a body for a library package that does not require one.
+<li>
+Numeric_Error renames Constraint_Error - In Ada 95, the declaration for
+     Numeric_Error has been changed to a renaming of Constraint_Error.
+</ul>
+<p>
+   These incompatibilities usually cause a legal Ada 83 program to be an
+illegal Ada 95 program and hence are detected at compile time.  They are
+described in more detail in the ensuing sections.  In each case we give
+an example of the incompatibility, an indication of how it can be avoided
+in existing Ada 83 programs and the possibility of its automatic
+detection and removal.
+</p>
+<p>
+   The remaining incompatibilities which are considered very unlikely to
+occur in normal programs are briefly considered in X.6.
+</p>
+<p>
+   The reader should note that we say that an incompatibility is
+consistent if the worst that can happen is that a legal Ada 83 program
+becomes illegal in Ada 95 and thus fails to compile.  An incompatibility
+is said to be inconsistent if the program can remain legal but have a
+different meaning.
+</p>
+
+<h2>
+<a name=1>
+X.1  Reserved Words
+</a>
+</h2>
+
+<p>
+Six new reserved words are introduced in Ada 95: abstract, aliased,
+protected, requeue, tagged, and until.
+</p>
+<p>
+   Two alternatives to new reserved words were considered: a new concept
+of unreserved keywords or the use of combinations of existing reserved
+words.  Neither of these options was considered preferable to the
+transitory inconvenience caused by the introduction of the new reserved
+words.
+</p>
+<p>
+   An Ada 83 program that uses any of these words as identifiers is an
+illegal Ada 95 program.  For example, the following fragment of Ada 83
+will fail to compile in Ada 95 because it uses two of the new reserved
+words
+<pre>
+   Protected: Boolean := False;
+
+   procedure Requeue(The_Activity: Activity; On_Queue: Queue);
+</pre>
+</p>
+<p>
+   Avoidance is clearly straightforward - avoid use of these six words as
+identifiers.  Detection of the incompatibility is also straightforward.
+Automatic correction is problematic - to ensure that a name change is
+valid requires significant analysis especially if the identifier is the
+name of a library unit, or occurs in a package specification for which
+use clauses occur.
+</p>
+
+<h2>
+<a name=2>
+X.2  Type Character
+</a>
+</h2>
+
+<p>
+In Ada 95, the type Character has 256 positions.  In Ada 83, it had 128
+positions.
+</p>
+<p>
+   Although suitable for English-speaking nations, a character type based
+on ASCII is inappropriate for most of Europe.  ISO has defined a number
+of 256 character standards such as Latin-1 and Latin-2.  This change to
+the language thus accommodates non-English speaking nations.
+</p>
+<p>
+   An Ada 83 program could be an illegal Ada 95 program if it has a case
+statement or an array indexed by Character, but it could be a legal Ada
+95 program with different semantics if it relies on the position number
+or value of Character'Last.  For example
+<pre>
+   type Char_Kind is (Numeric, Alphabetic, Other);
+
+   Kind_Array: array (Character) of Char_Kind :=         -- (1)
+                 ('0' .. '9' => Numeric,
+                  'A' .. 'Z' | 'a' .. 'z' => Alphabetic,
+                  others => Other);
+
+   case Char is                                          -- (2)
+      when Character'Val(0) .. Character'Val(63) => ...
+      when Character'Val(64) .. Character'Val(127) => ...
+   end case;
+
+   I: Integer := Character'Pos(Character'Last);          -- (3)
+</pre>
+</p>
+<p>
+   Declaration (1) is legal in Ada 95 but probably does not achieve the
+desired effect.  Statement (2) is illegal in Ada 95 and will be detected
+at compilation.  Statement (3) illustrates a situation where the program
+will still execute but have a different effect in Ada 95 (it is
+inconsistent).
+</p>
+<p>
+   As it is likely that allowing for 256 characters is outside the scope
+of the original requirement for the program concerned, avoidance is not
+really the issue - a review of the requirements is necessary.
+</p>
+<p>
+   The inconsistency illustrated by the third example can be avoided by
+not depending on the position or value of Character'Last.  Avoiding the
+other incompatibilities avoids the real issue of how the extra 128
+characters are to be handled.  Unless uniform behavior is acceptable for
+these extra characters, use of an others choice, whilst ensuring a legal
+(but bad style) Ada 95 program might cause unacceptable behavior.
+</p>
+<p>
+   Detection of the consistent incompatibilities is straightforward;
+detection that an inconsistency may arise is possible.  Manual correction
+is necessary to determine whether the required semantics of the program
+are those defined by Ada 95.
+</p>
+<p>
+   Finally, it should be noted that the ISO Working Group with
+responsibility for maintaining the Ada standard, has decreed that this
+change can be introduced into Ada 83 compilers, so this will increasingly
+become an Ada 83 portability issue as more implementations support 256
+characters.
+</p>
+
+<h2>
+<a name=3>
+X.3  Library Package Bodies
+</a>
+</h2>
+
+<p>
+In Ada 95, library unit packages are allowed to have a body only if
+required by language rules.  This avoids a nasty and not so rare error.
+</p>
+<p>
+   In Ada 83, a body need only be provided for a package that really
+needed one, such as where the specification contains subprogram or task
+declarations.  If a body was provided for a library package that did not
+need a body (for performing initializations for example), then if the
+package specification was subsequently changed, the body became obsolete.
+However, since it was optional, subsequent builds incorporating the
+package would not incorporate the body, unless it was manually
+recompiled.  This obviously affects packages, for example, that only
+declare types, constants and/or exceptions, a very common occurrence.  As
+a trivial example in Ada 83 consider
+<pre>
+   package Optional_Body is
+      Global_Variable: Integer;
+   end Optional_Body;
+
+   -----------------------------------------
+
+   with Integer_Function;
+   package body Optional_Body is
+   begin
+      Global_Variable := Integer_Function;
+   end Optional_Body;
+</pre>
+</p>
+<p>
+   The solution adopted in Ada 95 is to allow a body for a library unit
+package only when one is required by some language rule; the above
+example is therefore illegal in Ada 95.  However, the pragma
+Elaborate_Body can be used to cause a body to be required.
+</p>
+<p>
+   Given the non-uniform functionality of program libraries and
+sublibraries, it is probably wise not to try to automatically detect, let
+alone correct, this incompatibility.
+</p>
+
+<h2>
+<a name=4>
+X.4  Indefinite Generic Parameters
+</a>
+</h2>
+
+<p>
+Ada 95 provides new syntax for a generic formal private type to indicate
+that the actual subtype is allowed to be indefinite.  The old syntax is
+retained, but the meaning is changed to require definite actual
+parameters.
+</p>
+<p>
+   In Ada 83, no indication was given in a generic formal type
+declaration as to whether the actual needed to be definite, for example
+because the body declared an uninitialized variable for the type.  It was
+thus possible for a legal instantiation to become illegal if the body was
+changed.
+</p>
+<p>
+   An Ada 83 program, where an indefinite type is used as a generic
+actual parameter is an illegal Ada 95 program.  For example the following
+legal Ada 83 program is illegal in Ada 95
+<pre>
+   generic
+      type Element_Type is private;
+   package Stack is ...
+
+   ------------------------------------------------------
+
+   with Stack;
+   package String_Stack is new Stack(Element_Type => String);
+</pre>
+</p>
+<p>
+   There is no way to avoid this incompatibility but an Ada 83 program
+can be annotated with an appropriate comment, thus
+<pre>
+   generic
+      type Element_Type is private;  -- !! (<>) in Ada 95
+   package Stack ...
+</pre>
+</p>
+<p>
+   Detection of the incompatibility is straightforward.  Manual
+correction is necessary to determine whether restricting the actual to
+being definite is acceptable.
+</p>
+<p>
+   It is interesting to note that some predefined library units in Ada 83
+used this feature and so are changed.  Examples are Unchecked_Conversion
+and Unchecked_Deallocation and also Sequential_IO.
+</p>
+<p>
+   Finally, it should be noted that the ISO Working Group has recommended
+that Ada 83 compilers be allowed to accept the new syntax in order to
+simplify transition.
+</p>
+
+<h2>
+<a name=5>
+X.5  Numeric Error
+</a>
+</h2>
+
+<p>
+In Ada 95, the exception Numeric_Error is declared in the package
+Standard as a renaming of Constraint_Error.
+</p>
+<p>
+   The checks that could cause Numeric_Error to be raised in Ada 83 have
+all been reworded to cause Constraint_Error to be raised instead.
+Indeed, this change has been sanctioned by the Ada Rapporteur Group and
+encouraged in existing Ada 83 implementations.
+</p>
+<p>
+   However, the alternative of completely removing Numeric_Error was
+rejected because it would naturally have caused an incompatibility in
+programs using the construction
+<pre>
+   when Numeric_Error | Constraint_Error => Some_Action;
+</pre>
+which is the currently recommended way of avoiding the confusion between
+Numeric_Error and Constraint_Error in Ada 83.
+</p>
+<p>
+   This construction is still allowed in Ada 95 because of an additional
+rule that permits an exception to be mentioned more than once in the same
+handler.
+</p>
+<p>
+   Programs which do have distinct separate handlers for Numeric_Error
+and Constraint_Error such as
+<pre>
+   exception
+      when Constraint_Error => Action_1;
+      when Numeric_Error => Action_2;
+   end;
+</pre>
+are illegal in Ada 95.  Moreover, an inconsistency will arise if a frame
+has an explicit handler for Numeric_Error or Constraint_Error but not
+both as in the following
+<pre>
+   exception
+      when Constraint_Error => Action_1;
+      when others => Action_2;
+   end;
+</pre>
+since Numeric_Error will be caught by the first handler in Ada 95 but by
+the second in Ada 83.
+</p>
+<p>
+   Detection of the incompatibility is straightforward but manual
+correction will be necessary in cases where Numeric_Error is treated
+differently.
+</p>
+
+<h2>
+<a name=6>
+X.6  Other Incompatibilities
+</a>
+</h2>
+
+<p>
+It is considered that other incompatibilities will be unlikely to occur
+in normal programs - the Ada 83 semantics being known only to the most
+erudite of Ada programmers - and so only a brief description seems
+appropriate in this document.  In the following summary, they are grouped
+according to whether they result in a legal Ada 95 program but with
+different semantics; whether they would be detectable by an Ada 95
+compiler and so on.
+</p>
+
+<h3>
+<a name=6-1>
+X.6.1  Unlikely Inconsistencies
+</a>
+</h3>
+
+<p>
+These incompatibilities might cause a change in the runtime behavior, but
+they are not thought likely to occur in normal programs.
+</p>
+<ul>
+<li>  
+Derived type inherits all operations of parent - In Ada 95 a derived type
+     inherits all its parent's primitive operations previously declared
+     in the same declarative part.  In Ada 83, it did not.
+<li>
+Floating point types may have less precision - the chosen representation
+     for a floating point type may have less precision in Ada 95 for
+     hardware with a non-binary radix.
+<li>
+Fixed point types may have less precision - the chosen representation for
+     a fixed point type may have less precision in Ada 95.  This is
+     related to the next item.
+<li>
+Default Small for fixed point types - In Ada 83, the default value of
+     Small was defined to be the largest power of two not exceeding
+     S'Delta.  In Ada 95, it is allowed to be a smaller power of two.
+<li>
+Rounding from real to integer is deterministic - Rounding is defined in
+     Ada 95 as away from zero if the real number is midway between two
+     integers.
+<li>
+Evaluation order of defaulted generic actual parameters - The order of
+     evaluation of defaulted generic actuals is arbitrary in Ada 95.
+<li>
+Static expressions evaluated exactly - Static expressions are always
+     evaluated exactly in Ada 95.  In Ada 83 this was only required in a
+     static context.
+</ul>
+
+<h3>
+<a name=6-2>
+X.6.2  Unlikely Incompatibilities
+</a>
+</h3>
+
+<p>
+These incompatibilities cause a legal Ada 83 program to be an illegal Ada
+95 program and hence are detectable at compile time.  They are considered
+to be unlikely in normal programs.
+</p>
+<ul>
+<li>  
+Bad pragmas illegal - In Ada 95, a pragma with an error in its arguments
+     makes the compilation illegal.  In Ada 83, it was ignored.
+<li>
+S'Base not defined for composite subtypes - In Ada 95, S'Base is not
+     defined for a composite subtype S.
+<li>
+Wide_Character shares all character literals - As a result of adding
+     types Wide_Character and Wide_String to package Standard, Ada 95
+     character literals are always overloaded and Ada 95 string literals
+     are always overloaded.
+<li>
+Definition of freezing tightened - In Ada 95, range constraints on a type
+     after its declaration and in occurrences in pragmas freeze the
+     representation (are treated as forcing occurrences).  In Ada 83 they
+     were not treated as forcing occurrences.
+<li>
+Static matching of subtypes - In Ada 95, matching of subtypes is now
+     performed statically instead of at runtime (as in Ada 83) in array
+     conversions and generic instantiations.
+<li>
+Illegal to use value of deferred constant - In Ada 95 it is illegal to
+     use the value of a deferred constant before it is set.  In Ada 83 it
+     was erroneous.
+<li>
+Explicit constraints in uninitialized allocators designating access types
+     - in Ada 95 such constraints are illegal; in Ada 83 they were
+     ignord.
+<li>
+Exceptions in static expressions illegal - in Ada 95, it is illegal to
+     raise an exception in a static expression; in Ada 83 it made the
+     expression non-static.
+<li>
+Preference for universal numeric operators - In Ada 95, the overload
+     resolution rules have been changed to simplify them.  As a
+     consequence certain pathological Ada 83 programs become illegal.
+<li>
+Assume worst when checking generic bodies - Ada 83 generic contract model
+     violations have been overcome in Ada 95 by assuming the worst case
+     in a generic body.
+<li>
+New identifiers added to package System - New identifiers in package
+     System may introduce illegalities into a unit having a use clause
+     for System.
+<li>
+Append_Mode added to File_Mode enumeration - In Ada 95, subtype File_Mode
+     in packages Sequential_IO and Text_IO has an extra literal,
+     Append_Mode.
+<li>
+New identifiers added to package Text_IO - New identifiers in package
+     Ada.Text_IO may introduce illegalities into a unit having a use
+     clause for Text_IO.
+<li>
+New identifiers added to package Standard - New identifiers in package
+     Standard may clash with existing use-visible identifiers.
+<li>
+Functions returning local variables containing tasks - In Ada 95 it is
+     illegal or raises Program_Error if a function with a result type
+     with a task subcomponent returns a local variable.  In Ada 83 it was
+     erroneous to return a variable containing a local task.
+<li>
+Illegal to change representation of types containing tasks - In Ada 95,
+     it is illegal to give a representation item for a derived type
+     containing a task.
+<li>
+Character literals always visible - In Ada 95, character literals are
+     visible everywhere.  In Ada 83 they followed the usual rules of
+     visibility.
+</ul>
+
+<h3>
+<a name=6-3>
+X.6.3  Implementation Dependent Incompatibilities
+</a>
+</h3>
+
+<p>
+These incompatibilities only arise with some implementations.  They occur
+either as a result of tightening up Ada semantics or where an Ada 83
+implementation has used an identifier now predefined in Ada 95.  In the
+latter case, an inconsistency could occur if the Ada 83 use of the
+identifier is compatible with the Ada 95 use, though this is unlikely.
+</p>
+<ul>
+<li>  
+Real attributes replaced - The Ada 83 attributes for a real subtype S
+     (such as S'Mantissa) have been replaced by Ada 95 attributes defined
+     in the Numerics Annex.
+<li>
+Certain pragmas removed - Some pragmas (including Interface and Shared)
+     have been removed from the language and Priority has been moved to
+     the Real-Time Systems annex.
+<li>
+New pragmas defined - The names of new pragmas may clash with
+     implementation-defined pragmas.
+<li>
+New attributes defined - The names of new attributes may clash with
+     implementation-defined attributes.
+<li>
+New library units defined - The names of new (language-defined) library
+     units may clash with user-defined or implementation-defined library
+     units.
+</ul>
+
+<h3>
+<a name=6-4>
+X.6.4  Error Incompatibilities
+</a>
+</h3>
+
+<p>
+These incompatibilities only occur in programs containing runtime errors,
+either detectable (an exception is raised) or undetectable (the execution
+is erroneous).
+</p>
+<ul>
+<li>  
+Exceeding 'First or 'Last of an unconstrained floating point type - In
+     Ada 95, the 'First and 'Last of a floating point type declared
+     without a range constraint are treated as minimum bounds and may be
+     exceeded without causing Constraint_Error.
+<li>
+Dependent compatibility checks performed on object declaration - In Ada
+     95, dependent compatibility checks are performed on object
+     declaration.  In Ada 83, they were performed on subtype declaration.
+<li>
+Implicit array subtype conversion - Ada 95 allows sliding in more
+     situations than did Ada 83, so Constraint_Error might not be raised
+     as in Ada 83.
+<li>
+Lower bound of catenation changed for constrained array types - In Ada
+     95, the lower bound of the result of catenation for a constrained
+     array type is defined to be 'First of the index subtype.  In Ada 83,
+     the lower bound of the result was 'First of the left operand.
+<li>
+Raising Time_Error deferred - In Ada 95, raising  Time_Error can be
+     deferred until Split or Year is called, or might not be raised at
+     all.  In Ada 83, it is raised on "+" or "-".
+<li>
+Data format for Get - In Ada 95, Get for real types accepts a wider range
+     of formats which would raise Data_Error in Ada 83.  Leading and
+     trailing zeros and the radix point are not required.
+</ul>
+
+<h2>
+<a name=7>
+X.7  Conclusion
+</a>
+</h2>
+
+<p>
+This appendix has outlined the incompatibilities between Ada 83 and Ada
+95.  As we have seen, the small number that are likely to occur in
+practice are easily overcome.  The remainder are unlikely to be
+encountered in normal programs but have been mentioned for completeness.
+For further details the reader should consult the comprehensive
+discussion in [Taylor 95] upon which this discussion has been based.
+</p>
+<p>
+In conclusion, it is clear that there are unlikely to be significant
+transition issues for the vast majority of Ada 83 programs.  Ada 95 has
+been carefully designed to minimize incompatibilities while meeting the
+overall goals of the requirements.
+</p>
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p4.html> Previous </a> |
+<a href=rat95-p4-y.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

@@ -1,0 +1,619 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Two - Chapter 13
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-12.html> Previous </a> |
+<a href=rat95-p3.html> Next </a>
+<hr>
+
+
+<h1>
+13   Representation Issues
+</h1>
+
+<p>
+This part of the reference manual has always been a pot-pourri of bits
+and pieces often neglected by users and implementors alike.  However, it
+is an important area especially for embedded systems where tight control
+of the implementation is required.  The changes in Ada 95 are designed to
+make the vague control promised by Ada 83 into a reality.  The main
+changes are
+</p>
+<ul>
+<li>
+    The mechanism for specifying representations such as size and
+     alignment is generalized and their meaning is clarified.
+<li>
+    Additional types and operations are provided for address and offset
+     manipulation.
+<li>
+    The Valid attribute enables a potentially dubious value (such as
+     might be obtained through calling Unchecked_Conversion or
+     interfacing to another language) to be checked for validity.
+<li>
+    Facilities are provided for the more detailed control of heap
+     storage for allocated objects.
+<li>
+    The rules regarding the freezing of representations are properly
+     defined.
+<li>
+    The pragma Restrictions is provided for specifying that only a
+     subset of the language is to be used.
+<li>
+    The concept of streams and various stream attributes are introduced.
+</ul>
+<p>
+By their nature, these features of the language concern fine detail for
+which the reader is referred to [RM95].  In this chapter we will only
+discuss the broad principles involved.  Note that the material on
+interfacing to other languages is now described in a separate annex of
+[RM95]; see Chapter B in Part Three.  Note also that although the general
+concept of streams and the stream attributes are defined in section 13 of
+[RM95], their main application is for input-output and they are therefore
+discussed in A-1.4.
+</p>
+
+<h2>
+<a name=1>
+13.1  Representation of Data
+</a>
+</h2>
+
+<p>
+The first point to note is that the notation has been unified so that the
+attribute form can be used for setting all specifiable attributes.  Thus
+<pre>
+   for X'Address use 8#100#;
+</pre>
+rather than for X use at 8#100#, and
+<pre>
+   for R'Alignment use 2;
+</pre>
+rather than at mod 2 in a record representation clause.  (The old
+notations are allowed for compatibility although considered obsolete.)
+</p>
+<p>
+   An important reason for the unified notation is that we wish to allow
+implementations to define additional user-specifiable attributes in a
+consistent manner.  Furthermore the annexes define many additional
+attributes as discussed in Part Three.
+</p>
+<p>
+   The Alignment attribute can be applied to all first subtypes and
+objects whereas the mod clause only applied to records in Ada 83.  An
+overall rule is that the Address of an object must be an integral
+multiple of its Alignment.  In the case of internal objects the user must
+ensure that this is not violated if one or both attributes are specified.
+In the case of external objects, the attributes may also be specified but
+then they are more in the nature of an assertion; again it is assumed
+that the relationship holds.
+</p>
+<p>
+   It is now possible to specify the order of numbering bits.  This is
+particularly important when using record representation clauses to ensure
+that we know which way round the bits are numbered.  For example
+<pre>
+   for R'Bit_Order use Low_Order_First;
+</pre>
+where R is a record type indicates that the first bit (bit 0) is the
+least significant.
+</p>
+<p>
+   There was much confusion in Ada 83 over the Size attribute.  This is
+now clarified and the reader is referred to the discussion in [RM95] for
+details.  An important point is that the Size attribute may now be set
+for individual objects rather than just to types as in Ada 83.
+</p>
+
+<h2>
+<a name=2>
+13.2  The Package System
+</a>
+</h2>
+
+<p>
+The package System.Storage_Elements contains additional types and
+operations to enable addresses and offsets to be manipulated in a
+standard manner.  The comparison operators are defined for the type
+Address in the package System itself whereas other facilities are in the
+child package System.Storage_Elements.
+</p>
+<p>
+   This latter package includes a type Storage_Offset and operations to
+add and subtract such values to and from values of type Address.  Storage
+offsets are of course relative whereas addresses are absolute (echoes of
+duration and time) and so adding a storage offset to an address returns
+an address and so on.
+</p>
+<p>
+   The generic child package System.Address_To_Access_Conversions
+provides the ability to convert neatly between values of the type Address
+and values of a given general access type; this enables "peeking" and
+"poking" to be done in a consistent manner.
+</p>
+<p>
+   Finally note that the pragmas System_Name, Storage_Unit and
+Memory_Size are now obsolete.  They were not uniformly implemented in Ada
+83 and it was not at all clear what they should mean.  For example, in
+most implementations, it does not make sense to change the number of bits
+in a storage unit, and even if it did, it would not be sufficient to make
+only the package System obsolete; clearly all generated code depends on
+this value.  Consequently we no longer require implementations to support
+these pragmas.  Of course, implementations that already support them with
+some particular meaning can continue to do so (as implementation defined
+pragmas) for upward compatibility.  On the other hand the corresponding
+named numbers in package System are quite useful as queries and so
+remain.
+</p>
+
+<h2>
+<a name=3>
+13.3  The Valid Attribute
+</a>
+</h2>
+
+<p>
+There are occasions when Unchecked_Conversion is very valuable although
+inherently dangerous.  The Valid attribute enables the programmer to
+ensure that the result of an unchecked conversion is at least a valid
+value for the subtype concerned (even if not what the programmer hoped
+for).  Some risks of catastrophe are thereby avoided.
+</p>
+<p>
+   The [RM95 13.9.2] lists the ways in which invalid data could be
+obtained.  As well as unchecked conversion this includes results obtain
+through interfacing to another language and uninitialized data.  Note
+that Valid is only defined for objects of scalar types.
+</p>
+
+<h2>
+<a name=4>
+13.4  Storage Pool Management
+</a>
+</h2>
+
+<p>
+For Ada 95, we have provided the user with the ability to override the
+default algorithms for allocating and deallocating heap storage.  This is
+done by the introduction of the concept of a storage pool which provides
+the storage for objects created by allocators.  Every access to object
+type is associated with some storage pool which is a pool of memory from
+which the storage for allocated objects is obtained.
+</p>
+<p>
+   The storage pool for an access type may be shared with other access
+types.  In particular, any derivative of an access type shares the same
+storage pool as the parent access type.  More importantly, an
+implementation might use a common global heap by default.  An allocator
+for an access type allocates storage from the associated storage pool.
+</p>
+<p>
+   The package System.Storage_Pools provides mechanisms for defining a
+storage pool type as an extension of the abstract type Root_Storage_Pool.
+We can then associate a storage pool with a particular access type by
+specifying the Storage_Pool attribute for the access type.
+Alternatively, a bounded storage pool may be requested by specifying the
+Storage_Size attribute for an access type, as in Ada 83.  In the absence
+of a specification of either the Storage_Pool or Storage_Size attribute
+of an access type, the implementation chooses an appropriate storage pool
+for the type.
+</p>
+<p>
+   Pool-specific access values never point outside of their storage pool
+(in the absence of unchecked conversion and the like).  On the other
+hand, general access values may be assigned to point to any aliased
+object of an appropriate type and scope, either through the use of the
+Access attribute or explicit access type conversion.
+</p>
+<p>
+   The storage pool concept makes explicit the notion of a "heap", and
+when combined with the ability to specify a Storage_Pool object for an
+access type, gives the user better control over dynamic allocation.
+</p>
+<p>
+   The use of storage pools is illustrated by the following example which
+shows how an application can use a special allocator algorithm to meet
+its precise storage requirements.  The storage pool associated with the
+access type supports mark and release operations, allowing rapid
+reclamation of all storage allocated from the pool during some phase of
+processing.
+<pre>
+   with System.Storage_Pools;
+   with System.Storage_Elements; use System;
+   package Mark_Release_Storage is
+
+      type Mark_Release_Pool(Size: Storage_Elements.Storage_Count) is
+            new Storage_Pools.Root_Storage_Pool with private;
+
+      type Pool_Mark is limited private;
+
+      -- now provide the controlled operations
+      procedure Initialize(Pool: in out Mark_Release_Pool);
+
+      procedure Finalize(Pool: in out Mark_Release_Pool);
+
+      -- now provide the storage pool operations
+      procedure Allocate(
+         Pool           : in out Mark_Release_Pool;
+         Storage_Address: out Address;
+         Size_In_Storage_Elements: in Storage_Elements.Storage_Count;
+         Alignment      : in Storage_Elements.Storage_Count);
+
+      procedure Deallocate(
+         Pool           : in out Mark_Release_Pool;
+         Storage_Address: in Address;
+         Size_In_Storage_Elements: in Storage_Elements.Storage_Count;
+         Alignment      : in Storage_Elements.Storage_Count);
+
+      function Storage_Size(Pool: Mark_Release_Pool)
+         return Storage_Elements.Storage_Count;
+
+        -- additional subprograms for the Mark_Release_Pool
+      procedure Set_Mark(
+         Pool: in Mark_Release_Pool;
+         Mark: out Pool_Mark);
+
+        -- marks the current state of the pool for later release
+      procedure Release_To_Mark(
+         Pool: in out Mark_Release_Pool;
+         Mark: in Pool_Mark);
+        -- frees everything allocated from the Pool since Set_Mark.
+        -- all access values designating objects allocated since then
+        -- become invalid.
+
+   private
+       ...
+   end Mark_Release_Storage;
+</pre>
+</p>
+<p>
+This example demonstrates how a package defines a special type of
+mark/release storage pool, derived from
+System.Storage_Pools.Root_Storage_Pool (see [RM95 13.11]).
+</p>
+<p>
+   Note carefully that the procedures Allocate and Deallocate are invoked
+implicitly by the Ada 95 allocator and Unchecked_Deallocation facilities
+in much the same way as Initialize, Adjust and Finalize are implicitly
+called by the run-time system for controlled types (see 7.4).   Moreover,
+the type Root_Storage_Pool is itself a limited controlled type and so the
+procedures Initialize and Finalize are provided.
+</p>
+<p>
+   This example includes two additional operations on the storage pool
+type, which the user can use to set a mark and then later release the
+pool to a marked state, and thereby reclaim all recently allocated
+storage.  The declaration of Mark_Release_Pool indicates that it is also
+extended with additional private components that would be supplied in the
+private part.
+</p>
+<p>
+   In order to use the above package we first have to declare a
+particular pool and then specify it as the pool for the access type
+concerned.  We might write
+<pre>
+   use Mark_Release_Storage;
+   Big_Pool: Mark_Release_Pool(50_000);
+
+   type Some_Type is ...;
+   type Some_Access is access Some_Type;
+   for Some_Access'Storage_Pool use Big_Pool;
+</pre>
+</p>
+<p>
+This declares the pool Big_Pool of the type Mark_Release_Pool and then
+associates it with the access type Some_Access by the representation
+clause.  The discriminant of 50,000 acts as an initialization parameter
+perhaps indicating the total size of the pool.  We can then allocate and
+use objects in the usual way.  We can also use the special mark and
+release capabilities provided by this particular type of pool.
+<pre>
+   declare
+      Mark: Pool_Mark;
+      Done: Boolean := False;
+   begin
+      -- set mark prior to commencing the loop
+      Set_Mark(Big_Pool, Mark);
+      while not Done loop
+         -- each iteration allocates a data structure composed of
+
+         -- objects of Some_Type, which may be discarded
+         -- before the next iteration.
+         declare
+            X, Y : Some_Access;
+         begin
+            -- algorithm that allocates various objects from
+            -- the mark/release storage pool
+            X := new Some_Type;
+            ...
+
+            Y := new Some_Type;
+            ...
+            -- release storage each time through the loop
+            Release_To_Mark(Big_Pool, Mark);
+         exception
+            when others =>
+               -- release storage then reraise the exception
+               Release_To_Mark(Big_Pool, Mark);
+               raise;
+         end;
+      end loop;
+   end;
+</pre>
+</p>
+<p>
+   Note carefully that the assignments such as
+<pre>
+   X := new Some_Type;
+</pre>
+implicitly call the Allocate procedure thus
+<pre>
+   Mark_Release_Storage.Allocate(Pool => Big_Pool,...);
+</pre>
+</p>
+<p>
+Any calls on Unchecked_Deallocation will similarly result in an implicit
+call of Deallocate.
+</p>
+
+<h2>
+<a name=5>
+13.5  Freezing of Representations
+</a>
+</h2>
+
+<p>
+Certain uses of an entity or the type of an entity cause it to be frozen;
+these are situations where the representation has to be known (and if
+none has been specified the implementation will then choose a
+representation by default).  These uses were called forcing occurrences
+in Ada 83 (the name has been changed because not all the situations
+causing freezing are actual occurrences of the name of the entity).  The
+forcing occurrence rules of Ada 83 did not really achieve their
+objective; sometimes they were too lax and sometimes too rigid; the
+freezing rules of Ada 95 are intended to more exactly satisfy the
+objective of identifying when the representation has to be determined.
+</p>
+<p>
+   The situations causing freezing and the operations not allowed on a
+frozen entity are described in [RM95 13.14].  There seems little point in
+repeating the discussion here but one point of difference worth
+emphasizing is that the loophole in deferred constants in Ada 83 which
+allowed uninitialized access values is now blocked.  The new rules were
+designed to overcome this and similar problems with the Ada 83 rules.
+</p>
+
+<h3>
+<a name=5-1>
+13.5.1  Freezing and Tagged Types
+</a>
+</h3>
+
+<p>
+The freezing rules for tagged types are important.  The two main ones are
+that a record extension freezes the parent and a primitive subprogram
+cannot be declared for a frozen tagged type - this applies to both new
+ones and overridden ones.  Using the illustrative model of the tag and
+dispatch table in 4.3 this means that the contents of the dispatch table
+can be determined as soon as the type is frozen.
+</p>
+<p>
+   A consequence of these freezing rules is that we cannot declare
+further primitive subprograms for a tagged type after a record extension
+of it has been defined.  This was mentioned in II.1 during the discussion
+of the alert system when we noted the practical benefit of being able to
+declare a sequence of derived types in one package.
+</p>
+<p>
+   But note that although a record extension freezes the parent type a
+private extension does not.  In the private case the parent type is
+frozen at the full type declaration (which will be a record extension
+anyway).  So in the following
+<pre>
+   package P is
+      type T is tagged ...;
+      type NT is new T with private;
+      procedure Op(X: T);
+   private
+      type NT is new T with ...;
+   end P;
+</pre>
+the partial declaration of NT does not freeze T and so the further
+operation Op can be added.  This operation is also inherited by NT
+although it is not visible for the partial view of NT (since its
+declaration was after that of the partial view); it effectively gets
+added at the full declaration.  So
+<pre>
+   A: NT'Class := ...;
+   Op(A);
+</pre>
+is illegal outside P but legal in the body of P.
+</p>
+<p>
+   Note that we can add an operation, OpN for NT before the new operation
+Op for T thus
+<pre>
+   package P is
+      type T is tagged ...;
+      type NT is new T with private;
+      procedure OpN(X: NT);
+      procedure Op(X: T);
+   private
+      type NT is new T with ...;
+   end P;
+</pre>
+and in this case, perhaps surprisingly, we have added a new operation for
+the dispatch table of NT before knowing all about the dispatch table of T
+(which of course forms the first part of the table for NT).  However, the
+full declaration of NT will freeze T and prevent further operations being
+added for T.
+</p>
+<p>
+   It is instructive to reconsider the alert system discussed in Part One
+and to rearrange the declarations to minimize spurious visibility.  The
+details of the various types need not be visible externally (we can
+imagine that they are initialized by operations in some child package).
+Moreover, it is only necessary for the procedure Handle to be visible
+externally since Display, Log and Set_Alarm are only called internally
+from the procedures Handle.  However, in the case of Display it is
+important that it be a dispatching operation if the redispatching
+discussed in 4.5 is to be possible.  The package could thus be
+reconstructed as follows
+<pre>
+   with Calendar;
+   package New_Alert_System is
+
+      type Alert is abstract tagged private;
+      procedure Handle(A: in out Alert);
+
+      type Low_Alert is new Alert with private;
+      type Medium_Alert is new Alert with private;
+      type High_Alert is new Alert with private;
+
+   private
+
+      type Device is (Teletype, Console, Big_Screen);
+
+      type Alert is tagged
+         record
+            Time_Of_Arrival: Calendar.Time;
+            Message: Text;
+         end record;
+
+      procedure Display(A: in Alert; On: in Device);  -- also dispatches
+      procedure Log(A: in Alert);
+
+      type Low_Alert is new Alert with null record;
+
+      type Medium_Alert is new Alert with
+         record
+            Action_Officer: Person;
+         end record;
+
+      -- now override inherited operations
+      procedure Handle(MA: in out Medium_Alert);
+      procedure Display(MA: in Medium_Alert; On: in Device);
+
+      type High_Alert is new Medium_Alert with
+         record
+            Ring_Alarm_At: Calendar.Time;
+         end record;
+
+      procedure Handle(HA: in out High_Alert);
+      procedure Display(HA: in High_Alert; On: in Device);
+      procedure Set_Alarm(HA: in High_Alert);
+
+   end New_Alert_System;
+</pre>
+</p>
+<p>
+   In this formulation all the alerts are private and the visible part
+consists of a series of private extensions.  If the private extensions
+froze the parent type Alert then it would not be possible to add the
+private dispatching operation Display in the private part.  The deferral
+of freezing until the full type declaration is thus important.  Note that
+we have also hidden the fact that the High_Alert is actually derived from
+Medium_Alert.  Remember that the full type declaration only has to have
+the type given in the private extension as some ancestor and not
+necessarily as the immediate parent.
+</p>
+<p>
+   We can now add a child package for the emergency alert as suggested in
+II.7 and this will enable a new Display and Handle to be added.
+<pre>
+   package New_Alert_System.Emergency is
+      type Emergency_Alert is new Alert with private;
+   private
+      type Emergency_Alert is new Alert with
+         record
+            ...
+         end record;
+
+      procedure Handle(EA: in out Emergency_Alert);
+      procedure Display(EA: in Emergency_Alert; On: in Device);
+
+   end New_Alert_System.Emergency;
+</pre>
+</p>
+<p>
+We could make the procedure Display visible by declaring it in the
+visible part; it would still override the inherited version even though
+the inherited version is private as mentioned in 7.1.1.
+</p>
+
+<h2>
+<a name=6>
+13.6  The Pragma Restrictions
+</a>
+</h2>
+
+<p>
+There are some application areas where it is useful to impose
+restrictions on the use of certain features of the language.  Thus it
+might be desirable to know that only certain simple uses of tasking are
+made in a particular program; this might allow the program to be linked
+with an especially efficient run-time system for use in a hard real time
+application.  Another area where more severe restrictions are relevant is
+for safety-critical applications where it is required that application
+programs are written using only simple parts of the language so that they
+are more amenable to mathematical proof.  Restrictions on the use of the
+language may be imposed by the pragma Restrictions.  The possible
+arguments to this pragma are defined in the Real-Time Systems and Safety
+and Security annexes [RM95 D7, H3].
+</p>
+
+<h2>
+<a name=7>
+13.7  Requirements Summary
+</a>
+</h2>
+
+<p>
+The requirement
+<pre>
+     R6.2-A(1) - Data Interoperability
+</pre>
+is partially met by the provision of better control over representations
+such as the alignment of objects.
+</p>
+<p>
+   The study topic
+<pre>
+     S6.4-B(1) - Low-Level Pointer Operations
+</pre>
+is addressed by the attribute Unchecked_Access and address and offset
+operations in the package System.Address_To_Access_Conversions.
+</p>
+<p>
+   The requirement
+<pre>
+     R4.2-A(1) - Allocation and Reclamation of Storage
+</pre>
+is met by the storage pool mechanism described in 13.4.
+</p>
+
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-12.html> Previous </a> |
+<a href=rat95-p3.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

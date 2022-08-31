@@ -1,0 +1,139 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Partitions</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.Hanging-Body {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 7.2em; margin-top: 0em; margin-bottom: 0.6em}
+    DIV.Hanging-Term {float: left; font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-top: 0em; margin-bottom: 0em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-E.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-E-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>E.1 Partitions</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal">The partitions of a distributed program are classified 
+as either active or passive.&nbsp;</DIV>
+
+<H4 Class="centered">Post-Compilation Rules</H4>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal"><A NAME="I7057"></A><A NAME="I7058"></A>An <I>active 
+partition</I> is a partition as defined in <A HREF="RM-10-2.html">10.2</A>. 
+A <I>passive partition</I> is a partition that has no thread of control 
+of its own, whose library units are all preelaborated, and whose data 
+and subprograms are accessible to one or more active partitions.&nbsp;</DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Normal">A passive partition shall include only <SPAN Class="swiss"><A HREF="RM-10-1-1.html#S0230">library_item</A></SPAN>s 
+that either are declared pure or are shared passive (see <A HREF="RM-10-2-1.html">10.2.1</A> 
+and <A HREF="RM-E-2-1.html">E.2.1</A>).</DIV>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Normal">An active partition shall be configured on a processing 
+node. A passive partition shall be configured either on a storage node 
+or on a processing node.</DIV>
+<DIV Class="paranum">5</DIV>
+<DIV Class="Normal">The configuration of the partitions of a program 
+onto a distributed system shall be consistent with the possibility for 
+data references or calls between the partitions implied by their semantic 
+dependences. <A NAME="I7059"></A>Any reference to data or call of a subprogram 
+across partitions is called a <I>remote access</I>.&nbsp;</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">6</DIV>
+<DIV Class="Normal"><A NAME="I7060"></A>A <SPAN Class="swiss"><A HREF="RM-10-1-1.html#S0230">library_item</A></SPAN> 
+is elaborated as part of the elaboration of each partition that includes 
+it. If a normal library unit (see <A HREF="RM-E-2.html">E.2</A>) has 
+state, then a separate copy of the state exists in each active partition 
+that elaborates it. The state evolves independently in each such partition.</DIV>
+<DIV Class="paranum">7</DIV>
+<DIV Class="Normal"><A NAME="I7061"></A><A NAME="I7062"></A><A NAME="I7063"></A><A NAME="I7064"></A>An 
+active partition <I>terminates</I> when its environment task terminates. 
+A partition becomes <I>inaccessible</I> if it terminates or if it is 
+<I>aborted</I>. An active partition is aborted when its environment task 
+is aborted. In addition, if a partition fails during its elaboration, 
+it becomes inaccessible to other partitions. Other implementation-defined 
+events can also result in a partition becoming inaccessible.&nbsp;</DIV>
+<DIV Class="paranum">8/1</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">For a <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+D that denotes a library-level declaration, excepting a declaration of 
+or within a declared-pure library unit, the following attribute is defined: 
+</DIV>
+<DIV Class="paranum">9</DIV>
+<DIV Class="Hanging-Term">D'Partition_Id</DIV><DIV Class="Hanging-Body"><BR clear="left">
+<A NAME="I7065"></A><A NAME="I7066"></A>Denotes a value of the type <I>universal_integer</I> 
+that identifies the partition in which D was elaborated. If D denotes 
+the declaration of a remote call interface library unit (see <A HREF="RM-E-2-3.html">E.2.3</A>) 
+the given partition is the one where the body of D was elaborated.&nbsp;</DIV>
+
+<H4 Class="centered">Bounded (Run-Time) Errors</H4>
+<DIV Class="paranum">10</DIV>
+<DIV Class="Normal"><A NAME="I7067"></A>It is a bounded error for there 
+to be cyclic elaboration dependences between the active partitions of 
+a single distributed program. <A NAME="I7068"></A>The possible effects, 
+in each of the partitions involved, are deadlock during elaboration, 
+or the raising of Communication_Error or Program_Error.&nbsp;</DIV>
+
+<H4 Class="centered">Implementation Permissions</H4>
+<DIV Class="paranum">11</DIV>
+<DIV Class="Normal">An implementation may allow multiple active or passive 
+partitions to be configured on a single processing node, and multiple 
+passive partitions to be configured on a single storage node. In these 
+cases, the scheduling policies, treatment of priorities, and management 
+of shared resources between these partitions are implementation defined. 
+</DIV>
+<DIV Class="paranum">12</DIV>
+<DIV Class="Normal">An implementation may allow separate copies of an 
+active partition to be configured on different processing nodes, and 
+to provide appropriate interactions between the copies to present a consistent 
+state of the partition to other active partitions.&nbsp;</DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Normal">In an implementation, the partitions of a distributed 
+program need not be loaded and elaborated all at the same time; they 
+may be loaded and elaborated one at a time over an extended period of 
+time. An implementation may provide facilities to abort and reload a 
+partition during the execution of a distributed program.</DIV>
+<DIV Class="paranum">14</DIV>
+<DIV Class="Normal">An implementation may allow the state of some of 
+the partitions of a distributed program to persist while other partitions 
+of the program terminate and are later reinvoked.&nbsp;</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">15</DIV>
+<DIV Class="Notes">3&nbsp;&nbsp;Library units are grouped into partitions 
+after compile time, but before run time. At compile time, only the relevant 
+library unit properties are identified using categorization pragmas.</DIV>
+<DIV Class="paranum">16</DIV>
+<DIV Class="Notes">4&nbsp;&nbsp;The value returned by the Partition_Id 
+attribute can be used as a parameter to implementation-provided subprograms 
+in order to query information about the partition.</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-E.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-E-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

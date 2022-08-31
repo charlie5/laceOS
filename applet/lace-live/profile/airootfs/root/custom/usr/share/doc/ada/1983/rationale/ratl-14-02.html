@@ -1,0 +1,326 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 14.2: Presentation of Exception Handling in Ada</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 14: Exception Handling</H2>
+
+<H3><a name="14.2">14.2 Presentation of Exception Handling in Ada</a></H3>
+
+There exist  situations that  prevent the completion of an action; for
+example, where  a constraint  is violated. An exception is a name that
+is  attached   to  such   a   situation;   for   example,   the   name
+CONSTRAINT_ERROR is attached to the violation of a constraint. Raising
+an  exception  means  telling  the  invoker  of  an  action  that  the
+corresponding error  situation has occurred; and handling an exception
+means executing some actions in response to this occurrence.
+<p>
+The definition of the exception handling facility will provide answers
+to the following questions:
+<ul>
+<li>How are exceptions declared?
+<p>
+<li>What are exception handlers and in which part of a program can they
+   appear?
+<p>
+<li>How are exceptions raised?
+<p>
+<li>Which handler gets executed when an exception is raised?
+<p>
+<li>How can the same exception be raised again?
+</ul>
+
+We first  examine these  different questions in the case of sequential
+programs; then  the case  of parallel  tasks is  discussed in  <a href="ratl-14-04.html#14.4">section
+14.4</a>.
+
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#14.2.1">14.2.1 Declaration of Exceptions</a><BR>
+<a href="#14.2.2">14.2.2 Exception Handlers</a><BR>
+<a href="#14.2.3">14.2.3 The Raise Statement</a><BR>
+<a href="#14.2.4">14.2.4 Association of Handlers with Exceptions</a><BR>
+<a href="#14.2.5">14.2.5 Raising the Same Exception Again</a><BR>
+<a href="#14.2.6">14.2.6 Suppressing Checks</a><BR>
+<a href="#14.2.7">14.2.7 Order of Exceptions
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="14.2.1">14.2.1 Declaration of Exceptions</a></H3>
+
+An exception  declaration associates  a name  with a  particular error
+situation. The  form of  an exception  declaration  is  shown  by  the
+following example:
+<p>
+<PRE>    SINGULAR :  exception;</PRE>
+<p>
+Conceptually, we  may view  an exception  declaration as  declaring  a
+constant of  some type  called "exception",  whose values  may only be
+mentioned in  exception handlers  and in  raise statements.  Thus  the
+above declaration has the meaning that SINGULAR is one of the possible
+exceptions. Like any other declaration, an exception declaration has a
+scope, which is the region of text in which the corresponding name can
+be written  in order  to refer  to the  exception.  However,  as  this
+analogy suggests,  the error  situation associated  with an  exception
+will exist beyond this region.
+<p>
+Declarations of  the predefined  exceptions, namely  CONSTRAINT_ERROR,
+NUMERIC_ERROR, PROGRAM_ERROR,  STORAGE_ERROR, and  TASKING_ERROR,  are
+provided  in   the  package   STANDARD  that  defines  the  predefined
+environment.
+
+<H3><BR><a name="14.2.2">14.2.2 Exception Handlers</a></H3>
+
+Exception handlers are the sections of the program to which control is
+passed when exceptions occur. Each exception handler has the form of a
+sequence of  statements prefixed by the reserved word when followed by
+the  names  of  the  exceptions  that  are  serviced  by  the  handler
+considered (or the reserved word others, as described below).
+<p>
+Exception handlers  may only appear at the end of a block statement or
+at the  end of  the body of a subprogram, package, or task unit; after
+the reserved  word exception.  In each  of these  cases, the construct
+includes the following part, called a frame:
+<p>
+<table border cellpadding=6><tr><td><pre>
+begin
+  sequence_of_statements
+exception
+   exception_handler
+  {exception_handler}
+end
+</pre></td></tr></table>
+<p>
+The exception  handlers given  after the  reserved word exception in a
+frame apply  to the  sequence of  statements given  after the reserved
+word begin  in the  same frame.  As an  example  the  following  block
+contains a single handler that services the exception SINGULAR:
+<p>
+<table border cellpadding=6><tr><td><pre>
+begin
+  -- sequence of statements
+exception
+  when SINGULAR =&gt;
+    PUT("Matrix is singular");
+end;
+</pre></td></tr></table>
+<p>
+A handler  that starts  with when  others services all exceptions that
+have no  explicit handler  in the same frame. Note finally, that where
+we  want   to  localize  the  effect  of  handlers  to  some  specific
+statements, we  may always  do so  by enclosing  these statements  and
+handlers within a block statement.
+
+<H3><BR><a name="14.2.3">14.2.3 The Raise Statement</a></H3>
+
+There are  two possible  reasons for  an exception  to be  raised in a
+given program  unit. It  may either  be explicitly  raised by  a raise
+statement or,  as we  will explain  later, it  may  be  propagated  by
+subprograms (including  operators), package bodies and blocks executed
+by the  program unit considered. (Violation of a constraint is treated
+as propagation.)
+<p>
+The normal  form of  raise statement  includes the reserved word raise
+and the name of the exception that is raised:
+<p>
+<table border cellpadding=6><tr><td><pre>
+raise SINGULAR;
+raise IO_EXCEPTIONS.DEVICE_ERROR;
+</pre></td></tr></table>
+<p>
+The name  of the  exception must  of course be visible at the point of
+the raise  statement. It may have the form of a selected component, as
+in the  above case  of the  exception  DEVICE_ERROR  declared  in  the
+package IO_EXCEPTIONS.
+
+<H3><BR><a name="14.2.4>14.2.4 Association of Handlers with Exceptions</a></H3>
+
+We next  examine  the  question  of  determining  which  handler  gets
+executed when  a given  exception is  raised. The case of an exception
+raised within a sequence of statements is treated here; the case of an
+exception raised  during  the  elaboration  of  declarations  will  be
+considered later (<a href="ratl-14-05.html#14.5.1">see 14.5.1</a>).
+<p>
+Note that if a frame contains a raise statement for a given exception,
+it does  not necessarily  contain a  handler for  that exception.  For
+example, in  the procedure  P given below, both the procedures P and R
+provide a  handler for  SINGULAR and  have no explicit raise statement
+for that  exception. On  the other  hand, the  procedure Q contains an
+explicit raise statement for SINGULAR but provides no handler for that
+exception.
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure P is
+  ...
+  SINGULAR :  exception;
+  ...
+  procedure Q is
+  begin
+    ...
+    if DETERMINANT = 0 then
+      raise SINGULAR;
+    end if;
+    ...
+  end Q;
+
+  procedure R is
+  begin
+    ...
+    Q;
+    ...
+  exception
+    when SINGULAR =&gt;  ...
+              -- inner handler for SINGULAR
+  end R;
+
+begin       -- P
+  ...
+  R;
+  ...
+  Q;
+exception
+  when SINGULAR =&gt;  ...
+              -- outer handler for SINGULAR
+end P;
+</pre></td></tr></table>
+<p>
+When an  exception is  raised within  the sequence  of statements of a
+frame,  the  execution  of  this  sequence  of  statements  is  always
+abandoned. What  happens next  depends on  the presence  or absence of
+appropriate exception handlers:
+<DL>
+<DT><b>(a) The frame includes a handler for the exception:</b>
+<p>
+<DD>In this  case the  execution of  the sequence of statements of this
+   handler completes the execution of the frame.
+<p>
+<DT><b>(b) The frame does not have a handler for the exception:</b>
+<p>
+<DD>In this  case the  subsequent actions  depend on  the nature of the
+   frame. For  a subprogram  body, the  same  exception  is  raised  -
+   implicitly -  at the  point of  call of the subprogram; for a block
+   statement, the same exception is raised within the frame containing
+   the block  statement itself,  after this statement. In either case,
+   we say that the exception is propagated.
+</DL>
+
+In the  above example,  if the exception SINGULAR is raised during the
+execution of Q that is called from R:
+<ul>
+<li>The execution  of Q will be abandoned, since no handler is provided
+   for SINGULAR within Q.
+<p>
+<li>This exception  is then  propagated to  the caller:  it  is  raised
+   within R at the point of call of Q.
+<p>
+<li>Further execution  of the  statements of  R is then abandoned - the
+   statements following the call of Q are not executed.
+<p>
+<li>But in  this case,  there is  a handler  for SINGULAR,  and  it  is
+   executed. This  terminates the  execution of R and the exception is
+   not further  propagated. For P, this call of R therefore appears as
+   a normal call.
+</ul>
+
+Note that the outer handler for SINGULAR, that of P, would be executed
+if the  exception were  raised by  the execution  of Q  that is called
+directly from within P.
+<p>
+With  this   definition  of   exception  handling,  the  effect  of  a
+subprogram, which  is normally completed by the sequence of statements
+of its body, may alternatively, when an exception occurs, be completed
+by a corresponding handler, if present.
+<p>
+The sequence  of statements of a package body acts as a procedure that
+is implicitly  called by the package for its initialization. This also
+applies for  exceptions. A  handler in  a package  body  acts  like  a
+handler in  a procedure.  In the absence of a handler, an exception is
+propagated to  the program unit that contains the package declaration.
+The case of task bodies is discussed in <a href="ratl-14-04.html#14.4">section 14.4</a>.
+<p>
+After the  explanation of  the concept  of exception  propagation,  it
+should now be clear that there is no conceptual difference between the
+predefined exceptions  and exceptions  that are  declared by the user.
+Predefined exceptions  are exceptions  that can  be propagated  by the
+basic operations  of the language such as indexing, accessing a value,
+and the  arithmetic operations.  As an  example  NUMERIC_ERROR  is  an
+exception that  may be propagated by the (hardware supplied) operation
+of division.
+
+<H3><BR><a name="14.2.5">14.2.5 Raising the Same Exception Again</a></H3>
+
+Within a  handler, the  exception that  caused transfer to the handler
+may be  raised again by a normal raise statement (mentioning its name)
+or by an abbreviated raise statement of the form
+<p>
+<PRE>    raise;</PRE>
+<p>
+In either  case, the effect of raising the same (or another) exception
+within a  handler is  to abandon  the execution  of the  frame and  to
+propagate the  corresponding exception  (except for tasks as explained
+in <a href="ratl-14-04.html#14.4">section 14.4</a>).
+<p>
+The  abbreviated   form  for  raising  the  same  exception  again  is
+especially useful  in the  case of  a handler for others. Thus, such a
+handler can  be used  to perform some general cleanup actions, such as
+undoing possible  side-effects,  before  raising  the  same  exception
+again. This  is made  possible by  the fact that the exception is left
+anonymous both in the handler prefix and in the reraise statement.
+
+<H3><BR><a name="14.2.6">14.2.6 Suppressing Checks</a></H3>
+
+It is  possible to  inform the  compiler that  certain run-time checks
+need not  be provided  within a  given frame.  This is  achieved by  a
+pragma. For example, the pragma
+<p>
+<PRE>    pragma SUPPRESS(RANGE_CHECK,  ON =&gt;  INDEX);</PRE>
+<p>
+allows the  compiler to omit range checks for assignments to variables
+of subtype  INDEX. Note  that this  pragma is  not imperative, and its
+inclusion does  not guarantee that the exception CONSTRAINT_ERROR will
+not be  raised: it  may be  raised explicitly, or be propagated from a
+subprogram in  which checks are not suppressed. Finally, the exception
+may be  raised simply  because the compiler did not inhibit the check:
+this is likely to be the case if hardware checks are available.
+
+<H3><BR><a name="14.2.7">14.2.7 Order of Exceptions</a></H3>
+
+A compiler  may  choose  to  evaluate  the  constituent  terms  of  an
+expression in  any  order  that  is  consistent  with  the  precedence
+properties  of   the  operators,   and  with  the  parentheses.  As  a
+consequence, the  order in  which exceptions  might be  raised in  the
+course of  the evaluation  of an  expression is  not guaranteed by the
+language. The  semantics of  the language  only defines  the value  of
+expressions whose evaluation does not raise any exception.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-14-03.html#14.3"><b>NEXT</b></a>
+&#128; <a href="ratl-14-01.html#14.1"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-14.html#14"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

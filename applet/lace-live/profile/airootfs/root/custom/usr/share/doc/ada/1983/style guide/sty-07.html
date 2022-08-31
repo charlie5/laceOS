@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Ch 7: Portability
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 7: Portability</H2>
+
+Discussions concerning portability usually concentrate on the differences in 
+computer systems. But the development and runtime environment may also change:
+
+<DL><DD><b>portability</b> (software). The ease with which software can be transferred from <BR>
+one computer system or environment to another (IEEE Dictionary 1984).</DL>
+
+And most portability problems are not pure language issues. Portability  
+involves hardware (byte order, device IO); software (utility libraries,  
+operating systems, runtime libraries). This section will not address these  
+challenging design issues.<P>
+This section does identify the more common portability problems that are 
+specific to Ada when moving from one platform or compiler to another. It also 
+suggests ways that non-portable code can be isolated. By using the 
+implementation hiding features of Ada, the cost of porting can be 
+significantly reduced.<P>
+In fact, many language portability issues are solved by the strict definition 
+of the Ada language itself. In most programming languages, different dialects 
+are prevalent as vendors extend or dilute a language for various reasons: 
+conformance to a programming environment; or features for a particular 
+application domain. The <a href="http://sw-eng.falls-church.va.us/AdaIC/testing/acvc/">Ada Compiler Validation Capability (ACVC)</a> was 
+developed by the U.S. Department of Defense at the Ada Validation Facility, 
+ASD/SIDL, Wright-Patterson Air Force Base to ensure that implementors strictly 
+adhered to the Ada standard.<P>
+As part of the strict definition of Ada, certain constructs are defined to be 
+erroneous and the effect of executing an erroneous construct is unpredictable. 
+Therefore erroneous constructs are obviously not portable. Erroneous 
+constructs are discussed in <a href="sty-05-09.html#5.9">Guideline 5.9</a>,
+and are not repeated in this chapter.<P>
+Most programmers new to the language expect Ada to eliminate all portability 
+problems; it definitely does not. Certain areas of Ada are not yet covered by 
+validation. The definition of Ada leave certain details to the implementor. 
+The compiler implementor's choices with respect to these details affect 
+portability.<P>
+There are some general principles to enhancing portability exemplified by many  
+of the guidelines in this chapter. They are:
+<UL>
+<li>Recognize those Ada constructs that may adversely affect portability. 
+<li>Avoid the use of these constructs where possible. 
+<li> Localize and encapsulate nonportable features of a program if their 
+use is essential. 
+<li>Highlight the use of constructs that may cause portability problems. 
+</UL>
+These guidelines cannot be applied thoughtlessly. Many of them involve a  
+detailed understanding of the Ada model and its implementation. In many cases,  
+you will have to make carefully considered tradeoffs between efficiency and  
+portability. Reading this chapter should improve your insight into the  
+tradeoffs involved.<P>
+The material in this chapter was largely acquired from three sources: the
+<a href="http://dec5200.gtri.gatech.edu/artewg/home.htm">Ada  
+Run Time Environment Working Group</a> (ARTEWG) Catalogue of Ada Run Time  
+Implementation Dependencies (ARTEWG 1986); the Nissen and Wallis book on  
+Portability and Style in Ada (Nissen and Wallis 1984); and a paper written for  
+the U.S. Air Force by SofTech on Ada Portability Guidelines (Pappas 1985). The  
+last of these sources (Pappas 1985) encompasses the other two and provides an  
+in depth explanation of the issues, numerous examples, and techniques for  
+minimizing portability problems. Conti (1987) is a valuable reference for  
+understanding the latitude allowed for implementors of Ada and the criteria  
+often used to make decisions.<P>
+This chapter's purpose is to provide a summary of portability issues in the 
+guideline format of this book. The chapter does not include all issues 
+identified in the references, but only the most significant. For an in-depth 
+presentation, see Pappas (1985). A few additional guidelines are presented 
+here and others are elaborated upon where applicable. For further reading on 
+Ada I/O portability issues, see Matthews (1987), Griest (1989), and CECOM 
+(1989).<P>
+Some of the guidelines in this chapter cross reference and place stricter  
+constraints on other guidelines in this book. These constraints apply when  
+portability is being emphasized.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this chapter...</font><BR>
+<BR><a href="sty-07-01.html#7.1">7.1     Fundamentals</a><BR>
+<img src="indent.gif"><a href="sty-07-01.html#7.1.1">7.1.1   Global Assumptions</a><BR>
+<img src="indent.gif"><a href="sty-07-01.html#7.1.2">7.1.2   Actual Limits</a><BR>
+<img src="indent.gif"><a href="sty-07-01.html#7.1.3">7.1.3   Comments</a><BR>
+<img src="indent.gif"><a href="sty-07-01.html#7.1.4">7.1.4   Main Subprogram</a><BR>
+<img src="indent.gif"><a href="sty-07-01.html#7.1.5">7.1.5   Encapsulating Implementation Dependencies</a><BR>
+<img src="indent.gif"><a href="sty-07-01.html#7.1.6">7.1.6   Implementation-Added Features</a><BR>
+<BR><a href="sty-07-02.html#7.2">7.2     Numeric Types and Expressions</a><BR>
+<img src="indent.gif"><a href="sty-07-02.html#7.2.1">7.2.1   Predefined Numeric Types</a><BR>
+<img src="indent.gif"><a href="sty-07-02.html#7.2.2">7.2.2   Ada Model</a><BR>
+<img src="indent.gif"><a href="sty-07-02.html#7.2.3">7.2.3   Analysis</a><BR>
+<img src="indent.gif"><a href="sty-07-02.html#7.2.4">7.2.4   Accuracy Constraints</a><BR>
+<img src="indent.gif"><a href="sty-07-02.html#7.2.5">7.2.5   Comments</a><BR>
+<img src="indent.gif"><a href="sty-07-02.html#7.2.6">7.2.6   Precision of Constants</a><BR>
+<img src="indent.gif"><a href="sty-07-02.html#7.2.7">7.2.7   Subexpression Evaluation</a><BR>
+<img src="indent.gif"><a href="sty-07-02.html#7.2.8">7.2.8   Relational Tests</a><BR>
+<BR><a href="sty-07-03.html#7.3">7.3     Storage Control</a><BR>
+<img src="indent.gif"><a href="sty-07-03.html#7.3.1">7.3.1   Representation Clause</a><BR>
+<BR><a href="sty-07-04.html#7.4">7.4     Tasking</a><BR>
+<img src="indent.gif"><a href="sty-07-04.html#7.4.1">7.4.1   Task Activation Order</a><BR>
+<img src="indent.gif"><a href="sty-07-04.html#7.4.2">7.4.2   Delay Statements</a><BR>
+<img src="indent.gif"><a href="sty-07-04.html#7.4.3">7.4.3   Package <CODE>Calendar</CODE>, Type <CODE>Duration</CODE>, and <CODE>System.Tick</CODE></a><BR>
+<img src="indent.gif"><a href="sty-07-04.html#7.4.4">7.4.4   Select Statement Evaluation Order</a><BR>
+<img src="indent.gif"><a href="sty-07-04.html#7.4.5">7.4.5   Task Scheduling Algorithm</a><BR>
+<img src="indent.gif"><a href="sty-07-04.html#7.4.6">7.4.6   Abort</a><BR>
+<img src="indent.gif"><a href="sty-07-04.html#7.4.7">7.4.7   Shared Variables and Pragma <CODE>Shared</CODE></a><BR>
+<BR><a href="sty-07-05.html#7.5">7.5     Exceptions</a><BR>
+<img src="indent.gif"><a href="sty-07-05.html#7.5.1">7.5.1   Predefined Exceptions</a><BR>
+<img src="indent.gif"><a href="sty-07-05.html#7.5.2">7.5.2   <CODE>Constraint_Error</CODE> and <CODE>Numeric_Error</CODE></a><BR>
+<img src="indent.gif"><a href="sty-07-05.html#7.5.3">7.5.3   Implementation-Defined Exceptions</a><BR>
+<BR><a href="sty-07-06.html#7.6">7.6     Representation Clauses And Implementation-Dependent Features</a><BR>
+<img src="indent.gif"><a href="sty-07-06.html#7.6.1">7.6.1   Representation Clauses</a><BR>
+<img src="indent.gif"><a href="sty-07-06.html#7.6.2">7.6.2   Package <CODE>System</CODE></a><BR>
+<img src="indent.gif"><a href="sty-07-06.html#7.6.3">7.6.3   Machine Code Inserts</a><BR>
+<img src="indent.gif"><a href="sty-07-06.html#7.6.4">7.6.4   Interfacing Foreign Languages</a><BR>
+<img src="indent.gif"><a href="sty-07-06.html#7.6.5">7.6.5   Implementation-Defined Pragmas and Attributes</a><BR>
+<img src="indent.gif"><a href="sty-07-06.html#7.6.6">7.6.6   Unchecked Deallocation</a><BR>
+<img src="indent.gif"><a href="sty-07-06.html#7.6.7">7.6.7   Unchecked Conversion</a><BR>
+<img src="indent.gif"><a href="sty-07-06.html#7.6.8">7.6.8   Run Time Dependencies</a><BR>
+<BR><a href="sty-07-07.html#7.7">7.7     Input/Output</a><BR>
+<img src="indent.gif"><a href="sty-07-07.html#7.7.1">7.7.1   <CODE>Name</CODE> and <CODE>Form</CODE> Parameters</a><BR>
+<img src="indent.gif"><a href="sty-07-07.html#7.7.2">7.7.2   File Closing</a><BR>
+<img src="indent.gif"><a href="sty-07-07.html#7.7.3">7.7.3   I/O on Access Types</a><BR>
+<img src="indent.gif"><a href="sty-07-07.html#7.7.4">7.7.4   Package <CODE>Low_Level_IO</CODE></a><BR>
+<BR><a href="sty-07-08.html#7.8">Summary</a><BR>
+<img src="indent.gif"><a href="sty-07-08.html#7.8.1">fundamentals</a><BR>
+<img src="indent.gif"><a href="sty-07-08.html#7.8.2">numeric types and expressions</a><BR>
+<img src="indent.gif"><a href="sty-07-08.html#7.8.3">storage control</a><BR>
+<img src="indent.gif"><a href="sty-07-08.html#7.8.4">tasking</a><BR>
+<img src="indent.gif"><a href="sty-07-08.html#7.8.5">exceptions</a><BR>
+<img src="indent.gif"><a href="sty-07-08.html#7.8.6">representation clauses and implementation-dependent features</a><BR>
+<img src="indent.gif"><a href="sty-07-08.html#7.8.7">input/output</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>
+

@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 9.1: Task Specifications and Task Bodies</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="9.1">9.1</A>.  Task Specifications and Task Bodies   </H2>
+<A HREF="lrm-09.html#9"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-09-02.html#9.2"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+A task unit consists of a task specification  and  a  task  body.   A  task
+specification  that  starts  with  the reserved words  task type declares a
+task type.  The value of an object of a task type designates a task  having
+the  entries,  if  any, that are declared in the task specification;  these
+entries are also called entries of this object.  The execution of the  task
+is defined by the corresponding task body.                                                   
+<P>
+A  task specification without the reserved word type defines a single task.
+A task declaration with this form of specification  is  equivalent  to  the
+declaration   of  an  anonymous  task  type  immediately  followed  by  the
+declaration of an object of the task type, and  the  task  unit  identifier
+names the object.  In the remainder of this chapter, explanations are given
+in  terms  of  task  type declarations;  the corresponding explanations for
+single task declarations follow from the stated equivalence. 
+<pre>
+    task_declaration ::= task_specification; 
+
+    task_specification ::=
+       task [type] identifier [is
+          {entry_declaration}
+          {representation_clause}
+       end [task_simple_name]] 
+
+    task_body ::=
+        task body task_simple_name is
+           [declarative_part]
+        begin
+            sequence_of_statements
+       [exception
+            exception_handler
+           {exception_handler}]
+        end [task_simple_name]; 
+</pre>
+<P>
+The simple name at the start of a task  body  must  repeat  the  task  unit
+identifier.   Similarly  if  a  simple  name appears at the end of the task
+specification or body, it must repeat the task unit identifier.   Within  a
+task  body,  the  name  of  the corresponding task unit can also be used to
+refer to the task object that designates the task currently  executing  the
+body;   furthermore,  the  use  of  this name as a type mark is not allowed
+within the task unit itself. 
+<P>
+For the  elaboration  of  a  task  specification,  entry  declarations  and
+representation  clauses,  if  any, are elaborated in the order given.  Such
+representation clauses only apply to  the  entries  declared  in  the  task
+specification (see <a href="lrm-13-05.html#13.5">13.5</a>). 
+<P>
+The  elaboration  of a task body has no other effect than to establish that
+the body can from then on be used for the execution of tasks designated  by
+objects of the corresponding task type. 
+<P>
+The  execution of a task body is invoked by the activation of a task object
+of the corresponding type (see <a href="lrm-09-03.html#9.3">9.3</a>).  The optional  exception  handlers  at
+the end of a task body handle exceptions raised during the execution of the
+sequence of statements of the task body (see <a href="lrm-11-04.html#11.4">11.4</a>). 
+<P>
+Examples of specifications of task types: 
+<pre>
+    task type RESOURCE is
+       entry SEIZE;
+       entry RELEASE;
+    end RESOURCE;  
+
+    task type KEYBOARD_DRIVER is
+       entry READ (C : out CHARACTER);
+       entry WRITE(C : in  CHARACTER);
+    end KEYBOARD_DRIVER;                                                     
+</pre>
+<P>
+Examples of specifications of single tasks: 
+<pre>
+    task PRODUCER_CONSUMER is
+       entry READ (V : out ITEM);
+       entry WRITE(E : in  ITEM);
+    end; 
+
+    task CONTROLLER is
+       entry REQUEST(LEVEL)(D : ITEM);  --  a family of entries
+    end CONTROLLER; 
+
+    task USER;  --  has no entries 
+</pre>
+<P>
+Example of task specification and corresponding body: 
+<pre>
+    task PROTECTED_ARRAY is
+       --  INDEX and ITEM are global types
+       entry READ (N : in INDEX; V : out ITEM);
+       entry WRITE(N : in INDEX; E : in  ITEM);
+    end; 
+
+    task body PROTECTED_ARRAY is
+       TABLE : array(INDEX) of ITEM := (INDEX =&gt; NULL_ITEM);
+    begin
+       loop
+          select
+             accept READ (N : in INDEX; V : out ITEM) do
+                V := TABLE(N);
+             end READ;
+          or
+             accept WRITE(N : in INDEX; E : in  ITEM) do
+                TABLE(N) := E;
+             end WRITE;
+          end select;
+       end loop;
+    end PROTECTED_ARRAY;
+</pre>
+<P>
+Note: 
+<P>
+A task specification specifies the interface of tasks of the task type with
+other  tasks  of  the  same  or  of different types, and also with the main
+program. 
+<P>
+<b>References:</b>  <A HREF="lrm-03-01.html#3.1">declaration</A>,
+<A HREF="lrm-03-09.html#3.9">declarative part</A>,
+<A HREF="lrm-03-09.html#3.9">elaboration</A>,
+<A HREF="lrm-09-05.html#9.5">entry</A>,
+<A HREF="lrm-09-05.html#9.5">entry  declaration</A>,
+<A HREF="lrm-11-02.html#11.2">exception handler</A>,
+<A HREF="lrm-02-03.html#2.3">identifier</A>,
+<A HREF="lrm-10-01.html#10.1">main program</A>,
+<A HREF="lrm-03-02.html#3.2">object</A>,
+<A HREF="lrm-03-02.html#3.2.1">object declaration</A>,
+<A HREF="lrm-13-01.html#13.1">representation  clause</A>,
+<A HREF="lrm-02-09.html#2.9">reserved word</A>,
+<A HREF="lrm-05-01.html#5.1">sequence of statements</A>,
+<A HREF="lrm-04-01.html#4.1">simple name</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-03-03.html#3.3.1">type declaration</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-13-02.html#13.2.1">13.2.1&nbsp;Tasks: Textual Layout</a>
+<p>
+
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-02-01.html#2.1.7">2.1.7&nbsp;Pagination</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-03-02.html#3.2.4">3.2.4&nbsp;Program Unit Names</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-03-03.html#3.3.7">3.3.7&nbsp;Marker Comments</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-01.html#5.1.4">5.1.4&nbsp;Naming End Statements</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-01.html#6.1.1">6.1.1&nbsp;Tasks</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-01.html#6.1.4">6.1.4&nbsp;Priorities</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-03.html#6.3.3">6.3.3&nbsp;The Abort Statement</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-03.html#6.3.4">6.3.4&nbsp;Abnormal Termination</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-01.html#7.1.3">7.1.3&nbsp;Comments</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-04.html#7.4.6">7.4.6&nbsp;Abort</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-04.html#8.4.2">8.4.2&nbsp;Coupling Due to Pragmas</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

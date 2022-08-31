@@ -1,0 +1,421 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 6.1: Tasking
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 6: Concurrency</H2>
+
+<H3><a name="6.1">6.1     Tasking</a></H3>
+Many problems map naturally to a concurrent programming solution. By 
+understanding and correctly using the Ada language tasking features, you can 
+produce solutions that are independent of target implementation. Tasks provide 
+a means, within the Ada language, of expressing concurrent asynchronous 
+threads of control and relieving programmers from the problem of explicitly 
+controlling multiple concurrent activities.<P>
+Tasks cooperate to perform the required activities of the software.  
+Synchronization is required between individual tasks. The Ada rendezvous  
+provides a powerful mechanism for this synchronization.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><br>
+<a href="#6.1.1">6.1.1   Tasks</a><BR>
+<a href="#6.1.2">6.1.2   Anonymous Task Types</a><BR>
+<a href="#6.1.3">6.1.3   Dynamic Tasks</a><BR>
+<a href="#6.1.4">6.1.4   Priorities</a><BR>
+<a href="#6.1.5">6.1.5   Delay Statements</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-06-04.html#6.4.1"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="6.1.1">6.1.1   Tasks</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use tasks to model asynchronous entities within the problem domain. 
+<li>Use tasks to control or synchronize access to tasks or devices. 
+<li>Use tasks to define concurrent algorithms. 
+</UL>
+
+<H4>example</H4>
+Asynchronous entities are the naturally concurrent objects within the problem  
+domain. These tend to be objects in the problem space that have state, such as  
+elevators in an elevator control system or satellites in a global positioning  
+system. The following is an example for an elevator control system:
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------ 
+package Elevator_Objects is
+
+   ... 
+   type Elevator_States is (Moving, Idle, Stopped, At_Floor); 
+   type Up_Down         is (Up, Down);
+   
+   --------------------------------------------------------------------- 
+   task type Elevators is
+   
+      entry Initialize; 
+      entry Close_Door; 
+      entry Open_Door; 
+      entry Stop; 
+      entry Idle; 
+      entry Start         (Direction        : in     Up_Down); 
+      entry Current_State (My_State         :    out Elevator_States; 
+                           Current_Location :    out Float);
+                           
+   end Elevators; 
+   ---------------------------------------------------------------------
+   
+   ...
+   
+end Elevator_Objects; 
+------------------------------------------------------------------------</pre></td></tr></table>
+
+A task that manages updates from multiple concurrent user tasks to a graphic  
+display is an example of a control and synchronization task. <P>
+Multiple tasks that implement the decomposition of a large matrix  
+multiplication algorithm is an example of an opportunity for real concurrency  
+in a multi-processor target environment. In a single processor target 
+environment this approach may not be justified. <P>
+A task that updates a radar display every 30 milliseconds is an example of a  
+cyclic activity supported by a task. <P>
+A task that detects an over-temperature condition in a nuclear reactor and 
+performs an emergency shutdown of the systems is an example of a task to  
+support a high priority activity.
+
+<H4>rationale</H4>
+These guidelines reflect the intended uses of tasks. They all revolve around 
+the fact that a task has its own thread of control separate from the main 
+subprogram. The conceptual model for a task is a separate program with its own 
+virtual processor. This provides the opportunity to model entities from the 
+problem domain in terms more closely resembling those entities, and the 
+opportunity to handle physical devices as a separate concern from the main 
+algorithm of the application. Tasks also allow naturally concurrent activities 
+which can be mapped to multiple processors when available.<P>
+Resources shared between multiple tasks, such as devices and abstract data 
+structures, require control and synchronization since their operations are 
+not atomic. Drawing a circle on a display may require that many low level 
+operations be performed without interruption by another task. A display 
+manager would ensure that no other task accesses the display until all these 
+operations are complete.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-01.html#9.1">9.1&nbsp;Abort Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-02.html#9.2">9.2&nbsp;Task Types and Task Objects</A>
+
+
+<H3><BR><a name="6.1.2">6.1.2   Anonymous Task Types</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use anonymous task types for single instances. 
+</UL>
+
+<H4>example</H4>
+The example below illustrates the syntactic differences between the kinds of 
+tasks discussed here. <CODE>Buffer</CODE> is static and has a name, but its type is 
+anonymous. Because it is declared explicitly, the task type <CODE>Buffer_Manager</CODE> is 
+not anonymous. <CODE>Channel</CODE> is static and has a name, and its type is not 
+anonymous.  Like all dynamic objects, <CODE>Encrypted_Packet_Queue.all</CODE> is 
+essentially anonymous, but its type is not.
+<table border cellpadding=6><tr><td><pre>task      Buffer; 
+task type Buffer_Manager; 
+type Replaceable_Buffer is access Buffer_Manager;
+
+... 
+Encrypted_Packet_Queue : Replaceable_Buffer; 
+Channel                : Buffer_Manager;
+
+... 
+Encrypted_Packet_Queue := new Buffer_Manager; 
+...</pre></td></tr></table>
+
+<H4>rationale</H4>
+The use of named tasks of anonymous type avoids a proliferation of task types  
+that are only used once, and the practice communicates to maintainers that  
+there are no other task objects of that type. If the need arises later to have  
+additional tasks of the same type, then the work required to convert a named  
+task to a task type is minimal.<P>
+The consistent and logical use of task types, when necessary, contributes to  
+understandability. Identical tasks can be derived from a common task type.  
+Dynamically allocated task structures are necessary when you must create and  
+destroy tasks dynamically or when you must reference them by different names.
+
+<H4>note</H4>
+Though changing the task from an anonymous type to a task type is trivial, 
+structural changes to the software architecture may not be trivial. 
+Introduction of multiple tasks of the task type may require the scope of the 
+task type to change and may change the behavior of the network of 
+synchronizing tasks.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-02.html#9.2">9.2&nbsp;Task Types and Task Objects</A>
+
+
+<H3><BR><a name="6.1.3">6.1.3   Dynamic Tasks</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Justify the use of dynamically allocated task objects. 
+<li>Avoid disassociating a dynamic task from all names. 
+</UL>
+
+<H4>example</H4>
+The approach used in the following example below is not recommended. The  
+example shows why caution is required with dynamically allocated task objects.  
+It illustrates how a dynamic task can be disassociated from its name.
+<table border cellpadding=6><tr><td><pre>task type Radar_Track; 
+type      Radar_Track_Pointer is access Radar_Track;
+
+Current_Track : Radar_Track_Pointer;
+
+--------------------------------------------------------------------- 
+task body Radar_Track is 
+begin 
+   loop 
+      -- update tracking information 
+      ... 
+      -- exit when out of range 
+      delay 1.0; 
+   end loop;
+   
+... 
+end Radar_Track; 
+---------------------------------------------------------------------
+
+... 
+loop 
+   ...
+   
+   -- Unless some code deals with non-null values of Current_Track, 
+   -- (such as an array of existing tasks) 
+   -- this assignment leaves the existing Radar_Track task running with 
+   -- no way to signal it to abort or to instruct the system to 
+   -- reclaim its resources. 
+   Current_Track := new Radar_Track;
+   
+   ... 
+end loop;</pre></td></tr></table>
+
+<H4>rationale</H4>
+A dynamically allocated task object is a task object created by the execution 
+of an allocator.  Allocators can be used to avoid limiting the number of 
+tasks.  Memory and timing requirements are positively or negatively affected 
+by the decision to use dynamic tasks.  Both creation and deletion of dynamic 
+tasks and scheduling of dormant static tasks adversely affect performance. 
+Dormant static tasks incur memory overhead that can be avoided using dynamic 
+tasks.  Creation and deletion of dynamic tasks is typically more expensive 
+than scheduling overhead in terms of CPU time.<P>
+Allocated task objects referenced by access variables allow you to generate  
+<i>aliases</i>; multiple references to the same object.  Anomalous behavior can arise  
+when you reference an aborted task by another name.<P>
+A dynamically allocated task that is not associated with a name (a &quot;dropped 
+pointer&quot;) cannot be referenced for the purpose of making entry calls, nor can  
+it be the direct target of an abort statement (see <a href="sty-05-04.html#5.4.3">Guideline 5.4.3</a>).<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-08.html#3.8">3.8&nbsp;Access Types</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-08.html#4.8">4.8&nbsp;Allocators</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-03.html#9.3">9.3&nbsp;Task Execution - Task Activation</A>
+
+
+<H3><BR><a name="6.1.4">6.1.4   Priorities</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Do not rely on pragma <CODE>Priority</CODE> to prioritize the service of entries. 
+<li>Arrange task bodies in order of their priorities (if possible). 
+</UL>
+
+<H4>example</H4>
+For example, let the tasks have the following priorities:
+<table border cellpadding=6><tr><td><pre>task T1 ... pragma Priority (High)   ... Server.Operation ... 
+task T2 ... pragma Priority (Medium) ... Server.Operation ... 
+task Server                          ... accept Operation ...</pre></td></tr></table>
+
+At some point in its execution, <CODE>T1</CODE> is blocked. Otherwise, <CODE>T2</CODE> and <CODE>Server</CODE> may 
+never execute. If <CODE>T1</CODE> is blocked, it is possible for <CODE>T2</CODE> to reach its call to 
+<CODE>Server</CODE>'s entry (<CODE>Operation</CODE>) before <CODE>T1</CODE>. Suppose this has happened and that <CODE>T1</CODE> 
+now makes its entry call before <CODE>Server</CODE> has a chance to accept <CODE>T2</CODE>'s call.<P>
+This is the timeline of events so far:
+<table border cellpadding=6><tr><td><pre>T1 blocks 
+T2 calls Server.Operation 
+T1 unblocks 
+T1 calls Server.Operation
+
+Does Server accept the call from T1 or from T2?</pre></td></tr></table>
+
+Some people might expect that, due to its higher priority, <CODE>T1</CODE>'s call would be 
+accepted by <CODE>Server</CODE> before that of <CODE>T2</CODE>. However, entry calls are queued in 
+first-in-first-out (FIFO) order and not queued in order of priority. 
+Therefore, the synchronization between <CODE>T1</CODE> and <CODE>Server</CODE> is not affected by <CODE>T1</CODE>'s 
+priority.  As a result, the call from <CODE>T2</CODE> is accepted first.  This is a form of 
+<i>priority inversion</i>.<P>
+A solution might be to provide an entry for a <CODE>High</CODE> priority user and an entry  
+for a <CODE>Medium</CODE> priority user.
+<table border cellpadding=6><tr><td><pre>--------------------------------------------------------------------- 
+task Server is 
+   entry Operation_High_Priority; 
+   entry Operation_Medium_Priority; 
+   ... 
+end Server;
+
+--------------------------------------------------------------------- 
+task body Server is 
+begin
+
+   loop 
+      select 
+         accept Operation_High_Priority do 
+            Operation; 
+         end Operation_High_Priority; 
+      else  -- accept any priority
+      
+         select 
+            accept Operation_High_Priority do 
+               Operation; 
+            end Operation_High_Priority; 
+         or 
+            accept Operation_Medium_Priority do 
+               Operation; 
+            end Operation_Medium_Priority; 
+         or 
+            terminate; 
+         end select; 
+      end select;
+      
+   end loop;
+   
+... 
+end Server; 
+---------------------------------------------------------------------</pre></td></tr></table>
+
+However, in this approach <CODE>T1</CODE> still waits for one execution of <CODE>Operation</CODE> when 
+<CODE>T2</CODE> has already gained control of the task <CODE>Server</CODE>. In addition, the approach 
+increases the communication complexity (see <a href="sty-06-02.html#6.2.6">Guideline 6.2.6</a>).
+
+<H4>rationale</H4>
+The pragma <CODE>Priority</CODE> allows relative priorities to be placed on tasks to  
+accomplish scheduling.  Precision becomes a critical issue with hard-deadline  
+scheduling.  However, there are certain problems associated with using  
+priorities that warrant caution.  <P>
+<i>Priority inversion</i> occurs when lower priority tasks are given service while 
+higher priority tasks remain blocked.  In the above example, this occurred 
+because entry queues are serviced in FIFO order, not by priority.  There is 
+another situation referred to as a <i>race condition</i>.  A program like the one in 
+the first example might often behave as expected as long as <CODE>T1</CODE> calls 
+<CODE>Server.Operation</CODE> only when <CODE>T2</CODE> is not already using <CODE>Server.Operation</CODE> or 
+waiting.  You cannot rely on <CODE>T1</CODE> always winning the race, since that behavior 
+would be due more to fate than to the programmed priorities.  Race conditions 
+change when either adding code to an unrelated task or porting this code to a 
+new target.  Task priorities are not a means of achieving mutual exclusion.<P>
+Arranging task bodies in order of priority will elaborate the higher priority  
+tasks first.
+
+<H4>exceptions</H4>
+When there are dependencies between tasks, the dependencies will influence the 
+order in which the tasks should be elaborated. In these cases, the 
+dependencies in conjunction with the task priorities should be used to order 
+the task bodies.
+
+<H4>note</H4>
+Work is being done to minimize these problems, including the introduction of a 
+scheduling algorithm known as the priority ceiling protocol (Goodenough and 
+Sha 1988). The priority ceiling protocol reduces the blocking time that causes 
+<i>priority inversion</i> to only one critical region (defined by the entries in a 
+task). The protocol also eliminates deadlock unless a task recursively tries 
+to access a critical region. This protocol is based on priority inheritance 
+and thus deviates from the standard Ada tasking paradigm.<P>
+Priorities are used to control when tasks run relative to one another. When  
+both tasks are not blocked waiting at an entry, the highest priority task is  
+given precedence. However, the most critical tasks in an application do not  
+always have the highest priority. For example, support tasks or tasks with  
+small periods may have higher priorities, because they need to run frequently.<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-01.html#9.1">9.1&nbsp;Abort Statements</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-03.html#9.3">9.3&nbsp;Task Execution - Task Activation</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-05.html#9.5">9.5&nbsp;Entries, Entry Calls, and Accept Statements</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-08.html#9.8">9.8&nbsp;Priorities</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-B.html#B">B&nbsp;Predefined Language Pragmas</A>
+
+
+<H3><BR><a name="6.1.5">6.1.5   Delay Statements</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li> Do not depend on a particular delay being achievable (Nissen and 
+Wallis 1984). 
+<li>Do not use a busy waiting loop instead of a delay. 
+<li>Design to limit polling to those cases where absolutely necessary. 
+<li>Do not use knowledge of the execution pattern of tasks to achieve  
+timing requirements. 
+</UL>
+
+<H4>example</H4>
+The phase of a periodic task is the fraction of a complete cycle elapsed as  
+measured from a specified reference point. In the following example an  
+inaccurate delay causes the phase of the periodic task to drift over time  
+(i.e., the task starts later and later in the cycle):
+<table border cellpadding=6><tr><td><pre>Periodic: 
+   loop 
+      delay Interval; 
+      ... 
+   end loop Periodic;</pre></td></tr></table>
+
+The following example shows how to compensate for the inaccuracy of the delay  
+statement. This approach works well when the periodic requirement can be  
+satisfied with an average period.  Periodic tasks based on an inaccurate delay  
+can drift from their phase. Prevention of this drift can be achieved by  
+calculating the next time-to-occur based on the actual time of the current 
+execution. The following example illustrates this tactic:
+<table border cellpadding=6><tr><td><pre>No_Drift: 
+   declare 
+      use Calendar;
+      
+      -- Interval is a global constant of type Duration 
+      Next_Time : Calendar.Time := Calendar.Clock + Interval;
+      
+   begin  -- No_Drift 
+      Stable_Periodic: 
+         loop 
+            delay Next_Time - Clock; 
+            ...
+            
+            Next_Time := Next_Time + Interval; 
+         end loop Stable_Periodic; 
+   end No_Drift;</pre></td></tr></table>
+
+<H4>rationale</H4>
+The Ada language definition only guarantees that the delay time is a minimum. 
+The meaning of a <CODE>delay</CODE> statement is that the task is not scheduled for 
+execution before the interval has expired. In other words, a task becomes 
+eligible to resume execution as soon as the amount of time has passed. 
+However, there is no guarantee of when (or if) it is scheduled after that 
+time.<P>
+A busy wait can interfere with processing by other tasks. It can consume the 
+very processor resource necessary for completion of the activity for which it 
+is waiting. Even a loop with a delay can have the impact of busy waiting if 
+the planned wait is significantly longer then the delay interval. If a task 
+has nothing to do, it should be blocked at an accept or select statement.<P>
+Using knowledge of the execution pattern of tasks to achieve timing  
+requirements is nonportable. Ada does not specify the underlying scheduling  
+algorithm.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-03.html#9.3">9.3&nbsp;Task Execution - Task Activation</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-06.html#9.6">9.6&nbsp;Delay Statements, Duration, and Time</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-07.html#9.7.3">9.7.3&nbsp;Timed Entry Calls</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-C.html#C">C&nbsp;Predefined Language Environment</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

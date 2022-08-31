@@ -1,0 +1,205 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 8.5: Renaming Declarations</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="8.5">8.5</A>.  Renaming Declarations  </H2>
+<A HREF="lrm-08-04.html#8.4"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-08.html#8"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-08-06.html#8.6"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+A renaming declaration declares another name for an entity.
+<pre>
+    renaming_declaration ::=
+         identifier : type_mark   renames object_name;
+       | identifier : exception   renames exception_name;
+       | package identifier       renames package_name;
+       | subprogram_specification renames subprogram_or_entry_name; 
+</pre>
+<P>
+The  elaboration  of a renaming declaration evaluates the name that follows
+the reserved word renames and thereby determines the entity denoted by this
+name (the renamed entity).  At any point where a  renaming  declaration  is
+visible, the identifier, or operator symbol of this declaration denotes the
+renamed entity. 
+<P>
+The first form of renaming declaration is used for the renaming of objects.
+The  renamed  entity  must  be an object of the base type of the type mark.
+The properties of the renamed object  are  not  affected  by  the  renaming
+declaration.   In particular, its value and whether or not it is a constant
+are unaffected;  similarly, the constraints that apply to an object are not
+affected by renaming (any constraint  implied  by  the  type  mark  of  the
+renaming  declaration  is ignored).  The renaming declaration is legal only
+if exactly one object has this type and can be denoted by the object  name. 
+<P>
+The  following  restrictions  apply  to the renaming of a subcomponent that
+depends on discriminants of a variable.  The renaming is not allowed if the
+subtype of the variable, as defined in a corresponding object  declaration,
+component declaration, or component subtype indication, is an unconstrained
+type;   or  if  the  variable  is a generic formal object (of mode in out).
+Similarly if the variable is  a  formal  parameter,  the  renaming  is  not
+allowed  if  the  type mark given in the parameter specification denotes an   
+nconstrained type whose discriminants have default expressions. 
+<P>
+The second form of  renaming  declaration  is  used  for  the  renaming  of
+exceptions;  the third form, for the renaming of packages. 
+<P>
+The  last  form  of  renaming  declaration  is  used  for  the  renaming of
+subprograms  and  entries.   The  renamed  subprogram  or  entry  and   the
+subprogram  specification  given  in the renaming declaration must have the
+same parameter and result type profile (see <a href="lrm-06-06.html#6.6">6.6</a>).  The renaming declaration
+is legal only if exactly one visible  subprogram  or  entry  satisfies  the
+above  requirements  and  can  be  denoted by the given subprogram or entry
+name.  In addition, parameter modes must be identical for formal parameters  
+that are at the same parameter position. 
+<P>
+The subtypes of the parameters and result (if any) of a renamed  subprogram
+or  entry  are not affected by renaming.  These subtypes are those given in
+the  original  subprogram  declaration,  generic  instantiation,  or  entry
+declaration  (not  those of the renaming declaration);  even for calls that
+use the new name.  On the other hand, a renaming declaration can  introduce
+parameter  names  and  default  expressions  that  differ from those of the
+renamed subprogram;  named associations of calls with  the  new  subprogram
+name  must  use the new parameter name;  calls with the old subprogram name
+must use the old parameter names.                                                    
+<P>
+A procedure can only be renamed as a procedure.  Either of  a  function  or
+operator  can be renamed as either of a function or operator;  for renaming   
+as  an  operator,  the  subprogram  specification  given  in  the  renaming
+declaration  is  subject  to  the  rules  given in section <a href="lrm-06-07.html#6.7">6.7</a> for operator
+declarations.   Enumeration  literals  can   be   renamed   as   functions;
+similarly,  attributes  defined as functions (such as SUCC and PRED) can be
+renamed as functions.  An entry can only be renamed as  a  procedure;   the
+new name is only allowed to appear in contexts that allow a procedure name.
+An  entry of a family can be renamed, but an entry family cannot be renamed
+as a whole. 
+<P>
+Examples: 
+<pre>
+    declare
+       L : PERSON renames LEFTMOST_PERSON; -- see <a href="lrm-03-08.html#3.8.1">3.8.1</a>
+    begin
+       L.AGE := L.AGE + 1;
+    end; 
+
+    FULL : exception renames TABLE_MANAGER.TABLE_FULL; -- see <a href="lrm-07-05.html#7.5">7.5</a> 
+
+    package TM renames TABLE_MANAGER; 
+
+    function REAL_PLUS(LEFT, RIGHT : REAL   ) return REAL    renames "+";
+    function INT_PLUS (LEFT, RIGHT : INTEGER) return INTEGER renames "+"; 
+
+    function ROUGE return COLOR renames RED;  --  see <a href="lrm-03-05.html#3.5.1">3.5.1</a>
+    function ROT   return COLOR renames RED;
+    function ROSSO return COLOR renames ROUGE; 
+
+    function NEXT(X : COLOR) return COLOR renames COLOR'SUCC; -- see <a href="lrm-03-05.html#3.5.5">3.5.5</a> 
+</pre>
+<P>
+Example of a renaming declaration with new parameter names: 
+<pre>
+    function "*" (X,Y : VECTOR) return REAL renames DOT_PRODUCT; -- see <a href="lrm-06-01.html#6.1">6.1</a> 
+</pre>
+<P>
+Example of a renaming declaration with a new default expression: 
+<pre>
+    function MINIMUM(L : LINK := HEAD) return CELL renames MIN_CELL; -- see <a href="lrm-06-01.html#6.1">6.1</a> 
+</pre>
+<P>
+Notes: 
+<P>
+Renaming may be used to resolve name conflicts and to act as  a  shorthand.
+Renaming  with  a different identifier or operator symbol does not hide the
+old name;  the new name and the old name need not be visible  at  the  same
+points.    The   attributes  POS  and  VAL  cannot  be  renamed  since  the
+corresponding specifications cannot be written;  the  same  holds  for  the
+predefined multiplying operators with a universal_fixed result.   
+<P>
+Calls  with  the  new name of a renamed entry are procedure call statements
+and are not allowed at places where  the  syntax  requires  an  entry  call
+statement  in  conditional  and  timed  entry  calls;  similarly, the COUNT
+attribute is not available for the new name.    
+<P>
+A task object that is declared by an object declaration can be  renamed  as
+an   object.    However,   a  single  task  cannot  be  renamed  since  the
+corresponding task type is anonymous.  For similar reasons, an object of an
+anonymous array type cannot be  renamed.   No  syntactic  form  exists  for
+renaming a generic unit. 
+<P>
+A subtype can be used to achieve the effect of renaming a type (including a
+task type) as in 
+<pre>
+    subtype MODE is TEXT_IO.FILE_MODE;                                               
+</pre>
+<P>
+<b>References:</b>   <A HREF="lrm-01-06.html#1.6">allow</A>,
+<A HREF="lrm-04-01.html#4.1.4">attribute</A>,
+<A HREF="lrm-03-03.html#3.3">base type</A>,
+<A HREF="lrm-09-07.html#9.7.2">conditional entry call</A>,
+<A HREF="lrm-03-02.html#3.2.1">constant</A>,
+<A HREF="lrm-03-03.html#3.3">constrained  subtype</A>,
+<A HREF="lrm-03-03.html#3.3">constraint</A>,
+<A HREF="lrm-03-01.html#3.1">declaration</A>,
+<A HREF="lrm-06-01.html#6.1">default  expression</A>,
+<A HREF="lrm-03-07.html#3.7.1">depend on a discriminant</A>,
+<A HREF="lrm-03-07.html#3.7.1">discriminant</A>,
+<A HREF="lrm-03-01.html#3.1">elaboration</A>,
+ and <A HREF="lrm-03-09.html#3.9">3.9</A>,
+<A HREF="lrm-09-05.html#9.5">entry</A>,
+<A HREF="lrm-09-05.html#9.5">entry call</A>,
+<A HREF="lrm-09-05.html#9.5">entry call  statement</A>,
+<A HREF="lrm-09-05.html#9.5">entry declaration</A>,
+<A HREF="lrm-09-05.html#9.5">entry family</A>,
+<A HREF="lrm-03-05.html#3.5.1">enumeration literal</A>,
+<A HREF="lrm-04-01.html#4.1">evaluation of a name</A>,
+<A HREF="lrm-11.html#11">exception</A>,
+<A HREF="lrm-06-01.html#6.1">formal  parameter</A>,
+<A HREF="lrm-06-05.html#6.5">function</A>,
+<A HREF="lrm-02-03.html#2.3">identifier</A>,
+<A HREF="lrm-01-06.html#1.6">legal</A>,
+<A HREF="lrm-06-01.html#6.1">mode</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-03-02.html#3.2">object</A>,
+<A HREF="lrm-03-02.html#3.2">object  declaration</A>,
+<A HREF="lrm-06-07.html#6.7">operator</A>,
+<A HREF="lrm-06-07.html#6.7">operator  declaration</A>,
+<A HREF="lrm-06-01.html#6.1">operator symbol</A>,
+<A HREF="lrm-07.html#7">package</A>,
+<A HREF="lrm-06-02.html#6.2">parameter</A>,
+<A HREF="lrm-06-01.html#6.1">parameter specification</A>,
+<A HREF="lrm-06-01.html#6.1">procedure</A>,
+<A HREF="lrm-06-04.html#6.4">procedure   call   statement</A>,
+<A HREF="lrm-02-09.html#2.9">reserved  word</A>,
+<A HREF="lrm-03-03.html#3.3">subcomponent</A>,
+<A HREF="lrm-06.html#6">subprogram</A>,
+<A HREF="lrm-06-04.html#6.4">subprogram call</A>,
+<A HREF="lrm-06-01.html#6.1">subprogram declaration</A>,
+<A HREF="lrm-06-01.html#6.1">subprogram specification</A>,
+<A HREF="lrm-03-03.html#3.3.2">subtype</A>,
+<A HREF="lrm-09-02.html#9.2">task  object</A>,
+<A HREF="lrm-09-07.html#9.7.3">timed entry call</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-03-03.html#3.3.2">type mark</A>,
+<A HREF="lrm-03-02.html#3.2.1">variable</A>,
+<A HREF="lrm-08-03.html#8.3">visibility</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-11-03.html#11.3.4">11.3.4&nbsp;Renaming</a>
+<p>
+
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-06.html#5.6.9">5.6.9&nbsp;Blocks</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-07.html#5.7.1">5.7.1&nbsp;The Use Clause</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-07.html#5.7.2">5.7.2&nbsp;The Renames Clause</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

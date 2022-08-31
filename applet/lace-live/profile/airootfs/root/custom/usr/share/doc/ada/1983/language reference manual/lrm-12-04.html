@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 12.4: Example of a Generic Package</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="12.4">12.4</A>.  Example of a Generic Package</H2>
+<A HREF="lrm-12-03.html#12.3"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-12.html#12"><img src="lrm-up.gif" alt="[UP]"></A>
+<P>
+The following example provides a possible formulation of stacks by means of
+a  generic  package.   The  size  of  each  stack and the type of the stack
+elements are provided as generic parameters. 
+<pre>
+    generic
+       SIZE : POSITIVE;
+       type ITEM is private;
+    package STACK is
+       procedure PUSH(E : in  ITEM);
+       procedure POP (E : out ITEM);
+       OVERFLOW, UNDERFLOW : exception;
+    end STACK; 
+
+    package body STACK is 
+
+       type TABLE is array (POSITIVE range <>) of ITEM;
+       SPACE : TABLE(1 .. SIZE);
+       INDEX : NATURAL := 0; 
+
+       procedure PUSH(E : in ITEM) is
+       begin
+          if INDEX >= SIZE then
+             raise OVERFLOW;
+          end if;
+          INDEX := INDEX + 1;
+          SPACE(INDEX) := E;
+       end PUSH; 
+
+       procedure POP(E : out ITEM) is
+       begin
+          if INDEX = 0 then
+             raise UNDERFLOW;
+          end if;
+          E := SPACE(INDEX);
+          INDEX := INDEX - 1;
+       end POP; 
+
+    end STACK; 
+</pre>
+<P>
+Instances of this generic package can be obtained as follows: 
+<pre>
+    package STACK_INT  is new STACK(SIZE =&gt; 200, ITEM =&gt; INTEGER);
+    package STACK_BOOL is new STACK(100, BOOLEAN);
+</pre>
+<P>
+Thereafter, the procedures of the instantiated packages can  be  called  as
+follows: 
+<pre>
+    STACK_INT.PUSH(N);
+    STACK_BOOL.PUSH(TRUE);                                                       
+</pre>
+<P>
+Alternatively,  a  generic  formulation  of  the type STACK can be given as
+follows (package body omitted): 
+<pre>
+    generic
+       type ITEM is private;
+    package ON_STACKS is
+       type STACK(SIZE : POSITIVE) is limited private;
+       procedure PUSH(S : in out STACK; E : in  ITEM);
+       procedure POP (S : in out STACK; E : out ITEM);
+       OVERFLOW, UNDERFLOW : exception;
+    private
+       type TABLE is array (POSITIVE range <>) of ITEM;
+       type STACK(SIZE : POSITIVE) is
+          record
+             SPACE : TABLE(1 .. SIZE);
+             INDEX : NATURAL := 0;
+          end record;
+    end; 
+</pre>
+<P>
+In order to use such a  package,  an  instantiation  must  be  created  and
+thereafter stacks of the corresponding type can be declared: 
+<pre>
+    declare
+       package STACK_REAL is new ON_STACKS(REAL); use STACK_REAL;
+       S : STACK(100)
+    begin
+       ...
+       PUSH(S, 2.54);
+       ...
+    end;                           
+</pre>
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-12-03.html#12.3.3">12.3.3&nbsp;A Generic Package with Tasks</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-12-03.html#12.3.4">12.3.4&nbsp;A More Complicated Example</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

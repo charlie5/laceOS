@@ -1,0 +1,306 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Two - Chapter 11
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-10.html> Previous </a> |
+<a href=rat95-p2-12.html> Next </a>
+<hr>
+
+<h1>
+11   Exceptions
+</h1>
+
+<p>
+The changes to exception handling from Ada 83 are quite small.  The main
+changes are
+</p>
+<ul>
+<li>
+    The exception Numeric_Error is now a renaming of Constraint_Error
+     and is also obsolescent.
+<li>
+    The notion of an exception occurrence is introduced.  This refers to
+     an instance of raising an exception.  The package Ada.Exceptions
+     contains procedures providing additional information regarding an
+     exception occurrence.
+<li>
+    The interaction between exceptions and optimization is clarified.
+<li>
+    A minor improvement is that an accept statement may now directly
+     have an exception handler.
+</ul>
+
+<h2>
+<a name=1>
+11.1  Numeric Error
+</a>
+</h2>
+
+<p>
+Those familiar with the early use of Ada 83 will recall that there was
+considerable confusion between Numeric_Error and Constraint_Error in a
+number of corner situations.  As a consequence the ARG ruled that
+implementations should raise Constraint_Error in all situations for which
+Numeric_Error was originally intended.  This was a non-binding
+interpretation with the intention of making it binding in due course.
+</p>
+<p>
+Essentially all implementations of Ada 83 now raise Constraint_Error
+although for historic reasons some programs may contain dormant handlers
+for Numeric_Error.
+</p>
+<p>
+   The development of Ada 95 provided an opportunity to remove this
+historic wart once and for all.  It was thus proposed that Numeric_Error
+be completely removed.  However, many reviewers pointed out that those
+programs which had conformed to the advice of AI-387 by consistently
+writing
+<pre>
+   when Constraint_Error | Numeric_Error =>
+</pre>
+would then become illegal.  Accordingly, in Ada 95, Numeric_Error is
+simply a renaming of Constraint_Error.  Such a change alone would still
+have made the above illegal because, in Ada 83, all the exceptions in a
+handler had to be distinct; a supplementary change is thus that an
+exception may appear more than once in a handler in Ada 95.
+</p>
+<p>
+   Allowing multiple instances of an exception in a given handler has
+benefits in other areas.  It now allows sequences such as
+<pre>
+   when Text_IO.Data_Error | Integer_IO.Data_Error =>
+</pre>
+where there may be documentation advantages in revealing the potential
+causes of the exception.
+</p>
+<p>
+   Of course if the user had deliberately relied upon a distinction
+between Numeric_Error and Constraint_Error then the program will now
+become incorrect.  It may be simply incompatible but may also be
+inconsistent if the handlers are in different frames.  For a more
+detailed discussion see A-4.5.  Despite this possibility it was concluded
+that the perhaps safer alternative of completely removing Numeric_Error
+was not appropriate for this revision although it should be reconsidered
+at the next revision.
+</p>
+
+<h2>
+<a name=2>
+11.2  Exception Occurrences
+</a>
+</h2>
+
+<p>
+It is important in many programs to be able to recover from all
+exceptions and to continue processing in some way.  All exceptions
+including unexpected exceptions can be caught by an others handler.
+Unfortunately, however, Ada 83 provided no way of identifying the
+particular exception and it was thus not possible to log the details or
+take specific appropriate action.
+</p>
+<p>
+   This is overcome in Ada 95 by the introduction of the concept of an
+exception occurrence and a number of subprograms to access information
+regarding the occurrence.  The type Exception_Occurrence and the
+subprograms are declared in the package Ada.Exceptions.  The user can
+then declare a choice parameter in a handler through which the particular
+occurrence can be identified.  For example a fragment of a continuous
+embedded system might take the form
+<pre>
+   with Ada.Exceptions;
+   task body Control is
+   ...
+   begin
+      loop
+         begin
+            ... -- main algorithm
+         exception
+            when Error: others =>
+               -- unhandled exception; log it
+               Log("Unknown error in task Control"
+                     &
+                     Ada.Exceptions.Exception_Information(Error));
+               -- reset data structures as necessary
+         end;
+         -- loop around to restart the task
+      end loop;
+   end Control;
+</pre>
+</p>
+<p>
+The choice parameter Error is a constant of the type
+Exception_Occurrence.  The function Exception_Information returns a
+printable string describing the exception and details of the cause of the
+occurrence.  The actual details depend on the implementation.
+</p>
+<p>
+   Two other functions in Ada.Exceptions are Exception_Name and
+Exception_Message.  Exception_Name just returns the name of the exception
+(the expanded name) and Exception_Message returns a one-liner giving
+further details (it excludes the name).  Thus Exception_Name,
+Exception_Message and Exception_Information provide a hierarchy of
+strings appropriate to different requirements.
+</p>
+<p>
+   The purpose of the three functions is to provide information suitable
+for output and subsequent analysis in a standard way.  Although the
+details of the strings will depend upon the implementation nevertheless
+they should be appropriate for analysis on that system.
+</p>
+<p>
+   Exception occurrences can be saved for later analysis by the two
+subprograms Save_Occurrence.  Note that the type Exception_Occurrence is
+limited; using subprograms rather than allowing the user to save values
+through assignment gives better control over the use of storage for saved
+exception occurrences (which could of course be large since they may
+contain full trace back information).  The procedure Save_Occurrence may
+truncate the message to 200 characters whereas the function
+Save_Occurrence (which returns an access value) is not permitted to
+truncate the message.  (Note that 200 corresponds to the minimum size of
+line length required to be supported, see 2.2.)
+</p>
+<p>
+   An occurrence may be reraised by calling the procedure
+Reraise_Occurrence.  This is precisely equivalent to reraising an
+exception by a raise statement without an exception name and does not
+create a new occurrence (thus ensuring that the original cause is not
+lost).  An advantage of Reraise_Occurrence is that it can be used to
+reraise an occurrence that was stored by Save_Occurrence.
+</p>
+<p>
+   It is possible to attach a specific message to the raising of an
+exception by the procedure Raise_Exception.  The first parameter is a
+value of the type Exception_Id which identifies the exception; this value
+can be obtained by applying the attribute Identity to the identifier of
+the exception.  The second parameter is the message (a string) which can
+then be retrieved by calling Exception_Message.  This provides a
+convenient means of identifying the cause of an exception during program
+debugging.  Consider
+<pre>
+   declare
+      O_Rats: exception;
+   begin
+   ...
+      Raise_Exception(O_Rats'Identity, "Hard cheese");
+   ...
+      Raise_Exception(O_Rats'Identity, "Rat poison");
+   ...
+   exception
+      when Event: O_Rats =>
+         Put("O_Rats raised because of ");
+         Put(Exception_Message(Event));
+   end;
+</pre>
+Calling Raise_Exception raises the exception O_Rats with the string
+attached as the message.  The second call of Put in the handler will
+output Hard cheese or Rat poison according to which occurrence of O_Rats
+was raised.  See also the example in 9.6.1.
+</p>
+<p>
+   Note that the system messages do not include the name so user and
+system messages can be processed in a similar manner without the user
+having to insert the exception name in the message.
+</p>
+
+<h2>
+<a name=3>
+11.3  Exceptions and Optimization
+</a>
+</h2>
+
+<p>
+The general objective is to strike a sensible balance between prescribing
+the language so rigorously that no optimizations are possible (which
+would make the language uncompetitive) and allowing so much freedom that
+the language semantics are almost non-existent (which would impact on
+portability and provability).  A progressive approach is required that
+enables different degrees to be permitted in different circumstances.
+</p>
+<p>
+   Much of the difficulty lies with exceptions and ensuring that they are
+still raised in the appropriate frame.  In particular we have ensured
+that calls to subprograms in other library units are not disrupted.
+   For details of the approach taken the reader is referred to [RM95
+11.6].  A more detailed discussion of the rationale will be found in
+[AARM].
+</p>
+
+<h2>
+<a name=4>
+11.4  Other Improvements
+</a>
+</h2>
+
+<p>
+As mentioned in 1.3, the description of exception handling has been
+simplified by the introduction of a new syntactic category
+handled_sequence_of_statements which embraces a sequence of statements
+plus associated exception handlers and is used for all situations where
+handlers are allowed.
+</p>
+<p>
+   An incidental minor improvement following from this change to the
+syntax is that an accept statement can now have a handler without the
+necessity for an inner block, thus
+<pre>
+   accept E do
+      ...
+      ...
+   exception
+      ...
+   end E;
+</pre>
+</p>
+<p>
+   A further practical improvement is that the concept of a current error
+file is introduced.  This can conveniently be used to log error messages
+without cluttering other output.  This is discussed in more detail in
+Part Three.
+</p>
+
+<h2>
+<a name=5>
+11.5  Requirements Summary
+</a>
+</h2>
+
+<p>
+The specific requirement
+<pre>
+     R 4.5-A(1) - Accessing an Exception Name
+</pre>
+is met by the introduction of exception occurrences.
+</p>
+<p>
+   The requirement
+<pre>
+     R2.2-C(1) - Minimize Special Case Restrictions
+</pre>
+mentions as an example the curious fact that an accept statement cannot
+have an exception handler.  This has been rectified.
+</p>
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-10.html> Previous </a> |
+<a href=rat95-p2-12.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

@@ -1,0 +1,466 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 8.2: Robustness
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 8: Reusability</H2>
+
+<H3><a name="8.2">8.2     Robustness</a></H3>
+The following guidelines improve the robustness of Ada code. It is easy to 
+write code that depends on an assumption which you do not realize that you are 
+making. When such a part is reused in a different environment, it can break 
+unexpectedly. The guidelines below show some ways in which Ada code can be 
+made to automatically conform to its environment, and some ways in which it 
+can be made to check for violations of assumptions. Finally, some guidelines 
+are given to warn you about errors which Ada does not catch as soon as you 
+might like.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><BR>
+<a href="#8.2.1">8.2.1   Named Numbers</a><BR>
+<a href="#8.2.2">8.2.2   Unconstrained Arrays</a><BR>
+<a href="#8.2.3">8.2.3   Assumptions</a><BR>
+<a href="#8.2.4">8.2.4   Subtypes in Generic Specifications</a><BR>
+<a href="#8.2.5">8.2.5   Overloading in Generic Units</a><BR>
+<a href="#8.2.6">8.2.6   Hidden Tasks</a><BR>
+<a href="#8.2.7">8.2.7   Exceptions</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-08-05.html#8.5.2"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="8.2.1">8.2.1   Named Numbers</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li> Use named numbers and static expressions to allow multiple 
+dependencies to be linked to a small number of symbols. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------ 
+procedure Disk_Driver is
+
+   -- In this procedure, a number of important disk parameters are 
+   -- linked. 
+   Number_Of_Sectors  : constant :=     4; 
+   Number_Of_Tracks   : constant :=   200; 
+   Number_Of_Surfaces : constant :=    18; 
+   Sector_Capacity    : constant := 4_096;
+   
+   Track_Capacity   : constant := Number_Of_Sectors  * Sector_Capacity; 
+   Surface_Capacity : constant := Number_Of_Tracks   * Track_Capacity; 
+   Disk_Capacity    : constant := Number_Of_Surfaces * Surface_Capacity;
+   
+   type Sector_Range  is range 1 .. Number_Of_Sectors; 
+   type Track_Range   is range 1 .. Number_Of_Tracks; 
+   type Surface_Range is range 1 .. Number_Of_Surfaces;
+   
+   type Track_Map   is array (Sector_Range)  of ...; 
+   type Surface_Map is array (Track_Range)   of Track_Map; 
+   type Disk_Map    is array (Surface_Range) of Surface_Map;
+   
+begin  -- Disk_Driver 
+   ... 
+end Disk_Driver; 
+------------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+To reuse software that uses named numbers and static expressions 
+appropriately, just one or a small number of constants need to be reset and 
+all declarations and associated code are changed automatically. Apart from 
+easing reuse, this reduces the number of opportunities for error and documents 
+the meanings of the types and constants without using error-prone comments.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-02.html#3.2">3.2&nbsp;Objects and Named Numbers</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-09.html#4.9">4.9&nbsp;Static Expressions and Static Subtypes</A>
+
+        
+<H3><BR><a name="8.2.2">8.2.2   Unconstrained Arrays</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use unconstrained array types for array formal parameters and array  
+return values. 
+<li>Make the size of local variables depend on actual parameter size where  
+appropriate. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>   ... 
+   type Vector is array (Vector_Index range &lt;&gt;) of Element; 
+   type Matrix is array 
+         (Vector_Index range &lt;&gt;, Vector_Index range &lt;&gt;) of Element; 
+   ...
+   
+   --------------------------------------------------------------------- 
+   procedure Matrix_Operation (Data : in     Matrix) is
+   
+      Workspace   : Matrix (Data'Range(1), Data'Range(2)); 
+      Temp_Vector : Vector (Data'First(1) .. 2 * Data'Last(1)); 
+   ... 
+   ---------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+Unconstrained arrays can be declared with their sizes dependent on formal 
+parameter sizes. When used as local variables, their sizes change 
+automatically with the supplied actual parameters. This facility can be used 
+to assist in the adaption of a part since necessary size changes in local 
+variables are taken care of automatically.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-06.html#3.6">3.6&nbsp;Array Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-12-01.html#12.1.2">12.1.2&nbsp;Generic Formal Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-12-03.html#12.3.4">12.3.4&nbsp;Matching Rules for Formal Array Types</A>
+
+
+<H3><BR><a name="8.2.3">8.2.3   Assumptions</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Minimize the number of assumptions made by a unit. 
+<li>For assumptions which cannot be avoided, use types to automatically  
+enforce conformance. 
+<li>For assumptions which cannot be automatically enforced by types, add  
+explicit checks to the code. 
+<li>Document all assumptions. 
+</UL>
+
+<H4>example</H4>
+The following poorly written function documents, but does not check, its assumption:
+<table border cellpadding=6><tr><td><pre>   -- Assumption:  BCD value is less than 4 digits. 
+   function Binary_To_BCD (Binary_Value : in     Natural) 
+         return BCD;</pre></td></tr></table>
+<P>
+The next example enforces conformance with its assumption, making the checking  
+automatic, and the comment unnecessary:
+<table border cellpadding=6><tr><td><pre>   type Binary_Values is new Natural range 0 .. 9_999;
+   
+   function Binary_To_BCD (Binary_Value : in     Binary_Values) 
+         return BCD;</pre></td></tr></table>
+<p>         
+The next example explicitly checks and documents its assumption:
+<table border cellpadding=6><tr><td><pre>   --------------------------------------------------------------------- 
+   -- Out_Of_Range raised when BCD value exceeds 4  digits. 
+   function Binary_To_BCD (Binary_Value : in     Natural) 
+         return BCD is
+         
+      Maximum_Representable : constant Natural := 9_999;
+      
+   begin  -- Binary_To_BCD 
+      if Binary_Value &gt; Maximum_Representable then 
+         raise Out_Of_Range; 
+      end if;
+      
+      ... 
+   end Binary_To_BCD; 
+   ---------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+
+Any part that is intended to be used again in another program, especially if 
+the other program is likely to be written by other people, should be robust. 
+It should defend itself against misuse by defining its interface to enforce as 
+many assumptions as possible and by adding explicit defensive checks on 
+anything which cannot be enforced by the interface.
+
+<H4>note</H4>
+You can restrict the ranges of values of the inputs by careful selection or  
+construction of the types of the formal parameters. When you do so, the  
+compiler-generated checking code may be more efficient than any checks you 
+might write. Indeed, such checking is part of the intent of the strong typing  
+in the language. This presents a challenge, however, for generic units where  
+the user of your code selects the types of the parameters. Your code must be  
+constructed so as to deal with <u>any</u> value of <u>any</u> type the user may choose to  
+select for an instantiation.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-03.html#3.3">3.3&nbsp;Types and Subtypes</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-03.html#11.3">11.3&nbsp;Raise Statements</A>
+
+
+<H3><BR><a name="8.2.4">8.2.4   Subtypes in Generic Specifications</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Beware of using subtypes as type marks when declaring generic formal  
+objects of type <CODE>in out</CODE>. 
+<li>Beware of using subtypes as type marks when declaring parameters or  
+return values of generic formal subprograms. 
+<li>Use attributes rather than literal values. 
+</UL>
+
+<H4>example</H4>
+In the following example, it appears that any value supplied for the generic  
+formal object Object would be constrained to the range <CODE>1..10</CODE>. It also appears  
+that parameters passed at run-time to the Put routine in any instantiation, and 
+values returned by the Get routine, would be similarly constrained.
+<table border cellpadding=6><tr><td><pre>   subtype Range_1_10 is Integer range 1 .. 10;
+
+   --------------------------------------------------------------------- 
+   generic
+   
+      Object : in out Range_1_10; 
+      with procedure Put (Parameter : in     Range_1_10); 
+      with function  Get  return             Range_1_10;
+      
+   package Input_Output is 
+      ... 
+   end Input_Output; 
+   ---------------------------------------------------------------------</pre></td></tr></table>
+<P>
+However, this is not the case. Given the following legal instantiation:
+<table border cellpadding=6><tr><td><pre>   subtype Range_15_30 is Integer range 15 .. 30; 
+   Constrained_Object : Range_15_30 := 15;
+   
+   procedure Constrained_Put (Parameter : in     Range_15_30); 
+   function  Constrained_Get  return             Range_15_30;
+   
+   package Constrained_Input_Output 
+      is new Input_Output (Object =&gt; Constrained_Object, 
+                           Put    =&gt; Constrained_Put, 
+                           Get    =&gt; Constrained_Get);
+                           
+   ...</pre></td></tr></table>
+<P>
+<CODE>Object</CODE>, <CODE>Parameter</CODE>, and the return value of
+<CODE>Get</CODE> are constrained to the range  
+<CODE>15..30</CODE>. Thus, for example, if the body of the generic package contains an  
+assignment statement:<P>
+<IMG SRC="indent.gif"><CODE>Object := 1;</CODE><P>
+<CODE>Constraint_Error</CODE> is raised when this instantiation is executed.
+
+<H4>rationale</H4>
+According to Sections <a href="http://archive.adaic.com/standards/83lrm/html/lrm-12-01.html#12.1.1">12.1.1</a>(5)
+and <a href="http://archive.adaic.com/standards/83lrm/html/lrm-12-01.html#12.1.3">12.1.3</a>(5) of the
+<a href="http://archive.adaic.com/standards/83lrm/html/">Ada Language Reference Manual (Department of Defense 1983)</a>,
+when constraint checking is performed for  
+generic formal objects, and parameters and return values of generic formal  
+subprograms, the constraints of the actual subtype (not the formal subtype or  
+the base type) are enforced. <P>
+Thus, even with a generic unit which has been instantiated and tested many 
+times, and with an instantiation which reported no errors at instantiation 
+time, there can be a run-time error. Since the subtype constraints of the 
+generic formal are ignored, the Ada Language Reference Manual (Department of 
+Defense 1983) suggests using the name of a base type in such places to avoid 
+confusion. Even so, you must be careful not to assume the freedom to use any 
+value of the base type because the instantiation imposes the subtype 
+constraints of the generic actual parameter. To be safe, always refer to 
+specific values of the type via symbolic expressions containing attributes 
+like <CODE>'First</CODE>, <CODE>'Last</CODE>, <CODE>'Pred</CODE>, and
+<CODE>'Succ</CODE> rather than via literal values.<P>
+The best solution is to introduce a new generic formal type parameter and use  
+it in place of the subtype, as shown below:
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------ 
+generic 
+   type Object_Range is range &lt;&gt;; 
+   Object : in out Object_Range;
+   
+   with procedure Put (Parameter : in     Object_Range); 
+   with function  Get  return             Object_Range;
+   
+package Input_Output is 
+   ... 
+end Input_Output; 
+------------------------------------------------------------------------</pre></td></tr></table>
+<P>
+This is a clear statement by the developer of the generic unit that no  
+assumptions are made about the <CODE>Objects</CODE> type other than that it is an integer  
+type. This should reduce the likelihood of any invalid assumptions being made  
+in the body of the generic unit.<P>
+For generics, attributes provide the means to maintain generality.  It is  
+possible to use literal values, but literals run the risk of violating some  
+constraint.  For example, assuming an array's index starts at one may cause a  
+problem when the generic is instantiated for a zero-based array type.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-01.html#4.1.4">4.1.4&nbsp;Attributes</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-02.html#4.2">4.2&nbsp;Literals</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-12-01.html#12.1.1">12.1.1&nbsp;Generic Formal Objects</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-12-03.html#12.3">12.3&nbsp;Generic Instantiation</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-A.html#A">A&nbsp;Predefined Language Attributes</A>
+
+
+<H3><BR><a name="8.2.5">8.2.5   Overloading in Generic Units</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Be careful about overloading the names of subprograms exported by the  
+same generic package. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------ 
+generic 
+   type Item is limited private;
+   
+package Input_Output is
+
+   procedure Put (Value : in     Integer); 
+   procedure Put (Value : in     Item);
+   
+end Input_Output; 
+------------------------------------------------------------------------</pre></td></tr></table>
+
+
+<H4>rationale</H4>
+If the generic package shown in the example above is instantiated with <CODE>Integer</CODE> 
+(or any subtype of <CODE>Integer</CODE>) as the actual type corresponding to generic formal 
+<CODE>Value</CODE>, then the two <CODE>Put</CODE> procedures have identical interfaces,
+and all calls to 
+<CODE>Put</CODE> are ambiguous. Therefore, this package cannot be used with type <CODE>Integer</CODE>. 
+In such a case, it is better to give unambiguous names to all subprograms. See 
+<a href="http://archive.adaic.com/standards/83lrm/html/lrm-12-03.html#12.3">Section 12.3(22) of the Ada Language Reference Manual</a>
+(Department of Defense 1983) for more information.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-06.html#6.6">6.6&nbsp;Parameter and Result Type Profile - Overloading of Subprograms</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-07.html#8.7">8.7&nbsp;The Context of Overload Resolution</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-12-03.html#12.3">12.3&nbsp;Generic Instantiation</A>
+
+
+<H3><BR><a name="8.2.6">8.2.6   Hidden Tasks</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Within a specification, document any tasks that would be activated by  
+<b>with</b>'ing the specification and by using any part of the specification. 
+<li>Document which generic formal parameters are accessed from a task  
+hidden inside the generic unit. 
+</UL>
+
+<H4>rationale</H4>
+The effects of tasking becomes a major factor when reusable code enters the 
+domain of real-time systems.  Even though tasks may be used for other 
+purposes, their effect on scheduling algorithms is still a concern and must be 
+clearly documented.  With the task clearly documented, the real-time 
+programmer can then analyze performance, priorities, and so forth to meet 
+timing requirements; or if necessary, he can modify or even redesign the 
+component.<P>
+Concurrent access to data structures must be carefully planned to avoid 
+errors, especially for data structures which are not atomic
+(see <a href="sty-06.html">Chapter 6</a> for 
+details). If a generic unit accesses one of its generic formal parameters 
+(reads or writes the value of a generic formal object or calls a generic 
+formal subprogram which reads or writes data) from within a task contained in 
+the generic unit, then there is the possibility of concurrent access for which 
+the user may not have planned. In such a case, the user should be warned by a 
+comment in the generic specification.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-02.html#7.2">7.2&nbsp;Package Specifications and Declarations</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-03.html#9.3">9.3&nbsp;Task Execution - Task Activation</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-10-01.html#10.1.1">10.1.1&nbsp;Context Clauses - With Clauses</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-12-01.html#12.1.1">12.1.1&nbsp;Generic Formal Objects</A>
+
+
+<H3><BR><a name="8.2.7">8.2.7   Exceptions</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Propagate exceptions out of reusable parts. Handle exceptions within  
+reusable parts only when you are certain that the handling is appropriate in  
+all circumstances. 
+<li> Propagate exceptions raised by generic formal subprograms after 
+performing any cleanup necessary to the correct operation of future 
+invocations of the generic instantiation. 
+<li>Leave state variables in a valid state when raising an exception. 
+<li>Leave parameters unmodified when raising an exception. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------ 
+generic
+
+   type Number is limited private;
+   
+   with procedure Get (Value :    out Number);
+   
+procedure Process_Numbers;
+
+------------------------------------------------------------------------ 
+procedure Process_Numbers is
+
+   Local : Number;
+   
+   procedure Perform_Cleanup_Necessary_For_Process_Numbers is 
+         separate; 
+   ...
+   
+begin  -- Process_Numbers 
+   ...
+   
+   Catch_Exceptions_Generated_By_Get: 
+      begin 
+         Get(Local);
+         
+      exception 
+         when others =&gt; 
+            Perform_Cleanup_Necessary_For_Process_Numbers; 
+            raise; 
+      end Catch_Exceptions_Generated_By_Get;
+      
+   ... 
+end Process_Numbers; 
+------------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+On most occasions, an exception is raised because an undesired event (such as  
+floating-point overflow) has occurred. Such events often need to be dealt with 
+entirely differently with different uses of a particular software part. It is  
+very difficult to anticipate all the ways that users of the part may wish to  
+have the exceptions handled. Passing the exception out of the part is the  
+safest treatment.<P>
+In particular, when an exception is raised by a generic formal subprogram, the 
+generic unit is in no position to understand why or to know what corrective 
+action to take. Therefore, such exceptions should always be propagated back to 
+the caller of the generic instantiation. However, the generic unit must first 
+clean up after itself, restoring its internal data structures to a correct 
+state so that future calls may be made to it after the caller has dealt with 
+the current exception. For this reason, all calls to generic formal 
+subprograms should be within the scope of a <CODE>when others</CODE> exception handler if 
+the internal state is modified, as shown in the example above.<P>
+When a reusable part is invoked, the user of the part should be able to know 
+exactly what operation (at the appropriate level of abstraction) has been 
+performed. For this to be possible, a reusable part must always do all or none 
+of its specified function; it must never do half. Therefore, any reusable part 
+which terminates early by raising or propagating an exception should return to 
+the caller with no effect on the internal or external state. The easiest way 
+to do this is to test for all possible exceptional conditions before making 
+any state changes (modifying internal state variables, making calls to other 
+reusable parts to modify their states, updating files, etc.). When this is not 
+possible, it is best to restore all internal and external states to the values 
+which were current when the part was invoked before raising or propagating the 
+exception. Even when this is not possible, it is important to document this 
+potentially hazardous situation in the comment header of the specification of 
+the part.<P>
+A similar problem arises with parameters of mode <CODE>out</CODE> or <CODE>in out</CODE> when exceptions  
+are raised. The Ada language defines these modes in terms of &quot;copy-in&quot; and 
+&quot;copy-back&quot; semantics, but leaves the actual parameter-passing mechanism 
+undefined. When an exception is raised, the copy-back does not occur, but for 
+an Ada compiler which passes parameters by reference, the actual parameter has  
+already been updated. When parameters are passed by copy, the update does not  
+occur. To reduce ambiguity, increase portability, and avoid situations where  
+some but not all of the actual parameters are updated when an exception is  
+raised, it is best to treat values of <CODE>out</CODE> and <CODE>in out</CODE> parameters like state  
+variables, updating them only after it is certain that no exception will be  
+raised.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-02.html#11.2">11.2&nbsp;Exception Handlers</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-03.html#11.3">11.3&nbsp;Raise Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-04.html#11.4">11.4&nbsp;Exception Handling</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-12-02.html#12.2">12.2&nbsp;Generic Bodies</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

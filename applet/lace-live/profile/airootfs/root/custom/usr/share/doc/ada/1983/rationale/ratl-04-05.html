@@ -1,0 +1,728 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Rationale, Sec 4.5: Array Types</TITLE>
+</HEAD>
+
+<BODY>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 4: Types</H2>
+
+<H3><a name="4.5">4.5 Array Types</a></H3>
+
+An array  type declaration  specifies the subtype of array components,
+and the  subtype of index values for each index position. On the other
+hand, the  index bounds  are not specified. This means that the set of
+array values  defined by  an array type contains arrays with different
+numbers of  components. Consider  for example  the formulation  of the
+predefined array type STRING:
+<PRE>    type STRING is array (POSITIVE range &lt;&gt;) of CHARACTER;</PRE>
+<p>
+This declaration  specifies  that  values  of  type  STRING  are  one-
+dimensional arrays  whose  components  have  the  type  CHARACTER.  It
+further specifies that the index values must be positive integers, the
+subtype POSITIVE being declared as
+<PRE>    subtype POSITIVE is INTEGER range 1 .. INTEGER'LAST;</PRE>
+<p>
+On the  other hand, it does not specify which values should be assumed
+by the  index bounds.  This is  stressed by  the box (&lt;&gt;) in the index
+subtype definition
+<PRE>    POSITIVE range &lt;&gt;</PRE>
+<p>
+The box  symbol  (here  as  elsewhere  in  the  language)  stands  for
+something that  is to  be filled  in later;  something  that  is  left
+unspecified, but only temporarily.
+<p>
+Later on,  it will  be possible  to partition  the set of array values
+into subsets  corresponding to  some specific  index bounds. Each such
+subset defines  a subtype  of the  array type.  The form of constraint
+used to specify the range of index values (and hence the bounds) for a
+given index position is called an index constraint. For example:
+<PRE>    BUFFER :  STRING(1 .. 1000);</PRE>
+<p>
+This declares  the variable BUFFER of type STRING: an index constraint
+is required  in such  a declaration  and, in  the case  considered, it
+specifies that  the lower  and upper bounds are the positive numbers 1
+and 1000.
+<p>
+We can  also declare  a subtype,  and thus  give a name to the subtype
+indication formed  by the  name of the array type followed by an index
+constraint. Subsequently,  we can  use  the  subtype  name  in  object
+declarations:
+<table border cellpadding=6><tr><td><pre>
+subtype LINE is STRING(1 .. 80);
+
+LEAD       :  constant LINE  :=  (LINE'RANGE =&gt;  ' ');
+HEADER  :  LINE :=  LEAD;
+</pre></td></tr></table>
+<p>
+We have  used the  array attribute LINE'RANGE in the initialization of
+LEAD: it  provides the  index range  of the subtype LINE in a symbolic
+manner, and  is therefore  easier to  maintain than  stating the range
+literally, as 1 .. 80.
+<p>
+Other examples of array attributes are given below:
+<table border cellpadding=6><tr><td><pre>
+BUFFER'FIRST          -- 1
+BUFFER'LAST           -- 1000
+BUFFER'LENGTH         -- 1000
+LINE'LAST             -- 80
+LEAD'LAST             -- 80 (same as LINE'LAST)
+</pre></td></tr></table>
+<p>
+In some  cases we  want all  declared objects of a given array type to
+have the same index bounds. This can be achieved by providing an index
+constraint directly in the array type declaration. For example
+<PRE>    type SCHEDULE is array (DAY) of BOOLEAN;</PRE>
+<p>
+This form is actually a contraction of the declaration of an anonymous
+array type followed by the declaration of a subtype:
+<table border cellpadding=6><tr><td><pre>
+type schedule  is array  (DAY range  &lt;&gt;) of  BOOLEAN;  -- arbitrary range of days
+subtype SCHEDULE is schedule (DAY'FIRST .. DAY'LAST);  -- always 7 days
+</pre></td></tr></table>
+<p>
+This means that SCHEDULE is actually a (constrained) array subtype and
+all objects that have this subtype therefore have the same bounds (MON
+and SUN).
+<p>
+There are two cases in which the subtype of an array object (and hence
+the bounds)  can be  inferred, and  therefore is  not required  to  be
+explicit in  the declaration  of the  object. The  first case  is  for
+constants. In  a way,  constancy is  the ultimate form of restriction:
+whereas an  index constraint  freezes the  index bounds  but  not  the
+values of  the array  components, everything is invariable in the case
+of a  constant: the component values and hence also the bounds. Thus a
+constant declaration such as
+<PRE>    MESSAGE :  constant STRING  :=  "how many characters?";</PRE>
+<p>
+is allowed.  The implied  lower bound is 1 - that is, POSITIVE'FIRST -
+and the  implied upper  bound is  given by the number of characters of
+the string  (which we  can  subsequently  obtain  from  the  attribute
+MESSAGE'LENGTH).
+<p>
+The second  case is  for formal  parameters.  We  want  to  provide  a
+subprogram of  general utility  that is  applicable to  any array of a
+given type,  whatever the  index bounds. This is achieved by declaring
+the formal  parameter to  have this array type. Then, for each call of
+the subprogram, the formal parameter will be constrained by the bounds
+obtained from  the associated actual parameter. For example a function
+MIRROR, returning the mirror image of a string of arbitrary bounds, is
+defined as follows:
+<table border cellpadding=6><tr><td><pre>
+function MIRROR(A :  STRING) return STRING is
+  RESULT :  STRING(A'RANGE);
+begin
+  for N in A'RANGE loop
+    RESULT(N) :=  A(A'LAST - (N - A'FIRST));
+  end loop;
+  return RESULT;
+end MIRROR;
+</pre></td></tr></table>
+<p>
+For each  call, the formal parameter A is constrained by the bounds of
+the associated  actual parameter.  This means  that the bounds A'FIRST
+and A'LAST  (and hence  the range  A'RANGE) have  well-defined  values
+during a given call. Consider for example:
+<table border cellpadding=6><tr><td><pre>
+EGASSEM : constant STRING  :=  MIRROR(MESSAGE);
+    -- the string "?sretcarahc ynam woh"
+</pre></td></tr></table>
+<p>
+then  during  the  call  MIRROR(MESSAGE),  the  value  of  A'FIRST  is
+MESSAGE'FIRST; that  of A'LAST  is MESSAGE'LAST; and the range A'RANGE
+is defined  by MESSAGE'RANGE. These values are invariable for the call
+considered, but they need not be the same for different calls.
+<p>
+To complete  our discussion  of array types we need to mention the set
+of operations  defined by  an  array  type.  Some  of,  them  such  as
+indexing, are fairly classical: indexing the array BUFFER by the index
+value N  is achieved  by BUFFER(N)  and refers to the Nth component of
+that array  (since the  lower bound is 1). The discussion given in the
+following subsections  will concentrate  upon features  that are  less
+classical: slices and aggregates.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<br><br>
+<a href="#4.5.1">4.5.1  Slices and Sliding</a><BR>
+<a href="#4.5.2">4.5.2  Array Aggregates</a><BR>
+<a href="#4.5.3">4.5.3  Equivalence and Explicit Conversions</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="4.5.1">4.5.1 Slices and Sliding</a></H3>
+<p>
+
+Slices are  quite useful  for programs that deal with strings and more
+generally for  one-dimensional arrays.  Consider, for example, setting
+the headline  of a  given page  of a dictionary. Assuming the headline
+declared as
+<PRE>    HEADLINE :  STRING(1 .. 60)  :=  (others =&gt; ' ');</PRE>
+<p>
+it could later be filled by slice assignments such as
+<table border cellpadding=6><tr><td><pre>
+HEADLINE(1  .. 10)    :=  "battle cry";
+HEADLINE(29 .. 32)    :=  " 125";
+HEADLINE(46 .. 60)    :=  "Bayeux tapestry";
+</pre></td></tr></table>
+<p>
+More realistically,  our application would have functions defining the
+left, middle, and right sides for a given page number:
+<table border cellpadding=6><tr><td><pre>
+function LEFT    (N :  POSITIVE) return STRING (1 .. 20);
+function MID (N :  POSITIVE) return STRING (1 .. 4);
+function RIGHT   (N :  POSITIVE) return STRING (1 .. 20);
+</pre></td></tr></table>
+<p>
+so that the composition for the page 125 could appear as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+HEADLINE(1 .. 20)     :=  LEFT(125);
+HEADLINE(29 .. 32)    :=  MID(125);
+HEADLINE(41 .. 60)    :=  RIGHT(125);
+</pre></td></tr></table>
+<p>
+Another way  of programming this headline composition is to declare an
+eight character  blank filler  and then  use string catenation. So for
+the current page P:
+<p>
+<table border cellpadding=6><tr><td><pre>
+FILLER :  constant STRING(1 .. 8)  :=  (others =&gt;  ' ');
+  ...
+HEADLINE :=  LEFT(P) &amp; FILLER &amp; MID(P) &amp; FILLER &amp; RIGHT(P);
+</pre></td></tr></table>
+<p>
+In another part of the program, in which we analyze the header, we may
+define another string
+<p>
+<PRE>    PLACE :  STRING(1 .. 60);</PRE>
+<p>
+and write the slice assignment
+<p>
+<PRE>    PLACE(1 .. 20) :=  HEADLINE(41 .. 60);</PRE>
+<p>
+Finally, we  may want  to compare  a slice  to a  string literal or to
+another slice:
+<p>
+<table border cellpadding=6><tr><td><pre>
+if PLACE(1 .. 20) = "          BAYEUX TAPESTRY" or
+   PLACE(1 .. 20) =  HEADLINE (41 .. 60) then
+</pre></td></tr></table>
+<p>
+Having reviewed  these typical  uses of  slices, we  now consider what
+they are  and what  is involved  in slice assignments and comparisons.
+Consider first the type of a slice such as
+<p>
+<PRE>    PLACE(41 .. 60)</PRE>
+<p>
+This type  is the  same as  that of  PLACE, that  is, the type STRING.
+Remember that  an array  type defines  the subtype of the index bounds
+but not the bounds themselves. Thus STRING was defined as
+<p>
+<PRE>    type STRING is array (POSITIVE range &lt;&gt;) of CHARACTER;</PRE>
+<p>
+Consequently PLACE and PLACE(41 .. 60) are both of this type, although
+they have different subtypes. The subtype of PLACE is
+<p>
+<PRE>    STRING(1 .. 60)</PRE>
+<p>
+whereas the subtype of
+<p>
+<PRE>    PLACE(41 .. 60)</PRE>
+<p>
+is
+<p>
+<PRE>    STRING(41 .. 60)</PRE>
+<p>
+Note that  we can have slices even in the case where the array type is
+anonymous. For  example, given  the  type  SCHEDULE  declared  in  the
+previous section we can declare
+<p>
+<PRE>    A, B :  SCHEDULE;</PRE>
+<p>
+and then perform slice assignments such as
+<p>
+<table border cellpadding=6><tr><td><pre>
+A(MON .. FRI)       :=  (MON    .. FRI    =&gt;  TRUE);
+A(SAT .. SUN)       :=  (SAT    .. SUN    =&gt;  FALSE);
+</pre></td></tr></table>
+<p>
+Similarly we can catenate slices as in
+<p>
+<table border cellpadding=6><tr><td><pre>
+B :=  A(WED .. SUN) &amp; A(MON .. TUE);
+   -- B = (TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE)
+</pre></td></tr></table>
+<p>
+In the  above cases,  slices such  as A(MON  .. FRI) and A(SAT .. SUN)
+have the  anonymous type schedule (and this is quite legitimate, as is
+amply demonstrated by these examples).
+<p>
+Consider next what is involved in an assignment statement such as
+<p>
+<PRE>    PLACE(1 .. 20) :=  HEADLINE(41 .. 60);</PRE>
+<p>
+The two  objects do have the same type (STRING) but their subtypes are
+STRING(1 ..  20) and  STRING(41 ..  60)  respectively,  and  are  thus
+different. The  assignment is nevertheless correct: the language rules
+specify that  before assigning  HEADLINE(41 ..  60), this  array value
+undergoes a  subtype conversion  to the subtype of the left-hand side,
+that is,  to STRING(1  .. 20).  This subtype  conversion  -  sometimes
+called sliding  - is  possible only  if the  two arrays  have the same
+length (which  is true  for our  example). If  the lengths differ, the
+subtype conversion fails and the exception CONSTRAINT_ERROR is raised.
+<p>
+Sliding is also involved in comparisons such as
+<p>
+<PRE>    PLACE(1 .. 20) = HEADLINE(41 .. 60)</PRE>
+<p>
+so that  equality does  not require  the same subtype (and bounds): it
+only  requires  that  the  lengths  be  the  same  and  that  matching
+components be equal - matching components are those that have the same
+relative position.  If the  lengths differ, the two slices are unequal
+(no exception is raised).
+<p>
+So far  we have  given examples  of sliding in the case of slices, but
+subtype conversions  are also  involved for  array objects that do not
+have the same bounds. For example, having declared
+<p>
+<PRE>    BANNER :  STRING(101 .. 160);</PRE>
+<p>
+the following  assignment is  correct and  involves a  similar subtype
+conversion:
+<p>
+<PRE>    BANNER :=  PLACE;</PRE>
+<p>
+To conclude,  sliding corresponds  to a  view of  arrays for which the
+bounds are  not part  of array values but rather of array objects. The
+logical consistency  of the  model moreover requires that array bounds
+be transmitted  to formal  parameters. The  sliding semantics selected
+for equality can actually be described in Ada itself:
+<p>
+<table border cellpadding=6><tr><td><pre>
+function "=" (LEFT, RIGHT :  STRING) return BOOLEAN is
+begin
+  if LEFT'LENGTH /= RIGHT'LENGTH then
+    return FALSE;
+  end if;
+  for N in LEFT'RANGE loop
+    if LEFT(N) /=  RIGHT(N + (RIGHT'FIRST - LEFT'FIRST)) then
+      return FALSE;
+    end if;
+  end loop;
+  return TRUE;
+end;
+</pre></td></tr></table>
+<p>
+Sliding actually corresponds to the term (RIGHT'FIRST - LEFT'FIRST) in
+the indexing of the right array.
+<p>
+Without slices  the necessity  for a  sliding semantics of assignments
+would not  be as  obvious: after  all it would be possible to restrict
+assignments  to   cases  where  the  bounds  were  the  same.  Another
+alternative would  have been  to consider  that sliding is part of the
+slicing itself.  This would mean, for example, that the lower bound of
+any string  slice is  POSITIVE'FIRST. However  this semantics does not
+appear very intuitive. Consider for example the following function:
+<p>
+<table border cellpadding=6><tr><td><pre>
+function LOCATE(C :  CHARACTER;  S  :  STRING) return INTEGER is
+begin
+  for N in S'RANGE loop
+    if C = S(N) then
+      return N;
+    end if;
+  end loop;
+  return 0;      -- not found
+end;
+</pre></td></tr></table>
+<p>
+With the  Ada semantics  of slices  we can  call this  function in the
+following manner:
+<p>
+<table border cellpadding=6><tr><td><pre>
+LOCATE('X', BUFFER)
+LOCATE('&#42;', BUFFER(30 .. 90))
+LOCATE('?', BUFFER(100 .. 200))
+</pre></td></tr></table>
+<p>
+and so  on, and  we expect the result, if not zero, to be usable as an
+index indicating  a position  where the  character was  located in the
+buffer. Now  this relies  essentially on  the fact that both the lower
+and upper  bounds of  the actual array are passed to the formal array.
+This would  not be  the case if slicing already implied sliding, since
+all STRING slices would have a lower bound equal to 1.
+
+<p>
+<H3><BR><a name="4.5.2">4.5.2 Array Aggregates</a></H3>
+<p>
+
+The syntax of array aggregates allows for named aggregates, aggregates
+with the  choice others,  and positional  aggregates. These  forms are
+justified by  readability and by convenience, and also, in the case of
+positional aggregates,  by tradition.  Their design  had to  take into
+account certain  limitations, inspired  either  by  efficiency  or  by
+consistency with other rules, such as sliding.
+<p>
+The different  forms of  aggregate are  reviewed in  what follows. For
+each form  we discuss  what is allowed, and consider the determination
+of the  subtype of  the corresponding  aggregates -  that is,  how  to
+determine the  lower and  upper bounds.  Most examples will presuppose
+the following declarations:
+<p>
+<table border cellpadding=6><tr><td><pre>
+subtype INDEX is INTEGER range -1 .. +200;
+type     TABLE is array (INDEX range &lt;&gt;) of INTEGER;
+
+subtype QUINTET  is TABLE(0 .. 4);
+subtype TRIPLE   is TABLE(1 .. 3);
+
+TRIO   :  TRIPLE;
+QUINT  :  QUINTET;
+ROW    :  TABLE(1 .. 50);
+
+procedure DISPLAY    (T :  TABLE);
+procedure TRIANGLE (T :  TRIPLE);
+</pre></td></tr></table>
+<p>
+
+<H4>Named Aggregates</H4>
+
+Named associations  are provided for reasons of readability: they make
+the association  between  index  values  and  component  values  fully
+explicit. For example:
+<p>
+<PRE>    (1 .. 10 =&gt;  0,  11 .. 50 =&gt;  25);</PRE>
+<p>
+The choices  being explicit,  the lower  and upper  bounds  are  fully
+defined by  the smallest  and largest  choice values, respectively, so
+that the  subtype of  the above  aggregate is  TABLE(1 ..  50), in the
+present context. Thus for the call
+<p>
+<PRE>    DISPLAY((1 .. 10 =&gt;  0,  11 .. 50 =&gt;  25));</PRE>
+<p>
+the attributes  of the  formal  parameter  T  have  the  corresponding
+values: T'FIRST = 1 and T'LAST = 50.
+<p>
+For assignment statements, sliding applies as usual, and the following
+assignment is therefore well-defined:
+<p>
+<PRE>    QUINT :=  (1 .. 5 =&gt;  33);</PRE>
+<p>
+The  limitations   imposed  on   named  aggregates  are  justified  by
+efficiency considerations:  the choices  must be static (computable at
+compilation time),  unless the  aggregate includes  a single component
+association, and  this component association has a single choice. Thus
+an aggregate with a single choice such as
+<p>
+<PRE>    (1 .. N =&gt;  25)</PRE>
+<p>
+where N is computed at run time, is allowed. But an aggregate such as
+<p>
+<PRE>    (M .. N =&gt;  25,  K .. L =&gt;  12)</PRE>
+<p>
+where M,  N, K  and L  are not static is not allowed, since this would
+require a  rather complex  check at  run time  that  the  ranges  were
+adjacent and did not overlap.
+<p>
+
+<H4>The Choice Others
+</H4>
+In many cases most components of an array will have the same value and
+it will be convenient to obtain the array value by an aggregate of the
+form:
+<p>
+<PRE>    ( ... , others =&gt;  COMMON_VALUE)</PRE>
+<p>
+The particular case where all components have the same common value is
+also frequent; in this case the form of the aggregate reduces to
+<p>
+<PRE>    (others =&gt;  COMMON_VALUE)</PRE>
+<p>
+In  contrast   to  the   situation  encountered  with  previous  named
+aggregates,  the   presence  of  an  others  choice  implies  that  no
+information about  the bounds can be derived from the aggregate itself
+and this  information will  therefore have  to be  obtained  from  the
+context. An  aggregate with  the choice  others will  be illegal  in a
+context that  does not define the bounds. For this reason, a call such
+as:
+<p>
+<PRE>    DISPLAY((others =&gt;  25));      -- illegal</PRE>
+<p>
+is illegal since no information on the bounds can be obtained from the
+context; indeed  it is the other way round: since the formal parameter
+is unconstrained,  it expects  the bounds to be supplied by the actual
+parameter. For similar reasons the comparison
+<p>
+<PRE>    if TRIO = (others =&gt;  10) then  ...</PRE>
+<p>
+is not allowed, since the predefined operator "=", which is implicitly
+declared by  the declaration  of the  type TABLE,  has  the  following
+profile:
+<p>
+<PRE>    function "=" (LEFT, RIGHT :  TABLE) return BOOLEAN;</PRE>
+<p>
+so that  the right  parameter is  of the  (unconstrained)  array  type
+TABLE, which does not provide information on the bounds.
+<p>
+For the  above reasons  an aggregate  containing the  choice others is
+only allowed  in contexts  where we know the array subtype, whether by
+declaration or by qualification, as in the following examples:
+<p>
+<table border cellpadding=6><tr><td><pre>
+TRIANGLE((others =&gt;  15));                          -- subtype TRIPLE
+DISPLAY(TRIPLE'(others =&gt;  21));                    -- qualified: a TRIPLE
+DISPLAY(QUINTET'(0 .. 1 =&gt; 5,  others =&gt; 15));   -- qualified: a QUINTET
+</pre></td></tr></table>
+<p>
+For assignment  statements, the  choice others  is also allowed, since
+the subtype  of the variable on the left-hand side is always known. So
+we can write:
+<p>
+<table border cellpadding=6><tr><td><pre>
+TRIO   :=  (others =&gt; 0);
+QUINT  :=  (others =&gt; 1);
+</pre></td></tr></table>
+<p>
+Note that  an others  choice need  not be  static, as  is shown in the
+following example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+for N in 1 .. 4 loop
+  ROW(10&#42;N .. 12&#42;N) :=  (others =&gt;  3);
+end loop;
+</pre></td></tr></table>
+<p>
+Whereas the  above aggregate  is allowed,  an aggregate  combining the
+choice others  with other  named associations  is not  allowed as  the
+right-hand-side expression  of an  assignment  statement  (unless  the
+aggregate is qualified). To understand this restriction, remember that
+an array assignment involves sliding of the bounds of the value of the
+array expression.  In combination  with the  choice others  this could
+have led to surprises. Consider for example the variable:
+<p>
+<PRE>    FIVE :  TABLE(2 .. 6);</PRE>
+<p>
+and the (illegal) assignment statement
+<p>
+<PRE>    FIVE :=  (3 =&gt;  8,  others =&gt;  1);     -- illegal</PRE>
+<p>
+One might  expect the  resulting value  of  FIVE  to  be  (8,1,1,1,1),
+because of the explicit choice, or perhaps (1,8,1,1,1), because of the
+lower bound  of FIVE.  However, before  sliding  the  subtype  of  the
+aggregate would  be TABLE(-1  .. 3),  with INDEX'FIRST  = -1  as lower
+bound, therefore  placing the  value 8  in fifth position and with the
+resulting value  (1,1,1,1,8). The  combination of these two degrees of
+freedom -  sliding on the one hand, and others with other associations
+on the  other  hand  -  would  thus  have  unintuitive  and  therefore
+unreliable consequences; it is not allowed in Ada.
+<p>
+Note that,  as usual, an explicit qualification resolves all doubt, so
+that the following assignment is allowed:
+<p>
+<PRE>    FIVE :=  QUINTET'(3 =&gt;  8,  others =&gt; 1);     -- (1,1,1,8,1)</PRE>
+<p>
+
+<H4>Positional Aggregates
+</H4>
+For positional aggregates we again have to consider whether or not the
+subtype is defined by the context. Thus for:
+<p>
+<table border cellpadding=6><tr><td><pre>
+TRIANGLE((4, 6, 8));        -- subtype TRIPLE
+TRIO :=  (4, 6, 8);         -- subtype TRIPLE
+DISPLAY(TRIPLE'(4, 6, 8));  -- qualified: TRIPLE
+</pre></td></tr></table>
+<p>
+the subtype is known and therefore defines the bounds. Consider on the
+other hand a call such as
+<p>
+<PRE>    DISPLAY((4, 6, 8));</PRE>
+<p>
+where the  declaration of  the formal  parameter is  unconstrained: in
+such a  case the lower bound of the aggregate is (implicitly) taken to
+be INDEX'FIRST, the lower bound of the index subtype (here -1).
+
+<p>
+<H3><BR><a name="4.5.3">4.5.3 Equivalence and Explicit Conversions</a></H3>
+<p>
+
+Name equivalence,  as explained in section 4.3, is used systematically
+for all  types in Ada, and in particular for array types. As for other
+types, the  main arguments in favor of name equivalence are simplicity
+and the  desire to  avoid unintentional  equivalence: It  would not be
+desirable to treat two arrays as having the same type just because the
+component type is the same:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type OPTION_SET  is array (OPTION) of BOOLEAN;
+type COLOR_SET is array (COLOR)  of BOOLEAN;
+</pre></td></tr></table>
+<p>
+and (in this case) just because the number of options happens to equal
+the number of colors. From a conceptual point of view, these two array
+types have  nothing to  do with  each other,  apart from  their common
+component type.
+<p>
+On the  other hand,  the design  of Ada  recognizes that  this  safety
+argument does  not apply to explicit type conversions: being explicit,
+they are unequivocally intentional and cannot be just accidental.
+<p>
+Explicit type conversions are clearly desirable among array types that
+satisfy certain conditions. To illustrate their need, consider first a
+package defining sorting operations. It could appear as:
+<p>
+<table border cellpadding=6><tr><td><pre>
+with MATHS; use MATHS;      -- defines REAL
+package SORTING is
+  type VECTOR is array (INTEGER range &lt;&gt;) of REAL;
+  procedure SORT(X :  in out VECTOR);
+  ...
+end SORTING;
+</pre></td></tr></table>
+<p>
+For the  definition of  the type  VECTOR the number of decisions to be
+made was rather limited: first there was the component type, for which
+it appeared  convenient to  use the  type REAL  defined in the library
+package MATHS  (along with  useful mathematical functions); then there
+was the  selection of  INTEGER as  index subtype.  Given this  limited
+number of  decisions, it is not unlikely that the same decisions could
+be made  in another  package defined  totally independently,  say by a
+different software  producer. For  example a  package performing table
+listings could be specified as:
+<p>
+<table border cellpadding=6><tr><td><pre>
+with MATHS; use MATHS;
+package LISTING is
+  type TABLE is array (INTEGER range &lt;&gt;) of REAL;
+  procedure LIST(X :  in TABLE);
+  ...
+end LISTING;
+</pre></td></tr></table>
+<p>
+These two packages are of general use and hence they would probably be
+made available  as library  packages, so  that a  user performing both
+sort and  listing operations would naturally write a procedure such as
+the one given below:
+<table border cellpadding=6><tr><td><pre>
+with   MATHS, SORTING, LISTING;
+use MATHS, SORTING, LISTING;
+procedure APPLICATION is
+  ...
+  V :  VECTOR(1 .. 200);
+  ...
+  T :  TABLE(0 .. 3000);
+begin
+  ...
+  SORT(V);
+  ...
+  LIST(T);
+  ...
+end APPLICATION;
+</pre></td></tr></table>
+<p>
+The SORT  operation is  applicable to vectors and thus to V; similarly
+the LIST  operation is  applicable to tables and thus to T. However, a
+dilemma would  arise for  an array  that must  be sorted  before being
+listed: should  it be declared as a VECTOR or as a TABLE? - neither of
+the two would work. Similarly, an array might have been declared as
+<PRE>    A : array (1 .. 1000) of REAL;</PRE>
+<p>
+without knowing  in advance  whether  it  would  ever  be  sorted  (or
+listed), and  it would be cumbersome to have to change the declaration
+of A just because it needed to be sorted in one part of the program.
+<p>
+For these  reasons, explicit conversions are allowed between two array
+types if  both types  have  the  same  component  type  and  the  same
+dimensionality, and if for each dimension the index types are the same
+(or convertible to each other: see <a href="http://archive.adaic.com/standards/83lrm/html/lrm-04-06.html#4.6">RM 4.6</a>). Syntactically, an explicit
+conversion appears  as a  call of a function whose name is that of the
+target type. For example:
+<table border cellpadding=6><tr><td><pre>
+SORT(VECTOR(T));
+  ...
+LIST(TABLE(V));
+  ...
+SORT(VECTOR(A));
+</pre></td></tr></table>
+<p>
+Note that  conversions are  still possible when the constraints on the
+component type are different. Consider for example the array types
+<table border cellpadding=6><tr><td><pre>
+type CHAR_LINE   is array (1 .. 120) of CHARACTER;
+type TEXT_LINE   is array (1 .. 120) of CHARACTER range 'A' .. 'Z';
+
+CL  :  CHAR_LINE;
+TL  :  TEXT_LINE;
+</pre></td></tr></table>
+<p>
+Explicit conversions such as
+<table border cellpadding=6><tr><td><pre>
+TL  :=  TEXT_LINE(CL);
+CL  :=  CHAR_LINE(TL);
+</pre></td></tr></table>
+<p>
+are allowed.  The fact that they are explicit warns the user that they
+may (but need not) be costly. For example, the conversion of CL to the
+type TEXT_LINE  requires an implicit loop to check that each component
+of CL  is in  the allowed  range of  characters; on the other hand, no
+check is  involved for  the conversion  of TL  to the  type CHAR_LINE.
+Similarly, for  an in  out parameter that is implemented by reference,
+an actual parameter that has the form of a type conversion may require
+the creation  of a copy on the calling side if the compiler has chosen
+different representations for the two types.
+<p>
+Array types  are the  only types for which Ada provides anonymous type
+definitions. However, all array objects declared in this manner are of
+different types, even in the case of multiple declarations such as
+<PRE>    U, V :  array (1 .. 12) of INTEGER;</PRE>
+<p>
+since this  multiple declaration has the same meaning as the following
+succession of single declarations:
+<table border cellpadding=6><tr><td><pre>
+U  :  array (1 .. 12) of INTEGER;
+V  :  array (1 .. 12) of INTEGER;
+</pre></td></tr></table>
+<p>
+Two type  definitions imply  two distinct  types, and  thus we  cannot
+assign U  to V,  although we  could assign  a  component  of  U  to  a
+component of  V since  they are both of type INTEGER. Should we want U
+and V  to be  of the same type (and the ability to assign U to V), the
+only solution  is to  name the  type and  use this  type name  in  the
+declaration of U and V:
+<table border cellpadding=6><tr><td><pre>
+type DOZEN is array (1 .. 12) of INTEGER;
+U  :  DOZEN;
+V  :  DOZEN;
+  ...
+U :=  V;
+</pre></td></tr></table>
+
+<center>
+<hr width=60%>
+&#164; <a href="ratl-04-06.html#4.6"><b>NEXT</b></a>
+&#164; <a href="ratl-04-04.html#4.4"><b>PREVIOUS</b></a>
+&#164; <a href="ratl-04.html#4"><b>UP</b></a>
+&#164; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#164; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#164;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+</BODY></HTML>
+

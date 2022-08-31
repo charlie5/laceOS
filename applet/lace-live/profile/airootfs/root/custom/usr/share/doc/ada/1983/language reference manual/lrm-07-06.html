@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 7.6: Example of a Text Handling Package</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="7.6">7.6</A>.  Example of a Text Handling Package  </H2>
+<A HREF="lrm-07-05.html#7.5"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-07.html#7"><img src="lrm-up.gif" alt="[UP]"></A>
+<P>
+This  example  illustrates  a simple text handling package.  The users only
+have access to the visible part;  the implementation is hidden from them in
+the private part and the package body (not shown). 
+<P>
+From a user's point of view, a TEXT is a variable-length string.  Each text
+object has a maximum length,  which  must  be  given  when  the  object  is
+declared,  and  a  current  value, which is a string of some length between
+zero and the maximum.  The maximum possible length of a text object  is  an
+implementation-defined constant.   
+<P>
+The  package  defines first the necessary types, then functions that return
+some characteristics of objects of the type, then the conversion  functions
+between  texts  and  the predefined CHARACTER and STRING types, and finally
+some of the standard operations on varying strings.   Most  operations  are
+overloaded  on strings and characters as well as on the type TEXT, in order
+to minimize the number of explicit conversions the user has to write.                                                   
+<pre>
+    package TEXT_HANDLER is
+       MAXIMUM : constant := SOME_VALUE;  --  implementation-defined
+       subtype INDEX is INTEGER range 0 .. MAXIMUM; 
+
+       type TEXT(MAXIMUM_LENGTH : INDEX) is limited private; 
+
+       function LENGTH (T : TEXT) return INDEX;
+       function VALUE  (T : TEXT) return STRING;
+       function EMPTY  (T : TEXT) return BOOLEAN; 
+
+       function TO_TEXT (S : STRING;    MAX : INDEX) return TEXT;
+                                                     --  maximum length MAX
+       function TO_TEXT (C : CHARACTER; MAX : INDEX) return TEXT;
+       function TO_TEXT (S : STRING)    return TEXT;
+                                                --  maximum length S'LENGTH
+       function TO_TEXT (C : CHARACTER) return TEXT; 
+
+       function "&amp;" (LEFT : TEXT;      RIGHT : TEXT)      return TEXT;
+       function "&amp;" (LEFT : TEXT;      RIGHT : STRING)    return TEXT;
+       function "&amp;" (LEFT : STRING;    RIGHT : TEXT)      return TEXT;
+       function "&amp;" (LEFT : TEXT;      RIGHT : CHARACTER) return TEXT;
+       function "&amp;" (LEFT : CHARACTER; RIGHT : TEXT)      return TEXT; 
+
+       function "="  (LEFT : TEXT; RIGHT : TEXT) return BOOLEAN;
+       function "&lt;"  (LEFT : TEXT; RIGHT : TEXT) return BOOLEAN;
+       function "&lt;=" (LEFT : TEXT; RIGHT : TEXT) return BOOLEAN; 
+       function "&gt;"  (LEFT : TEXT; RIGHT : TEXT) return BOOLEAN;
+       function "&gt;=" (LEFT : TEXT; RIGHT : TEXT) return BOOLEAN; 
+
+       procedure SET (OBJECT : in out TEXT; VALUE : in TEXT);
+       procedure SET (OBJECT : in out TEXT; VALUE : in STRING);
+       procedure SET (OBJECT : in out TEXT; VALUE : in CHARACTER); 
+
+       procedure APPEND (TAIL : in TEXT;      TO : in out TEXT);
+       procedure APPEND (TAIL : in STRING;    TO : in out TEXT);
+       procedure APPEND (TAIL : in CHARACTER; TO : in out TEXT); 
+
+  procedure AMEND (OBJECT : in out TEXT; BY : in TEXT; POSITION : in INDEX);
+  procedure AMEND (OBJECT : in out TEXT; BY : in STRING; POSITION : in INDEX);
+  procedure AMEND (OBJECT : in out TEXT; BY : in CHARACTER; POSITION :
+                                                                    in INDEX);
+
+--  amend replaces part of the object by the given text, string, or character
+--  starting at the given position in the object
+
+       function LOCATE (FRAGMENT : TEXT;      WITHIN : TEXT) return INDEX;
+       function LOCATE (FRAGMENT : STRING;    WITHIN : TEXT) return INDEX;
+       function LOCATE (FRAGMENT : CHARACTER; WITHIN : TEXT) return INDEX; 
+
+       --  all return 0 if the fragment is not located 
+
+    private
+       type TEXT(MAXIMUM_LENGTH : INDEX) is
+          record
+             POS   : INDEX := 0;
+             VALUE : STRING(1 .. MAXIMUM_LENGTH);
+          end record;
+    end TEXT_HANDLER;                                                                
+</pre>
+<P>
+Example of use of the text handling package: 
+<P>
+A program opens an output file, whose name is supplied by the string  NAME.
+This string has the form 
+<pre>
+    [DEVICE :] [FILENAME [.EXTENSION]] 
+</pre>
+<P>
+There  are  standard  defaults  for  device,  filename, and extension.  The
+user-supplied name is passed to EXPAND_FILE_NAME as a  parameter,  and  the
+result is the expanded version, with any necessary defaults added.    
+<pre>
+    function EXPAND_FILE_NAME (NAME : STRING) return STRING is
+       use TEXT_HANDLER; 
+
+       DEFAULT_DEVICE    : constant STRING := "SY:";
+       DEFAULT_FILE_NAME : constant STRING := "RESULTS";
+       DEFAULT_EXTENSION : constant STRING := ".DAT"; 
+
+       MAXIMUM_FILE_NAME_LENGTH : constant INDEX := SOME_APPROPRIATE_VALUE;
+       FILE_NAME : TEXT(MAXIMUM_FILE_NAME_LENGTH); 
+
+    begin 
+
+       SET(FILE_NAME, NAME); 
+
+       if EMPTY(FILE_NAME) then
+          SET(FILE_NAME, DEFAULT_FILE_NAME);
+       end if; 
+
+       if LOCATE(':', FILE_NAME) = 0 then
+          SET(FILE_NAME, DEFAULT_DEVICE &amp; FILE_NAME);
+       end if; 
+
+       if LOCATE('.', FILE_NAME) = 0 then
+          APPEND(DEFAULT_EXTENSION, TO =&gt; FILE_NAME);
+       end if; 
+
+       return VALUE(FILE_NAME); 
+
+    end EXPAND_FILE_NAME;                 
+</pre>
+<P>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

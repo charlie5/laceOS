@@ -1,0 +1,263 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Position of pragmas and labels</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.Indented1 {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-6-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-6-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>6.2 Position of pragmas and labels</H1>
+<div class="Normal">It is surprising that basic stuff such as where one 
+can place a pragma should be the subject of discussion thirty years after 
+Ada became an ANSI standard.</div>
+<div class="Normal">However, there is a real problem in this area which 
+one could imagine might have led to headlines in the Wall Street Journal 
+and Financial Times such as</div>
+<div class="Normal" style="text-align: center"><I><B></B></I><SPAN STYLE="font-size: 125%"><I><B>Collapse 
+of NY Stock Market because of Safety Fears in Avionic Applications after 
+Discovery that Ada is Illegal</B></I></SPAN><I><B></B></I></div>
+<div class="Normal" style="margin-bottom: 0.4em">Indeed, it seems that 
+the package <SPAN Class="swiss">Ada</SPAN> in Ada 2005 might be illegal.<A NAME="I1432"></A><A NAME="I1433"></A> 
+This surprising conclusion was triggered by the consideration of</div>
+<div class="SwissExamples"><B>task&nbsp;type</B>&nbsp;TT&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Priority(12);<BR>
+<B>end</B>&nbsp;TT;</div>
+<div class="Normal">The rules in Ada 83, Ada 95 and Ada 2005 concerning 
+the position of pragmas say</div>
+<div class="Normal" style="margin-bottom: 0.4em">Pragmas are only allowed 
+at the following places in a program:</div>
+<div class="Bulleted">After a semicolon delimiter, but not within a formal 
+part or discriminant part.</div>
+<div class="Bulleted">At any place where the syntax rules allow a construct 
+defined by a syntactic category whose name ends with &quot;<SPAN Class="swiss">declaration</SPAN>&quot;, 
+&quot;<SPAN Class="swiss">statement</SPAN>&quot;, &quot;<SPAN Class="swiss">clause</SPAN>&quot;, 
+or &quot;<SPAN Class="swiss">alternative</SPAN>&quot;; or one of the 
+syntactic categories <SPAN Class="swiss">variant</SPAN> or <SPAN Class="swiss">exception_handler</SPAN>; 
+but not in place of such a construct. Also at any place where a <SPAN Class="swiss">compilation_unit</SPAN> 
+would be allowed.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now the syntax for 
+task_definition in Ada 2005 is</div>
+<div class="Indented1">task_definition&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;{task_item}<BR>
+[<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;{task_item}]<BR>
+<B>end</B>&nbsp;[<I>task</I>_identifier]}</div>
+<div class="Normal">There are at least two problems. The key one here 
+is that the list of categories in the rule does not include &quot;item&quot;. 
+The other concerns the words &quot;not in place of&quot;. It seems that 
+the intent was that if at least one instance of the construct is required 
+(as in a sequence of statements) then the pragma cannot be given in place 
+of a single statement. So it looks as if the task type <SPAN Class="swiss">TT</SPAN> 
+is not legal.</div>
+<div class="Normal">It has probably been permitted because task_item 
+itself splits down into aspect_clause or entry_declaration and they seem 
+to be allowed. But if none is present then we cannot tell which category 
+is permitted!</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note rather scarily 
+that the package <SPAN Class="swiss">Ada</SPAN> is given as</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Pure(Ada);<BR>
+<B>end</B>&nbsp;Ada;</div>
+<div class="Normal">and the same problem applies.</div>
+<div class="Normal">The entities in a package specification are of the 
+category basic_declarative_item and again although it splits down into 
+things ending _clause or _declaration we don't know which.</div>
+<div class="Normal">The fear concerning package <SPAN Class="swiss">Ada</SPAN> 
+made one member of the ARG concerned that the sky might be falling in. 
+Of course, we don't ever have to submit a package <SPAN Class="swiss">Ada</SPAN> 
+in our file (on punched cards, paper tape or whatever media we are using). 
+The package <SPAN Class="swiss">Ada</SPAN> is just in the mind of the 
+compiler so that it behaves as if she were declared. The same applies 
+to <SPAN Class="swiss">Standard</SPAN>. They are sort of synthesized 
+and not actually declared.</div>
+<div class="Normal">Anyway, the upshot is that in Ada 2012, the description 
+of the placement of pragmas is corrected by adding &quot;item&quot; to 
+the list and clarifying the meaning of not in place of.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A further discussion 
+considered sequences of statements. In a structure such as an if statement 
+the syntax is</div>
+<div class="Indented1">if_statement&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;condition&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sequence_of_statements<BR>
+&nbsp;&nbsp;&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">where</div>
+<div class="Indented1">sequence_of_statements&nbsp;::=&nbsp;statement&nbsp;{statement}</div>
+<div class="Normal" style="margin-bottom: 0.4em">The important point 
+is that a sequence_of_statements must have at least one statement. Moreover, 
+the rules for placing pragmas in Ada 2005 do not allow a pragma in place 
+of a construct so we cannot write</div>
+<div class="SwissExamples"><B>if</B>&nbsp;B&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Assert(&nbsp;...&nbsp;);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal&nbsp;in&nbsp;Ada&nbsp;2005</I></SPAN><BR>
+<B>else</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">but have to include 
+at least one statement (such as a null statement) by writing perhaps</div>
+<div class="SwissExamples"><B>if</B>&nbsp;B&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Assert(&nbsp;...&nbsp;);&nbsp;<B>null</B>;<BR>
+<B>else</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">or</div>
+<div class="SwissExamples"><B>if</B>&nbsp;B&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;<B>null</B>;&nbsp;<B>pragma</B>&nbsp;Assert(&nbsp;...&nbsp;);<BR>
+<B>else</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">On reflection this 
+seemed irritating so the rules for the placement of pragmas are further 
+amended to include another bullet</div>
+<div class="Bulleted">In place of a <SPAN Class="swiss">statement</SPAN> 
+in a <SPAN Class="swiss">sequence_of_statements</SPAN>&nbsp;</div>
+<div class="Normal">A useful note on a language definition principle 
+is added to the AARM which is that if all pragmas are treated as unrecognized 
+then a program should remain legal.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Incidentally, there 
+are other places in the language where at least one item is required 
+such as in a component list. Again if we don't want any components we 
+have to write a null component as in</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Nothing&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>null</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">One might have thought 
+that we could similarly now allow one to write</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Page;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Indeed, it might have 
+been thought that we could simply say that in general a pragma can be 
+given &quot;in place of&quot; an entity. But this doesn't work in some 
+cases. For example, an asynchronous select statement can take the form 
+of a series of statements in its triggering alternative thus</div>
+<div class="SwissExamples"><B>select</B><BR>
+&nbsp;&nbsp;&nbsp;S1(&nbsp;...&nbsp;);<BR>
+&nbsp;&nbsp;&nbsp;S2(&nbsp;...&nbsp;);<BR>
+&nbsp;&nbsp;&nbsp;S3(&nbsp;...&nbsp;);<BR>
+<B>then&nbsp;abort</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end&nbsp;select</B>;</div>
+<div class="Normal">Now the call of <SPAN Class="swiss">S1</SPAN> is 
+the triggering statement and has a different status to <SPAN Class="swiss">S2</SPAN> 
+and <SPAN Class="swiss">S3</SPAN>. It would be very confusing to be able 
+to replace the call of <SPAN Class="swiss">S1</SPAN> by a pragma. So 
+such generalization was dismissed as leading to trouble.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The final topic in 
+this vein concerns the position of labels. This was triggered by the 
+consideration of the problem of quitting one iteration of a loop if it 
+proves unsuccessful and then trying the next iteration. As described 
+in the Introduction (see <A HREF="Rat12-1-3-5.html">1.3.5</A>) this can 
+be done by writing</div>
+<div class="SwissExamples"><B>for</B>&nbsp;I&nbsp;<B>in</B>&nbsp;Some_Range&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>if&nbsp;not</B>&nbsp;OK&nbsp;<B>then&nbsp;goto</B>&nbsp;End_Of_Loop;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>lots&nbsp;of&nbsp;other&nbsp;code</I></SPAN><BR>
+&lt;&lt;End_Of_Loop&gt;&nbsp;<B>null</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>try&nbsp;another&nbsp;iteration</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Of course, maybe we 
+should avoid the goto and write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;I&nbsp;<B>in</B>&nbsp;Some_Range&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;OK&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>lots&nbsp;of&nbsp;other&nbsp;code</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>try&nbsp;another&nbsp;iteration</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">At first sight the latter structure looks nicer. 
+However, if the &quot;lots of other code&quot; encounters several situations 
+which mean that the iteration has to be abandoned then we quickly get 
+a deeply nested structure which is not easy to understand and becomes 
+heavily indented.</div>
+<div class="Normal">Much consideration was given to the introduction 
+of a continue statement but it was felt that this would obscure the existence 
+of the transfer of control. Although the goto may be deprecated as obscure, 
+the corresponding obvious label in its aggressive double angle brackets 
+is a strong clue to the existence of the transfer of control. <A NAME="I1434"></A><A NAME="I1435"></A></div>
+<div class="Normal">In the end it was decided that the only sensible 
+improvement was to remove the need for the null statement at the end 
+of the loop.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is achieved by 
+changing the syntax for a sequence of statements to</div>
+<div class="Indented1">sequence_of_statements&nbsp;::=&nbsp;statement&nbsp;{statement}&nbsp;{label}</div>
+<div class="Normal" style="margin-bottom: 0.4em">where (as before)</div>
+<div class="Indented1">statement&nbsp;&nbsp;&nbsp;&nbsp;::=&nbsp;{label}&nbsp;simple_statement<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;{label}&nbsp;compound_statement</div>
+<div class="Normal" style="margin-bottom: 0.4em">so that as well as 
+being permitted before a statement, a label can also follow a sequence 
+of statements. In addition, a rule is added to the effect that if one 
+or more labels end a sequence of statements then an implicit null statement 
+is inserted after the labels. This rule is necessary because the effect 
+of the goto statement is described in terms of going to the statement 
+after the label. So the loop example can now be written as</div>
+<div class="SwissExamples"><B>for</B>&nbsp;I&nbsp;<B>in</B>&nbsp;Some_Range&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>if&nbsp;not</B>&nbsp;OK&nbsp;<B>then&nbsp;goto</B>&nbsp;End_Of_Loop;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;lots&nbsp;of&nbsp;other&nbsp;code</I></SPAN><BR>
+&lt;&lt;End_Of_Loop&gt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>try&nbsp;another&nbsp;iteration</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">More generally we can 
+write</div>
+<div class="SwissExamples"><B>if</B>&nbsp;B&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;S1;&nbsp;&nbsp;S2;&nbsp;&nbsp;&lt;&lt;My_Label&gt;&gt;<BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">as well as giving the 
+null explicitly thus</div>
+<div class="SwissExamples"><B>if</B>&nbsp;B&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S1;&nbsp;&nbsp;S2;&nbsp;&nbsp;&lt;&lt;My_Label&gt;&gt;&nbsp;<B>null</B>;<BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">but we still cannot 
+write</div>
+<div class="SwissExamples"><B>if</B>&nbsp;B&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&lt;&lt;My_Label&gt;&gt;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal">since a sequence of statements must still include 
+at least one statement. Of course, we could never jump to such a label 
+anyway since control cannot be transferred into a structure.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-6-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-6-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

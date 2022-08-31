@@ -1,0 +1,443 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 13.3: Rationale for the Design of the Rendezvous Facilities</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 13: Tasking</H2>
+
+<H3><a name="13.3">13.3 Rationale for the Design of the Rendezvous Facilities</a></H3>
+
+This section  starts by  briefly surveying  some of the more important
+and  older  real-time  primitives  and  their  shortcomings.  It  then
+considers the  concept of  rendezvous and  shows how  this concept has
+influenced the design of the tasking facilities in Ada.
+
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#13.3.1">13.3.1 Early Primitives</a><BR>
+<a href="#13.3.2">13.3.2 The Rendezvous Concept</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="13.3.1">13.3.1 Early Primitives</a></H3>
+
+The understanding  of algorithmic  sequential processes  is based upon
+that of  the evaluation  of arithmetic  and Boolean expressions, whose
+axioms have  been well  understood for centuries. However, there is no
+mathematical tradition  upon which  we can draw in order to help us to
+understand the  behavior of  cooperating sequential  processes.  As  a
+consequence  it   has  always  been  difficult  to  decide  whether  a
+particular set  of real-time  primitives is good or not. Many sets can
+be implemented in terms of each other but their relative primitiveness
+is often hard to perceive.
+<p>
+Broadly speaking  the primitives  (or perhaps the applications) can be
+divided into  two categories.  The first enables common data or common
+code to  be protected from multiple usage. The second enables one task
+to send  a message  to another; this includes the degenerate case of a
+signal, which can be thought of as a message with no content.
+<p>
+One of  the oldest  and  best  known  primitive  sets  is  the  binary
+semaphore described  by Dijkstra  <a href="ratl-BIB.html">[Di 68]</a>.  This consists  of the  two
+operators P  and V,  acting on  a semaphore  S which takes two values,
+busy and  free (or  equivalently true  and false). The behavior of the
+operations is:
+
+<p>
+<center><table border cellpadding=6><tr><th>
+P(S)
+</th><td>
+If S  is busy  the task  is suspended until S becomes
+free. If S is free then it is set busy and the task proceeds.
+</td></tr><tr><th>
+V(S)
+</th><td>
+S is  set free.  If there are tasks held up on a P(S)
+operation then one of them is allowed to proceed.
+</td></tr></table></center>
+<p>
+
+Semaphores can  be used  to protect  data by  embedding the  code that
+accesses the data between matched calls thus:
+<p>
+<table border cellpadding=6><tr><td><pre>
+P(S)
+  -- access data      
+V(S)
+
+task A
+</pre></td><td><pre>
+P(S)
+  -- access data      
+V(S)
+
+task B
+</pre></td></tr></table>
+<p>
+Semaphores can  also be  used to  signal happenings. One task waits by
+calling P, the other signals by calling V.
+
+<p>
+<table border cellpadding=6><tr><td><pre>
+P(S) -- wait for B    
+
+task A            
+</pre></td><td><pre>
+V(S) -- signal to A    
+
+task B
+</pre></td></tr></table>
+<p>
+Semaphores  can   therefore  be  used  both  for  protection  and  for
+signalling. They also have the merit of being primitives that are both
+simple to  describe and  easy  to  understand.  What  then  are  their
+disadvantages? Briefly  the problem  is that  for all but the simplest
+applications, the  programming of  semaphores is  difficult.  Programs
+using semaphores  exhibit similar  symptoms to  unstructured  programs
+using gotos.  They are hard to write, understand, prove, and maintain.
+More specifically, typical problems are:
+<ul>
+<li>One can  jump around  a call of P and therefore accidentally access
+   unprotected data.
+<p>
+<li>One can  jump around  a  call  of  V  and  accidentally  leave  the
+   semaphore busy so that the system deadlocks.
+<p>
+<li>One can forget to use them.
+<p>
+<li>It is  not possible to program an alternative action if a semaphore
+   is found to be busy when attempting P.
+<p>
+<li>It is  not possible  to wait  for one  of several  semaphores to be
+   free.
+<p>
+<li>Semaphores are often visible to tasks that need not access them.
+</ul>
+
+An extended  form of  semaphore is the integer semaphore. In this case
+the value  is an  integer rather  than a  boolean. It  is particularly
+useful for  allowing a  limited number  of tasks  to have  access to a
+resource. Nevertheless  it has  been shown  that the integer semaphore
+can be programmed in terms of binary semaphores, and so in practice it
+is only marginally more useful.
+<p>
+Closely related  to the  semaphore is  the signal  or event. There are
+variations, but  a typical definition would be that an event E has two
+states, set and unset, and the following operations upon it:
+<p>
+<p>
+<center><table border cellpadding=6><tr><th>
+WAIT(E)
+</th><td>
+If E  has not  been set  then the task is suspended until the
+event is set. If E has been set then it is unset and the task
+is allowed to proceed.
+</td></tr><tr><th>
+SEND(E)
+</th><td>
+E is  set. If  there are tasks waiting for E then one of them
+is allowed to proceed.
+</td></tr></table></center>
+<p>
+Clearly such  an event  is isomorphic  to the  binary  semaphore.  The
+difference lies perhaps in the intended use. Semaphores are associated
+with data  protection, and  events with  indicating that something has
+happened. There are variations in which several events are remembered.
+But in  all forms, events suffer from the same structuring problems as
+semaphores.
+<p>
+Various other  primitives have  been proposed in order to overcome the
+structuring difficulties  of  semaphores  and  events.  However,  they
+usually tackle  only one  of the application areas distinguished above
+(data protection  and signalling).  In this  respect they are somewhat
+unbalanced.
+<p>
+The critical  section has been proposed as a syntactic form equivalent
+to a  bracketed pair  of  P  and  V  operations.  This  prevents  goto
+statements from  bypassing one  of the  operations and hence overcomes
+some  of   the  difficulties   of  semaphores.  A  further  form,  the
+conditional critical  section, allows  an  alternative  action  to  be
+performed if the resource represented is busy.
+<p>
+Critical sections do not seem to have been successful. They solve only
+the exclusion  problem and  need to  be complemented with a signalling
+mechanism; this  does not  lead to  the unification sought by language
+designers.
+<p>
+Many forms  of message switching system have been implemented in order
+to give  improved solutions  to the  signalling problem  (see <a href="ratl-BIB.html">[BH  70,
+73]</a>). Typically  they enable  messages to  be sent  between tasks, and
+allow the  source or  destination of  the  message  to  be  optionally
+specified.  They   therefore  give   added  protection  by  preventing
+unauthorized access to messages.
+<p>
+Perhaps the  biggest disadvantage of message systems is the need for a
+sizeable message controller. Message systems also seem to be of an ad-
+hoc nature  with an  apparently arbitrary  set of parameters. Moreover
+they do  not easily  solve exclusion  problems  because  of  the  high
+overhead involved.
+<p>
+A significant  step forward was the monitor, first described by Brinch
+Hansen <a href="ratl-BIB.html">[BH  73,75]</a> and  by Hoare <a href="ratl-BIB.html">[Ho 74]</a>. This includes the facilities
+of the critical section, and when combined with events (as in <a href="ratl-BIB.html#languages">Modula</a>),
+gives a  reasonable solution  to problems  such as the bounded buffer.
+The monitor  solves the exclusion problem but not the message problem.
+Indeed the  signals  in  Modula  still  suffer  from  the  structuring
+problems of semaphores.
+
+<H3><BR><a name="13.3.2">13.3.2 The Rendezvous Concept</a></H3>
+
+Another line  of approach  to mutual exclusion and synchronization was
+introduced in early computer science by Conway <a href="ratl-BIB.html">[Co 63]</a> with the notion
+of coroutine,  the first  definition of  a high-level  synchronization
+mechanism. One  of the  important concepts  introduced by  Conway (and
+maybe forgotten  later) is  that synchronization and data transmission
+are  two  inseparable  activities.  Two  parallel  tasks  need  to  be
+synchronized to  exchange information  - thereafter  they resume their
+respective activities;  this synchronization is known as a rendezvous.
+Two papers  by Hoare  <a href="ratl-BIB.html">[Ho 78]</a>  and Brinch  Hansen <a href="ratl-BIB.html">[BH  78]</a> proposed  a
+rethink of  parallel processing in terms of this concept of rendezvous
+and strongly influenced the design of Ada.
+<p>
+The difficult problem that arises here is one of making tasks known to
+each other.  Tasks have names that identify them unambiguously. Should
+these names be used by tasks to synchronize with each other, or should
+there  exist   a  further   entity  that  makes  both  candidates  for
+synchronization known  to each  other  by  reference  to  some  common
+channel?  These   two  solutions   are  extreme   forms  of  symmetric
+communication; either  each communicating  task has  full knowledge of
+its colleague,  or it has no information at all. Both solutions appear
+in the literature: <a href="ratl-BIB.html">[Ho 78]</a> and <a href="ratl-BIB.html">[Ka 74]</a>.
+<p>
+We rejected  the channel  solution in this design in order to avoid an
+additional language  concept and the dual connection mechanism that it
+requires. The  solution adopted  in Ada,  although closer  to the  one
+proposed by  Hoare, is  asymmetric: one of the two communicating tasks
+knows the  name of  the other and names it explicitly; the second task
+knows only that it expects some external interaction.
+<p>
+In order  to  justify  the  asymmetry,  let  us  first  summarize  the
+symmetric proposal developed by Hoare and embedded in a language which
+has become  known as CSP (Communicating Sequential Processes). In CSP,
+communication between  tasks is seen as synchronized input-output: one
+task outputs  data which  the other  inputs, and both tasks rendezvous
+during the  transfer -  that is,  the first  to arrive at its input or
+output statement  waits for  the other  and they both then execute the
+I/O statements  together (or  apparently together)  before  proceeding
+independently. Each task names the other in the transfer. The transfer
+can be  thought of as an assignment split into two parts with the left
+side in one task and the right side in the other.
+<p>
+As an example we shall consider a task BUFFER, to smooth variations in
+the speed  of output  of items  by a  producer task  and  input  by  a
+consumer task (given in <a href="ratl-13-02.html#13.2.5">section 13.2.5</a>). The program is as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+BUFFER ::
+  pool :  (1 .. 10) item;
+  inindex, outindex, count :  integer;
+  inindex :=  1;  outindex :=  1;  count :=  0;
+    &#42; [count &lt; 10;  producer?pool(inindex) -&gt;
+      inindex :=  inindex mod 10 + 1;  count :=  count + 1
+    [] count &gt; 0;  consumer?more() -&gt;
+       consumer!pool(outindex);
+       outindex :=  outindex mod 10 + 1;  count :=  count - 1
+    ]
+</pre></td></tr></table>
+<p>
+The key language statements in this example are:
+<p>
+<table border cellpadding=6><tr><td><pre>
+X  ?   Y     Input Y from task X
+X  !   Y     Output Y to task X
+</pre></td></tr></table>
+<p>
+On each  iteration the  guards "count  &lt;  10"  and  "count  &gt;  0"  are
+evaluated. If both guards are true then calls from either the consumer
+or producer are acceptable and the first such call will be waited for;
+if both  have already  made such  a call  and are therefore themselves
+waiting then  a nondeterministic  choice will be made; if only one has
+made a  call then  obviously that call is taken. If, however, only one
+guard is  true then  only the  corresponding call can be accepted, and
+the other  task will  wait until  the buffer  is partially  filled  or
+emptied as  the case  may be.  In this  example both  guards cannot be
+false and so the iterative process continues indefinitely.
+<p>
+In the producer case the statement
+<p>
+<PRE>    producer  ?  pool(inindex)</PRE>
+<p>
+moves the  item into  the buffer  directly. In  the consumer  case the
+statement
+<p>
+<PRE>    consumer  ?  more()</PRE>
+<p>
+indicates that the consumer is ready and a subsequent
+<p>
+<PRE>    consumer  !  pool(outindex)</PRE>
+<p>
+actually does  the transfer.  The  producer  task  therefore  contains
+statements such as
+<p>
+<PRE>    BUFFER  !  X</PRE>
+<p>
+whereas the consumer task has pairs such as
+<p>
+<table border cellpadding=6><tr><td><pre>
+BUFFER  !  more();
+BUFFER  ?  X
+</pre></td></tr></table>
+<p>
+Note that  more() denotes a structured value with no components and is
+used here as a signal.
+<p>
+As can  be seen the program is readable, although perhaps presented in
+a terse  style by  traditional high-level language standards. However,
+there are  two problems  with CSP.  One is  that a  (one-to-one) named
+correspondence is  required; because  of  this  symmetry,  it  is  not
+possible  to  program  a  library  routine  to  provide  resources  to
+arbitrary users.  The other  problem is  that a  double interaction is
+required for  the consumer;  this means that the two calls really need
+to be  encapsulated by  a single  procedure in  order to  give a clean
+interface.
+<p>
+In  Ada,   as  we  have  seen,  naming  is  one-sided.  Tasks  can  be
+characterized as  services or as users. A user certainly needs to know
+the name  of the service it is requesting. On the other hand, a server
+need not  know the  names of  its users.  Because of this asymmetry it
+possible to  program the above library routine. As a consequence there
+can be  queues of  waiting tasks associated with each request. On each
+successful rendezvous just one waiting task is served.
+<p>
+The other  important concept  introduced in  Ada is  the notion of the
+extended rendezvous.  This notion  is a major breakthrough to a higher
+level of  abstraction. In  the case  of the task BUFFER this overcomes
+the need  for the double rendezvous with the consumer. This is seen by
+comparing the  example in  <a href="ratl-13-02.html#13.2.5">section 13.2.5</a> with that above. Thus we now
+have
+<p>
+<PRE>    BUFFER.READ(X);</PRE>
+<p>
+rather than  the two  statements of  CSP. This  also  illustrates  the
+procedural  form   of  entry  call  as  opposed  to  some  specialized
+statements. As we have seen, this enables a similar external interface
+to be presented, even if a change of solution demands that a procedure
+be replaced by an entry or vice versa.
+<p>
+The extended  rendezvous is more disciplined since it ensures that the
+same task  performs the interaction throughout. It is also instructive
+to consider  the same  example written  in <a href="ratl-BIB.html#languages">Modula</a>  using  monitors  as
+follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+interface module buffer;
+  define put, get;
+  const poolsize = 10;
+  var pool :  array [1 .. poolsize] of item;
+  inindex, outindex, count :  integer;
+  nonfull, nonempty :  signal;
+
+  procedure put (x :  item);
+  begin
+    if count = poolsize then wait(nonfull) end;
+    pool [inindex] :=  x;
+    inindex :=  inindex mod poolsize + 1;  count :=  count + 1;
+    send(nonempty)
+  end put;
+
+  procedure get (var x :  item);
+  begin
+    if count = 0 then wait(nonempty) end;
+    x :=  pool [outindex];
+    outindex :=  outindex mod poolsize + 1;  count :=  count - 1;
+    send(nonfull)
+  end get;
+begin
+  inindex :=  1;  outindex :=  1;  count :=  0
+end buffer;
+</pre></td></tr></table>
+<p>
+The producer and consumer processes move the items by calls such as
+<p>
+<PRE>    put(x)      and      get(x)</PRE>
+<p>
+respectively. This  is satisfactory,  but the internal behavior of the
+monitor is  not nearly  as clear  as in  CSP and  Ada. The  rendezvous
+mechanism is  more  disciplined  than  a  monitor,  since  the  accept
+statements appear  inside a  context (for  example following  a guard)
+from which  information can  be  deduced,  thereby  facilitating  both
+understanding and proof.
+<p>
+Perhaps the  most important  point about both CSP and Ada is that they
+offer mechanisms  that are  applicable to  both  data  protection  and
+signalling. Earlier  attempts to  develop features  at a  higher level
+than semaphores  or events  (such as  message  systems  and  monitors)
+seemed to  solve only  one problem,  and  by  offering  an  unbalanced
+solution were not clearly better than the original simple primitives.
+<p>
+The rationale  behind the accept statement and entry call is simply to
+provide a  rendezvous. In  some applications  it is  necessary that  a
+rendezvous be  achieved, whereas  in others  it is  important for  the
+caller not  to be  held up.  It is  much more  difficult to  program a
+rendezvous in  terms of  non-rendezvous primitives  than  vice  versa.
+Hence the rendezvous has been chosen as the natural primitive.
+<p>
+It is  noted that  calls are  accepted in simple order of arrival. The
+alternative of  making the  order depend on some parameter of the call
+was  considered   and  rejected   because   of   the   difficulty   of
+implementation, which  could severely penalize the simple user. As has
+been demonstrated in the examples, it is possible to program different
+strategies when necessary.
+<p>
+The introduction  of entries  leads naturally  to the  unification  of
+tasks and  packages. A  task encapsulates entries in the same way as a
+package encapsulates  procedures. Moreover  there is  a strong analogy
+between on  the one  hand the  specification, in which the entries are
+specified, and  the body,  containing the  sequence that  controls the
+critical actions, and on the other hand the corresponding subdivisions
+of  a  package  with  respect  to  the  specification  and  bodies  of
+procedures.
+<p>
+However, this  unification has  its limits.  It  proved  necessary  to
+disallow  entities   other  than  entries  in  the  specification.  As
+mentioned earlier,  this was  partly for  methodological  reasons  and
+partly because  of the  cost of  preventing access  to variables of an
+inactive task and of implementing access on a distributed system.
+<p>
+The general applicability of the rendezvous concept has been confirmed
+by its  use in  other  examples.  This  concept  is  well  adapted  to
+distributed systems  -  communication  is  achieved  by  entry  calls,
+exchanged data  is passed  via parameters.  From  a  more  theoretical
+viewpoint, it is interesting to note that path expressions <a href="ratl-BIB.html">[CH 74]</a> can
+be shown to be easily expressible in terms of rendezvous primitives.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-13-04.html#13.4"><b>NEXT</b></a>
+&#128; <a href="ratl-13-02.html#13.2"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-13.html#13"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>

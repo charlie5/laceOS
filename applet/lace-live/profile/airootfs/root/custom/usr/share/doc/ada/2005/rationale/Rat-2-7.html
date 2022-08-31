@@ -1,0 +1,418 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Overriding and overloading</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-2-6.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>2.7 Overriding and overloading</H1>
+<div class="Normal">One of the key goals in the design of Ada was to 
+encourage the writing of correct programs. It was intended that the structure, 
+strong typing, and so on should ensure that many errors which are not 
+detected by most languages until run time should be caught at compile 
+time in Ada. Unfortunately the introduction of type extension and overriding 
+in Ada 95 produced a situation where careless errors in subprogram profiles 
+lead to errors which are awkward to detect.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The Introduction described 
+two typical examples. The first concerns the procedure <SPAN Class="swiss">Finalize</SPAN>. 
+Consider&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Finalization;&nbsp;&nbsp;<B>use</B>&nbsp;Ada.Finalization;<BR>
+<B>package</B>&nbsp;Root&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;new</B>&nbsp;Controlled&nbsp;<B>with</B>&nbsp;...&nbsp;;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(Obj:&nbsp;<B>in&nbsp;out</B>&nbsp;T;&nbsp;Data:&nbsp;<B>in</B>&nbsp;Integer);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Finalise(Obj:&nbsp;<B>in&nbsp;out</B>&nbsp;T);<BR>
+<B>end</B>&nbsp;Root;</div>
+<div class="Normal">We have inadvertently written <SPAN Class="swiss">Finalise</SPAN> 
+rather than <SPAN Class="swiss">Finalize</SPAN>. This means that <SPAN Class="swiss">Finalize</SPAN> 
+does not get overridden as expected and so the expected behaviour does 
+not occur on finalization of objects of type <SPAN Class="swiss">T</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 2005 we can 
+prefix the declaration with <B>overriding</B><A NAME="I1095"></A>&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Finalize(Obj:&nbsp;<B>in&nbsp;out</B>&nbsp;T);</div>
+<div class="Normal">And now if we inadvertently write <SPAN Class="swiss">Finalise</SPAN> 
+then this will be detected during compilation.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Similar errors can 
+occur in a profile. If we write&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Root.Leaf&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;NT&nbsp;<B>is&nbsp;new</B>&nbsp;T&nbsp;<B>with&nbsp;null&nbsp;record</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>overriding</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>overriding&nbsp;indicator</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(Obj:&nbsp;<B>in&nbsp;out</B>&nbsp;NT;&nbsp;Data:&nbsp;<B>in</B>&nbsp;String);<BR>
+<B>end</B>&nbsp;Root.Leaf;</div>
+<div class="Normal">then the compiler will detect that the new procedure 
+<SPAN Class="swiss">Op</SPAN> has a parameter of type <SPAN Class="swiss">String</SPAN> 
+rather than <SPAN Class="swiss">Integer</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However if we do want 
+a new operation then we can write&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>not&nbsp;overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(Obj:&nbsp;<B>in&nbsp;out</B>&nbsp;NT;&nbsp;Data:&nbsp;<B>in</B>&nbsp;String);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The overriding indicators 
+can also be used with abstract subprograms, null procedures, renamings, 
+instantiations, stubs, bodies and entries (we will deal with entries 
+in the chapter on tasking &ndash; <A HREF="Rat-5-3.html">5.3</A>). So 
+we can have&nbsp;</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>procedure</B>&nbsp;Pap(X:&nbsp;TT)&nbsp;<B>is&nbsp;abstract</B>;</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>procedure</B>&nbsp;Pep(X:&nbsp;TT)&nbsp;<B>is&nbsp;null</B>;</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>procedure</B>&nbsp;Pip(Y:&nbsp;TT)&nbsp;<B>renames</B>&nbsp;Pop;</div>
+<div class="SwissExamples"><B>not&nbsp;overriding</B><BR>
+<B>procedure</B>&nbsp;Poop&nbsp;<B>is&nbsp;new</B>&nbsp;Peep(&nbsp;...&nbsp;);</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>procedure</B>&nbsp;Pup(Z:&nbsp;TT)<B>&nbsp;is&nbsp;separate</B>;</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>procedure</B>&nbsp;Pup(X:&nbsp;TT)&nbsp;<B>is</B><BR>
+<B>begin</B>&nbsp;...&nbsp;<B>end</B>&nbsp;Pup;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We do not need to apply 
+an overriding indicator to both a procedure specification and body but 
+if we do then they naturally must not conflict. It is expected that overriding 
+indicators will typically only be given on specifications but they would 
+be appropriate in the case of a body standing alone as in the example 
+of <SPAN Class="swiss">Action</SPAN> in the previous section. So we might 
+have&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Green_To_Red(L:&nbsp;<B>in</B>&nbsp;List)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;GTR_It&nbsp;<B>is&nbsp;new</B>&nbsp;Iterator<B>&nbsp;with&nbsp;null&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Action(It:&nbsp;<B>in&nbsp;out</B>&nbsp;GTR_It;&nbsp;C:&nbsp;<B>in&nbsp;out</B>&nbsp;Colour)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;C&nbsp;=&nbsp;Green&nbsp;<B>then</B>&nbsp;C&nbsp;:=&nbsp;Red;&nbsp;<B>end</B>&nbsp;<B>if</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Action;<BR>
+...</div>
+<div class="Normal">The overriding indicators are optional for two reasons. 
+One is simply for compatibility with Ada 95. The other concerns awkward 
+problems with private types and generics.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Consider&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;NT<B>&nbsp;is&nbsp;new</B>&nbsp;T&nbsp;<B>with&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(X:&nbsp;NT);<BR>
+<B>private</B></div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose the type 
+<SPAN Class="swiss">T</SPAN> does not have an operation <SPAN Class="swiss">Op</SPAN>. 
+Then clearly it would be wrong to write&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;NT<B>&nbsp;is&nbsp;new</B>&nbsp;T&nbsp;<B>with&nbsp;private</B>;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>T&nbsp;has&nbsp;no&nbsp;Op</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>overriding&nbsp;&nbsp;&nbsp;&nbsp;--</B><SPAN Class="roman"><I>&nbsp;illegal</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(X:&nbsp;NT);<BR>
+<B>private</B></div>
+<div class="Normal">because that would violate the information known 
+in the partial view.</div>
+<div class="Normal" style="margin-bottom: 0.4em">But suppose that in 
+fact it turns out that in the private part the type <SPAN Class="swiss">NT</SPAN> 
+is actually derived from <SPAN Class="swiss">TT</SPAN> (itself derived 
+from <SPAN Class="swiss">T</SPAN>) and that <SPAN Class="swiss">TT</SPAN> 
+does have an operation <SPAN Class="swiss">Op</SPAN>.&nbsp;</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;NT&nbsp;<B>is&nbsp;new</B>&nbsp;TT&nbsp;<B>with</B>&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>TT&nbsp;has&nbsp;Op</I></SPAN><BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal">In such a case it turns out in the end that <SPAN Class="swiss">Op</SPAN> 
+is in fact overriding after all. We can then put an overriding indicator 
+on the body of <SPAN Class="swiss">Op</SPAN> since at that point we do 
+know that it is overriding.</div>
+<div class="Normal">Equally of course we should not specify <B>not overriding</B> 
+for <SPAN Class="swiss">Op</SPAN> in the visible part because that might 
+not be true either (since it might be that <SPAN Class="swiss">TT</SPAN> 
+does have <SPAN Class="swiss">Op</SPAN>). However if we did put <B>not 
+overriding</B> on the partial view then that would not in itself be an 
+error but would simply constrain the full view not to be overriding and 
+thus ensure that <SPAN Class="swiss">TT</SPAN> does not have <SPAN Class="swiss">Op</SPAN>.</div>
+<div class="Normal">Of course if <SPAN Class="swiss">T</SPAN> itself 
+has <SPAN Class="swiss">Op</SPAN> then we could and indeed should put 
+an overriding indicator in the visible part since we know that to be 
+the truth at that point.</div>
+<div class="Normal">The general rule is not to lie. But the rules are 
+slightly different for <B>overriding</B> and <B>not overriding</B>. For 
+<B>overriding</B> it must not lie at the point concerned. For <B>not 
+overriding</B> it must not lie anywhere.</div>
+<div class="Normal">This asymmetry is a bit like presuming the prisoner 
+is innocent until proved guilty. We sometimes start with a view in which 
+an operation appears not to be overriding and then later on we find that 
+it is overriding after all. But the reverse never happens &ndash; we 
+never start with a view in which it is overriding and then later discover 
+that it was not. So the asymmetry is real and justified.</div>
+<div class="Normal">There are other similar but more complex problems 
+with private types concerning implicit declarations where the implicit 
+declaration turns up much later and is overriding but has no physical 
+presence on which to hang the indicator. It was concluded that by far 
+the best approach to these problems was just to say that the overriding 
+indicator is always optional. We cannot expect to find all the bugs in 
+a program through syntax and static semantics; the key goal here is to 
+provide a simple way of finding most of them.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Similar problems arise 
+with generics. As is usual with generics the rules are checked in the 
+generic itself and then rechecked upon instantiation (in this case for 
+uses within both the visible part and private part of the specification). 
+Consider&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;GT&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;<BR>
+<B>package</B>&nbsp;GP&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;NT&nbsp;<B>is&nbsp;new</B>&nbsp;GT&nbsp;<B>with&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>overriding</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal,&nbsp;GT&nbsp;has&nbsp;no&nbsp;Op</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(X:&nbsp;NT);<BR>
+<B>private</B></div>
+<div class="Normal">This has to be illegal because <SPAN Class="swiss">GT</SPAN> 
+has no operation <SPAN Class="swiss">Op</SPAN>. Of course the actual 
+type at instantiation might have <SPAN Class="swiss">Op</SPAN> but the 
+check has to pass both in the generic and in the instantiation.</div>
+<div class="Normal" style="margin-bottom: 0.4em">On the other hand saying 
+<B>not overriding</B> is allowed&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;GT&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;<BR>
+<B>package</B>&nbsp;GP&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;NT&nbsp;<B>is&nbsp;new</B>&nbsp;GT&nbsp;<B>with&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>not</B>&nbsp;<B>overriding</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal,&nbsp;GT&nbsp;has&nbsp;no&nbsp;Op</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(X:&nbsp;NT);<BR>
+<B>private</B></div>
+<div class="Normal">However, in this case we cannot instantiate <SPAN Class="swiss">GP</SPAN> 
+with a type that does have an operation <SPAN Class="swiss">Op</SPAN> 
+because it would fail when checked on the instantiation. So in a sense 
+this imposes a further contract on the generic. If we do not want to 
+impose this restriction then we must not give an overriding indicator 
+on the procedure <SPAN Class="swiss">Op</SPAN> for <SPAN Class="swiss">NT</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another situation arises 
+when the generic formal is derived&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;GT&nbsp;<B>is&nbsp;new</B>&nbsp;T&nbsp;<B>with&nbsp;private</B>;<BR>
+<B>package</B>&nbsp;GP&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;NT&nbsp;<B>is&nbsp;new</B>&nbsp;GT&nbsp;<B>with&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>overriding</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal&nbsp;if&nbsp;T&nbsp;has&nbsp;Op</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(X:&nbsp;NT);<BR>
+<B>private</B></div>
+<div class="Normal">In this case it might be that the type <SPAN Class="swiss">T</SPAN> 
+does have an operation <SPAN Class="swiss">Op</SPAN> in which case we 
+can give the overriding indicator.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We might also try&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;GT&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;procedure</B>&nbsp;Op(X:&nbsp;GT);<BR>
+<B>package</B>&nbsp;GP&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;NT&nbsp;<B>is&nbsp;new</B>&nbsp;GT&nbsp;<B>with&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>overriding</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal,&nbsp;Op&nbsp;not&nbsp;primitive</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(X:&nbsp;NT);<BR>
+<B>private</B></div>
+<div class="Normal">But this is incorrect because although <SPAN Class="swiss">GT</SPAN> 
+has to have an operation corresponding to <SPAN Class="swiss">Op</SPAN> 
+as specified in the formal parameter list, nevertheless it does not have 
+to be a primitive operation nor does it have to be called <SPAN Class="swiss">Op</SPAN> 
+and thus it isn't inherited.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It should also be observed 
+that overriding indicators can be used with untagged types although they 
+have been introduced primarily to avoid problems with dispatching operations. 
+Consider&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;is<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;+&quot;&nbsp;(Left,&nbsp;Right:&nbsp;T)&nbsp;<B>return</B>&nbsp;T;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;range</B>&nbsp;0&nbsp;..&nbsp;100;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>&quot;+&quot;&nbsp;overrides</I></SPAN><BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal" style="margin-bottom: 0.4em">as opposed to&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T<B>&nbsp;is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;+&quot;&nbsp;(Left,&nbsp;Right:&nbsp;T)&nbsp;<B>return</B>&nbsp;T;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is</B>&nbsp;(Red,&nbsp;White,&nbsp;Blue);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>&quot;+&quot;&nbsp;does&nbsp;not&nbsp;override</I></SPAN><BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal">The point is that the partial view does not reveal 
+whether overriding occurs or not &ndash; nor should it since either implementation 
+ought to be acceptable. We should therefore remain silent regarding overriding 
+in the partial view. This is similar to the private extension and generic 
+cases discussed earlier. Inserting <B>overriding</B> would be illegal 
+on both examples, while <B>not overriding</B> would be allowed only on 
+the second one (which would constrain the implementation as in the previous 
+examples). Again, it is permissible to put an overriding indicator on 
+the body of <SPAN Class="swiss">&quot;+&quot;</SPAN> to indicate whether 
+or not it does override.</div>
+<div class="Normal">It is also possible for a subprogram to be primitive 
+for more than one type (this cannot happen for more than one tagged type 
+but it can happen for untagged types or one tagged type and some untagged 
+types). It could then be overriding for some types and not overriding 
+for others. In such a case it is considered to be overriding as a whole 
+and any indicator should reflect this.</div>
+<div class="Normal">The possibility of having a pragma which would enforce 
+the use of overriding indicators (so that they too could not be inadvertently 
+omitted) was eventually abandoned largely because of the private type 
+and generic problem which made the topic very complicated.</div>
+<div class="Normal">Note the recommended layout, an overriding indicator 
+should be placed on the line before the subprogram specification and 
+aligned with it. This avoids disturbing the layout of the specification.</div>
+<div class="Normal">It is hoped that programmers will use overriding 
+indicators freely. As mentioned in the Introduction, they are very valuable 
+for preventing nasty errors during maintenance. Thus if we add a further 
+parameter to an operation such as Op for a root type and all type extensions 
+have overriding indicators then the compiler will report an error if 
+we do not modify the operators of all the derived types correctly.</div>
+<div class="Normal">We now turn to a minor change in the overriding rules 
+for functions with controlling results.</div>
+<div class="Normal">The reader may recall the general rule in Ada 95 
+that a function that is a primitive operation of a tagged type and returns 
+a value of the type, always requires overriding when the type is extended. 
+This is because the function for the extended type must create values 
+for the additional components. (This rule is sometimes incorrectly phrased 
+as saying that the function &quot;goes abstract&quot; if the extended 
+type is concrete; this is incorrect as the rules for abstract functions 
+and functions that &quot;require overriding&quot; are quite different.) 
+The irritating thing about the rule in Ada 95 is that it applies even 
+if there are no additional components.<A NAME="I1096"></A><A NAME="I1097"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Thus consider a generic 
+version of the set package of Section <A HREF="Rat-2-3.html">2.3</A> 
+</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element&nbsp;<B>is&nbsp;private</B>;<BR>
+<B>package</B>&nbsp;Sets&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Set&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Empty&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Unit(E:&nbsp;Element)&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Union(S,&nbsp;T:&nbsp;Set)&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Intersection(S,&nbsp;T:&nbsp;Set)&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Sets;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose we declare 
+an instantiation thus&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;My_Sets&nbsp;<B>is&nbsp;new</B>&nbsp;Sets(My_Type);</div>
+<div class="Normal" style="margin-bottom: 0.4em">This results in the 
+type <SPAN Class="swiss">Set</SPAN> and all its operations being declared 
+inside the package <SPAN Class="swiss">My_Sets</SPAN>. However, for various 
+reasons we might wish to have the type and its operations at the current 
+scope. One reason could just be for simplicity of naming so that we do 
+not have to write <SPAN Class="swiss">My_Sets.Set</SPAN> and <SPAN Class="swiss">My_Sets.Union</SPAN> 
+and so on. (We might be in a regime where use clauses are forbidden.) 
+An obvious approach is to derive our own type locally so that we have 
+</div>
+<div class="SwissExamples"><B>package</B>&nbsp;My_Sets&nbsp;<B>is&nbsp;new</B>&nbsp;Sets(My_Type);<BR>
+<B>type</B>&nbsp;My_Set&nbsp;<B>is&nbsp;new</B>&nbsp;My_Sets.Set&nbsp;<B>with&nbsp;null&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another situation where 
+we might need to do this is where we wish to use the type <SPAN Class="swiss">Set</SPAN> 
+as the full type for a private type thus&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;My_Set&nbsp;<B>is&nbsp;private</B>;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;My_Sets&nbsp;<B>is&nbsp;new</B>&nbsp;Sets(My_Type);<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;My_Set&nbsp;<B>is&nbsp;new</B>&nbsp;My_Sets.Set&nbsp;<B>with&nbsp;null&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">But this doesn't work 
+nicely in Ada 95 since all the functions have controlling results and 
+so &quot;go abstract&quot; and therefore have to be overridden with wrappers 
+thus&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Union(S,&nbsp;T:&nbsp;My_Set)&nbsp;<B>return</B>&nbsp;My_Set&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;My_Set(My_Sets.Union(My_Sets.Set(S),&nbsp;My_Sets.Set(T)));<BR>
+<B>end</B>&nbsp;Union;</div>
+<div class="Normal">This is clearly a dreadful nuisance. Ada 2005 sensibly 
+allows the functions to be inherited provided that the extension is visibly 
+null (and that there is no new discriminant part) and so no overriding 
+is required. This new facility will be much appreciated by users of the 
+new container library in Ada 2005 which has just this style of generic 
+packages which export tagged types.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The final topic to 
+be discussed concerns a problem with overloading and untagged types. 
+Remember that the concept of abstract subprograms was introduced into 
+Ada 95 largely for the purpose of tagged types. However it can also be 
+used with untagged types on derivation if we do not want an operation 
+to be inherited. This often happens with types representing physical 
+measurements. Consider&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Length<B>&nbsp;is&nbsp;new</B>&nbsp;Float;<BR>
+<B>type</B>&nbsp;Area&nbsp;<B>is&nbsp;new</B>&nbsp;Float;</div>
+<div class="Normal" style="margin-bottom: 0.4em">These types inherit 
+various undesirable operations such as multiplying a length by a length 
+to give a length when of course we want an area. We can overcome this 
+by overriding them with abstract operations. Thus&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;*&quot;&nbsp;(L,&nbsp;R:&nbsp;Length)&nbsp;<B>return</B>&nbsp;Length&nbsp;<B>is&nbsp;abstract</B>;<BR>
+<B>function</B>&nbsp;&quot;*&quot;&nbsp;(L,&nbsp;R:&nbsp;Area)&nbsp;<B>return</B>&nbsp;Area&nbsp;<B>is&nbsp;abstract</B>;<BR>
+<B>function</B>&nbsp;&quot;*&quot;&nbsp;(L,&nbsp;R:&nbsp;Length)&nbsp;<B>return</B>&nbsp;Area;</div>
+<div class="Normal">We have also declared a function to multiply two 
+lengths to give an area. So now we have two functions multiplying two 
+lengths, one returns a length but is abstract and so can never be called 
+and the other correctly returns an area.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose we want 
+to print out some values of these types. We might declare a couple of 
+functions delivering a string image thus&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Image(L:&nbsp;Length)&nbsp;<B>return</B>&nbsp;String;<BR>
+<B>function</B>&nbsp;Image(L:&nbsp;Area)&nbsp;<B>return</B>&nbsp;String;</div>
+<div class="Normal" style="margin-bottom: 0.4em">And then we decide 
+to write&nbsp;</div>
+<div class="SwissExamples">X:&nbsp;Length&nbsp;:=&nbsp;2.5;<BR>
+...<BR>
+Put_Line(Image(X&nbsp;*&nbsp;X));&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>ambiguous&nbsp;in&nbsp;Ada&nbsp;95</I></SPAN></div>
+<div class="Normal">This fails to compile in Ada 95 since it is ambiguous 
+because both <SPAN Class="swiss">Image</SPAN> and <SPAN Class="swiss">&quot;*&quot;</SPAN> 
+are overloaded. The problem is that although the function <SPAN Class="swiss">&quot;*&quot;</SPAN> 
+returning a length is abstract it nevertheless is still there and is 
+considered for overload resolution. So we don't know whether we are calling 
+<SPAN Class="swiss">Image</SPAN> on a length or on an area because we 
+don't know which <SPAN Class="swiss">&quot;*&quot;</SPAN> is involved.<A NAME="I1098"></A></div>
+<div class="Normal">So declaring the operation as abstract does not really 
+get rid of the operation at all, it just prevents it from being called 
+but its ghost lives on and is a nuisance.</div>
+<div class="Normal">In Ada 2005 this is overcome by a new rule that says 
+&quot;abstract nondispatching subprograms are ignored during overload 
+resolution&quot;. So the abstract <SPAN Class="swiss">&quot;*&quot;</SPAN> 
+is ignored and there is no ambiguity in Ada 2005.</div>
+<div class="Normal">Note that this rule does not apply to dispatching 
+operations of tagged types since we might want to dispatch to a concrete 
+operation of a descendant type. But it does apply to operations of a 
+class-wide type.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-2-6.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

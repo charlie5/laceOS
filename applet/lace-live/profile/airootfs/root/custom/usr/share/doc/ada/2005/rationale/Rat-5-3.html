@@ -1,0 +1,586 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Synchronized interfaces</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>5.3 Synchronized interfaces</H1>
+<div class="Normal">We now turn to the most important improvement to 
+the core tasking features introduced by Ada 2005. This concerns the coupling 
+of object oriented and real-time features through inheritance.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Recall from the chapter 
+on the object oriented model (see Section <A HREF="Rat-2-4.html">2.4</A>) 
+that we can declare an interface thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Int&nbsp;<B>is&nbsp;interface</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">An interface is essentially 
+an abstract tagged type that cannot have any components but can have 
+abstract operations and null procedures. We can then derive other interfaces 
+and tagged types by inheritance such as&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Another_Int&nbsp;<B>is&nbsp;interface&nbsp;and</B>&nbsp;Int1&nbsp;<B>and</B>&nbsp;Int2;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is&nbsp;new</B>&nbsp;Int1&nbsp;<B>and</B>&nbsp;Int2;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;TT&nbsp;<B>is&nbsp;new</B>&nbsp;T&nbsp;<B>and</B>&nbsp;Int3&nbsp;<B>and</B>&nbsp;Int4;</div>
+<div class="Normal">Remember that a tagged type can be derived from at 
+most one other normal tagged type but can also be derived from several 
+interfaces. In the list, the first is called the parent (it can be a 
+normal tagged type or an interface) and any others (which can only be 
+interfaces) are called progenitors.</div>
+<div class="Normal">Ada 2005 also introduces further categories of interfaces, 
+namely synchronized, protected, and task interfaces. A synchronized interface 
+can be implemented by either a task or protected type; a protected interface 
+can only be implemented by a protected type and a task interface can 
+only be implemented by a task type.<A NAME="I1152"></A><A NAME="I1153"></A><A NAME="I1154"></A><A NAME="I1155"></A><A NAME="I1156"></A><A NAME="I1157"></A></div>
+<div class="Normal">A nonlimited interface can only be implemented by 
+a nonlimited type. However, an explicitly marked limited interface can 
+be implemented by any tagged type (limited or not) or by a protected 
+or task type. Remember that task and protected types are inherently limited. 
+Note that we use the term limited interface to refer collectively to 
+interfaces marked limited, synchronized, task or protected and we use 
+explicitly limited to refer to those actually marked as limited.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So we can write&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;LI&nbsp;<B>is&nbsp;limited&nbsp;interface</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>similarly&nbsp;a&nbsp;type&nbsp;LI2</I></SPAN></div>
+<div class="SwissExamples"><B>type</B>&nbsp;SI<B>&nbsp;is&nbsp;synchronized&nbsp;interface</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;TI&nbsp;<B>is&nbsp;task&nbsp;interface</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;PI&nbsp;<B>is&nbsp;protected&nbsp;interface</B>;</div>
+<div class="Normal">and we can of course provide operations which must 
+be abstract or null. (Remember that <B>synchronized</B> is a new reserved 
+word.)<A NAME="I1158"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">We can compose these 
+interfaces provided that no conflict arises. The following are all permitted: 
+</div>
+<div class="SwissExamples"><B>type</B>&nbsp;TI2&nbsp;<B>is&nbsp;task&nbsp;interface&nbsp;and</B>&nbsp;LI&nbsp;<B>and</B>&nbsp;TI;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;LI3&nbsp;<B>is&nbsp;limited&nbsp;interface&nbsp;and</B>&nbsp;LI&nbsp;<B>and</B>&nbsp;LI2;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;TI3&nbsp;<B>is&nbsp;task&nbsp;interface&nbsp;and</B>&nbsp;LI&nbsp;<B>and</B>&nbsp;LI2;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;SI2&nbsp;<B>is&nbsp;synchronized&nbsp;interface&nbsp;and</B>&nbsp;LI&nbsp;<B>and</B>&nbsp;SI;</div>
+<div class="Normal">The rule is simply that we can compose two or more 
+interfaces provided that we do not mix task and protected interfaces 
+and the resulting interface must be not earlier in the hierarchy: limited, 
+synchronized, task/protected than any of the ancestor interfaces.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can derive a real 
+task type or protected type from one or more of the appropriate interfaces 
+</div>
+<div class="SwissExamples"><B>task&nbsp;type</B>&nbsp;TT&nbsp;<B>is&nbsp;new</B>&nbsp;TI&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>and&nbsp;here&nbsp;we&nbsp;give&nbsp;entries&nbsp;as&nbsp;usual</I></SPAN><BR>
+<B>end</B>&nbsp;TT;</div>
+<div class="Normal" style="margin-bottom: 0.4em">or</div>
+<div class="SwissExamples"><B>protected&nbsp;type</B>&nbsp;PT&nbsp;<B>is&nbsp;new</B>&nbsp;LI&nbsp;<B>and</B>&nbsp;SI&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;PT;</div>
+<div class="Normal">Unlike tagged record types we cannot derive a task 
+or protected type from another task or protected type as well. So the 
+derivation hierarchy can only be one level deep once we declare an actual 
+task or protected type.</div>
+<div class="Normal">The operations of these various interfaces are declared 
+in the usual way and an interface composed of several interfaces has 
+the operations of all of them with the same rules regarding duplication 
+and overriding of an abstract operation by a null one and so on as for 
+normal tagged types.</div>
+<div class="Normal">When we declare an actual task or protected type 
+then we must implement all of the operations of the interfaces concerned. 
+This can be done in two ways, either by declaring an entry or protected 
+operation in the specification of the task or protected object or by 
+declaring a distinct subprogram in the same list of declarations (but 
+not both). Of course, if an operation is null then it can be inherited 
+or overridden as usual.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Thus the interface 
+</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Pkg&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;TI&nbsp;<B>is&nbsp;task&nbsp;interface</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;P(X:&nbsp;<B>in</B>&nbsp;TI)&nbsp;<B>is&nbsp;abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Q(X:&nbsp;<B>in</B>&nbsp;TI;&nbsp;I:&nbsp;<B>in</B>&nbsp;Integer)&nbsp;<B>is&nbsp;null</B>;<BR>
+<B>end</B>&nbsp;Pkg;</div>
+<div class="Normal" style="margin-bottom: 0.4em">could be implemented 
+by&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;PT1&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>task&nbsp;type</B>&nbsp;TT1&nbsp;<B>is&nbsp;new</B>&nbsp;TI&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;P;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>P&nbsp;and&nbsp;Q&nbsp;implemented&nbsp;by&nbsp;entries</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;Q(I:&nbsp;<B>in</B>&nbsp;Integer);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;TT1;<BR>
+<B>end</B>&nbsp;PT1;</div>
+<div class="Normal" style="margin-bottom: 0.4em">or by</div>
+<div class="SwissExamples"><B>package</B>&nbsp;PT2&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>task&nbsp;type</B>&nbsp;TT2<B>&nbsp;is&nbsp;new&nbsp;</B>TI&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;P;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>P&nbsp;implemented&nbsp;by&nbsp;an&nbsp;entry</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;TT2;<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Q&nbsp;implemented&nbsp;by&nbsp;a&nbsp;procedure</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Q(X:&nbsp;<B>in</B>&nbsp;TT2;&nbsp;I:&nbsp;<B>in</B>&nbsp;Integer);<BR>
+<B>end</B>&nbsp;PT2;</div>
+<div class="Normal" style="margin-bottom: 0.4em">or even by&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;PT3&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>task&nbsp;type</B>&nbsp;TT3&nbsp;<B>is&nbsp;new</B>&nbsp;TI&nbsp;<B>with&nbsp;end</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>P&nbsp;implemented&nbsp;by&nbsp;a&nbsp;procedure&nbsp;</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Q&nbsp;inherited&nbsp;as&nbsp;a&nbsp;null&nbsp;procedure</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;P(X:&nbsp;<B>in</B>&nbsp;TT3);<BR>
+<B>end</B>&nbsp;PT3;</div>
+<div class="Normal">In this last case there are no entries and so we 
+have the juxtaposition <B>with end</B> which is somewhat similar to the 
+juxtaposition <B>is end</B> that occurs with generic packages used as 
+signatures.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Observe how the first 
+parameter which denotes the task is omitted if it is implemented by an 
+entry. This echoes the new prefixed notation for calling operations of 
+tagged types in general. Remember that rather than writing&nbsp;</div>
+<div class="SwissExamples">Op(X,&nbsp;Y,&nbsp;Z,&nbsp;...);</div>
+<div class="Normal" style="margin-bottom: 0.4em">we can write&nbsp;</div>
+<div class="SwissExamples">X.Op(Y,&nbsp;Z,&nbsp;...);</div>
+<div class="Normal">provided certain conditions hold such as that <SPAN Class="swiss">X</SPAN> 
+is of a tagged type and that <SPAN Class="swiss">Op</SPAN> is a primitive 
+operation of that type.</div>
+<div class="Normal">In order for the implementation of an interface operation 
+by an entry of a task type or a protected operation of a protected type 
+to be possible some fairly obvious conditions must be satisfied.</div>
+<div class="Normal">In all cases the first parameter of the interface 
+operation must be of the task type or protected type (it may be an access 
+parameter).</div>
+<div class="Normal">In addition, in the case of a protected type, the 
+first parameter of an operation implemented by a protected procedure 
+or entry must have mode <B>out</B> or <B>in out</B> (and in the case 
+of an access parameter it must be an access to variable parameter).</div>
+<div class="Normal">If the operation does not fit these rules then it 
+has to be implemented as a subprogram. An important example is that a 
+function has to be implemented as a function in the case of a task type 
+because there is no such thing as a function entry. However, a function 
+can often be directly implemented as a protected function in the case 
+of a protected type.</div>
+<div class="Normal">Entries and protected operations which implement 
+inherited operations may be in the visible part or private part of the 
+task or protected type in the same way as for tagged record types.</div>
+<div class="Normal">It may seem rather odd that an operation can be implemented 
+by a subprogram that is not part of the task or protected type itself 
+&ndash; it seems as if it might not be task safe in some way. But a common 
+paradigm is where an operation as an abstraction has to be implemented 
+by two or more entry calls. An example occurs in some implementations 
+of the classic readers and writers problem as we shall see in a moment.</div>
+<div class="Normal">Of course a task or protected type which implements 
+an interface can have additional entries and operations as well just 
+as a derived tagged type can have more operations than its parent.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The overriding indicators 
+<B>overriding</B> and <B>not overriding</B> can be applied to entries 
+as well as to procedures. Thus the package <SPAN Class="swiss">PT2</SPAN> 
+above could be written as<A NAME="I1159"></A>&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;PT2&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>task&nbsp;type</B>&nbsp;TT2<B>&nbsp;is&nbsp;new&nbsp;</B>TI&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>overriding</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>P&nbsp;implemented&nbsp;by&nbsp;an&nbsp;entry</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;P;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;TT2;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>overriding</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Q&nbsp;implemented&nbsp;by&nbsp;procedure</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Q(X:&nbsp;<B>in</B>&nbsp;TT2;&nbsp;I:&nbsp;<B>in</B>&nbsp;Integer);<BR>
+<B>end</B>&nbsp;PT2;</div>
+<div class="Normal" style="margin-bottom: 0.4em">:We will now explore 
+a simple readers and writers example in order to illustrate various points. 
+We start with the following interface&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;RWP&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;RW&nbsp;<B>is&nbsp;limited&nbsp;interface</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Write(Obj:&nbsp;<B>out</B>&nbsp;RW;&nbsp;X:&nbsp;<B>in</B>&nbsp;Item)&nbsp;<B>is&nbsp;abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Read(Obj:&nbsp;<B>in</B>&nbsp;RW;&nbsp;X:&nbsp;<B>out</B>&nbsp;Item)&nbsp;<B>is&nbsp;abstract</B>;<BR>
+<B>end</B>&nbsp;RWP;</div>
+<div class="Normal">The intention here is that the interface describes 
+the abstraction of providing an encapsulation of a hidden location and 
+a means of writing a value (of some type <SPAN Class="swiss">Item</SPAN>) 
+to it and reading a value from it &ndash; very trivial.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We could implement 
+this in a nonsynchronized manner thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Simple_RW&nbsp;<B>is&nbsp;new</B>&nbsp;RW&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V:&nbsp;Item;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>procedure</B>&nbsp;Write(Obj:&nbsp;<B>out</B>&nbsp;Simple_RW;&nbsp;X:&nbsp;<B>in</B>&nbsp;Item);</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>procedure</B>&nbsp;Read(Obj:&nbsp;<B>in</B>&nbsp;Simple_RW;&nbsp;X:&nbsp;<B>out</B>&nbsp;Item);</div>
+<div class="SwissExamples">...</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Write(Obj:&nbsp;<B>out</B>&nbsp;Simple_RW;&nbsp;X:&nbsp;<B>in</B>&nbsp;Item)<BR>
+<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Obj.V&nbsp;:=&nbsp;X;<BR>
+<B>end</B>&nbsp;Write;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Read(Obj:&nbsp;<B>in</B>&nbsp;Simple_RW;&nbsp;X:&nbsp;<B>out</B>&nbsp;Item)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;X&nbsp;:=&nbsp;Obj.V;<BR>
+<B>end</B>&nbsp;Read;</div>
+<div class="Normal">This implementation is of course not task safe (task 
+safe is sometimes referred to as thread-safe). If a task calls <SPAN Class="swiss">Write</SPAN> 
+and the type <SPAN Class="swiss">Item</SPAN> is a composite type and 
+the writing task is interrupted part of the way through writing, then 
+a task which calls <SPAN Class="swiss">Read</SPAN> might get a curious 
+result consisting of part of the new value and part of the old value.</div>
+<div class="Normal" style="margin-bottom: 0.4em">For illustration we 
+could derive a synchronized interface&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Sync_RW&nbsp;<B>is&nbsp;synchronized&nbsp;interface&nbsp;and</B>&nbsp;RW;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This interface can 
+only be implemented by a task or protected type. For a protected type 
+we might have&nbsp;</div>
+<div class="SwissExamples"><B>protected&nbsp;type</B>&nbsp;Prot_RW&nbsp;<B>is&nbsp;new&nbsp;</B>Sync_RW&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Write(X:&nbsp;<B>in</B>&nbsp;Item);<BR>
+&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Read(X:&nbsp;<B>out</B>&nbsp;Item);<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;V:&nbsp;Item;<BR>
+<B>end</B>;</div>
+<div class="SwissExamples"><B>protected&nbsp;body</B>&nbsp;Prot_RW&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Write(X:&nbsp;<B>in</B>&nbsp;Item)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V&nbsp;:=&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Write;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Read(X:&nbsp;<B>out</B>&nbsp;Item)&nbsp;is<BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X&nbsp;:=&nbsp;V;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Read;<BR>
+<B>end</B>&nbsp;Prot_RW;</div>
+<div class="Normal">Again observe how the first parameter of the interface 
+operations is omitted when they are implemented by protected operations.</div>
+<div class="Normal">This implementation is perfectly task safe. However, 
+one of the characteristics of the readers and writers example is that 
+it is quite safe to allow multiple readers since they cannot interfere 
+with each other. But the type <SPAN Class="swiss">Prot_RW</SPAN> does 
+not allow multiple readers because protected procedures can only be executed 
+by one task at a time.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now consider&nbsp;</div>
+<div class="SwissExamples"><B>protected&nbsp;type</B>&nbsp;Multi_Prot_RW&nbsp;<B>is&nbsp;new</B>&nbsp;Sync_RW&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Write(X:&nbsp;<B>in</B>&nbsp;Item);<BR>
+&nbsp;&nbsp;&nbsp;<B>not&nbsp;overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Read&nbsp;<B>return</B>&nbsp;Item;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;V:&nbsp;Item;<BR>
+<B>end</B>;</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>procedure</B>&nbsp;Read(Obj:&nbsp;<B>in</B>&nbsp;Multi_Prot_RW;&nbsp;X:&nbsp;<B>out</B>&nbsp;Item);</div>
+<div class="SwissExamples">...</div>
+<div class="SwissExamples"><B>protected&nbsp;body</B>&nbsp;Multi_Prot_RW&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Write(X:&nbsp;<B>in</B>&nbsp;Item)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V&nbsp;:=&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Write;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Read&nbsp;<B>return</B>&nbsp;Item&nbsp;is<BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;V;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Read;<BR>
+<B>end</B>&nbsp;Multi_Prot_RW;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Read(Obj:&nbsp;<B>in</B>&nbsp;Multi_Prot_RW;&nbsp;X:&nbsp;<B>out</B>&nbsp;Item)<BR>
+<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;X&nbsp;:=&nbsp;Obj.Read;<BR>
+<B>end</B>&nbsp;Read;</div>
+<div class="Normal">In this implementation the procedure <SPAN Class="swiss">Read</SPAN> 
+is implemented by a procedure outside the protected type and this procedure 
+then calls the function <SPAN Class="swiss">Read</SPAN> within the protected 
+type. This allows multiple readers because one of the characteristics 
+of protected functions is that multiple execution is permitted (but of 
+course calls of the protected procedure <SPAN Class="swiss">Write</SPAN> 
+are locked out while any calls of the protected function are in progress). 
+The structure is emphasized by the use of overriding indicators.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A simple tasking implementation 
+might be as follows&nbsp;</div>
+<div class="SwissExamples"><B>task&nbsp;type</B>&nbsp;Task_RW<B>&nbsp;is&nbsp;new</B>&nbsp;Sync_RW&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;Write(X:&nbsp;<B>in</B>&nbsp;Item);<BR>
+&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;Read(X:&nbsp;<B>out</B>&nbsp;Item);<BR>
+<B>end</B>;</div>
+<div class="SwissExamples"><B>task&nbsp;body</B>&nbsp;Task_RW&nbsp;<B>is<BR>
+</B>&nbsp;&nbsp;&nbsp;V:&nbsp;Item;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>select</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>accept</B>&nbsp;Write(X:&nbsp;<B>in</B>&nbsp;Item)&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V&nbsp;:=&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Write;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>or</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>accept</B>&nbsp;Read(X:&nbsp;<B>out</B>&nbsp;Item)&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X&nbsp;:=&nbsp;V;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Read;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>or</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>terminate</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;select</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;loop</B>;<BR>
+<B>end</B>&nbsp;Task_RW;</div>
+<div class="Normal">Finally, here is a tasking implementation which allows 
+multiple readers and ensures that an initial value is set by only allowing 
+a call of <SPAN Class="swiss">Write</SPAN> first. It is based on an example 
+in <I>Programming in Ada 95</I> by the author <A HREF="Rat-0-2.html#R6">[6]</A>. 
+</div>
+<div class="SwissExamples"><B>task&nbsp;type</B>&nbsp;Multi_Task_RW(V:&nbsp;<B>access</B>&nbsp;Item)&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;Sync_RW&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;Write(X:&nbsp;<B>in</B>&nbsp;Item);<BR>
+&nbsp;&nbsp;&nbsp;<B>not</B>&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;Start;<BR>
+&nbsp;&nbsp;&nbsp;<B>not&nbsp;overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;Stop;<BR>
+<B>end</B>;</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>procedure</B>&nbsp;Read(Obj:&nbsp;<B>in</B>&nbsp;Multi_Task_RW;&nbsp;X:&nbsp;<B>out</B>&nbsp;Item);</div>
+<div class="SwissExamples">...</div>
+<div class="SwissExamples"><B>task&nbsp;body</B>&nbsp;Multi_Task_RW&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Readers:&nbsp;Integer&nbsp;:=&nbsp;0;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>accept</B>&nbsp;Write(X:&nbsp;<B>in</B>&nbsp;Item)&nbsp;do<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V.<B>all</B>&nbsp;:=&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Write;<BR>
+&nbsp;&nbsp;&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>select</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Write'Count&nbsp;=&nbsp;0&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>accept</B>&nbsp;Start;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Readers&nbsp;:=&nbsp;Readers&nbsp;+&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>or</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>accept</B>&nbsp;Stop;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Readers&nbsp;:=&nbsp;Readers&nbsp;&ndash;&nbsp;1;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>or</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Readers&nbsp;=&nbsp;0&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>accept</B>&nbsp;Write(X:&nbsp;<B>in</B>&nbsp;Item)&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V.<B>all</B>&nbsp;:=&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Write;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>or</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>terminate</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;select</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;loop</B>;<BR>
+<B>end</B>&nbsp;Multi_Task_RW;</div>
+<div class="SwissExamples"><B>overriding<BR>
+procedure</B>&nbsp;Read(Obj:&nbsp;<B>in</B>&nbsp;Multi_Task_RW;&nbsp;X:&nbsp;<B>out</B>&nbsp;Item)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Obj.Start;<BR>
+&nbsp;&nbsp;&nbsp;X&nbsp;:=&nbsp;Obj.V.<B>all</B>;<BR>
+&nbsp;&nbsp;&nbsp;Obj.Stop;<BR>
+<B>end</B>&nbsp;Read;</div>
+<div class="Normal">In this case the data being protected is accessed 
+via the access discriminant of the task. It is structured this way so 
+that the procedure <SPAN Class="swiss">Read</SPAN> can read the data 
+directly. Note also that the procedure <SPAN Class="swiss">Read</SPAN> 
+(which is the implementation of the procedure <SPAN Class="swiss">Read</SPAN> 
+of the interface) calls two entries of the task.</div>
+<div class="Normal">It should be observed that this last example is by 
+way of illustration only. As is well known, the <SPAN Class="swiss">Count</SPAN> 
+attribute used in tasks (as opposed to protected objects) can be misleading 
+if tasks are aborted or if entry calls are timed out. Moreover, it would 
+be gruesomely slow.</div>
+<div class="Normal">So we have seen that a limited interface such as 
+<SPAN Class="swiss">RW</SPAN> might be implemented by a normal tagged 
+type (plus its various operations) and by a protected type and also by 
+a task type. We could then dispatch to the operations of any of these 
+according to the tag of the type concerned. Observe that task and protected 
+types are now other forms of tagged types and so we have to be careful 
+to say tagged record type (or informally, normal tagged type) where appropriate.</div>
+<div class="Normal">In the above example, the types <SPAN Class="swiss">Simple_RW</SPAN>, 
+<SPAN Class="swiss">Prot_RW</SPAN>, <SPAN Class="swiss">Multi_Prot_RW</SPAN>, 
+<SPAN Class="swiss">Task_RW</SPAN> and <SPAN Class="swiss">Multi_Task_RW</SPAN> 
+all implement the interface <SPAN Class="swiss">RW</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So we might have&nbsp;</div>
+<div class="SwissExamples">RW_Ptr:&nbsp;<B>access</B>&nbsp;RW'Class&nbsp;:=&nbsp;...</div>
+<div class="SwissExamples">...<BR>
+RW_Ptr.Write(An_Item);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>dispatches</I></SPAN></div>
+<div class="Normal">and according to the value in <SPAN Class="swiss">RW_Ptr</SPAN> 
+this might call the appropriate entry or procedure of an object of any 
+of the types implementing the interface <SPAN Class="swiss">RW</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However if we have 
+</div>
+<div class="SwissExamples">Sync_RW_Ptr:&nbsp;<B>access</B>&nbsp;Sync_RW'Class&nbsp;:=&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">then we know that any 
+implementation of the synchronized interface <SPAN Class="swiss">Sync_RW</SPAN> 
+will be task safe because it can only be implemented by a task or protected 
+type. So the dispatching call&nbsp;</div>
+<div class="SwissExamples">Sync_RW_Ptr.Write(An_Item);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>task&nbsp;safe&nbsp;dispatching</I></SPAN></div>
+<div class="Normal">will be task safe.</div>
+<div class="Normal">An interesting point is that because a dispatching 
+call might be to an entry or to a procedure we now permit what appear 
+to be procedure calls in timed entry calls if they might dispatch to 
+an entry.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So we could have&nbsp;</div>
+<div class="SwissExamples"><B>select</B><BR>
+&nbsp;&nbsp;&nbsp;RW_Ptr.Read(An_Item);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>dispatches</I></SPAN><BR>
+<B>or</B><BR>
+&nbsp;&nbsp;&nbsp;<B>delay</B>&nbsp;Seconds(10);<BR>
+<B>end&nbsp;select</B>;</div>
+<div class="Normal">Of course it might dispatch to the procedure <SPAN Class="swiss">Read</SPAN> 
+if the type concerned turns out to be <SPAN Class="swiss">Simple_RW</SPAN> 
+in which case a time out could not occur. But if it dispatched to the 
+entry <SPAN Class="swiss">Read</SPAN> of the type <SPAN Class="swiss">Task_RW</SPAN> 
+then it could time out.</div>
+<div class="Normal" style="margin-bottom: 0.4em">On the other hand we 
+are not allowed to use a timed call if it is statically known to be a 
+procedure. So&nbsp;</div>
+<div class="SwissExamples">A_Simple_Object:&nbsp;Simple_RW;<BR>
+...<BR>
+<B>select</B><BR>
+&nbsp;&nbsp;&nbsp;A_Simple_Object.Read(An_Item);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+<B>or</B><BR>
+&nbsp;&nbsp;&nbsp;<B>delay</B>&nbsp;Seconds(10);<BR>
+<B>end&nbsp;select</B>;</div>
+<div class="Normal">is not permitted.</div>
+<div class="Normal">A note of caution is in order. Remember that the 
+time out is to when the call gets accepted. If it dispatches to <SPAN Class="swiss">Multi_Task_RW.Read</SPAN> 
+then time out never happens because the <SPAN Class="swiss">Read</SPAN> 
+itself is a procedure and gets called at once. However, behind the scenes 
+it calls two entries and so could take a long time. But if we called 
+the two entries directly with timed calls then we would get a time out 
+if there were a lethargic writer in progress. So the wrapper distorts 
+the abstraction. In a sense this is not much worse than the problem we 
+have anyway that a time out is to when a call is accepted and not to 
+when it returns &ndash; it could hardly be otherwise.</div>
+<div class="Normal">The same rules apply to conditional entry calls and 
+also to asynchronous select statements where the triggering statement 
+can be a dispatching call.</div>
+<div class="Normal">In a similar way we also permit timed calls on entries 
+renamed as procedures. But note that we do not allow timed calls on generic 
+formal subprograms even though they might be implemented as entries.</div>
+<div class="Normal">Another important point to note is that we can as 
+usual assume the common properties of the class concerned. Thus in the 
+case of a task interface we know that it must be implemented by a task 
+and so the operations such as <B>abort</B> and the attributes <SPAN Class="swiss">Identity</SPAN>, 
+<SPAN Class="swiss">Callable</SPAN> and so on can be applied. If we know 
+that an interface is synchronized then we do know that it has to be implemented 
+by a task or a protected type and so is task safe.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Typically an interface 
+is implemented by a task or protected type but it can also be implemented 
+by a singleton task or protected object despite the fact that singletons 
+have no type name. Thus we might have&nbsp;</div>
+<div class="SwissExamples"><B>protected</B>&nbsp;An_RW&nbsp;<B>is&nbsp;new</B>&nbsp;Sync_RW&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Write(X:&nbsp;<B>in</B>&nbsp;Item);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Read(X:&nbsp;<B>out</B>&nbsp;Item);<BR>
+<B>end</B>;</div>
+<div class="Normal">with the obvious body. However we could not declare 
+a single protected object similar to the type <SPAN Class="swiss">Multi_Prot_RW</SPAN> 
+above. This is because we need a type name in order to declare the overriding 
+procedure <SPAN Class="swiss">Read</SPAN> outside the protected object. 
+So singleton implementations are possible provided that the interface 
+can be implemented directly by the task or protected object without external 
+subprograms.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Here is another example 
+</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Map&nbsp;<B>is&nbsp;protected&nbsp;interface</B>;<BR>
+<B>procedure</B>&nbsp;Put(M:&nbsp;Map;&nbsp;K:&nbsp;Key;&nbsp;V:&nbsp;Value)<B>&nbsp;is&nbsp;abstract</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">can be implemented 
+by</div>
+<div class="SwissExamples"><B>protected</B>&nbsp;A_Map<B>&nbsp;is&nbsp;new</B>&nbsp;Map&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Put(K:&nbsp;Key;&nbsp;V:&nbsp;Value);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;A_Map;</div>
+<div class="Normal" style="margin-bottom: 0.4em">There is an important 
+rule about tagged private types and synchronized interfaces. Both partial 
+and full view must be synchronized or not. Thus if we wrote&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;SI&nbsp;<B>is&nbsp;synchronized&nbsp;interface</B>;<BR>
+<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;synchronized&nbsp;new</B>&nbsp;SI&nbsp;<B>with&nbsp;private</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Says&nbsp;synchronized</I></SPAN></div>
+<div class="Normal">then the full type <SPAN Class="swiss">T</SPAN> has 
+to be a task type or protected type or possibly a synchronized, protected 
+or task interface.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It is vital that the 
+synchronized property cannot be hidden since this would violate privacy. 
+This is largely because type extensions of synchronized interfaces and 
+tagged concurrent types are not allowed. We musn't need to look into 
+the private part to see whether a type extension is allowed. Note that 
+the word <B>synchronized</B> is always given. We could also write</div>
+<div class="SwissExamples"><B>type</B>&nbsp;LI&nbsp;<B>is&nbsp;limited&nbsp;interface</B>;<BR>
+<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;synchronized&nbsp;new</B>&nbsp;LI&nbsp;<B>with&nbsp;private</B>;</div>
+<div class="Normal">in which case the ancestor is not synchronized. But 
+the fact that <SPAN Class="swiss">T</SPAN> is synchronized is clearly 
+visible.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It might be remembered 
+that if a private view is untagged then the full view might be tagged. 
+In this case type extension is not allowed with the private view anyway 
+and so the full type might be synchronized. So we can have (in Ada 95 
+as well)</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;limited&nbsp;private</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>untagged</I></SPAN><BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>task&nbsp;type</B>&nbsp;T&nbsp;<B>is</B>&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>synchronized&nbsp;property&nbsp;is&nbsp;hidden</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">but we cannot have</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;abstract&nbsp;tagged&nbsp;limited&nbsp;private</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>tagged</I></SPAN><BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;synchronized&nbsp;interface</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">We conclude this discussion 
+on interfaces by saying a few words about the use of the word <B>limited</B>. 
+(Much of this has already been explained in the chapter on the object 
+oriented model (see <A HREF="Rat-2-4.html">2.4</A>) but it is worth repeating 
+in the context of concurrent types.) We always explicitly insert <B>limited</B>, 
+<B>synchronized</B>, <B>task</B>, or <B>protected</B> in the case of 
+a limited interface in order to avoid confusion. So to derive a new explicitly 
+limited interface from an existing limited interface <SPAN Class="swiss">LI</SPAN> 
+we write&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;LI2&nbsp;<B>is&nbsp;limited&nbsp;interface&nbsp;and</B>&nbsp;LI;</div>
+<div class="Normal">whereas in the case of normal types we can write 
+</div>
+<div class="SwissExamples"><B>type</B>&nbsp;LT&nbsp;<B>is&nbsp;limited</B>&nbsp;...</div>
+<div class="SwissExamples"><B>type</B>&nbsp;LT2&nbsp;<B>is&nbsp;new</B>&nbsp;LT&nbsp;<B>and</B>&nbsp;LI&nbsp;<B>with</B>&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>LT2&nbsp;is&nbsp;limited</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">then <SPAN Class="swiss">LT2</SPAN> 
+is limited by the normal derivation rules. Types take their limitedness 
+from their parent (the first one in the list, provided it is not an interface) 
+and it does not have to be given explicitly on type derivation &ndash; 
+although it can be in Ada 2005 thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;LT2&nbsp;<B>is&nbsp;limited&nbsp;new</B>&nbsp;LT&nbsp;<B>and</B>&nbsp;LI&nbsp;<B>with</B>&nbsp;...</div>
+<div class="Normal">Remember the important rule that all descendants 
+of a nonlimited interface have to be nonlimited because otherwise limited 
+types could end up with an assignment operation.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This means that we 
+cannot write&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;NLI&nbsp;<B>is&nbsp;interface</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>nonlimited</I></SPAN></div>
+<div class="SwissExamples"><B>type</B>&nbsp;LI&nbsp;<B>is&nbsp;limited&nbsp;interface</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>limited</I></SPAN></div>
+<div class="SwissExamples"><B>task&nbsp;type</B>&nbsp;TT<B>&nbsp;is&nbsp;new</B>&nbsp;NLI&nbsp;<B>and</B>&nbsp;LI&nbsp;<B>with</B>&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal">This is illegal because the interface <SPAN Class="swiss">NLI</SPAN> 
+in the declaration of the task type <SPAN Class="swiss">TT</SPAN> is 
+not limited.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

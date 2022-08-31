@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Streams</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-7.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-8.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>7.8 Streams</H1>
+<div class="Normal">Important improvements to the control of streams 
+were described in the chapter on the object oriented model where we discussed 
+the new package <SPAN Class="swiss">Ada.Tags.Generic_Dispatching_Constructor</SPAN> 
+(see <A HREF="Rat-2-6.html">2.6</A>) and various changes to the parent 
+package <SPAN Class="swiss">Ada.Tags</SPAN> itself. In this section we 
+mention two other changes.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There is a problem 
+with the existing stream attributes such as (see RM <A HREF="http://www.adaic.org/resources/add_content/standards/05rm/html/RM-13-13-2.html">13.13.2</A>) 
+</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;S'Write(Stream:&nbsp;<B>access</B>&nbsp;Root_Stream_Type'Class;&nbsp;Item:&nbsp;<B>in</B>&nbsp;<SPAN Class="roman"><I>T</I></SPAN>);</div>
+<div class="Normal">where <SPAN Class="swiss">S</SPAN> is a subtype of 
+<SPAN Class="swiss">T</SPAN>. Note that for the parameter <SPAN Class="swiss">Item</SPAN>, 
+its type <SPAN Class="swiss"><I>T</I></SPAN> is in italic and so has 
+to be interpreted according to the kind of type. In the case of integer 
+and enumeration types it means that the parameter <SPAN Class="swiss">Item</SPAN> 
+has type <SPAN Class="swiss">T'Base</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Given a declaration 
+such as&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Index&nbsp;<B>is&nbsp;range</B>&nbsp;1&nbsp;..&nbsp;10;</div>
+<div class="Normal">different implementations might use different representations 
+for <SPAN Class="swiss">Index'Base</SPAN> &ndash; some might use 8 bits 
+others might use 32 bits and so on.</div>
+<div class="Normal">Now stream elements themselves are typically 8 bits 
+and so with an 8-bit base, there will be one value of <SPAN Class="swiss">Index</SPAN> 
+per stream element whereas with a 32-bit base each value of <SPAN Class="swiss">Index</SPAN> 
+will take 4 stream elements. Clearly a stream written by the 8-bit implementation 
+cannot be read by the 32-bit one.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This problem is overcome 
+in Ada 2005 by the introduction of a new attribute <SPAN Class="swiss">Stream_Size</SPAN>.<A NAME="I1377"></A><A NAME="I1378"></A> 
+The universal integer value <SPAN Class="swiss">S'Stream_Size</SPAN> 
+gives the number of bits used in the stream for values of the subtype 
+<SPAN Class="swiss">S</SPAN>. We are guaranteed that it is a multiple 
+of <SPAN Class="swiss">Stream_Element'Size</SPAN>. So the number of stream 
+elements required will be&nbsp;</div>
+<div class="SwissExamples">S'Stream_Size&nbsp;/&nbsp;Stream_Element'Size</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can set the attribute 
+in the usual way provided that the value given is a static multiple of 
+<SPAN Class="swiss">Stream_Element'Size</SPAN>. So in the case above 
+we can write&nbsp;</div>
+<div class="SwissExamples"><B>for</B>&nbsp;Index'Stream_Size&nbsp;<B>use</B>&nbsp;8;</div>
+<div class="Normal">and portability is then assured. That is provided 
+that <SPAN Class="swiss">Stream_Element_Size</SPAN> is 8 anyway and that 
+the implementation accepts the attribute definition clause (which it 
+should).</div>
+<div class="Normal" style="margin-bottom: 0.4em">A minor change is that 
+the parameter <SPAN Class="swiss">Stream</SPAN> of the various attributes 
+now has a null exclusion so that <SPAN Class="swiss">S'Write</SPAN> is 
+in fact&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;S'Write(Stream:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;Root_Stream_Type'Class;&nbsp;Item:&nbsp;<B>in</B>&nbsp;<SPAN Class="roman"><I>T</I></SPAN>);</div>
+<div class="Normal">This does not introduce any incompatibilities since 
+in Ada 95 passing null raises <SPAN Class="swiss">Constraint_Error</SPAN> 
+anyway and so this change just clarifies the situation.</div>
+<div class="Normal">On this dullish but important topic here endeth the 
+Rationale for Ada 2005 apart from various exciting appendices and the 
+extensive Chapter <A HREF="Rat-8.html">8</A> on containers.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-7.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-8.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

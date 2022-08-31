@@ -1,0 +1,2610 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Three - Chapter A
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p3.html> Previous </a> |
+<a href=rat95-p3-b.html> Next </a>
+<hr>
+
+<h1>
+A   Predefined Language Environment
+</h1>
+
+<p>
+One of the main objectives of Ada 95 is to supply a set of supplemental
+packages of general utility in order to promote portability and
+reusability.  Several packages are essentially intrinsic to the language
+(such as Ada.Finalization) and are discussed in Part Two.  This chapter
+explains the main design decisions behind the packages described in Annex
+A of [RM95].  It should be noted that input-output which appeared in
+chapter 14 of the Ada 83 reference manual [ANSI 83, ISO 87] now appears
+in Annex A.  This move is designed to emphasize that input-output is just
+one of many facilities provided by the predefined environment and is not
+really an intrinsic part of the language.
+</p>
+<p>
+As mentioned in II.13, the predefined library is structured into three
+packages, Ada, Interfaces and System which can be thought of as child
+packages of Standard.  The main reason for the restructuring is to avoid
+contamination of the top level name space and consequent risk of clashes
+with library units defined by the user.
+</p>
+<p>
+   The package System concerns intrinsic facilities associated with the
+target machine and with storage management and is discussed in Chapter
+13.  The package Interfaces concerns communication with systems in other
+languages and also the interface to hardware numeric types.  All other
+predefined packages including input-output are children of Ada.
+</p>
+<p>
+   The major additions to the predefined environment compared with Ada 83
+are as follows:
+</p>
+
+<ul>
+<li>
+    The packages Ada.Characters and Ada.Strings provide general
+     facilities for the manipulation of characters and strings.
+<li>
+    The package Ada.Numerics provides elementary functions and random
+     number generation.
+<li>
+    There are new packages for completely heterogeneous input-output
+     streams.
+<li>
+    The additional mode Append_File is provided for Ada.Sequential_IO
+     and Ada.Text_IO.
+<li>
+    Improvements to Text_IO include facilities for looking ahead at the
+     next character, for getting the next character (from the keyboard)
+     without buffering or blocking, and to flush an output buffer.  In
+     addition the procedure Get now accepts a wider variety of numeric
+     formats.
+<li>
+    The package Ada.Wide_Text_IO provides text input-output based on the
+     types Wide_Character and Wide_String.  Both Text_IO and Wide_Text_IO
+     also have internal packages for modular and decimal input-output.
+<li>
+    The concept of a current error file is introduced in Text_IO by
+     analogy with the current output file.  Additional subprograms are
+     added to manipulate current input, output and error in a convenient
+     manner.
+<li>
+    The package Ada.Command_Line enables a program to access any
+     arguments of the command which invoked it and to return an exit
+     status.
+</ul>
+
+<p>
+   In order to avoid incompatibility problems, renamings are provided for
+packages existing in Ada 83 such as
+<pre>
+   with Ada.Text_IO;
+   package Text_IO renames Ada.Text_IO;
+</pre>
+</p>
+<p>
+These renamings are considered obsolescent and thus liable to be removed
+at the next revision of the language.
+</p>
+
+<h2>
+<a name=1>
+A.1  Character Handling
+</a>
+</h2>
+
+<p>
+Ada 95 provides an empty parent package Ada.Characters with two children:
+a package of character categorization and conversion subprograms,
+Characters.Handling, and a child package of constants,
+Characters.Latin_1, corresponding to the values of type Character.  The
+intent is to provide basic character handling facilities, similar in
+scope to the contents of the standard C library header <ctype.h> [Plauger
+92].
+</p>
+<p>
+   The following were the major issues concerning the design of this
+package:
+</p>
+<ul>
+<li>
+    Which kinds of classification functions to supply;
+<li>
+    What to provide for Wide_Character handling;
+<li>
+    Whether to have an analogue to the package Standard.ASCII, extended
+     to account for characters in the "upper half" of the character set;
+<li>
+    What to do about localization.
+</ul>
+</p>
+<p>
+   We had considered declaring the character handling subprograms
+directly in the package Ada.Characters.  However, with such an approach
+there was some concern that an application needing access only to the
+constants in Characters.Latin_1 would incur a code-space penalty if the
+subprograms in the parent package were bound into the application.
+Placing the subprograms in a child package addresses this concern.
+</p>
+
+<h3>
+<a name=1-1>
+A.1.1  Classification Functions
+</a>
+</h3>
+
+<p>
+A preliminary design of the character handling package was based heavily
+on C's <ctype.h>.  Although some of the classification functions are
+directly applicable, such as testing if a character is a digit, or
+testing if it is a letter, it was soon apparent that the C model was not
+completely appropriate for Ada 95.  The main issue is that Ada 95, unlike
+C, has Latin-1 as its default standard character type.  Thus the
+<ctype.h> categorization functions such as ispunct(c) and isspace(c)
+would have no standard meaning in Latin-1.  Moreover, <ctype.h> relies on
+the C approach to locale, which is rather complicated and has not been
+adopted by Ada 95.
+</p>
+<p>
+   The categorization functions in Characters.Handling are designed to
+reflect more the properties of Latin-1 than the heritage of <ctype.h>.
+Most of the categorizations form a hierarchy:
+</p>
+<ul>
+<li>
+    Each character is either a control or graphic character
+<li>
+    Each graphic character is either an alphanumeric or a special
+     graphic
+<li>
+    Each alphanumeric is either a letter or a decimal digit
+<li>
+    Each letter is either an upper- or lower-case letter
+</ul>
+<p>
+Supplementing these are further categories; for example a basic
+character (one without diacritical marks), a hexadecimal digit, and an
+ISO_646 character (whose position is in the range 0..127).
+</p>
+
+<h3>
+<a name=1-2>
+A.1.2  Wide_Character Handling
+</a>
+</h3>
+
+<p>
+There is a single classification function for Wide_Character, namely a
+test if a value is within the Character subset of the type.  We had
+considered providing additional classification functions for
+Wide_Character, but this would be premature since there is no widespread
+agreement on how such functions might be defined.
+</p>
+<p>
+   The Characters.Handling package provides a conversion from
+Wide_Character to Character, and from Wide_String to String, that leaves
+a Character value unchanged and that replaces a value outside the
+Character range with a (programmer-specifiable) value inside this range.
+</p>
+
+<h3>
+<a name=1-3>
+A.1.3  Package of Character Names
+</a>
+</h3>
+
+<p>
+The Ada 83 package Standard.ASCII declares a set of constants for the
+control characters (those whose positions are in the range 0 .. 31, and
+also the character at position 127), the lower-case letters, and some of
+the other graphic characters.  The contents of this package are a rather
+uneven mixture, and different motivations led to the inclusion of
+different parts.  The constants corresponding to the control characters
+are needed, since otherwise references to such characters would have to
+be in terms of Character'Val(number), which is not in the spirit of the
+language.  It is accepted practice to use ASCII.Nul, ASCII.CR, and
+ASCII.LF in Ada programs.
+</p>
+<p>
+   On the other hand, the inclusion of constants for the lower-case
+letters is principally a concession to the fact that, in the early
+1980's, the input devices used in some environments did not support
+upper-case characters.  To simulate a string literal such as "Abc" the
+programmer can write "A" & ASCII.LC_B & ASCII.LC_C.
+</p>
+<p>
+   For Ada 95, the issues were what to do about the package
+Standard.ASCII, and what to do about names of the characters in the
+"upper half" (those whose positions are in the range 128 .. 255).
+</p>
+<p>
+   Part of the problem surrounding Standard.ASCII is due to the fact that
+the name "ASCII" now no longer refers to a 7-bit character set, but
+rather to ISO 8859-1 (Latin-1).  Thus perhaps the most consistent
+approach would be to add to Standard.ASCII the declarations of names for
+"upper half" characters, and to introduce renamings where relevant in
+order to be consistent with ISO nomenclature (for example,
+Reverse_Solidus as a renaming of Back_Slash).  However, this would have
+the significant disadvantage of introducing a large number of
+declarations into Standard.  Even though they would be in an inner
+package (and thus not pollute the user's namespace), there was concern
+that such a specialized package would be out of place if included in
+package Standard.
+</p>
+<p>
+   These considerations led to the declaration of the child package
+Characters.Latin_1.  This package includes names of the control
+characters from ISO 646 (the same names as in Standard.ASCII), the
+graphic characters from ISO 646 excepting the upper case letters and the
+decimal digits, the control characters from ISO 6429, and the graphic
+characters in the "upper half".  The names of the graphics are based on
+Latin-1; hence Number_Sign for '#', as opposed to Sharp as in
+Standard.ASCII.  Since Characters.Latin_1 is in the predefined
+environment, it must be supported by all implementations.
+</p>
+<p>
+   Although there is some overlap between Characters.Latin_1 and
+Standard.ASCII, we expect that new Ada 95 programs will refer to the
+former, whereas existing Ada 83 code that is being moved intact to Ada 95
+will continue to use the latter.  In fact, the main reason to retain
+Standard.ASCII at all is for upward compatibility; removing it from the
+language would have been a major incompatibility and was not a realistic
+design alternative.  Instead, it is specified as an obsolescent feature
+and its declaration appears in [RM95 J].
+</p>
+<p>
+   We recognize that names such as Ada.Characters.Latin_1.Nul are
+notationally rather heavy.  However, we expect that users will typically
+provide renamings (either at the library level or as local declarations)
+such as
+<pre>
+   package Latin_1 renames Ada.Characters.Latin_1;
+</pre>
+and thus in practice the references will be of the more palatable form
+Latin_1.Nul.
+</p>
+
+<h3>
+<a name=1-4>
+A.1.4  Character Set Localization
+</a>
+</h3>
+
+<p>
+Although the language standard dictates Latin-1 as the contents of type
+Character, an implementation has permission to supply an alternative set
+specific to the locale or environment.  For example, an eastern European
+implementation may define the type Character based on ISO 8859, Part 2
+(Latin-2); a personal computer implementation may define the type
+Character as the native PC character set.  Of course with such
+adaptations an Ada program might no longer be portable, but in some
+environments the ability to exploit the characteristics of the local
+environment is more important than the ability to move a program between
+different environments.  In fact the explicit permission for a validated
+compiler to perform such localizations is not new in Ada 95 but applies
+also to Ada 83 based on a non-binding interpretation of ISO/IEC JTC1/SC22
+WG9 Ada [ISO WG9 93].
+</p>
+<p>
+   An implication of such localization is that the semantics of the
+classification and conversion functions in the Characters.Handling
+package depends on the definition of Character.  For example, the result
+of Is_Letter(Character'Val(16#F7#)) is false for Latin-1 (this character
+is the division sign) but is true for Latin/Cyrillic.
+</p>
+
+<h2>
+<a name=2>
+A.2  String Handling
+</a>
+</h2>
+
+<p>
+Many languages support string handling either directly via data types and
+operations or through standard supplemental library functions.  Ada 83
+provided the framework for a solution, through discriminated record types
+and access types, but the absence of a standard set of string handling
+services has proved a barrier to portability.  To solve this problem, Ada
+95 includes a set of packages for string handling that need to be
+supplied by all implementations.
+</p>
+
+<h3>
+<a name=2-1>
+A.2.1  Categories of Strings
+</a>
+</h3>
+
+<p>
+We can divide string data structures into three categories based on their
+flexibility and associated storage management:
+</p>
+<ul>
+<li>
+    A fixed-length string has a length whose value is established at
+     object creation and is invariant during the object's lifetime.
+     There is no need to use the heap for the storage of a fixed-length
+     string.
+<li>
+    A bounded-length string, also known in the literature as a varying-
+     length string, can change in length during its lifetime, but the
+     maximum length is established no later than when the object is
+     created.  Thus a bounded-length string has both a current length
+     which can change, and a maximum length which does not change.
+<li>
+     Since the maximum length is known on a per-object basis, a natural
+     implementation is to reserve this maximum amount of storage when the
+     object is created, rather than using the heap.
+<li>
+    An unbounded-length string,  also known in the literature as a
+     dynamic string, can change in length during its lifetime with no a
+     priori maximum length other than that implied by the range of the
+     index subtype.  Unbounded-length strings need to be managed
+     dynamically, either in the general heap or in some region reserved
+     for strings, because of the wide range of possible sizes for any
+     given object.
+</ul>
+<p>
+In practice the storage allocation performed by the compiler may vary
+from the "natural" method mentioned.  For example, if the length of a
+fixed-length string, or the maximum length of a bounded-length string,
+exceeds some threshold value then the compiler may choose to place the
+object on the heap, with automatic reclamation when the object becomes
+inaccessible.  This may be done because of target machine addressing
+constraints or (for bounded-length strings with a prohibitively large
+maximum size) as a means to economize on storage usage.
+</p>
+<p>
+   Ada 95 supplies packages for each of these categories, for both the
+predefined types String and Wide_String.  For fixed-length strings the
+type is the specific type String or Wide_String.  For the other two
+categories, a private type is supplied (see below) since it is important
+for purposes of data abstraction to avoid exposing the representation.
+Each of the three packages supplies a set of string-handling subprograms.
+The bounded- and unbounded-length string packages also supply conversion
+and selection functions; these are needed because the type is private.
+</p>
+
+<h3>
+<a name=2-2>
+A.2.2  Operations on Strings
+</a>
+</h3>
+
+<p>
+Operations on strings fall into several categories.  This section
+summarizes the various operations that are provided, and notes the
+semantic issues that arise based on whether the strings are fixed-,
+bounded-, or unbounded-length.
+</p>
+
+<dl>
+<dt>
+Constructors
+<dd>
+<p>
+Literals are available for fixed-length strings; for bounded- and
+unbounded-length strings we need conversion functions (String to/from
+Bounded_String and also to/from Unbounded_String).
+</p>
+<p>
+   The conversion function from String to Bounded_String illustrates a
+point that comes up in other contexts when constructing a bounded string:
+suppose the length of the result exceeds the maximum length of the
+bounded string?  We let the user control the behavior through a parameter
+to the constructor function.  The default effect is to raise an exception
+(Strings.Length_Error), but the user can also establish truncation of
+extra characters either on the right or left.
+</p>
+<p>
+   Concatenation is available automatically for fixed-length strings, and
+explicit overloadings are provided for bounded and unbounded strings.
+Note that since the operator form for concatenation of bounded length
+strings does not offer a possibility for the user to control the behavior
+if the result length exceeds the bounded string type's maximum length, we
+provide also a set of Append functions taking an explicit parameter
+dictating truncation versus raising an exception.  The operator form will
+raise an exception if the result length exceeds the type's maximum
+length.
+</p>
+<p>
+   For bounded and unbounded strings, there is the question of how many
+overloaded versions to supply for the concatenation functions.  For
+convenience we allow concatenation of a Bounded_String with either a
+Character, a String, or another Bounded_String, returning a
+Bounded_String result, and analogously for Unbounded_String.  We decided
+against allowing the concatenation of two fixed-length strings return a
+Bounded_String (or an Unbounded_String), since such an overloading would
+render ambiguous a statement such as
+<pre>
+   B := S1 & S2 & S3;
+</pre>
+where S1, S2 and S3 are of type String and B is of type Bounded_String.
+</p>
+<p>
+   If it is necessary to convert between a bounded and an unbounded
+string, this can be done by producing a String as an intermediate result.
+</p>
+<p>
+   Replication operations are also provided to construct string values.
+For each of the three string categories a "*" operator is supplied with
+left operand of subtype Natural and right operand either a Character, a
+String, or (for bounded and unbounded strings) a value of the
+corresponding string type.  The result is of the string type.  For
+example:
+<pre>
+   declare
+      Alpha, Beta : Unbounded_String;
+   begin
+      Alpha := 3 * 'A';     -- To_String(Alpha) = "AAA"
+      Alpha := 2 * Alpha;   -- To_String(Alpha) = "AAAAAA"
+      Beta  := 2 * "Abc";   -- To_String(Beta)  = "AbcAbc"
+   end;
+</pre>
+</p>
+
+<dt>
+Copying
+<dd>
+<p>
+     The issue in copying is what to do when the source and target lengths
+differ; this is only a concern in the fixed-length case.  For bounded
+strings the ":=" operation always works: the source and target have
+identical maximum lengths, so assignment simply copies the source to the
+target.  For unbounded strings the ":=" operation does the necessary
+storage management through Adjust and Finalize operations to allocate
+needed space for the new value of the target and to reclaim the space
+previously occupied by the object.
+</p>
+<p>
+   Our model, based on COBOL, is that a fixed-length string comprises
+significant contents together with padding.  The pad characters may
+appear either on the right or left (or both); this is useful for report
+output fields.  Parameters to the Move procedure allow the programmer to
+control the effect.  When a shorter string is copied to a longer string,
+pad characters are supplied as filler, and the Justify parameter guides
+where the source characters are placed.  When a longer string is copied
+to a shorter string, the programmer establishes whether the extra
+characters are to be dropped from the left or the right, or if an
+exception should be raised when a non-pad character is dropped.
+</p>
+<dt>
+Selection
+<dd>
+<p>
+     Component selection is not an issue for fixed-length strings, since
+indexing and slicing are directly available.  For both bounded and
+unbounded strings, we supply subprograms to select and replace a single
+element, and to select and replace a slice.
+</p>
+<dt>
+Ordering relations
+<dd>
+<p>     
+For fixed-length strings the predefined ordering and equality operators
+are appropriate, but for both the bounded and unbounded string types we
+provide explicit overloadings.  Note that if the implementation chooses
+to represent bounded strings with a maximum-length array and an index for
+the current length (see A.2.5 for further discussion), then predefined
+assignment has the desired effect but predefined equality does not, since
+it would check the "junk" characters in the string beyond the logical
+length.
+</p>
+<p>
+   The ordering operators return a result based on the values of
+corresponding characters; Thus for example the string "ZZZ" is less than
+the string "aa".  Anything more sophisticated would have been out of
+scope and in any event is dependent on local cultural conventions.
+</p>
+<dt>
+Searching and pattern matching
+<dd>
+<p>
+    Each of the string handling packages provides subprograms to scan a
+string for a pattern (Index, Count) or for characters inside or outside
+specified sets (Index_Non_Blank, Index, and Find_Token).  The profiles
+for each of these subprograms is the same in the three packages, except
+for the type of the source string (String, Bounded_String, or
+Unbounded_String).
+</p>
+<p>
+   A design issue was how to arrange that pattern matches be case
+insensitive, or in general to reflect user-defined character
+equivalences.  Our approach is to supply to each pattern matching
+function a parameter that specifies a character equivalence.  By default
+the equivalence mapping is the identity relation, but the programmer can
+override this via an explicit parameter of type
+Strings.Maps.Character_Mapping.
+</p>
+<p>
+   Although Index_Non_Blank is redundant, it is included since searching
+for blanks is such a common operation.
+</p>
+<p>
+   Find_Token is at a somewhat higher level than the other subprograms.
+We have supplied this procedure since it is extremely useful for simple
+lexical analysis such as parsing a line of interactively supplied input
+text.
+</p>
+<dt>
+String transformation
+<dd>
+<p>     
+As with the searching and pattern matching subprograms, we supply the
+same functionality for string transformations in each of the three string
+handling packages.
+</p>
+<p>
+   A common need is to translate a string via a character translation
+table.  The Translate function satisfies this goal.  The procedural form
+of Translate is included for efficiency, to avoid the extra copying that
+may be required for function returns.
+</p>
+<p>
+   The other string transformation subprograms are Replace_Slice, Insert,
+Overwrite, Delete, and Trim.  These are not necessarily length
+preserving.
+</p>
+<p>
+   We had considered including a subprogram to replace all occurrences of
+a pattern with a given string but ultimately decided in the interest of
+simplicity to leave this out.  It can be written in terms of the supplied
+operations if needed (see the example in A.2.8).
+</p>
+</dl>
+
+<h3>
+<a name=2-3>
+A.2.3  General Design Decisions
+</a>
+</h3>
+
+<p>
+Independent of the functionality provided, several fundamental design
+questions arose: whether to make the packages generic (with respect to
+character and string type) or specific to the types in Standard; how to
+organize the packages (hierarchically or as siblings); and whether to
+define the string-returning operations as functions, procedures, or both.
+</p>
+<dl>
+<dt>
+Generic vs non-generic form of packages
+<dd>
+<p>     
+String handling needs to be provided for the predefined String and
+Wide_String types, and it is also useful for strings of elements from
+user-supplied character types.  For these reasons it seems desirable to
+have a generic version of the string handling packages, with language-
+defined instantiations for Character and String and also for
+Wide_Character and Wide_String.  In fact, an earlier version of the
+packages adopted this approach, but we subsequently decided to provide
+non-generic forms instead.
+</p>
+<p>
+   There are several reasons for this decision.  First, although the
+specifications for the packages for handling Character and Wide_Character
+strings might be the same, the implementations would be different.
+Second, the generic form would be rather complicated, a pedagogical issue
+for users and a practical issue for implementations.
+</p>
+<dt>
+Structure of packages
+<dd>
+<p>
+     In order to minimize the number of language-defined names for immediate
+children of the root package Ada, the string handling packages form a
+hierarchy.  The ancestor unit, Ada.Strings, declares the types and
+exceptions common to the other packages.  The package Strings.Maps
+declares the types and related entities for the various data
+representations needed by the other packages.  Strings.Fixed,
+Strings.Bounded, and Strings.Unbounded provide the entities for fixed-
+length, bounded-length, and unbounded-length strings, respectively.  The
+package Strings.Maps.Constants declares  Character_Set constants
+corresponding to the character classification functions in the package
+Characters, as well as Character_Mapping constants that can be used in
+pattern matching and string transformations.  There are analogous
+packages Strings.Wide_Maps, Strings.Wide_Fixed, Strings.Wide_Bounded,
+Strings.Wide_Unbounded, and Strings.Wide_Maps.Constants, for Wide_String
+handling.
+</p>
+<dt>
+Procedures vs functions
+<dd>
+<p>
+The subprograms that deliver string results can be defined either as
+functions or as procedures.  The functional notation is perhaps more
+pleasant stylistically but typically involves extra copying.  The
+procedural form, with an in out parameter that is updated "in place", is
+generally more efficient but can lead to a heavy-looking style.
+</p>
+<p>
+   Our solution is to provide both forms for all three string-handling
+packages.  Although this increases the size of the packages, the benefits
+are an increase in flexibility for the programmer, and a regularity in
+the structure of the packages that should make them easier to use.
+</p>
+</dl>
+
+<h3>
+<a name=2-4>
+A.2.4  Strings.Maps
+</a>
+</h3>
+
+<p>
+The package Strings.Maps defines the types for representing sets of
+characters and character-to-character mappings, for the types Character
+and String.  A corresponding package, Strings.Wide_Maps, provides the
+same functionality for the types Wide_Character and Wide_String.
+</p>
+<p>
+   The type Character_Set represents sets of Character values that are to
+be passed to the string handling subprograms.  We considered several
+alternative declarations for Character_Set:
+</p>
+<ul>
+<li>
+    A visible constrained array-of-Booleans type;
+<li>
+    A visible unconstrained array-of-Booleans type;
+<li>
+        A private type; and
+<li>
+    A private type with unknown discriminants.
+</ul>
+<p>
+A visible constrained array type is the traditional representation of a
+set of values from a discrete type; in the case of Character it would be:
+<pre>
+   type Character_Set is array (Character) of Boolean;
+   pragma Pack(Character_Set);
+</pre>
+<p>
+However, this has several disadvantages.  First, it would differ from the
+choice of representations for a set of Wide_Character values, in the
+package Strings.Wide_Maps; in the latter package a constrained array type
+is not a realistic decision, since an overhead of 2**16 (64K) bits for
+each set would be excessive.  Second, even 256 bits may be more than is
+desirable for small sets, and a more compact representation might be
+useful.
+</p>
+<p>
+   An unconstrained array of Booleans addresses the second issue:
+<pre>
+   type Character_Set is array (Character range <>) of Boolean;
+   pragma Pack(Character_Set);
+</pre>
+</p>
+<p>
+In this version, an object CS of type Character_Set represents the set
+comprising each character C in CS'Range such that CS(C) is true; any
+character outside CS'Range is implicitly regarded as not being in the
+set, and of course any character C in CS'Range such that CS(C) is false
+is regarded as not being in the set.  Thus, for example, the empty set is
+represented by a null Character_Set array (as well as by many other
+Character_Set values).
+</p>
+<p>
+   The unconstrained array approach was used in earlier versions of the
+string handling packages, since it is more efficient in storage than the
+constrained array approach.  However, we ultimately decided against this
+approach, for several reasons.
+</p>
+<ul>
+<li>
+    Similar to the constrained array-of-Booleans approach, it is not
+     always appropriate for Wide_Character sets.  In particular, even if
+     a set is small and has a compact representation, taking the
+     complement of the set can yield a value requiring 64K bits.
+<li>
+    The effect of ":=" is unintuitive.  Two Character_Set objects could
+     represent the same set, yet since they might have different lengths,
+     assigning one to another could raise Constraint_Error.
+<li>
+    The need to provide an explicit initialization for each
+     Character_Set variable (since the type is unconstrained) is
+     inconvenient.
+</ul>
+<p>
+   The private type approach is much more in the spirit of Ada and allows
+the implementation, rather than requiring the language, to make the
+choice of representations for Character_Set.  Note that a simple private
+type (i.e., one without unknown discriminants) is not allowed to have an
+unconstrained type as its full declaration.  Thus if we want to allow
+some flexibility (rather than just imposing a private type interface on
+what is certain to be a constrained array type declaration as the full
+type declaration) we should allow the possibility of having the full
+declaration be an access type whose designated type is an unconstrained
+array of Booleans.  To do this, we need to compromise the goal of having
+a pure package (since access types are not permitted in a pure package);
+instead, we simply make the package preelaborable.
+</p>
+<p>
+   A private type with an unknown discriminant part might seem like a
+more direct way to allow the unconstrained-array-of-Booleans as the full
+declaration, but it suffers from a major portability flaw.  If Set_1 and
+Set_2 are objects of type Character_Set, and Character_Set is a private
+type with an unknown discriminant part, then the assignment Set_1 :=
+Set_2; may or may not raise Constraint_Error, depending on what the
+implementation chooses for the full type declaration.
+</p>
+<p>
+   As a result of these considerations, we have declared Character_Set as
+a private type, without an unknown discriminant part, and have specified
+the package as just preelaborable rather than pure in order to allow the
+implementation to use an access type in the full declaration of
+Character_Set.
+</p>
+<p>
+   A consequence of declaring Character_Set as private is that
+constructor functions are needed for composing Character_Set values.  We
+have provided several such functions, each named To_Set.  Since it is
+often convenient to have a set containing a single character, or exactly
+those characters appearing in some array, we have overloaded To_Set to
+take either a parameter of type Character or of type Character_Sequence
+(the latter is in fact just a subtype with the effect of renaming
+String).  It is also useful to compose a set out of one or more character
+ranges, and hence we have supplied the appropriate additional
+overloadings of To_Set.  In the other direction, it is useful to get a
+"concrete" representation of a set as either a set of ranges or a
+character sequence, and hence we have provided the corresponding
+functions.
+</p>
+<p>
+   Although introducing the name Character_Sequence is not strictly
+necessary (the name String would be equivalent), the style of having a
+subtype as effectively a renaming of an existing (sub)type makes the
+intent explicit.
+</p>
+<p>
+   Other languages that supply string handling functions represent
+character sets directly as character sequences as opposed to boolean
+arrays; for example, the functions in the C standard header <strings.h>.
+This was considered for the Ada 95 packages but rejected in the interest
+of efficiency.
+</p>
+<p>
+   Another type declared by Strings.Maps is Character_Mapping, which
+represents a mapping from one Character value to another.  For the same
+reasons underlying the choice of a private type for Character_Set, we
+have also declared Character_Mapping as private.  A typical choice for a
+full type declaration would be:
+<pre>
+   type Character_Mapping is array (Character) of Character;
+</pre>
+with the obvious interpretation; if CM is a Character_Mapping and C is a
+character, then CM(C) is the character to which C maps under the mapping
+CM.
+</p>
+<p>
+   Character mappings are used in two contexts:
+</p>
+<ul>
+<li>
+    To define an equivalence function applicable during pattern matches
+     (e.g., allowing the programmer to do searches where the distinction
+     between upper and lower case letters does not matter); and
+<li>
+    To define a translation table used in string transformation
+     subprograms.
+</ul>
+<p>
+   As an example of the use of the Character_Mapping type, the constant
+Lower_Case_Map (declared in Strings.Maps.Constants) maps each letter to
+the corresponding lower case letter and maps each other character to
+itself.  The following finds the first occurrence of the pattern string
+"gerbil" in a source string S, independent of case:
+<pre>
+   Index(Source  => S,
+         Pattern => "gerbil",
+         Going   => Forward,
+         Mapping => Strings.Maps.Constants.Lower_Case_Map)
+</pre>
+</p>
+<p>
+   A character C matches a pattern character P with respect to the
+Character_Mapping value Map if Map(C)=P.  Thus the user needs to ensure
+that a pattern string comprises only characters occurring in the range of
+the mapping.  (Passing as a pattern the string "GERBIL" would always fail
+for the mapping Lower_Case_Map.)  An earlier version of the string
+packages had a more symmetric definition for matching; namely C matched P
+if Map(C) = Map(P).  However, this yielded some counterintuitive effects
+and has thus been changed.
+</p>
+<p>
+   There is another possible representation for mappings, namely an
+access value denoting a function whose domain and range are the character
+type in question.  This would be useful where the domain and range are
+very large sets, and in fact is used in the string handling packages for
+Wide_Character and Wide_String.  To avoid unnecessary differences between
+the String and Wide_String packages, we have supplied the analogous
+access-to-subprogram type in Strings.Maps:
+<pre>
+   type Character_Mapping_Function is
+      access function (From : in Character) return Character;
+</pre>
+</p>
+<p>
+   Each subprogram that takes a Character_Mapping parameter is overloaded
+with a version that takes a Character_Mapping_Function.  In an earlier
+version of the string handling packages, the access-to-subprogram type
+was provided for Wide_String handling but not for String handling, since
+we were striving to make the latter pure.  However, since the package has
+had to compromise purity for other reasons as described above, there was
+no longer a compelling reason to leave out the character mapping function
+type.
+</p>
+
+<h3>
+<a name=2-5>
+A.2.5  Bounded-Length Strings
+</a>
+</h3>
+
+<p>
+The major decisions for bounded-length strings were (1) whether the type
+should be private or not, and (2) whether to realize the maximum length
+as a discriminant or, instead, as a generic formal parameter.
+</p>
+<p>
+There are two main reasons to declare a type as private as opposed to
+non-private:
+</p>
+<ul>
+<li>
+    To hide irrelevant representational decisions, thus allowing
+     implementation flexibility,
+<li>
+    To ensure that the programmer does not violate data consistency or
+     otherwise abuse the intent of the type.
+</ul>
+<p>
+Both of these apply to Bounded_String; hence it is appropriate for the
+type to be declared as private.
+</p>
+<p>
+   There are two principal ways to represent a varying- (but bounded-)
+length string, assuming that access types are to be avoided.  One is to
+supply the maximum length as a discriminant constraint, thus allowing
+different objects of the same type to have different maximum lengths.
+The other approach is to supply the maximum length at the instantiation
+of a generic package declaring a bounded string type, implying that
+objects with different maximum lengths must be of different types.  We
+thus have the following basic approaches:
+<pre>
+   package Discriminated_Bounded_Length is
+      type Bounded_String(Max_Length : Positive) is private;
+      function Length(Item : Bounded_String) return Natural;
+      ...
+   private
+      type Bounded_String(Max_Length : Positive) is
+         record
+            Length : Natural;
+            Data   : String(1 .. Max_Length);
+         end record;
+   end Discriminated_Bounded_Length;
+</pre>
+and also the alternative:
+<pre>
+   generic
+      Max : Positive:
+   package Generic_Bounded_Length is
+      Max_Length : constant Positive := Max;
+      subtype Length_Range is Natural range 0 .. Max_Length;
+
+          type Bounded_String is private;
+
+          function Length(Item : Bounded_String)
+             return Length_Range;
+          ...
+   private
+      type Bounded_String_Internals(Length : Length_Range := 0) is
+         record
+            Data : String(1 .. Length);
+         end record;
+      type Bounded_String is
+         record
+            Data : Bounded_String_Internals;
+         end record;
+   end Generic_Bounded_Length;
+</pre>
+</p>
+<p>
+   Each of these approaches has advantages and disadvantages (the reason
+for the seeming redundancy in the private part of the generic package
+will be discussed below).  If there is an operation that needs to deal
+with Bounded_String values with different maximum lengths, then the
+discriminated type approach is simpler.  On the other hand, predefined
+assignment and equality for discriminated Bounded_String do not have the
+desired behavior.  Assignment makes sense when the maximum lengths of
+source and target are different, as long as the source's current length
+is no greater than the target's maximum length, yet predefined ":=" would
+raise Constraint_Error on the discriminant mismatch.  User-defined Adjust
+and Finalize operations do not solve this problem.  It would be possible
+to avoid the difficulty by declaring the type as limited private, but
+this would result in a very clumsy programming style.
+</p>
+<p>
+   A variation is to declare a discriminated type with a default value
+for the Max_Length discriminant.  An object declared unconstrained can
+thus be assigned a value with a different maximum length (and a different
+length).  This approach, however, introduces other problems.  First, if
+the object is allocated rather than declared, then its discriminant is in
+fact constrained (by its default initial value).  Second, declaring an
+appropriate subtype for the discriminant - that is, establishing an
+appropriate bound for Max_Length - is difficult.  If it is too small then
+the user might not be able to create needed objects.  If it is too large,
+then there will either be a lot of wasted space or else the
+implementation may use dynamic storage allocation implicitly.
+</p>
+<p>
+   The solution is to let the user establish the maximum length as a
+parameter at generic instantiation.  Such an approach avoids these
+complications, but has two main drawbacks.  First, the programmer will
+need to perform as many instantiations as there are different maximum
+lengths to be supported.  Second, operations involving varying-length
+strings of different maximum lengths cannot be defined as part of the
+same generic package.  However, the programmer can get around the first
+difficulty by providing a small number of instantiations with sufficient
+maximum size (for example, max lengths of 20 and 80).  Either explicit
+overloadings or generics with formal package instantiations serve to
+address the second issue.  For these reasons we have adopted the generic
+approach, rather than the discriminant approach, to specifying the
+maximum length for a varying-length string.
+</p>
+<p>
+   Note that Bounded_String in the generic package is declared without
+discriminants.  Max_Length is established at the generic instantiation,
+and the Length field is invisible to the user and is set implicitly as
+part of the effect of the various operations.  An alternative would be to
+declare the type as follows:
+<pre>
+   type Bounded_String(Length : Length_Range := 0) is private;
+</pre>
+However, this would allow the user to create constrained instances, which
+defeats the intent of the package.  In order to prevent such abuses it is
+best to leave the Length component hidden from the user [Eachus 92].
+</p>
+<p>
+   A final point of rationale for the Bounded_String generic: the reason
+for declaring Max_Length, which is simply a constant reflecting the value
+supplied at the generic instantiation, is to allow the user to refer to
+the maximum length without keeping track manually of which values were
+supplied at which instantiations.
+</p>
+
+<h3>
+<a name=2-6>
+A.2.6  Unbounded-Length Strings
+</a>
+</h3>
+
+<p>
+Unbounded-length strings need to be implemented via dynamic storage
+management.  In Ada 83, in the absence of automatic garbage collection it
+was the programmer's responsibility to reclaim storage through unchecked
+deallocation.  Ada 95's facilities for automatically invoked Adjust and
+Finalize plug this loophole, since the unbounded string type implementor
+can arrange that storage be reclaimed implicitly, with no need for the
+user to perform unchecked deallocation.
+</p>
+<p>
+   The main design issue for unbounded strings was whether to expose the
+type as derived from Finalization.Controlled.  That is, the type could be
+declared either as
+<pre>
+   type Unbounded_String is private;
+</pre>
+or
+<pre>
+   type Unbounded_String is new Finalization.Controlled with private;
+</pre>
+</p>
+<p>
+   An advantage of the latter approach is that users can further derive
+from Unbounded_String for richer kinds of data structures, and override
+the default Finalize and Adjust.  However, we have chosen the simpler
+approach, just making Unbounded_String private.  If a more complicated
+data structure is desired, this can be obtained by including an
+Unbounded_String as a component.
+</p>
+<p>
+   Besides providing the private type Unbounded_String, the package
+Strings.Unbounded declares a visible general access type String_Access
+whose designated type is String.  The need for such a type arises often
+in practice, and so it is appropriate to have it declared in a language-
+defined package.
+</p>
+<p>
+   The following is a sample implementation of the private part of the
+package:
+<pre>
+   private
+      use Finalization;
+
+      Null_String : aliased String := "";
+
+      type Unbounded_String is new Controlled with
+         record
+            Reference : String_Access := Null_String'Access;
+         end record;
+
+      -- No need for Initialize procedure
+      procedure Finalize (Object : in out Unbounded_String);
+      procedure Adjust   (Object : in out Unbounded_String);
+
+      Null_Unbounded_String : constant Unbounded_String :=
+        (Controlled with Reference => Null_String'Access);
+
+   end Ada.Strings.Unbounded;
+</pre>
+</p>
+<p>
+   The following skeletal package body illustrates how several of the
+subprograms might be implemented.
+<pre>
+   with Unchecked_Deallocation;
+   package body Strings.Unbounded is
+      procedure Free is
+         new Unchecked_Deallocation(String, String_Access);
+
+      function To_Unbounded_String(Source : String)
+         return Unbounded_String is
+         Result_Ref : constant String_Access :=
+                             new String(1 .. Source'Length);
+      begin
+         Result_Ref.all := Source;
+         return (Finalization.Controlled with Reference => Result_Ref);
+      end To_Unbounded_String;
+
+      function To_String(Source : Unbounded_String) return String is
+      begin
+         return Item.Reference.all;
+           -- Note: Item.Reference is never null
+      end To_String;
+
+      --  In the following subprograms, the Reference component of each
+      --  Unbounded_String formal parameter is non-null, because of the
+      --  default initialization implied by the type's declaration
+
+      function Length(Source : Unbounded_String) return Natural is
+      begin
+         return Source.Reference.all'Length;
+      end Length;
+
+      function "=" (Left, Right : Unbounded_String) return Boolean is
+      begin
+         return Left.Reference.all = Right.Reference.all;
+      end "=";
+
+      procedure Finalize(Object : in out Unbounded_String) is
+      begin
+         if Object.Reference /= Null_String'Access then
+            Free(Object.Reference);
+         end if;
+      end Finalize;
+
+      procedure Adjust(Object : in out Unbounded_String);
+      begin
+         --  Copy Object if it is not Null_Unbounded_String
+         if Object.Reference /= Null_String'Access then
+            Object.Reference := new String'(Object.Reference.all);
+         end if;
+      end Adjust;
+
+      function "&" (Left, Right : in Unbounded_String)
+                    return Unbounded_String is
+         Left_Length   : constant Natural := Left.Reference.all'Length;
+         Right_Length  : constant Natural := Right.Reference.all'Length;
+         Result_Length : constant Natural := Left_Length + Right_Length;
+         Result_Ref    : String_Access;
+      begin
+         if Result_Length = 0 then
+            return Null_Unbounded_String;
+         else
+            Result_Ref := new String(1 .. Result_Length);
+            Result_Ref.all(1..Left_Length) := Left.Reference.all;
+            Result_Ref.all(Left_Length+1..Result_Length) :=
+               Right.Reference.all;
+            return (Finalization.Controlled with
+                       Reference => Result_Ref);
+         end if;
+      end "&";
+      ...
+   end Ada.Strings.Unbounded;
+</pre>
+</p>
+
+<h3>
+<a name=2-7>
+A.2.7  Wide String Handling
+</a>
+</h3>
+
+<p>
+Since the same functionality is needed for Wide_String as for String,
+there are child packages of Ada.Strings with analogous contents to those
+discussed above, but for Wide_Character and Wide_String.  The only
+difference is that some of the type and subprogram names have been
+adapted to reflect their application to Wide_Character.
+</p>
+<p>
+   As a consequence of providing equivalent functionality for the two
+cases, we have made it easier for a programmer to modify an application
+that deals with, say, String data, so that it can work with Wide_String
+data.
+</p>
+
+<h3>
+<a name=2-8>
+A.2.8  Examples
+</a>
+</h3>
+
+<p>
+The function below, which replaces all occurrences of a pattern in a
+source string, is intended as an illustration of the various string
+handling operations rather than as a recommended style for solving the
+problem.  A more efficient approach would be to defer creating the result
+string until after the pattern matches have been performed, thereby
+avoiding the overhead of allocating and deallocating the intermediate
+string data at each iteration.
+<pre>
+   with Ada.Strings.Maps, Ada.Strings.Unbounded, Ada.Strings.Fixed;
+   use Ada.Strings;
+   function Replace_All (Source  : in String;
+                         Pattern : in String;
+                         By      : in String;
+                         Going   : in Direction := Forward;
+                         Mapping : in Maps.Character_Mapping :=
+                                         Maps.Identity)
+                         return String is
+      use type Unbounded.Unbounded_String;
+      Pattern_Length : constant Natural := Pattern'Length;
+      Start          : Natural          := Source'First;
+      Result         : Unbounded.Unbounded_String;
+      Index          : Natural;
+   begin
+      loop
+         Index :=
+            Fixed.Index(Source(Start .. Source'Last),
+                        Pattern, Going, Mapping);
+         if Index/=0 then
+            Result := Result & Source(Start .. Index-1) & By;
+            Start  := Index + Pattern'Length;
+         else
+            Result := Result & Source(Start .. Source'Last);
+            return Unbounded.To_String(Result);
+         end if;
+      end loop;
+   end Replace_All;
+</pre>
+</p>
+<p>
+   The following program fragments show how the string handling
+subprograms may be used to get the effect of several COBOL INSPECT
+statement forms.
+<pre>
+   COBOL:   INSPECT ALPHA
+            TALLYING NUM FOR ALL "Z" BEFORE "A".
+
+
+   Ada 95:  Alpha : String( ... );
+            A_Index, Num: Natural;
+            ...
+            A_Index := Index(Alpha, 'A');
+            Num     := Count(Alpha(Alpha'First .. A_Index-1), "Z");
+
+   COBOL:   INSPECT ALPHA
+            REPLACING ALL "A" BY "G", "B" BY "H"
+            BEFORE INITIAL "X".
+
+
+   Ada 95:  Alpha   : String( ... );
+            X_Index : Natural;
+            My_Map  : Character_Mapping :=
+                         To_Mapping(From => "AB", To=>"GH");
+            ...
+            X_Index := Index(Alpha, 'X');
+            Translate(Source  => Alpha(Alpha'First .. X_Index -1),
+                      Mapping => My_Map);
+</pre>
+</p>
+
+<h2>
+<a name=3>
+A.3  Numerics Packages and Attributes
+</a>
+</h2>
+
+<p>
+Ada 95 includes in the predefined environment several child packages of
+Ada.Numerics, and the language also provides a comprehensive set of
+representation-oriented, model-oriented, and primitive-function
+attributes for real types.
+</p>
+<p>
+   The package Ada.Numerics itself defines the named numbers Pi and e, as
+well as an exception (Argument_Error) shared by several of its children.
+</p>
+<p>
+   The constants Pi and e are defined for the convenience of mathematical
+applications.  The WG9 Numerics Rapporteur Group did not define these
+constants in the secondary numeric standards for Ada 83 [ISO 94a],
+primarily because it could not decide whether to define a minimal set (as
+has now been done in Ada 95) or a much larger set of mathematical and
+physical constants.  Ada 95 implementations are required to provide Pi
+and e to at least 50 decimal places; this exceeds by a comfortable margin
+the highest precision available on present-day computers.
+</p>
+<p>
+   The Argument_Error exception is raised when a function in a child of
+Numerics is given an actual parameter whose value is outside the domain
+of the corresponding mathematical function.
+</p>
+<p>
+   The child packages of Ada.Numerics are Generic_Elementary_Functions
+and its non-generic equivalents, Float_Random and Discrete_Random (see
+A.3.2); Generic_Complex_Types and its non-generic equivalents (see
+G.1.1); Generic_Complex_Elementary_Functions and its non-generic
+equivalents (see G.1.2).
+</p>
+
+<h3>
+<a name=3-1>
+A.3.1  Elementary Functions
+</a>
+</h3>
+
+<p>
+The elementary functions are critical to a wide variety of scientific and
+engineering applications written in Ada.  They have been widely provided
+in the past as vendor extensions, but the lack of a standardized
+interface, variations in the use or avoidance of generics, differences in
+the set of functions provided, and absence of guaranteed accuracy have
+hindered the portability and the analysis of programs.  These impediments
+are removed by including the elementary functions in the predefined
+language environment.
+</p>
+<p>
+   The elementary functions are provided in Ada 95 by a generic package,
+Numerics.Generic_Elementary_Functions, which is a very slight variation
+of the generic package, Generic_Elementary_Functions, defined in [ISO
+94a] for Ada 83.
+</p>
+<p>
+   In addition, Ada 95 provides non-generic equivalent packages for each
+of the predefined floating point types, so as to facilitate the writing
+of scientific applications by programmers whose experience in other
+languages leads them to select the precision they desire by choosing an
+appropriate predefined floating point type.  The non-generic equivalent
+packages have names as follows
+<pre>
+   Numerics.Elementary_Functions        -- for Float
+   Numerics.Long_Elementary_Functions   -- for Long_Float
+</pre>
+and so on.
+</p>
+<p>
+   These nongeneric equivalents behave just like instances of the generic
+packages except that they may not be used as actual package parameters as
+in the example in 12.6.
+</p>
+<p>
+   A vendor may, in fact, provide the non-generic equivalent packages by
+instantiating the generic, but more likely they will be obtained by hand-
+tailoring and optimizing the text of the generic package for each of the
+predefined floating point types, resulting in better performance.
+</p>
+<p>
+   The Argument_Error exception is raised, for example, when the Sqrt
+function in Numerics.Generic_Elementary_Functions is given a negative
+actual parameter.  In [ISO 94a] and related draft secondary standards for
+Ada 83, Argument_Error was declared in each generic package as a renaming
+of an exception of the same name defined in a (non-generic) package
+called Elementary_Functions_Exceptions; in Ada 95, the children of
+Numerics do not declare Argument_Error, even as a renaming.  In Ada 83,
+simple applications that declare problem-dependent floating point types
+might look like this:
+<pre>
+   with Generic_Elementary_Functions;
+   procedure Application is
+      type My_Type is digits ...;
+      package My_Elementary_Functions is
+         new Generic_Elementary_Functions(My_Type);
+      use My_Elementary_Functions;
+      X : My_Type;
+   begin
+      ... Sqrt(X) ...
+   exception
+      when Argument_Error =>
+      ...
+   end Application;
+</pre>
+</p>
+<p>
+In Ada 95, they will look almost the same, the essential difference being
+the addition of context clauses for Ada.Numerics:
+<pre>
+   with Ada.Numerics; use Ada.Numerics;
+   with Ada.Numerics.Generic_Elementary_Functions;
+   procedure Application is
+      type My_Type is digits ...;
+      package My_Elementary_Functions is
+         new Generic_Elementary_Functions(My_Type);
+      use My_Elementary_Functions;
+      X : My_Type;
+   begin
+      ... Sqrt(X) ...
+   exception
+      when Argument_Error =>
+      ...
+   end Application;
+</pre>
+</p>
+<p>
+The benefit of the Ada 95 approach can be appreciated when one
+contemplates what happens when a second problem-dependent type and a
+second instantiation of Numerics.Generic_Elementary_Functions are added
+to the application.  There are no surprises in Ada 95, where one would
+write the following:
+<pre>
+   with Ada.Numerics; use Ada.Numerics;
+   with Ada.Numerics.Generic_Elementary_Functions;
+   procedure Application is
+      type My_Type_1 is digits ...;
+      type My_Type_2 is digits ...;
+      package My_Elementary_Functions_1 is
+         new Generic_Elementary_Functions(My_Type_1);
+      package My_Elementary_Functions_2 is
+         new Generic_Elementary_Functions(My_Type_2);
+      use My_Elementary_Functions_1, My_Elementary_Functions_2;
+      X : My_Type_1;
+      Y : My_Type_2;
+   begin
+      ... Sqrt(X) ...
+      ... Sqrt(Y) ...
+   exception
+      when Argument_Error =>
+      ...
+   end Application;
+</pre>
+</p>
+<p>
+If one were to extend the Ada 83 example with a second problem-dependent
+type and a second instantiation, one would be surprised to discover that
+direct visibility of Argument_Error is lost (because both instances
+declare that name, and the declarations are not overloadable [RM95
+8.4(11)]).  To regain direct visibility, one would have to add to the
+application a renaming declaration for Argument_Error.
+</p>
+<p>
+   The functions provided in Numerics.Generic_Elementary_Functions are
+the standard square root function (Sqrt), the exponential function (Exp),
+the logarithm function (Log), the forward trigonometric functions (Sin,
+Cos, Tan, and Arctan), the inverse trigonometric functions (Arcsin,
+Arccos, Arctan, and Arccot), the forward hyperbolic functions (Sinh,
+Cosh, Tanh, and Coth), and the inverse hyperbolic functions (Arcsinh,
+Arccosh, Arctanh, and Arccoth).  In addition, an overloading of the
+exponentiation operator is provided for a pair of floating point
+operands.
+</p>
+<p>
+   Two overloadings of the Log function are provided.  Without a Base
+parameter, this function computes the natural (or Napierian) logarithm,
+i.e. the logarithm to the base e, which is the inverse of the exponential
+function.  By specifying the Base parameter, which is the second
+parameter, one can compute logarithms to an arbitrary base.  For example,
+<pre>
+   Log(U)                     -- natural logarithm of U
+   Log(U, 10.0)               -- common (base 10) logarithm of U
+   Log(U, 2.0)                -- log of U to the base 2
+</pre>
+</p>
+<p>
+   Two overloadings of each of the trigonometric functions are also
+provided.  Without a Cycle parameter, the functions all imply a natural
+cycle of 2*pi, which means that angles are measured in radians.  By
+specifying the Cycle parameter, one can measure angles in other units.
+For example,
+<pre>
+   Sin(U)                     -- sine of U (U measured in radians)
+   Cos(U, 360.0)              -- cosine of U (U measured in degrees)
+   Arctan(U, Cycle => 6400.0) -- angle (in mils) whose tangent is U
+   Arccot(U, Cycle => 400.0)  -- angle (in grads) whose cotangent is U
+</pre>
+</p>
+<p>
+Cycle is the second parameter of all the trigonometric functions except
+Arctan and Arccot, for which it is the third.  The first two parameters
+of Arctan are named Y and X, respectively; for Arccot, they are named X
+and Y.  The first parameter of each of the remaining trigonometric
+functions is named X.  A ratio whose arctangent or arccotangent is to be
+found is specified by giving its numerator and denominator separately,
+except that the denominator can be omitted, in which case it defaults to
+1.0.  The separate specification of numerator and denominator, which of
+course is motivated by the Fortran ATAN2 function, allows infinite ratios
+(i.e., those having a denominator of zero) to be expressed; these, of
+course, have a perfectly well-defined and finite arctangent or
+arccotangent, which lies on one of the axes.  Thus,
+<pre>
+   Arctan(U, V)            -- angle (in radians) whose tangent is U/V
+   Arccot(U, V)            -- angle (in radians) whose cotangent is U/V
+   Arctan(U)               -- angle (in radians) whose tangent is U
+   Arctan(U, V, 360.0)     -- angle (in degrees) whose tangent is U/V)
+   Arctan(1.0, 0.0, 360.0) -- 90.0 (degrees)
+</pre>
+</p>
+<p>
+The result of Arctan or Arccot is always in the quadrant (or on the axis)
+containing the point (X, Y), even when the defaultable formal parameter
+takes its default value; that of Arcsin is always in the quadrant (or on
+the axis) containing the point (1.0, X), while that of Arccos is always
+in the quadrant (or on the axis) containing the point (X, 1.0).
+</p>
+<p>
+   Given that the constant Pi is defined in Numerics, one might wonder
+why the two overloadings of each trigonometric function have not been
+combined into a single version, with a Cycle parameter having a default
+value of 2.0*Numerics.Pi.  The reason is that computing the functions
+with natural cycle by using the value of Numerics.Pi cannot provide the
+accuracy required of implementations conforming to the Numerics Annex, as
+discussed below.  Since Numerics.Pi is necessarily a finite approximation
+of an irrational (nay, transcendental) value, such an implementation
+would actually compute the functions for a slightly different cycle, with
+the result that cumulative "phase shift" errors many cycles from the
+origin would be intolerable.  Even relatively near the origin, the
+relative error near zeros of the functions would be excessive.  An
+implementation that conforms to the accuracy requirements of the Numerics
+Annex will use rather different strategies to compute the functions
+relative to the implicit, natural cycle of 2*pi as opposed to an explicit
+cycle given exactly by the user.  (In particular, an implementation of
+the former that simply invokes the latter with a cycle of 2.0*Numerics.Pi
+will not conform to the Numerics Annex.)
+</p>
+<p>
+   Similar considerations form the basis for providing the natural
+logarithm function as a separate overloading, with an implicit base,
+rather than relying on the version with a base parameter and a default
+value of Numerics.e for that parameter.
+</p>
+<p>
+   In an early draft of Ada 95, the overloading of the exponentiation
+operator for a pair of floating point operands had parameter names of X
+and Y, following the style adopted for the other subprograms in
+Numerics.Generic_Elementary_Functions.  It was subsequently deemed
+important for new overloadings of existing arithmetic operators to follow
+the precedent of using Left and Right for the names of their parameters,
+as in Ada 83.
+</p>
+<p>
+   The exponentiation operator is noteworthy in another respect.  Instead
+of delivering 1.0 as one might expect by analogy with 0.0**0, the
+expression 0.0**0.0 is defined to raise Numerics.Argument_Error.  This is
+because 0.0**0.0 is mathematically undefined, and indeed x**y can
+approach any value as x and y approach zero, depending on precisely how x
+and y approach zero.  If X and Y could both be zero when an application
+evaluates X**Y, it seems best to require the application to decide in
+advance what it means and what the result should be.  An application can
+do that by defining its own exponentiation operator, which would
+</p>
+<ul>
+<li>
+    invoke the one obtained by instantiating the elementary functions
+     package, and
+<li>
+    handle an Argument_Error exception raised by the latter, delivering
+     from the handler the appropriate application-dependent value.
+</ul>
+<p>
+The local exponentiation operator can be inlined, if the extra level of
+subprogram linkage would be of concern.
+</p>
+<p>
+   The Ada 95 version uses Float_Type'Base as a type mark in
+declarations; this was not available in Ada 83.  Thus the formal
+parameter types and result types of the functions are of the
+unconstrained (base) subtype of the generic formal type Float_Type,
+eliminating the possibility of range violations at the interface.  The
+same feature can be used for local variables in implementations of
+Numerics.Generic_Elementary_Functions (if it is programmed in Ada) to
+avoid spurious exceptions caused by range violations on assignments to
+local variables having the precision of Float_Type.  Thus, in contrast to
+[ISO 94a] there is no need to allow implementations to impose the
+restriction that the generic actual subtype must be an unconstrained
+subtype; implementations must allow any floating point subtype as the
+generic actual subtype, and they must be immune to the potential effects
+of any range constraint of that subtype.
+</p>
+<p>
+   Implementations in hardware sometimes do not meet the desired accuracy
+requirements [Tang 91] because the representation of pi contained on the
+hardware chip has insufficient precision.  To allow users to choose
+between fast (but sometimes inaccurate) versions of the elementary
+functions implemented in hardware and slightly slower versions fully
+conforming to realistic accuracy requirements, we introduced the concept
+of a pair of modes, "strict" and "relaxed".  No accuracy requirements
+apply in the relaxed mode, or if the Numerics Annex is not supported.
+(These modes govern all numeric accuracy issues, not just those connected
+with the elementary functions.)
+</p>
+<p>
+   The accuracy requirements of the strict mode are not trivial to meet,
+but neither are they particularly burdensome; their feasibility has been
+demonstrated in a public-domain implementation using table-driven
+techniques.  However, it should be noted that most vendors of serious
+mathematical libraries, including the hardware vendors, are now
+committing themselves to implementations that are fully accurate
+throughout the domain, since practical software techniques for achieving
+that accuracy are becoming more widely known.  The accuracy requirements
+in Ada 95 are not as stringent as those which vendors are now striving to
+achieve.
+</p>
+<p>
+   Certain results (for example, the exponential of zero) are prescribed
+to be exact, even in the relaxed mode, because of the frequent occurrence
+of the corresponding degenerate cases in calculations and because they
+are inexpensively provided.  Also, although the accuracy is
+implementation-defined in relaxed mode, nothing gives an implementation
+license to raise a spurious exception when an intermediate result
+overflows but the final result does not.  Thus, implementations of the
+forward hyperbolic functions need to be somewhat more sophisticated than
+is suggested by the usual textbook formulae that compute them in terms of
+exponentials.
+</p>
+<p>
+   An implementation that accommodates signed zeros, such as one on IEEE
+hardware (where Float_Type'Signed_Zeros is true), is required to exploit
+them in several important contexts, in particular the signs of the zero
+results from the "odd" functions Sin, Tan, and their inverses and
+hyperbolic analogs, at the origin, and the sign of the half-cycle result
+from Arctan and Arccot; this follows a recommendation [Kahan 87] that
+provides important benefits for complex elementary functions built upon
+the real elementary functions, and for applications in conformal mapping.
+Exploitation of signed zeros at the many other places where the
+elementary functions can return zero results is left implementation-
+defined, since no obvious guidelines exist for these cases.
+</p>
+
+<h3>
+<a name=3-2>
+A.3.2  Random Number Generation
+</a>
+</h3>
+
+<p>
+The capability of generating random numbers is required for many
+applications.  It is especially common in simulations, even when other
+aspects of floating point computation are not heavily stressed.  Indeed,
+some applications of random numbers have no need at all for floating
+point computation.  For these reasons, Ada 95 provides in the predefined
+language environment a package, Numerics.Float_Random, that defines types
+and operations for generating random floating point numbers uniformly
+distributed over the range 0.0 .. 1.0 and a generic package,
+Numerics.Discrete_Random, that defines types and operations for
+generating uniformly distributed random values of a discrete subtype
+specified by the user.
+</p>
+<p>
+   As a simple example, various values of a simulated uniform risk could
+be generated by writing
+<pre>
+   use Ada.Numerics.Float_Random;
+   Risk: Float range 0.0 .. 1.0;
+   G: Generator;
+   ...
+   loop
+      Risk := Random(G);   -- a new value for risk
+      ...
+   end loop;
+   ...
+</pre>
+</p>
+<p>
+   It has been the custom in other languages (for example, Fortran 90) to
+provide only a generator of uniformly distributed random floating point
+numbers and to standardize the range to 0.0 .. 1.0.  Usually it is also
+stated that the value 1.0 is never generated, although values as close to
+1.0 as the hardware permits may be generated.  Sometimes the value 0.0 is
+excluded from the range instead, or in addition.  The user who requires
+random floating point numbers uniformly distributed in some other range
+or having some other distribution, or who requires uniformly distributed
+random integers, is required to figure out and implement a conversion of
+what the language provides to the type and range desired.  Although some
+conversion techniques are robust with respect to whether 0.0 or 1.0 can
+occur, others might fail to stay within the desired range, or might even
+raise an exception, should these extreme values be generated; with a
+user-designed conversion, there is also a risk of introducing bias into
+the distribution.
+</p>
+<p>
+   The random number facility designed for Ada 95 initially followed the
+same custom.  However, concerns about the potential difficulties of user-
+designed post-generation conversion, coupled with the assertion that the
+majority of applications for random numbers actually need random
+integers, led to the inclusion of a capability for generating uniformly
+distributed random integers directly.  The provision of that capability
+also allows for potentially more efficient implementations of integer
+generators, because it gives designs that can stay in the integer domain
+the freedom to do so.
+</p>
+<p>
+   Thus a random integer in the range 1 to 49 inclusive can be generated
+by
+<pre>
+   subtype Lotto is Integer range 1 .. 49;
+   package Lottery is new Ada.Numerics.Discrete_Random(Lotto);
+   use Lottery;
+   G: Generator;
+   Number: Lotto;
+   ...
+   loop
+      Number := Random(G);   -- next number for lottery ticket
+      ...
+   end loop;
+   ...
+</pre>
+</p>
+<p>
+   The use of generics to parameterize the integer range desired seemed
+obvious and appropriate, because most applications for random integers
+need a sequence of values in some fixed, problem-dependent subtype.  As
+an alternative or a potential addition, we considered specifying the
+range dynamically on each call for a random number; this would have been
+convenient for those applications that require a random integer from a
+different range on each call.  Reasoning that such applications are rare,
+we left their special needs to be addressed by using the floating point
+generator, coupled with post-generation conversion to the dynamically
+varying integer range.  Help for the occasional user who faces the need
+to perform such a conversion is provided by a note in the reference
+manual, which describes a robust conversion technique [RM95
+A.5.2(50..52)].
+</p>
+<p>
+   Note that the parameter of Discrete_Random can be of any discrete
+subtype and so one can easily obtain random Boolean values, random
+characters, random days of the week and so on.
+</p>
+<p>
+   Once the potential conversion problems had been solved by the
+combination of providing a generic discrete generator and documenting a
+robust conversion technique for the small number of applications that
+cannot use the generic generator, some of the pressure on the floating
+point generator was relieved.  In particular, it was no longer necessary
+to specify that it must avoid generating 0.0 or 1.0.  The floating point
+generator is allowed to yield any value in its range, which can be
+described as the range 0.0 .. 1.0 without further qualification.  Of
+course, some implementations may be incapable of generating 0.0 or 1.0,
+but the user does not need to know that and would be better off not
+knowing it (portability could be compromised by exploiting knowledge that
+a particular implementation of the random number generator cannot deliver
+one or both bounds of the range).  A note in the reference manual [RM95
+A.5.2(52..54)] discusses ways of transforming the result of the floating
+point generator, using the Log function, into exponentially distributed
+random floating point numbers, illustrating a technique that avoids the
+Argument_Error exception that Log would raise when the value of its
+parameter is zero.
+</p>
+
+<dl>
+<dt>
+Generators
+<dd>
+<p>
+With the obvious exception of the result subtype, the two predefined
+packages declare the same types and operations, thereby simplifying their
+description and use.  In the remainder of this section, we therefore
+discuss the contents of the packages without (in most cases) naming one
+or the other.
+</p>
+<p>
+   Applications vary widely in their requirements for random number
+generation.  Global floating point and discrete random number generators
+would suffice for most applications, but more demanding applications
+require multiple generators (either one in each of several tasks or
+several in one task), with each generator giving rise to a different
+sequence of random numbers.  For this reason, we provide in both packages
+a type called Generator, each of whose objects is associated with a
+distinct sequence of random numbers.
+</p>
+<p>
+   Operations on generators, such as obtaining the "next" random number
+from the associated sequence, are provided by subprograms that take an
+object of type Generator as a parameter.  Applications requiring multiple
+generators can declare the required number of objects of type Generator
+in the tasks where they are needed.  The mechanism is simple enough,
+however, not to be burdensome for applications requiring only a single
+global generator, which can be declared in the main program or in a
+library package.
+</p>
+<p>
+   (We entertained the idea of also having an implicit generator, which
+would be used when the Generator parameter is omitted from an operation
+on generators.  This idea was abandoned, however, when agreement could
+not be reached on the question of whether the implicit generator should
+be local to each task or global to the tasks in a partition, and, in the
+latter case, whether serialization should be automatically provided for
+concurrent operations on the default generator performed in different
+tasks.  To do so would be likely to impose an unnecessary overhead on
+applications that do no tasking and require only a single generator.  The
+mechanisms provided in the random number packages and elsewhere in the
+language, particularly protected types and the generic package
+Ada.Task_Attributes, are sufficient to allow the developer of an advanced
+application, or the designer of a secondary library, to provide these
+capabilities, if desired.)
+</p>
+<dt>
+State Information
+<dd>
+<p>
+A generator obviously has state information associated with it, which
+reflects the current position in the associated sequence of random
+numbers and provides the basis for the computation of the next random
+number in the sequence.  To allow the implementation wide latitude in
+choosing appropriate algorithms for generating random numbers, and to
+enforce the abstraction of a generator, the Generator type is a private
+type; furthermore, to enforce the distinctness of different generators,
+the type is limited.  The full type is implementation defined.
+</p>
+<p>
+   For convenience of use, we chose to make Random a function.  Since its
+parameter must therefore be of mode in, the Generator type in practice
+has to be realized either as an access type or (if its storage is to be
+reclaimed through finalization on exit from the generator's scope) as a
+controlled type containing an access type.
+</p>
+<p>
+   Applications that use random numbers vary also in their requirements
+for repeatability as opposed to uniqueness of the sequence of random
+numbers.  Repeatability is desired during development and testing but
+often not desired in operational mode when a unique sequence of random
+numbers is required in each run.  To meet both of these needs, we have
+specified that each generator always starts in the same, fixed (but
+implementation-defined) state, providing repeatable sequences by default,
+and we have provided several operations on generators that can be used to
+alter the state of a generator.
+</p>
+<p>
+   Calling the Reset procedure on a generator without specifying any
+other parameter sets the state to a time-dependent value in an
+implementation-dependent way.
+</p>
+<p>
+   The Reset procedure can also be used to ensure that task-local
+generators yield different, but repeatable, sequences.  Note that by
+default, the fixed initial state of generators will result in all such
+generators yielding the same sequence.  This is probably not what is
+desired.  We considered specifying that each generator should have a
+unique initial state, but there is no realistic way to provide for the
+desired repeatability across different runs, given that the
+nondeterministic nature of task interactions could result in the "same"
+tasks (in some logical sense) being created in a different order in
+different runs.
+</p>
+<p>
+   Assuming that each task has a generator, different-but-repeatable
+sequences in different tasks are achieved by invoking the Reset procedure
+with an integer Initiator parameter on each generator prior to generating
+random numbers.  The programmer typically must provide integer values
+uniquely associated with each task's logical function, independent of the
+order in which the tasks are created.  The specified semantics of Reset
+are such that each distinct integer initiator value will initiate a
+sequence that will not overlap any other sequence in a practical sense,
+if the period of a generator is long enough to permit that.  At the very
+least, consecutive integers should result in very different states, so
+that the resulting sequences will not simply be offset in time by one
+element or a small number of elements.
+</p>
+<dt>
+Saving the State
+<dd>
+<p>
+     Most applications will have no need for capabilities beyond those already
+described.  A small number of applications may have the need to save the
+current state of a generator and restore it at a later time, perhaps in a
+different run.  This can be done by calling the Save procedure and
+another overloading of the procedure Reset.  The state is saved in a
+variable of the private type State.
+</p>
+<p>
+   As was said earlier, the realization of the internal state of a
+generator is implementation defined, so as to foster the widest possible
+innovation in the design of generators and generation algorithms.  The
+state is thus private and might be represented by a single integer or
+floating point value, or it might be represented by an array of integer
+or floating point values together with a few auxiliary values, such as
+indices into the array.
+</p>
+<p>
+   Internal generator states can be exported to a variable of the type
+State, saved in a file, and restored in a later run, all without knowing
+the representation of the type.
+</p>
+<p>
+   We also provide an Image function, which reversibly converts a value
+of type State to one of type String in an implementation-defined way,
+perhaps as a concatenation of one or more integer images separated by
+appropriate delimiters.  The maximum length of the string obtained from
+the Image function is given by the named number Max_Image_Width; images
+of states can be manipulated conveniently in strings of this maximum
+length obtained by the use of Ada.Strings.Bounded.  Using Save and Image,
+one can examine (a representation of) the current internal state for
+debugging purposes; one might use these subprograms in an interactive
+debugger, with no advanced planning, to make a pencilled note of the
+current state with the intention of typing it back in later.  This does
+not require knowledge of the mapping between states and strings.
+</p>
+<p>
+   The inverse operation, Value, converts the string representation of an
+internal state back into a value of type State, which can then be
+imported into a generator by calling the Reset procedure.  This pair of
+subprograms supports, without knowledge of the mapping between states and
+strings, the restoration of a state saved in the form of a string.  Of
+couse if one does know the implementation's mapping of strings to states,
+then one can use Value and Reset to create arbitrary internal states for
+experimentation purposes.  If passed a string that cannot be interpreted
+as the image of a state, Value raises Constraint_Error.  This is the only
+time that the possibly expensive operation of state validation is
+required; it is not required every time Random is called, nor even when
+resetting a generator from a state.
+</p>
+<p>
+   We considered an alternative design, perhaps closer to the norm for
+random number generators, in which Random is a procedure that acts
+directly on the state, the latter being held in storage provided by the
+user.  There would be no need for the Save and Reset (from-saved-state)
+procedures in this design, since the generator and state types would
+effectively be one and the same.  The only real problem with this design
+is that it necessitates making Random a procedure, which would interfere
+with the programmer's ability to compose clear and meaningful
+expressions.
+</p>
+<p>
+   Of course, most simple applications will have no need to concern
+themselves with the State type: no need to declare variables of type
+State, and no need to call Save or Reset with a state parameter.
+</p>
+<dt>
+Statistical Considerations
+<dd>
+<p>
+     The result subtype of the Random function in Float_Random is a subtype of
+Float with a range of 0.0 .. 1.0.  The subtype is called
+Uniformly_Distributed to emphasize that a large set of random numbers
+obtained from this function will exhibit an (approximately) uniform
+distribution.  It is the only distribution provided because it is the
+most frequently required distribution and because other distributions can
+be built on top of a uniform distribution using well-known techniques.
+In the case of Discrete_Random, it does not really make sense to consider
+other than uniform distributions.
+</p>
+<p>
+   No provision is made for obtaining floating point random numbers with
+a precision other than that of Float.  One reason is that applications
+typically do not have a need either for extremely precise random floating
+point numbers (those with a very fine granularity) or for random floating
+point numbers with several different precisions.  Assuming that they are
+to be used as real numbers, and not converted to integers, the precision
+of a set of random floating point numbers generally does not matter
+unless an immense quantity of them are to be consumed.  High precision
+random floating point numbers would be needed if they were to be
+converted to integers in some very wide range, but the provision of
+Discrete_Random makes that unnecessary.  A second reason for providing
+random floating point numbers only with the precision of Float, and
+especially for not providing them with a precision of the user's choice,
+is that algorithms for random number generation are often tied to the use
+of particular hardware representations, which essentially dictates the
+precision obtained.
+</p>
+<p>
+   Nothing is said about the number of distinct values between 0.0 and
+1.0 that must be (capable of being) delivered by the Random function in
+Float_Random.  Indeed, in the spirit of not requiring guaranteed
+numerical performance unless the Numerics Annex is implemented, the
+specification of Float_Random says nothing about the quality of the
+result obtained from Random, except that a large number of such results
+must appear to be approximately uniformly distributed.  On the other
+hand, the Numerics Annex specifies the minimum period of the generation
+algorithm, a wide range of statistical tests that must be satisfied by
+that algorithm, and the resolution of the time-dependent Reset function.
+In implementations in which Float corresponds to the hardware's double-
+precision type, the floating point random number algorithm can be based
+on the use of single-precision hardware, and can coerce the single-
+precision results to double precision at the final step, provided that
+the statistical tests are satisfied, which is perfectly feasible.
+</p>
+<p>
+   Details of the statistical tests, which are adapted from [Knuth 81]
+and other sources, are provided in an annotation in the [AARM].  The
+tests applicable to the floating point random number generator facility
+all exploit the floating point nature of the random numbers directly;
+they do not convert the numbers to integers.  Different tests are
+applicable to the discrete random number generator.
+</p>
+<p>
+   In the rare case that random floating point numbers of higher
+precision (finer granularity) than that of Float are needed, the user
+should obtain them by suitably combining two or more successive results
+from Random.  For example, two successive values might be used to provide
+the high-order and the low-order parts of a higher-precision result.
+</p>
+<p>
+   Guaranteeing that all the values in a wide integer range will
+eventually be generated is, in general, rather difficult and so is not
+required for the discrete generator.  Nevertheless, some guarantee of
+this nature is desirable for more modest ranges.  We thus require that if
+the range of the subtype has 2**15 or fewer values then each value of the
+range will be delivered in a finite number of calls.  This coverage
+requirement is in the specification of Discrete_Random in the Predefined
+Language Environment Annex; because it so directly affects the usability
+of the discrete random number generator facility, it was not thought
+appropriate to relegate the coverage requirement to the (optional)
+Numerics Annex.  It is practical to verify by testing that the coverage
+requirement is satisfied for ranges up to this size, but it is not
+practical to verify the same for significantly wider ranges; for that
+matter, only a very long-running application could detect that a wide
+integer range is not being completely covered by the random numbers that
+are generated.  Satisfying the coverage requirement is easily achieved by
+an underlying floating point algorithm, even one implemented in single
+precision, that converts its intermediate floating point result to the
+integer result subtype by appropriate use of scaling and type conversion.
+</p>
+<p>
+   The modest requirement discussed above does not completely eliminate
+all the difficulty in implementing Discrete_Random.  Even the
+straightforward scaling and conversion technique faces mundane problems
+when the size of the integer range exceeds Integer'Last.  Note that the
+size of the range of the predefined subtype Integer exceeds Integer'Last
+by about a factor of two, so that an instantiation of Discrete_Random for
+that predefined subtype will have to confront certain mundane problems,
+even if it does not purport to cover that range completely.  These
+implementation burdens could have been eliminated by imposing
+restrictions on the (size of the ranges of the) subtypes with which
+Discrete_Random could be instantiated, but such restrictions are inimical
+to the spirit of Ada.
+</p>
+<p>
+   Of course, implementations of Discrete_Random need not be based on an
+underlying floating point algorithm, and indeed, as has already been
+said, part of the justification for providing this package separately
+from Float_Random has to do with the efficiency gains that can be
+realized when the former is implemented in terms of an underlying integer
+algorithm, with no use of floating point at all.  Nevertheless, it may be
+convenient and sufficiently efficient for the discrete generator facility
+to be implemented in terms of a floating point algorithm.  There are
+implementations of the venerable multiplicative linear congruential
+generator with multiplier 7**5 and modulus 2**31-1 of [Lewis 69] and both
+the add-with-carry and subtract-with-borrow Fibonacci generators of
+[Marsaglia 91] that remain entirely within the floating point domain, and
+which therefore pay no premium for conversion from integer to floating
+point.  These algorithms have been verified to pass the statistical
+requirements of the Numerics Annex.  (Other algorithms that might be
+expected to pass, but that have not been explicitly tested, include the
+combination generators of  [Wichmann 82] and [L'Ecuyer 88] and the x**2
+mod N generators of [Blum 86]; each of the algorithms mentioned here has
+much to recommend it.)
+</p>
+</dl>
+
+<h3>
+<a name=3-3>
+A.3.3  Attributes of Real Types
+</a>
+</h3>
+
+<p>
+Most of the attributes of floating and fixed point types are defined in
+the Predefined Language Environment Annex.  These attributes are
+discussed elsewhere in this Rationale (see 6.2).
+</p>
+
+<h2>
+<a name=4>
+A.4  Input-Output
+</a>
+</h2>
+
+<p>
+Enhancements to input-output include a facility for heterogeneous
+streams, additional flexibility for Text_IO, and further file
+manipulation capabilities.
+</p>
+
+<h3>
+<a name=4-1>
+A.4.1  Stream Input and Output
+</a>
+</h3>
+
+<p>
+The packages Sequential_IO and Direct_IO have not proved to be
+sufficiently flexible for some applications because they only process
+homogeneous files.  Even so this is fairly liberal in the case of
+Sequential_IO which now has the form
+<pre>
+   generic
+      type Element_Type(<>) is private;
+   package Ada.Sequential_IO is ...
+</pre>
+since the actual parameter can be any indefinite type and hence can be a
+class-wide type.  This does not apply to Direct_IO which can only take a
+definite type as a parameter because of the need to index individual
+elements.
+</p>
+<p>
+   In order to provide greater flexibility, totally heterogeneous streams
+can be processed using the new package Streams [RM95 13.13] and several
+child packages [RM95 A.12].
+</p>
+<p>
+   The general idea is that there is a stream associated with any file
+declared using the package Ada.Streams.Stream_IO.  Such a file may be
+processed sequentially using the stream mechanism and also in a
+positional manner similar to Direct_IO.  We will consider the stream
+process first and return to positional use later.
+</p>
+<p>
+   The package Streams.Stream_IO enables a file to be created, opened and
+closed in the usual manner.  Moreover, there is also a function Stream
+which takes a stream file and returns (an access to) the stream
+associated with the file.  In outline the first part of the package is
+<pre>
+   package Ada.Streams.Stream_IO is
+      type Stream_Access is access all Root_Stream_Type'Class;
+      type File_Type is limited private;
+      -- Create, Open, ...
+      function Stream(File: in File_Type) return Stream_Access;
+      ...
+   end Ada.Streams.Stream_IO;
+</pre>
+</p>
+<p>
+   Observe that all streams are derived from the abstract type
+Streams.Root_Stream_Type and access to a stream is typically through an
+access parameter designating an object of the type
+Streams.Root_Stream_Type'Class.  We will return to the package Streams
+and the abstract type Root_Stream_Type in a moment.
+</p>
+<p>
+   Sequential processing of streams is performed using attributes T'Read,
+T'Write, T'Input and T'Output.  These attributes are predefined for all
+nonlimited types.  The user can replace them by providing an attribute
+definition clause and can also define such attributes explicitly for
+limited types.  This gives the user fine control over the processing when
+necessary.  The attributes T'Read and T'Write will be considered first;
+T'Input and T'Output (which are especially relevant to indefinite
+subtypes) will be considered later.
+</p>
+<p>
+   The attributes Read and Write take parameters denoting the stream and
+the element of type T thus
+<pre>
+   procedure T'Write(Stream : access Streams.Root_Stream_Type'Class;
+                     Item   : in T);
+
+   procedure T'Read(Stream : access Streams.Root_Stream_Type'Class;
+                    Item   : out T);
+</pre>
+</p>
+<p>
+   As a simple example, suppose we wish to write a mixture of integers,
+month names and dates where type Date might be
+<pre>
+   type Date is
+      record
+         Day   : Integer;
+         Month : Month_Name;
+         Year  : Integer;
+      end record;
+</pre>
+</p>
+<p>
+   We first create a file using the normal techniques and then obtain an
+access to the associated stream.  We can then invoke the Write attribute
+procedure on the values to be written to the stream.  We have
+<pre>
+   use Streams.Stream_IO;
+   Mixed_File : File_Type;
+   S          : Stream_Access;
+   ...
+   Create(Mixed_File);
+   S := Stream(Mixed_File);
+   ...
+   Date'Write(S, Some_Date);
+   Integer'Write(S, Some_Integer);
+   Month_Name'Write(S, This_Month);
+   ...
+</pre>
+</p>
+<p>
+   Note that Streams.Stream_IO is not a generic package and so does not
+have to be instantiated; all such heterogeneous files are of the same
+type.  Note also that they are binary files.  A file written in this way
+can be read back in a similar manner, but of course if we attempt to read
+things with the inappropriate subprogram then we will get a funny value
+or Data_Error.
+</p>
+<p>
+   In the case of a simple record such as Date the predefined Write
+attribute simply calls the attributes for the components in order.  So
+conceptually we have
+<pre>
+   procedure Date'Write(Stream : access Streams.Root_Stream_Type'Class;
+                        Item   : in Date) is
+   begin
+      Integer'Write(Stream, Item.Day);
+      Month_Name'Write(Stream, Item.Month);
+      Integer'Write(Stream, Item.Year);
+   end;
+</pre>
+</p>
+<p>
+We can supply our own version of Write.  Suppose for some reason that we
+wished to output the month name in a date as the corresponding integer;
+we could write
+<pre>
+   procedure Date_Write(Stream : access Streams.Root_Stream_Type'Class;
+                        Item   : in Date) is
+   begin
+      Integer'Write(Stream, Item.Day);
+      Integer'Write(Stream, Month_Name'Pos(Item.Month) + 1);
+      Integer'Write(Stream, Item.Year);
+   end Date_Write;
+
+   for Date'Write use Date_Write;
+</pre>
+and then the statement
+<pre>
+   Date'Write(S, Some_Date);
+</pre>
+will use the new format for the output of dates.  Similar facilities
+apply to input and indeed if we wish to read the dates back in we would
+need to declare the complementary version of Date'Read to read the month
+as an integer and convert to the appropriate value of Month_Name.
+</p>
+<p>
+   Note that we have only changed the output of months in dates, if we
+wish to change the format of all months then rather than redefining
+Date'Write we could simply redefine Month_Name'Write and this would
+naturally have the indirect effect of also changing the output of dates.
+</p>
+<p>
+   Note carefully that the predefined attributes T'Read and T'Write can
+only be overridden by an attribute definition clause in the same package
+specification or declarative part where T is declared (just like any
+representation item).  As a consequence these predefined attributes
+cannot be changed for the predefined types.  But they can be changed for
+types derived from them.
+</p>
+<p>
+   The situation is slightly more complex in the case of arrays, and also
+records with discriminants, since we have to take account of the "dope"
+information represented by the bounds and discriminants.  (In the case of
+a discriminant with defaults, the discriminant is treated as an ordinary
+component.)  This is done using the additional attributes Input and
+Output.  The general idea is that Input and Output process dope
+information (if any) and then call Read and Write to process the rest of
+the value.  Their profiles are
+<pre>
+   procedure T'Output(Stream : access Streams.Root_Stream_Type'Class;
+                      Item   : in T);
+
+   function T'Input(Stream: access Streams.Root_Stream_Type'Class)
+       return T;
+</pre>
+</p>
+<p>
+Note that Input is a function since T may be indefinite and we may not
+know the constraints for a particular call.
+</p>
+<p>
+   Thus in the case of an array the procedure Output outputs the bounds
+of the value and then calls Write to output the value itself.
+</p>
+<p>
+   In the case of a record type with discriminants, if it has defaults
+(is definite) then Output simply calls Write which treats the
+discriminants as just other components.  If there are no defaults then
+Output first outputs the discriminants and then calls Write to process
+the remainder of the record.  As an example consider the case of a
+definite subtype of a type whose first subtype is indefinite such as
+<pre>
+   subtype String_6 is String(1 .. 6);
+   S: String_6 := "String";
+   ...
+   String_6'Output(S);      -- outputs bounds
+   String_6'Write(S);       -- does not output bounds
+</pre>
+</p>
+<p>
+Note that the attributes Output and Write belong to the types and so it
+is immaterial whether we write String_6'Write or String'Write.
+</p>
+<p>
+   The above description of T'Input and T'Output applies to the default
+attributes.  They could be redefined to do anything and not necessarily
+call T'Read and T'Write.  Note moreover that Input and Output also exist
+for definite subtypes; their defaults just call Read and Write.
+</p>
+<p>
+   There are also attributes T'Class'Output and T'Class'Input for dealing
+with class-wide types.  For output, the external representation of the
+tag (see [RM95 3.9]) is output and then the procedure Output for the
+specific type is called (by dispatching) in order to output the specific
+value (which in turn will call Write).  Similarly on input, the tag is
+first read and then, according to its value, the corresponding function
+Input is called by dispatching.  For completeness, T'Class'Read
+(T'Class'Write) is defined to dispatch to the subprogram denoted by the
+Read (respectively, Write) attribute of the specific type identified by
+the tag.
+</p>
+<p>
+   The general principle is, of course, that whatever is written can then
+be read back in again by the appropriate reverse operation.
+</p>
+<p>
+   We now return to a consideration of the underlying structure.  All
+streams are derived from the abstract type Streams.Root_Stream_Type which
+has two abstract operations, Read and Write thus
+<pre>
+   procedure Read(Stream : in out Root_Stream_Type;
+                  Item   : out Stream_Element_Array;
+                  Last   : out Stream_Element_Offset) is abstract;
+
+   procedure Write(Stream : in out Root_Stream_Type;
+                   Item   : in Stream_Element_Array) is abstract;
+</pre>
+</p>
+<p>
+These work in terms of stream elements rather than individual typed
+values.  Note the difference between stream elements and storage elements
+(the latter being used for the control of storage pools which was
+discussed in 13.4).  Storage elements concern internal storage whereas
+stream elements concern external information and are thus appropriate
+across a distributed system.
+</p>
+<p>
+   The predefined Read and Write attributes use the operations Read and
+Write of the associated stream, and the user could define new values for
+the attributes in the same way.  Note, however, that the parameter Stream
+of the root type is of the type Root_Stream_Type whereas that of the
+attribute is an access type denoting the corresponding class.  So any
+such user-defined attribute will have to do an appropriate dereference
+thus
+<pre>
+   procedure My_Write(Stream : access Streams.Root_Stream_Type'Class;
+                      Item   : T) is
+   begin
+      ... -- convert value into stream elements
+      Streams.Write(Stream.all, ...);  -- dispatches
+   end My_Write;
+</pre>
+</p>
+<p>
+   We conclude by remarking that Stream_IO can also be used for indexed
+access.  This is possible because the file is structured as a sequence of
+stream elements.  Indexing then works in terms of stream elements much as
+Direct_IO works in terms of the typed elements.  Thus the index can be
+read and reset.  The procedures Read and Write process from the current
+value of the index and there is also an alternative Read that starts at a
+specified value of the index.  The procedures Read and Write (which take
+a file as parameter) correspond precisely to the dispatching operations
+of the associated stream.
+</p>
+
+<h3>
+<a name=4-2>
+A.4.2  Text_IO
+</a>
+</h3>
+
+<p>
+The main changes to Ada.Text_IO are the addition of internal generic
+packages Modular_IO (similar to Integer_IO) and Decimal_IO (similar to
+Fixed_IO).
+</p>
+<p>
+   There is also a completely distinct package Ada.Wide_Text_IO which
+provides identical facilities to Ada.Text_IO except that it works in
+terms of the types Wide_Character and Wide_String rather than Character
+and String.  Text_IO and Wide_Text_IO declare distinct file types.
+</p>
+<p>
+   Both Text_IO and Wide_Text_IO have a child package Editing defined in
+the Information Systems Annex.  This provides specialized facilities for
+the output of decimal values controlled by picture formats; for details
+see F.1.  Similarly both packages have a child Complex_IO defined in the
+Numerics Annex; see G.1.3.
+</p>
+<p>
+   Small but important changes to Text_IO are the addition of subprograms
+Look_Ahead, Get_Immediate and Flush.  The procedure Look_Ahead enables
+the next character to be determined without removing it and thereby
+enables the user to write procedures with similar behavior to predefined
+Get on numeric and enumeration types.  The procedure Get_Immediate
+removes a single character from the file and bypasses any buffering that
+might otherwise be used; it is designed for interactive use.  A call of
+Flush causes the remainder of any partly processed output buffer to be
+output.
+</p>
+<p>
+   A minor point is that the procedures Get for real types accept a
+literal in more liberal formats than in Ada 83.  Leading and trailing
+zeros before or after the point are no longer required and indeed the
+point itself can be omitted.  Thus the following are all acceptable forms
+for input for real types:
+<pre>
+   0.567
+   123.0
+   .567
+   123.
+   123
+</pre>
+whereas in Ada 83 only the first two were acceptable.  This is in some
+respects an incompatibility since a form such as .567 would cause
+Data_Error to be raised in Ada 83.  However, the main advantage is
+interoperability with other languages; data produced by Fortran programs
+can then be processed directly.  Furthermore, the allowed formats are in
+accordance with ISO 6093:1985 which defines language independent formats
+for the textual representation of floating point numbers.
+</p>
+<p>
+   There are also nongeneric equivalents to Integer_IO and Float_IO for
+each of the predefined types Integer, Long_Integer, Float, Long_Float and
+so on.  These have names such as Ada.Integer_Text_IO,
+Ada.Long_Integer_Text_IO, and Ada.Float_Text_IO.  Observe that they are
+not child packages of Ada.Text_IO but direct children of Ada, thus
+allowing the names to be kept reasonably short.
+</p>
+<p>
+   A major reason for introducing these nongeneric equivalents was to
+facilitate teaching Ada to new users.  Experience with teaching Ada 83
+has shown that fundamental input-output was unnecessarily complicated by
+the reliance on generics, which gave the language an air of difficulty.
+So rather than writing
+<pre>
+   with Ada.Text_IO;
+   procedure Example is
+      package Int_IO is new Ada.Text_IO.Integer_IO(Integer);
+      use Int_IO;
+      N: Integer;
+   begin
+      ...
+      Put(N);
+      ...
+   end Example;
+</pre>
+one can now perform simple output without needing to instantiate a
+generic
+<pre>
+   with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
+   procedure Example is
+      N: Integer;
+   begin
+      ...
+      Put(N);
+      ...
+   end Example;
+</pre>
+</p>
+<p>
+Another advantage of the nongeneric equivalents is that the user does not
+have to worry about an appropriate name for the instantiated version (and
+indeed fret over whether it might also be called Integer_IO without
+confusion with the generic version, or some other name such as we chose
+above).  Having standard names also promotes portability since many
+vendors had provided such nongeneric equivalents but with different
+names.
+</p>
+<p>
+   Note carefully that these packages are said to be nongeneric
+equivalents rather than preinstantiated versions.  This is so that
+implementations can use special efficient techniques not possible in the
+generic versions.  A minor consequence is that the nongeneric equivalents
+cannot be used as actual package parameters corresponding to the generic
+package.  Thus we cannot use Ada.Integer_Text_IO as an actual parameter
+to
+<pre>
+   generic
+      with package P is new Ada.Text_IO.Integer_IO;
+   package Q is ...
+</pre>
+</p>
+<p>
+   Similar nongeneric equivalents apply to the generic packages for
+elementary functions, complex types and complex elementary functions, see
+A.3.1 and G.1.
+</p>
+<p>
+   Finally, it is possible to treat a Text_IO file as a stream and hence
+to use the stream facilities of the previous section with text files.
+This is done by calling the function Stream in the child package
+Text_IO.Text_Streams.  This function takes a Text_IO file as parameter
+and returns an access to the corresponding stream.  It is then possible
+to intermix binary and text input-output and to use the current file
+mechanism with streams.
+</p>
+
+<h3>
+<a name=4-3>
+A.4.3  File Manipulation
+</a>
+</h3>
+
+<p>
+The Ada 83 package Sequential_IO did not make provision for appending
+data to the end of an existing file.  As a consequence implementations
+provided a variety of solutions using pragmas and the form parameter and
+so on.  In Ada 95 we have overcome this lack of portability by adding a
+further literal Append_File to the type File_Mode for Sequential_IO and
+Text_IO.  It also exists for Stream_IO but not for Direct_IO.
+</p>
+<p>
+   The concept of a current error file for Text_IO is introduced, plus
+subprograms Standard_Error, Current_Error and Set_Error by analogy with
+the similar subprograms for current input and current output.  The
+function Standard_Error returns the standard error file for the system.
+On some systems standard error and standard output might be the same.
+</p>
+<p>
+   Error files are a convenience for the user; the ability to switch
+error files in a similar manner to the default output file enables the
+user to keep the real output distinct from error messages in a portable
+manner.
+</p>
+<p>
+   A problem with the Ada 83 subprograms for manipulating the current
+files is that it is not possible to store the current value for later use
+because the file type is limited private.  As mentioned in 7.3, it is
+possible to temporarily "hang on" to the current value by the use of
+renaming thus
+<pre>
+   Old_File: File_Type renames Current_Output;
+   ... -- set and use a different file
+   Set_Output(Old_File);
+</pre>
+and thus permits some other file to be used and then the preexisting
+environment to be restored afterwards.  This works because the result of
+a function call is treated like an object and can then be renamed.
+However, this technique does not permit a file value to be stored in an
+arbitrary way.
+</p>
+<p>
+   In order to overcome this difficulty, further overloadings of the
+various functions are introduced which manipulate an access value which
+can then be stored.  Thus
+<pre>
+   type File_Access is access constant File_Type;
+   function Current_Input  return File_Access;
+   function Current_Output return File_Access;
+   function Current_Error  return File_Access;
+</pre>
+and similarly for Standard_Input and so on.  Additional procedures for
+setting the values are not required.  We can then write
+<pre>
+   procedure P(...) is
+      New_File     : File_Type;
+      Old_File_Ref : constant File_Access := Current_Output;
+   begin
+      Open(New_File, ...);
+      Set_Output(New_File);
+      -- use the new file
+      Set_Output(Old_File_Ref.all);
+      Close(New_File);
+   end P;
+</pre>
+</p>
+<p>
+   More sophisticated file manipulation is also possible.  We could for
+example have an array or linked list of input files and then concatenate
+them for output.  As another example, a utility program for pre-
+processing text files could handle nested "include"s by maintaining a
+stack of File_Access values.
+</p>
+<p>
+   Making the access type an access to constant prevents passing the
+reference to subprograms with in out parameters and thus prevents
+problems such as might arise from calling Close on Current_Input.
+</p>
+
+<h2>
+<a name=5>
+A.5  Command Line
+</a>
+</h2>
+
+<p>
+The package Ada.Command_Line provides an Ada program with a simple means
+of accessing any arguments of the command which invoked it.  The package
+also enables the program to set a return status.  Clearly the
+interpretation and implementation of these facilities depends very much
+on the underlying operating system.
+</p>
+<p>
+   The function Command_Name returns (as a string) the command that
+invoked the Ada program and the function Argument_Count returns the
+number of arguments associated with the command.  The function Argument
+takes an integer and returns the corresponding individual command
+argument also as a string.
+</p>
+<p>
+   The exit status can be set by a call of Set_Exit_Status which takes an
+integer parameter.
+</p>
+<p>
+   An alternative scheme based on using the parameters and results of the
+Ada main subprogram as the command arguments and exit status was rejected
+for a number of reasons.  The main reason was that the start and end of
+the main subprogram are not the start and end of the execution of the Ada
+program as a whole; elaboration of library packages occurs before and
+might want access to command arguments and similarly, library tasks can
+outlive the main subprogram and might want to set the exit status.
+</p>
+
+<h2>
+<a name=6>
+A.6  Requirements Summary
+</a>
+</h2>
+
+<p>
+The study topic
+<pre>
+     S10.4-A(1) - Varying-length String Package
+</pre>
+is met by the bounded and unbounded-length string packages, and the study
+topic
+<pre>
+     S10.4-A(2) - String Manipulation Functions
+</pre>
+is met in part by the string handling packages.
+</p>
+<p>
+   The requirement
+<pre>
+     R11.1-A(1) - Standard Mathematics Packages
+</pre>
+is met by the generic elementary functions and random number packages.
+</p>
+<p>
+   The somewhat general requirement
+<pre>
+     R4.6-B(1) - Additional Input/Output Functions
+</pre>
+calls for additional capability.  In particular it suggests that there
+should be a standard way to append data to an existing file and the
+ability to have heterogeneous files.  These specific requirements (and
+others) have been met as we have seen.  Moreover the requirement
+<pre>
+     R4.6-A(1) - Interactive TEXT_IO
+</pre>
+is specifically addressed by the introduction of the subprograms
+Get_Immediate, Look_Ahead and Flush; see A.4.2.
+</p>
+
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p3.html> Previous </a> |
+<a href=rat95-p3-b.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

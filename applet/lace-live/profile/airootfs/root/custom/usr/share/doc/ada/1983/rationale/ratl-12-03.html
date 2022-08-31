@@ -1,0 +1,683 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Rationale, Sec 12.3: The Use of Generic Units</TITLE>
+</HEAD>
+
+<BODY>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 12: Generic Units</H2>
+
+<H3><a name="12.3">12.3 The Use of Generic Units</a></H3>
+
+This section  contains a  number of  examples illustrating  the use of
+generic units.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<br><br>
+<a href="#12.3.1">12.3.1 Examples of Generic Functions</a><BR>
+<a href="#12.3.2">12.3.2 An Example of a Generic Package</a><BR>
+<a href="#12.3.3">12.3.3 A Generic Package with Tasks</a><BR>
+<a href="#12.3.4">12.3.4 A More Complicated Example</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="12.3.1">12.3.1 Examples of Generic Functions</a></H3>
+
+The following  program fragment  defines a  generic function  POWER to
+raise the  value of  an object  of a  type T  to its  nth power.  This
+exponentiation  is   defined  by   repeated  multiplication,  and  the
+corresponding multiplication  operation must  be supplied as a generic
+actual parameter.
+<table border cellpadding=6><tr><td><pre>
+generic
+  type ELEM is private;
+  with function OPER(LEFT, RIGHT :  ELEM) return ELEM;
+function POWER(E :  ELEM;  N :  POSITIVE) return ELEM;
+
+function POWER(E :  ELEM;  N :  POSITIVE) return ELEM is
+  RESULT :  ELEM  :=  E;
+begin
+  for J in 2 .. N loop
+    RESULT :=  OPER(RESULT, E);
+  end loop;
+  return RESULT;
+end POWER;
+</pre></td></tr></table>
+<p>
+This generic  function can  be used to define exponentiation for types
+for which a multiplication operation is known. For example:
+<table border cellpadding=6><tr><td><pre>
+function "&#42;&#42;" is new POWER(ELEM =&gt;  RATIONAL,  OPER =&gt;  "&#42;");
+function "&#42;&#42;" is new POWER(ELEM =&gt;  MATRIX,  OPER =&gt;  MULT);
+</pre></td></tr></table>
+<p>
+Each of  these declarations defines an overloading of the operator &#42;&#42;,
+obtained by  generic instantiation. For example, the first declaration
+defines a function with the following specification:
+<PRE>    function "&#42;&#42;" (E :  RATIONAL;  N :  POSITIVE) return RATIONAL;</PRE>
+<p>
+It  can   be  used   to  exponentiate  rational  numbers  by  repeated
+application of  the multiplication  operation defined  for this  type.
+Note also  that  the  generic  function  can  be  used  to  apply  any
+meaningful operation  repeatedly,  for  example  multiplication  of  a
+rational by a positive integer performed by repeated addition:
+<PRE>    function "&#42;" is new POWER(ELEM =&gt;  RATIONAL,  OPER =&gt;  "+");</PRE>
+<p>
+or repeated catenation of strings:
+<table border cellpadding=6><tr><td><pre>
+function "&#42;" is new POWER(ELEM =&gt;  STRING,  OPER =&gt;  "&amp;");
+RULER :  constant  :=  "!--+--" &#42; 5;
+</pre></td></tr></table>
+<p>
+so that
+<PRE>    RULER =  "!--+--!--+--!--+--!--+--!--+--"</PRE>
+<p>
+The generic  function body  can  be  expressed  more  briefly  in  the
+following recursive form:
+<table border cellpadding=6><tr><td><pre>
+function POWER(E :  ELEM;  N :  POSITIVE) return ELEM is
+begin
+  if N = 1 then
+    return E;
+  else
+    return OPER(POWER(E, N - 1),  E);
+  end if;
+end;
+</pre></td></tr></table>
+<p>
+which eliminates the local declaration and is thus easier to maintain.
+<p>
+We next  consider a  variation  of  the  preceding  generic  function,
+repeatedly applying a unary operation:
+<table border cellpadding=6><tr><td><pre>
+generic
+  type ELEM is private;
+  with function NEXT(X :  ELEM) return ELEM;
+function INVOLUTION(E :  ELEM;  N :  NATURAL) return ELEM;
+
+function INVOLUTION(E :  ELEM;  N :  NATURAL) return ELEM is
+  RESULT :  ELEM  :=  (E);
+begin
+  for J in 1 .. N loop
+    RESULT :=  NEXT(RESULT);
+  end loop;
+  return RESULT;
+end INVOLUTION;
+</pre></td></tr></table>
+<p>
+or the briefer recursive form:
+<table border cellpadding=6><tr><td><pre>
+function INVOLUTION(E :  ELEM;  N :  NATURAL) return ELEM is
+begin
+  if N = 0 then
+    return E;
+  else
+    return NEXT(INVOLUTION(E, N - 1));
+  end if;
+end;
+</pre></td></tr></table>
+<p>
+This generic  function  can  be  used  to  apply  any  unary  function
+repeatedly, for  example, to  produce the nth successor or predecessor
+of an enumeration value
+<table border cellpadding=6><tr><td><pre>
+function SUCC              is new INVOLUTION(ELEM =&gt;  COLOR, NEXT =&gt;  COLOR'SUCC);
+function PRED              is new INVOLUTION(ELEM =&gt;  COLOR, NEXT =&gt;  COLOR'PRED);
+</pre></td></tr></table>
+<p>
+Again,  these   generic  instantiations   declare   functions,   whose
+specifications are:
+<table border cellpadding=6><tr><td><pre>
+function SUCC(E :  COLOR;  N :  POSITIVE) return COLOR;
+function PRED(E :  COLOR;  N :  POSITIVE) return COLOR;
+</pre></td></tr></table>
+<p>
+Similar functions  can be  instantiated to  find the  nth successor or
+predecessor of  an item in a list, where the successor and predecessor
+are defined by the unary functions:
+<table border cellpadding=6><tr><td><pre>
+function SUCC(X :  LIST) return LIST is
+begin
+  return X.SUCC;
+end;
+
+function PRED(X :  LIST) return LIST is
+begin
+  return X.PRED;
+end;
+
+function SUCC    is new INVOLUTION(ELEM =&gt;  LIST,  NEXT =&gt;  SUCC);
+function PRED    is new INVOLUTION(ELEM =&gt;  LIST,  NEXT =&gt;  PRED);
+</pre></td></tr></table>
+<p>
+Note that  these involutions  overload (but do not hide) the functions
+SUCC and  PRED. Actually, the immediate successor of an element can be
+obtained in three ways:
+<table border cellpadding=6><tr><td><pre>
+X.SUCC    -- using the component SUCC
+SUCC(X)   -- the unary function
+SUCC(X,1) -- the involution
+</pre></td></tr></table>
+
+<H3><BR><a name="12.3.2">12.3.2 An Example of a Generic Package</a></H3>
+
+A discussion of generic units would probably not be complete without a
+presentation of  the treatment  of either  stacks or queues. Since the
+example of  stacks has  already been given in the <a href="http://archive.adaic.com/standards/83lrm/html/">Reference Manual</a>, we
+shall give here a formulation of queues.
+<p>
+Here is the specification of the generic package QUEUE_OF :
+<table border cellpadding=6><tr><td><pre>
+generic
+  -- the formal parameters are:
+  type ITEM is private;           -- the type of the items in the queues
+  MAX_LENGTH :  in POSITIVE :=  400; -- the maximum length for all the queues
+package QUEUE_OF is
+  type LENGTH is new INTEGER range 1 .. MAX_LENGTH;
+  type QUEUE(SIZE :  LENGTH :=  MAX_LENGTH) is limited private
+    -- the only operations that will be available on queues are
+    -- the operations declared in this visible part:
+  procedure ADD(X :  in ITEM;  Q :  in out QUEUE);
+                -- adds an item to a queue
+  procedure REDUCE(Q    :  in out               QUEUE);
+                -- removes the first item from the queue
+  function EMPTY(Q      :  in                   QUEUE) return BOOLEAN
+                -- returns TRUE if the queue is empty
+  function FRONT(Q      :  in                   QUEUE) return ITEM;
+                -- returns the first item of the queue (not removed)
+  OVERFLOW, UNDERFLOW :  exception;
+                -- raised when illegal operations are attempted
+private                   -- this part will not be available to users
+  type VECTOR is array(LENGTH range &lt;&gt;) of ITEM;
+  type QUEUE(SIZE :  LENGTH :=  MAX_LENGTH) is
+    record
+      POOL       :  VECTOR(1 .. SIZE);    -- the queued items in a circular list
+      COUNT      :  NATURAL :=  0;   -- their number
+      IN_INDEX   :  LENGTH  :=  1;   -- position of next in
+      OUT_INDEX  :  LENGTH  :=  1:   -- position of next out
+    end record;
+end QUEUE_OF;
+</pre></td></tr></table>
+<p>
+The package  body provides  the bodies of the functions and procedures
+promised in the specification:
+<table border cellpadding=6><tr><td><pre>
+package body QUEUE_OF is
+  function NEXT(Q :  in QUEUE;  INDEX :  in LENGTH) return LENGTH
+is
+    -- returns the position that follows INDEX in queue Q
+  begin
+    return (INDEX mod Q.SIZE) + 1;
+  end NEXT;
+
+  procedure ADD(X :  in ITEM;  Q :  in out QUEUE) is
+    -- adds item X at the end of queue Q,
+    -- or raises OVERFLOW if Q is full
+  begin
+    if Q.COUNT &lt; Q.SIZE then
+      Q.POOL(Q.IN_INDEX) :=  X;
+      Q.IN_INDEX :=  NEXT(Q,  Q.IN_INDEX);
+      Q.COUNT :=  Q.COUNT + 1;
+    else
+      raise OVERFLOW;
+    end if;
+  end ADD;
+
+  procedure REDUCE(Q :  in out QUEUE) is
+    -- removes the first item from queue Q,
+    -- or raises UNDERFLOW if Q is empty
+  begin
+    if Q.COUNT &gt; 0 then
+      Q.OUT_INDEX :=  NEXT(Q,  Q.OUT_INDEX);
+      Q.COUNT :=  Q.COUNT - 1;
+    else
+      raise UNDERFLOW;
+    end if;
+  end REDUCE;
+
+  function EMPTY(Q :  in QUEUE) return BOOLEAN is
+    -- returns TRUE if Q is empty
+  begin
+    return Q.COUNT = 0;
+  end EMPTY;
+
+  function FRONT(Q :  in QUEUE) return ITEM is
+    -- returns the first item in queue Q
+    -- but does not remove it
+  begin
+    if Q.COUNT &gt; 0 then
+      return Q.POOL(Q.OUT_INDEX);
+    else
+      raise UNDERFLOW;
+    end if;
+  end FRONT;
+
+end QUEUE_OF;
+</pre></td></tr></table>
+<p>
+Having defined  QUEUE_OF,  it  is  now  possible  to  instantiate  two
+packages that  deal respectively with queues of integers and queues of
+reals:
+<table border cellpadding=6><tr><td><pre>
+package ANY_INT_QUEUE is
+  new QUEUE_OF(ITEM =&gt;  INTEGER,  MAX_LENGTH =&gt;  200);
+
+package ANY_REAL_QUEUE is
+  new QUEUE_OF(ITEM =&gt;  REAL);      -- default maximum length
+</pre></td></tr></table>
+<p>
+In effect,  these two  declarations have  created  two  packages  (two
+ordinary nongeneric  packages). In the present case, a compiler may be
+able to  reuse the same code for the procedures of the two packages if
+reals and integers are represented with the same number of bits.
+<p>
+A block dealing with real queues may appear as below:
+<table border cellpadding=6><tr><td><pre>
+declare
+  use ANY_REAL_QUEUE;
+  QA :  QUEUE(SIZE =&gt;  100);
+  QB  :  QUEUE(SIZE =&gt;  200);
+begin
+  ADD(3.14, QA);
+  ...
+  if FRONT(QA) = FRONT(QB) then
+    REDUCE(QA);
+    ADD(FRONT(QB) + 1.0,  QA);
+  end if;
+  ...
+end ;
+</pre></td></tr></table>
+<p>
+With the  use clause  for  ANY_REAL_QUEUE,  the  type  QUEUE  is  made
+directly visible and can be used to declare the queues of reals QA and
+QB.
+<p>
+A slight  difficulty exists  if we want to use both ANY_REAL_QUEUE and
+ANY_INT_QUEUE in  the same block, since both declare a type QUEUE. The
+name conflict  can be  resolved by  the use  of expanded names for the
+type names:
+<table border cellpadding=6><tr><td><pre>
+declare
+  use ANY_REAL_QUEUE, ANY_INT_QUEUE;
+  QC :  ANY_REAL_QUEUE.QUEUE(SIZE =&gt;  50);
+  QD :  ANY_INT_QUEUE.QUEUE(SIZE =&gt;  40);
+begin
+  ...
+  ADD(3.0E5,  QC);
+  REDUCE(QD);
+  ...
+  ADD(15,  QD);
+  ...
+end;
+</pre></td></tr></table>
+<p>
+Using expanded  names for  the type  names will  usually be sufficient
+(repeated use  can be  avoided by  declaring corresponding  subtypes).
+Thereafter,  subprograms   (such  as   ADD)   appear   as   overloaded
+subprograms, and  no confusion  is possible. For example, the expanded
+specifications of ADD correspond to
+<table border cellpadding=6><tr><td><pre>
+procedure ADD(X :  in REAL;     Q :  in out ANY_REAL_QUEUE.QUEUE);
+procedure ADD(X :  in INTEGER;  Q :  in out ANY_INT_QUEUE.QUEUE);
+</pre></td></tr></table>
+<p>
+In the  case of  the exceptions OVERFLOW and UNDERFLOW, overloading is
+of no  help and either expanded names or renaming declarations must be
+used.
+<p>
+A final  word on  these two exceptions: the bodies of ADD, REDUCE, and
+FRONT are  written so  that no  damage occurs  to the  queue if either
+exception occurs.  In consequence  it is  possible to  provide a local
+handler for these exceptions:
+<table border cellpadding=6><tr><td><pre>
+declare
+  use ANY_REAL_QUEUE, ANY_INT_QUEUE;
+  subtype INT_QUEUE is ANY_INT_QUEUE.QUEUE;
+                -- INT_QUEUE defined as an abbreviation
+  INTQ_ERROR :  exception renames ANY_INT_QUEUE.OVERFLOW;
+  QA :  INT_QUEUE(SIZE =&gt;  100);
+  ...
+begin
+  ...
+  ADD(3,  QA);
+  ...
+exception
+  when INTQ_ERROR =&gt;
+    -- actions to be performed if QA overflows.
+end;
+</pre></td></tr></table>
+
+<H3><BR><a name="12.3.3">12.3.3 A Generic Package with Tasks</a></H3>
+
+The parameterization  mechanism provided  by a generic unit applies to
+all entities  nested within  the generic  unit. Thus it can be used to
+parameterize a  task type  - indirectly.  As an  example consider  the
+buffering interposed between a producer and a consumer (the example of
+<a href="http://archive.adaic.com/standards/83lrm/html/lrm-09-12.html#9.12">section 9.12 of the Reference Manual</a>).
+This might be reformulated as a
+task type  defined within  a generic  package where  the type  of  the
+buffered items as well as the size of the buffer in question have been
+factored out as generic parameters.
+<table border cellpadding=6><tr><td><pre>
+generic
+  type ITEM is private;
+  SIZE :  POSITIVE  :=  400;
+package ON_BUFFERS is
+  task type BUFFER is
+    entry READ(C :  out ITEM);
+    entry WRITE(C :  in ITEM);
+  end;
+end ON_BUFFERS;
+
+package body ON_BUFFERS is
+  type LENGTH is new INTEGER range 1 .. SIZE;
+  type VECTOR is array (LENGTH range &lt;&gt;) of ITEM;
+  task body BUFFER is
+    POOL   :  VECTOR(1 .. SIZE);
+    COUNT  :  NATURAL  :=  0;
+    IN_INDEX, OUT_INDEX :  LENGTH  :=  1;
+  begin
+    loop
+      select
+        when COUNT &lt; SIZE =&gt;
+          accept WRITE(C :  in ITEM) do
+            POOL(IN_INDEX) :=  C;
+          end;
+          IN_INDEX :=  (IN_INDEX mod SIZE) + 1;
+          COUNT :=  COUNT + 1;
+      or
+        when COUNT &gt; 0 =&gt;
+          accept READ(C :  out ITEM) do
+            C :=  POOL(OUT_INDEX);
+          end;
+          OUT_INDEX :=  (OUT_INDEX mod SIZE) + 1;
+          COUNT :=  COUNT - 1;
+      or
+        terminate;
+      end select;
+    end loop;
+  end BUFFER;
+end ON_BUFFERS;
+</pre></td></tr></table>
+<p>
+A task equivalent to that given in the <a href="http://archive.adaic.com/standards/83lrm/html/lrm-09-12.html#9.12">Reference Manual</a> is obtained by
+the generic instantiation:
+<table border cellpadding=6><tr><td><pre>
+package CHARACTER_BUFFERING is
+  new ON_BUFFERS(ITEM =&gt;  CHARACTER,  SIZE =&gt;  100);
+</pre></td></tr></table>
+<p>
+followed by the declaration of a task object:
+<PRE>    A_BUFFER :  CHARACTER_BUFFERING.BUFFER;</PRE>
+<p>
+Use of  the generic  formulation  permits  the  same  strategy  to  be
+employed in a variety of different applications; for example:
+<table border cellpadding=6><tr><td><pre>
+package MESSAGE_BUFFERING is
+  new ON_BUFFERS(ITEM =&gt;  MESSAGE,  SIZE =&gt;  BACKLOG);
+</pre></td></tr></table>
+<p>
+where MESSAGE  is assumed to be a previously declared type and BACKLOG
+yields an estimate for a reasonable buffer size.
+<p>
+It is  interesting to  observe that the logic of the queuing strategy,
+shown by  the example  in  the  previous  section,  and  that  of  the
+buffering strategy,  presented above,  are in many respects identical.
+The essential  difference between  the two approaches is that overflow
+and underflow are treated as exceptions in the former case, whereas in
+the latter case they merely result in some parallel task waiting until
+it can proceed.
+
+<H3><BR><a name="12.3.4">12.3.4 A More Complicated Example</a></H3>
+
+A final  example, involving  binary trees,  is presented to illustrate
+the use  of  different  kinds  of  generic  units  in  combination.  A
+frequently  encountered   data  type   like  binary   trees  is   best
+encapsulated within a package, where the types of the leaves and nodes
+can  be   factored  out   as  generic  parameters.  A  straightforward
+definition of the (recursive) data structure in question might then be
+formulated as follows:
+<table border cellpadding=6><tr><td><pre>
+generic
+  type LEAF_TYPE is private;
+  type NODE_TYPE is private;
+package BINARY_TREES is
+  type FORM is (INTERMEDIATE, TERMINAL);
+
+  type TREE(KIND :  FORM);
+  type LINK is access TREE;
+
+  type TREE(KIND :  FORM) is
+    record
+      case KIND is
+        when TERMINAL =&gt;
+          LEAF :  LEAF_TYPE;
+
+        when INTERMEDIATE =&gt;
+          NODE  :  NODE_TYPE;
+          LEFT   :  LINK;
+          RIGHT :  LINK;
+      end case;
+    end record;
+
+  -- specifications of standard operations on binary trees
+
+end BINARY_TREES;
+</pre></td></tr></table>
+<p>
+A number  of standard  operations associated  with binary  trees would
+normally be  included within  the generic  package  given  above;  for
+simplicity,  they  will  not  be  detailed  here.  Instead,  we  shall
+illustrate the typical ways in which binary trees are processed. These
+generally involve  a recursive  traversal (or walk) of the tree in one
+of a  few characteristic orders (namely, prefix order, infix order, or
+postfix order). These orders can be expressed as generic operations.
+<p>
+The commonest  of these  orders is  used in the example below. This is
+the postfix  walk, where  a certain operation is applied to each leaf,
+while another  operation is  applied to  each node,  as well as to the
+results of  previously processed  left and right branches. The desired
+generic function  might be  defined within the package BINARY_TREES as
+follows:
+<table border cellpadding=6><tr><td><pre>
+generic
+  type RESULT is private;
+  with function LEAF_ACTION(L :  LEAF_TYPE) return RESULT;
+  with function NODE_ACTION(N :  NODE_TYPE;
+                                L, R :  RESULT) return RESULT;
+function POST_WALK(T :  LINK) return RESULT;
+
+function POST_WALK(T :  LINK) return RESULT is
+begin
+  case T.KIND is
+    when TERMINAL =&gt;
+      return LEAF_ACTION(T.LEAF);
+    when INTERMEDIATE =&gt;
+      return NODE_ACTION(N =&gt;  T.NODE,
+                              L =&gt;  POST_WALK(T.LEFT),
+                              R =&gt;  POST_WALK(T.RIGHT));
+  end case;
+end POST_WALK;
+</pre></td></tr></table>
+<p>
+Note that  the recursive invocations of POST_WALK within this function
+cause no  confusion (or  infinite loop  during  instantiation)  since,
+within an  instantiation of  a generic  function body, the name of the
+generic function refers to the name of the current instantiation.
+<p>
+A number  of useful  utility functions  on  binary  trees  follow  the
+pattern of a postfix walk. Some of these might well be included within
+the package BINARY_TREES itself. For example, given the functions ONE,
+SUM, SUM_PLUS_ONE, and MAX:
+<table border cellpadding=6><tr><td><pre>
+function ONE(L :  LEAF_TYPE) return INTEGER is
+begin
+  return 1;
+end;
+
+function SUM(N :  NODE_TYPE;  L, R :  INTEGER) return INTEGER is
+begin
+  return L + R;
+end;
+
+function SUM_PLUS_ONE(N :  NODE_TYPE;  L, R :  INTEGER) return
+INTEGER is
+begin
+  return L + R + 1;
+end;
+
+function MAX(N :  NODE_TYPE;  L, R :  INTEGER) return INTEGER is
+begin
+  if L &lt; R then
+    return R;
+  else
+    return L;
+  end if;
+end;
+</pre></td></tr></table>
+<p>
+
+- where  a dummy parameter of node type or leaf type has been provided
+in order  to match  the  generic  functions  -  then  the  usual  tree
+functions  COUNT,   DEPTH,  and   WIDTH  are   obtained   by   generic
+instantiation:
+<table border cellpadding=6><tr><td><pre>
+function COUNT is new POST_WALK(RESULT =&gt;  INTEGER,
+                           LEAF_ACTION =&gt;  ONE,
+                           NODE_ACTION =&gt;  SUM_PLUS_ONE);
+  -- the number of leaves and nodes
+
+function DEPTH is new POST_WALK(RESULT =&gt;  INTEGER,
+                           LEAF_ACTION =&gt;  ONE,
+                           NODE_ACTION =&gt;  MAX);
+  -- the length of the longest path from root to leaf
+
+function WIDTH is new POST_WALK(RESULT =&gt;  INTEGER,
+                           LEAF_ACTION =&gt;  ONE,
+                           NODE_ACTION =&gt;  SUM);
+  -- the number of leaves
+</pre></td></tr></table>
+<p>
+The advantages  of using  the generic  facility  in  this  fashion  to
+formulate a basic pattern for several similar definitions are obvious.
+Another application  of such  definitions involves  the use  of binary
+trees to represent simple arithmetic expressions, where the leaves are
+integer values and the nodes correspond to the usual operators:
+<PRE>    type OPERATOR is (ADD, SUB, MUL, DIV);</PRE>
+<p>
+The appropriate  definition  can  be  obtained  by  instantiating  the
+generic package
+<table border cellpadding=6><tr><td><pre>
+package EXPRESSION_TREES is
+  new BINARY_TREES(LEAF_TYPE =&gt;  INTEGER,
+                  NODE_TYPE =&gt;  OPERATOR);
+</pre></td></tr></table>
+<p>
+In an  application, a  use clause  would be  provided for this package
+and, to introduce a name more appropriate to the application, the tree
+type would be renamed by a subtype declaration:
+<table border cellpadding=6><tr><td><pre>
+use EXPRESSION_TREES;
+subtype EXPRESSION is EXPRESSION_TREES.TREE;
+</pre></td></tr></table>
+<p>
+One may  then introduce  the specific  operations associated  with the
+type of tree in question. The most obvious is the evaluation function
+<PRE>    function EVAL(E :  EXPRESSION) return INTEGER;</PRE>
+<p>
+This, however,  exactly follows the pattern of a postfix walk, and may
+therefore be obtained directly by instantiation:
+<table border cellpadding=6><tr><td><pre>
+function EVAL is new POST_WALK(RESULT =&gt;  INTEGER,
+                          LEAF_ACTION =&gt;  VALUE,
+                          NODE_ACTION =&gt;  INTERPRET);
+</pre></td></tr></table>
+<p>
+where the requisite definitions of VALUE and INTERPRET are as follows:
+
+<table border cellpadding=6><tr><td><pre>
+function VALUE(I :  INTEGER) return INTEGER is
+begin
+  return I;
+end;
+
+function INTERPRET(OP :  OPERATOR;  L, R :  INTEGER) return INTEGER
+is
+begin
+  case OP is
+    when ADD  =&gt;  return L + R;
+    when SUB   =&gt;  return L - R;
+    when MUL  =&gt;  return L &#42; R;
+    when DIV   =&gt;  return L / R;
+  end case;
+end ;
+</pre></td></tr></table>
+<p>
+Once again,  the desired  function is obtained by merely providing the
+appropriate operations  for each  leaf and  node, while the details of
+the recursive  tree walk  are encapsulated within the generic function
+POST_WALK.
+<p>
+The  binary   tree  example  of  this  subsection  presents  a  rather
+sophisticated structure,  namely a  generic  recursive  function  (the
+function  is   recursive  but   there  is   of  course   no  recursive
+instantiation), the  declaration of  which is  itself nested  within a
+generic  package!  While  this  example  shows  why  such  complicated
+formulations are  occasionally desirable (see also <a href="ratl-BIB.html">[VH 75]</a>), a word of
+warning is  in order  with  regard  to  generic  packages.  Dependence
+between generic  units in  the form  of mutual  instantiation  is  not
+allowed since  such a  structure could  yield an  infinite loop during
+instantiation:
+
+<table border cellpadding=6><tr><td><pre>
+generic
+  ...
+package A is
+  ...
+end;
+
+generic
+  ...
+package B is
+  ...
+end;
+
+package body A is
+  ...
+  package NEW_B is new B( ... );      -- THIS ALONE IS LEGAL
+  ...
+end A;
+package body B is
+  ...
+  package NEW_A is new A( ... );      -- BUT NOT TOGETHER WITH THIS!
+  ...
+end B;
+</pre></td></tr></table>
+
+<center>
+<hr width=60%>
+&#164; <a href="ratl-12-04.html#12.4"><b>NEXT</b></a>
+&#164; <a href="ratl-12-02.html#12.2"><b>PREVIOUS</b></a>
+&#164; <a href="ratl-12.html#12"><b>UP</b></a>
+&#164; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#164; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#164;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+</BODY></HTML>

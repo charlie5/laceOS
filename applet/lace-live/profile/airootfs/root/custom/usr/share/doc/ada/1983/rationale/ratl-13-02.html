@@ -1,0 +1,1680 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Rationale, Sec 13.2: Presentation of the Tasking Facility</TITLE>
+</HEAD>
+
+<BODY>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 13: Tasking</H2>
+
+<H3><a name="13.2">13.2 Presentation of the Tasking Facility</a></H3>
+
+This  section   introduces  the   tasking  facilities,   defines  them
+generally,  and  illustrates  them  by  means  of  examples.  After  a
+presentation of  tasks and  their associated  hierarchy,  we  describe
+rendezvous,  entry   calls,  and  accept  statements.  The  discussion
+continues  with  select  statements,  timing,  timed  and  conditional
+communication, and  interrupts. Task types and families of entries are
+then described,  and the  presentation concludes with the use of these
+concepts for scheduling.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<br><br>
+<a href="#13.2.1">13.2.1 Tasks: Textual Layout</a><BR>
+<a href="#13.2.2">13.2.2 Task Execution</a><BR>
+<a href="#13.2.3">13.2.3 Visibility Rules</a><BR>
+<a href="#13.2.4">13.2.4 Entries and the Accept Statement</a><BR>
+<a href="#13.2.5">13.2.5 The Select Statement</a><BR>
+<a href="#13.2.6">13.2.6 Timing</a><BR>
+<a href="#13.2.7">13.2.7 Timed and Conditional Communication</a><BR>
+<a href="#13.2.8">13.2.8 Interrupts</a><BR>
+<a href="#13.2.9">13.2.9 Task Types</a><BR>
+<a href="#13.2.10">13.2.10 The Terminate Alternative</a><BR>
+<a href="#13.2.11">13.2.11 Families, Entries and Scheduling</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="13.2.1">13.2.1 Tasks: Textual Layout</a></H3>
+
+A task  is a  textually distinct  program unit  which may  be executed
+concurrently with  other tasks.  It is  very  similar  in  form  to  a
+package. Indeed  the major  difference between a package and a task is
+that the  former is  merely a  passive construct whereas a task may be
+active.
+<p>
+Like the  package, a  task may be declared within any declarative part
+(except the  visible part of another task) and similarly comprises two
+distinct pieces  of text. These are the specification, which describes
+its external  appearance, and  the body,  which describes its internal
+behavior. These  two parts  will often  be juxtaposed in the text, but
+need not  be, and  indeed need not even be compiled together. We shall
+now consider the details of these two parts, showing in particular how
+they differ from the corresponding parts of packages.
+<p>
+The specification  defines the  interface of  the task  to the outside
+world by  the declaration of entries in the task, in much the same way
+as the  specification of  a package  contains declarations  of  types,
+objects, subprograms,  and so on, which define its external interface.
+Entry declarations  have a  similar form to procedure declarations and
+are called  in a  similar manner, but they are executed in a different
+manner, as will be described in a moment.
+<p>
+Note carefully  that a  task  specification  may  contain  only  entry
+declarations and  any associated  representation clauses  or  pragmas.
+Unlike a  package, it  may not  contain  the  declarations  of  types,
+objects,  subprograms  or  other  entities.  The  reasons  are  mainly
+methodological (emphasizing that a task provides parallelism whereas a
+package  provides   visibility  control),  but  there  would  also  be
+difficulty in  implementation if  other entities  were allowed,  since
+there would  be problems  of existence and prevention of access if the
+task were  not active.  On  the  other  hand,  of  course,  a  package
+specification may not contain the declarations of entries.
+<p>
+The following is an example of the specification of a task:
+<table border cellpadding=6><tr><td><pre>
+task LINE_TO_CHAR is
+  entry PUT_LINE (L   :  in LINE);
+  entry GET_CHAR(C    :  out CHARACTER);
+end;
+</pre></td></tr></table>
+<p>
+The body  of a  task has  a form  similar to  that of  a  package  and
+comprises a declarative part and a sequence of statements. The body of
+the above example has the following outline.
+<table border cellpadding=6><tr><td><pre>
+task body LINE_TO_CHAR is
+  BUFFER :  LINE;
+begin
+  -- sequence of statements
+end;
+</pre></td></tr></table>
+<p>
+The full  details of  the body  of this  example  are  deferred  until
+<a href="#13.2.4">section 13.2.4</a>.
+
+<H3><BR><a name="13.2.2">13.2.2 Task Execution</a></H3>
+
+Before describing the detailed statements associated with tasks, it is
+important that the reader understand the underlying concept of a task,
+its activation and execution, and the concept of a master. We describe
+this in  terms of  a model  which should  be  considered  to  be  only
+illustrative and  applies to  the  simple  form  of  task  declaration
+described above; the extension to task types is outlined in <a href="#13.2.9">13.2.9</a>.
+<p>
+We distinguish between the execution of a task and the text of a task.
+An execution of a task is a dynamic parallel activity whereas the text
+is merely  a passive description of some code. The main program can be
+considered to  be called  by an  anonymous  task  whose  execution  is
+created by the underlying system.
+<p>
+When  an   execution  enters   a  unit   that  contains   task  object
+declarations, the  elaboration of  each declaration  creates a further
+task execution. There is therefore a one-to-one correspondence between
+task executions  and the  elaboration of task object declarations, and
+we can  loosely refer  to the  task  execution  by  the  name  of  the
+corresponding task declaration.
+<p>
+Although each elaboration of a task declaration only gives rise to one
+execution, nevertheless  there may be several such parallel executions
+corresponding to different coexisting elaborations of the declaration.
+This would  occur for  example if a task were declared through the use
+of task types which are described below.
+<p>
+It should  also be  realized that  a subprogram  does not in any sense
+belong to any particular task. If it is within the body of a task that
+has no  subtasks (and  is not  passed as an actual generic parameter),
+then it  can only  be called by the enclosing task. On the other hand,
+if it  is declared in the same declarative part as several tasks, then
+it can obviously be called by all these tasks.
+<p>
+The master  of a  task is  the innermost  task, block,  subprogram, or
+library package  that contains  its declaration  (other  packages  are
+excluded because  they merely  affect the visibility and not the scope
+of data). A task is said to depend on its master.
+<p>
+The reader  should note  that the  <a href="http://archive.adaic.com/standards/83lrm/html/">RM</a> introduces  the  concept  of  an
+hierarchical set  of masters  of a task. For didactic purposes we here
+use the term master to mean the direct master. It should also be noted
+that the  rules for  tasks declared  via  access  types  are  somewhat
+different: they are described in section <a href="#13.2.9">13.2.9</a>.
+<p>
+A task  automatically commences  execution when its master reaches the
+begin following  the task  declaration. Task  execution is a two-stage
+process. The  first  stage,  known  as  activation,  consists  of  the
+elaboration of  the declarative  part of  the task  body, whereas  the
+second stage  consists, of course, of the execution of its statements.
+During the  activation stage  the master is not allowed to proceed. If
+several tasks  are declared  in a  unit  then  their  activations  and
+subsequent  execution   occur  in  parallel  and  moreover  each  task
+commences its execution as soon as it has finished its own activation.
+However, it  is only  when the activation of all the tasks is complete
+that the  master can  continue with  the execution  of the  statements
+following the begin, in parallel with the new tasks.
+<p>
+The  reason   for  treating  task  activation  in  this  way  concerns
+exceptions. An  exception raised  by the  elaboration of a declarative
+part is  not handled  at that  level but  propagated. So  an exception
+raised by  the elaboration of the declarative part of a task (that is,
+by its  activation) cannot  be handled  by the  task  and  has  to  be
+propagated to  the master.  In order  that such  an exception  not  be
+asynchronous, the  master remains  suspended at  the begin  until  all
+activations are  complete. It should be added that even if two or more
+tasks raise  exceptions during  activation, then only one exception is
+received by the suspended master. Furthermore, the single exception is
+always TASKING_ERROR,  irrespective of  the nature  and number  of the
+original exceptions. This is because it would be almost impossible for
+the master  to handle  more than  one exception anyway, and the single
+exception then  clearly has  to be  of a  neutral nature - it would be
+unreasonable to choose one of the originating exceptions in preference
+to another.
+<p>
+Task termination is also a two-stage process. This is a consequence of
+an important rule that a unit cannot be left until all dependent tasks
+are terminated.  This rule ensures that objects declared in a unit and
+therefore visible to local tasks cannot disappear while there exists a
+task that could access them.
+<p>
+A unit  is said to be completed when it reaches its final end. It then
+waits, if  necessary, until  all dependent tasks are terminated before
+itself becoming  terminated. Of  course, if  a unit  has no  dependent
+tasks then it becomes completed and terminated at the same time.
+<p>
+For example consider the following procedure P containing the tasks T1
+and T2.
+<table border cellpadding=6><tr><td><pre>
+procedure P is
+
+  task T1 is
+    -- specification of T1
+  end;
+
+  task T2 is
+    -- specification of T2
+  end;
+
+  task body T1 is
+    -- body of T1
+  end;
+
+  task body T2 is
+    -- body of T2
+  end;
+begin
+    -- T1, T2 made active here
+  ...
+    -- P waits for T1, T2 here
+end;
+</pre></td></tr></table>
+<p>
+The tasks  T1 and  T2 automatically commence activation when P reaches
+its begin, and P waits at that point until activation of both tasks is
+complete. All  three (that  is, P,  T1 and  T2) may  then  execute  in
+parallel. When  P reaches  its final end, it again waits until both T1
+and T2 have terminated, if they have not already done so.
+<p>
+It is  possible to  force the  termination of a task by the use of the
+abort statement. Thus
+<PRE>    abort T1, T2;</PRE>
+<p>
+will force  tasks T1  and T2  to become completed as well as any other
+tasks that  depend on  T1 and  T2. The  actual mechanism  is a  little
+complex. Briefly,  the abort  statement places  a task  in an abnormal
+state, which  then leads to it becoming completed as soon as possible.
+Complications arise  because of  the possibility  of  the  task  being
+engaged in  a rendezvous.  The completion  of  an  aborted  caller  is
+delayed until  the rendezvous  is completed and the called task is not
+affected (this  permits the reliable programming of service tasks); on
+the other hand, if the called task is aborted then the caller receives
+the exception TASKING_ERROR.
+<p>
+Note that  the behavior  of the abort statement is formulated in terms
+of completing  tasks rather  than terminating  them. This is because a
+parent task  cannot  be  terminated  until  its  dependent  tasks  are
+terminated, and  if one  of those is the caller in a rendezvous with a
+third party  then its  termination will be delayed. Thus completion of
+the tasks  is the  best that  can be  individually enforced  and their
+termination will then automatically occur in the usual way.
+<p>
+The abort  statement is very disruptive but seems a necessary means of
+last resort to deal with a rogue task. For example, it is not possible
+to leave  a unit while dependent tasks are active, and so an exception
+handler in a unit might need to abort all local tasks.
+<p>
+Although unconditional  and immediate  termination  is  the  desirable
+semantics for  an abort  statement, nevertheless  as  explained  above
+problems in a rendezvous lead to a formulation in terms of completion.
+Apart from  this, the  abort statement  is severe. All dependent tasks
+are also  aborted since  their names will become unreachable after the
+abort. Furthermore  an aborted task is removed from any entry queue on
+which it  may have been placed as the result of calling an entry. This
+possibility demands  care in  the use  of  the  COUNT  attribute  (<a href="#13.2.5">see
+13.2.5</a>).
+<p>
+The abort  statement is  provided for  emergency use  only.  Its  ill-
+considered  use   will  severely   hinder  program  understanding  and
+validation.
+<p>
+The status  of a  task may  be interrogated  by two  attributes.  Thus
+T'TERMINATED is  TRUE if the task T has terminated; T'CALLABLE is TRUE
+if its  entries are  callable, that  is, unless  the task is abnormal,
+completed, or terminated.
+<p>
+The above discussion was presented in terms of several tasks executing
+in parallel.  Whether or  not this  physically occurs depends upon the
+hardware. In  a multiprocessor  system  true  parallel  execution  may
+occur, whereas  in a  single processor  system only one task at a time
+can really  be executing. In any case a scheduler is required in order
+to allocate  the ready  tasks to  the  one  or  more  processors.  The
+scheduling algorithm  is deliberately  not defined in complete detail,
+but a  task can be given a static priority by a pragma. The basic rule
+regarding priority is
+<blockquote>"If two  tasks with  different priorities  are  both  eligible  for
+   execution and  could sensibly  be executed  using the same physical
+   processors and  other processing  resources, then  it cannot be the
+   case that  the task  with the lower priority is executing while the
+   task with the higher priority is not."</blockquote>
+
+This rule  requires preemptive  scheduling. Note that the phrase "could
+sensibly be  executed" refers to situations such as distributed systems
+where a  high priority  task may  not be physically able to execute on
+some processors.  Thus preemption  is  only  required  for  processing
+resources that the high priority task can use.
+<p>
+Priorities are  provided as  a tool for indicating relative degrees of
+urgency and  on no  account should  their manipulation  be used  as  a
+technique for attempting to obtain mutual exclusion.
+<p>
+Task types are discussed in <a href="#13.2.9">section 13.2.9</a>.
+
+<H3><BR><a name="13.2.3">13.2.3 Visibility Rules</a></H3>
+
+The usual  visibility rules  are applicable to tasks. As a consequence
+several tasks  may share  global variables  and it is the programmer's
+responsibility  to  ensure  their  integrity;  problems  arising  from
+optimization whereby  the value of a variable is temporarily held in a
+register may  be overcome  by the pragma SHARED. Of course the primary
+means of  communication between  tasks is  not through  the sharing of
+global variables (which should be done with caution) but by the use of
+the rendezvous  as described  in the next section. However to disallow
+shared variables seems to be a constraint that would be unwise in some
+critical circumstances.
+
+<H3><BR><a name="13.2.4">13.2.4 Entries and the Accept Statement</a></H3>
+
+As we  have seen,  the specification  part of  a task  may contain the
+declaration of  entries. Externally  an entry  looks like a procedure,
+has parameters  of mode  in, in  out or out, and is called in the same
+way. The  difference lies  in the  internal behavior. In the case of a
+procedure the calling task executes the procedure body itself, and the
+procedure body  can be  executed immediately.  In the case of an entry
+the corresponding  actions are  executed by the task owning the entry,
+not by the calling task. Moreover these actions are only executed when
+the  called  task  is  prepared  to  execute  a  corresponding  accept
+statement. In fact the calling and called tasks may be thought to meet
+together in  a rendezvous.  We will  illustrate this by completing the
+example introduced earlier.
+<table border cellpadding=6><tr><td><pre>
+task LINE_TO_CHAR is
+  entry PUT_LINE  (L  :  in LINE);
+  entry GET_CHAR(C    :  out CHARACTER);
+end;
+
+task body LINE_TO_CHAR is
+  BUFFER :  LINE;
+begin
+  loop
+    accept PUT_LINE(L :  in LINE) do
+      BUFFER :=  L;
+    end PUT_LINE;
+    for I in LINE'RANGE loop
+      accept GET_CHAR(C :  out CHARACTER) do
+        C :=  BUFFER(I);
+      end GET_CHAR;
+    end loop;
+  end loop;
+end;
+</pre></td></tr></table>
+<p>
+The accept  statement looks  somewhat like a procedure body. It can be
+thought of  as a body to be executed where it stands, in much the same
+way as  a block  can be  thought of  as an  inline  procedure  without
+parameters.
+<p>
+The  accept   statement  repeats   the  formal   part  of   the  entry
+declarations, both  in order to emphasize the parameters and to permit
+unambiguous identification  of an  accept with  the correct,  possibly
+overloaded, entry.  The formal part is then followed by the statements
+to be executed during the rendezvous.
+<p>
+There are two possibilities for a rendezvous, according to whether the
+calling task issues the calling statement such as
+<PRE>    LINE_TO_CHAR.PUT_LINE(MY_LINE);</PRE>
+<p>
+before or  after a  corresponding accept  statement is  reached by the
+called task. Whichever task gets there first waits for the other. When
+the rendezvous  is achieved,  the appropriate parameters of the caller
+are passed  to the  called  task  (note  that  actual  parameters  are
+evaluated when  the entry  call is  issued, not  when  the  rendezvous
+occurs). The  caller is  then temporarily  suspended until  the called
+task completes  the  statements  embraced  by  do  ...  end.  Any  out
+parameters are  then passed  back to the caller and finally both tasks
+again proceed independently of each other.
+<p>
+It should  be observed  that the  rendezvous is named in one direction
+only. The  calling task  must know  the name of the entry, and this is
+specific to  the called  task. Thus  the calling  task must  know  the
+called task.  The called task on the other hand will accept calls from
+any task.  Thus we  have a  many-to-one pattern of communication. As a
+consequence of  this, each  entry potentially  has a  queue  of  tasks
+calling it.  This queue  is processed in a strictly first-in-first-out
+manner, and  each rendezvous  at an  accept statement removes just one
+item from this queue.
+<p>
+The behavior of the task LINE_TO_CHAR should now be clear. It contains
+an internal  buffer which  may hold  a line  of characters.  The  task
+alternately fills the buffer by accepting a call of PUT_LINE, and then
+empties it  by accepting  successive calls  of GET_CHAR.  Calls of the
+entries can  only be processed when the corresponding accept statement
+is reached.  Thus many  different  tasks  could  be  held  up  calling
+PUT_LINE. They  are only accepted one at a time in accordance with the
+groups of calls of GET_CHAR. Again note that the buffer may be emptied
+by several  different tasks  calling GET_CHAR.  Indeed  several  tasks
+could be  suspended on calls of GET_CHAR until a task issues a call of
+PUT_LINE.
+<p>
+It should  be carefully  observed that  at any  one time a task can be
+queuing only  in one  place (one position in one entry queue). This is
+because a task can naturally only be calling one entry at a time.
+<p>
+This example  could therefore  be used  to provide  a simple buffering
+mechanism between a producer and a consumer task:
+<p>
+<table border cellpadding=6><tr><td><pre>
+task CONSUME_CHAR;
+task PRODUCE_LINE;
+
+task body PRODUCE_LINE is
+  MY_LINE :  LINE;
+begin
+  loop
+    -- fill MY_LINE from somewhere
+    LINE_TO_CHAR.PUT_LINE(MY_LINE);
+  end loop;
+end;
+
+task body CONSUME_CHAR is
+  MY_CHAR :  CHARACTER;
+begin
+  loop
+    LINE_TO_CHAR.GET_CHAR(MY_CHAR);
+    -- do something with MY_CHAR
+  end loop;
+end;
+</pre></td></tr></table>
+<p>
+In  the   task  LINE_TO_CHAR   there  is  only  one  accept  statement
+corresponding to each entry. This need not necessarily be the case, as
+later examples  will  show.  Moreover  if  there  are  several  accept
+statements  corresponding   to  one  entry  then  their  sequences  of
+statements may differ. We see here a sharp distinction between entries
+and procedures. All calls of a procedure execute the same body whereas
+calls of  entries need  not. This  is because  procedure bodies do not
+change state  between successive calls, and so the normal case is that
+all calls do the same thing; whereas tasks continue to execute between
+calls of  their entries,  and so  may need to do different things each
+time. In  this respect  an entry  call is  analogous  to  a  coroutine
+transfer.
+<p>
+As general  programming practice,  the body  of the  accept  statement
+between  do   and  end  should  not  contain  unnecessary  statements;
+otherwise  the   calling  task  will  be  needlessly  held  up.  As  a
+consequence, it  will often  be the  case that  the accept  body  will
+contain only  the code  that accesses the entry parameters; additional
+code as  may be  necessary to  update the  task's state  variables  to
+reflect the status of its callers can then follow the accept body.
+<p>
+An accept  statement may  have no  do ... end part. This will usually,
+but not necessarily, be the case when the entry has no parameters.
+<p>
+As  a  didactic  example,  the  following  task  implements  a  binary
+semaphore for protecting critical sections:
+<p>
+<table border cellpadding=6><tr><td><pre>
+task SEMAPHORE is
+  entry P;
+  entry V;
+end;
+
+task body SEMAPHORE is
+begin
+  loop
+    accept P;
+    accept V;
+  end loop;
+end;
+</pre></td></tr></table>
+<p>
+A critical section is then bracketed thus
+<p>
+<table border cellpadding=6><tr><td><pre>
+SEMAPHORE.P;
+-- critical section
+SEMAPHORE.V;
+</pre></td></tr></table>
+<p>
+In this  case the  rendezvous merely  provides synchronization  and no
+data is transferred.
+<p>
+An accept statement must be in the body of the task concerned, and not
+within any inner subprogram, package or task. This ensures that it can
+only be executed by the task that owns the corresponding entry.
+<p>
+If an  entry is  renamed, it is renamed as a procedure. This preserves
+the uniform  user interface.  A minor  distinction between entries and
+subprograms is  that it  is not  possible to  have an  entry function.
+Finally it should be remarked that there also exist so-called families
+of entries. These are discussed in <a href="#13.2.10">13.2.10</a>.
+
+<H3><BR><a name="13.2.5">13.2.5 The Select Statement</a></H3>
+
+The accept  statement enables a task to wait for some event to happen,
+and the  happening of  the event  is in  our notation indicated by the
+calling of  the  corresponding  entry.  To  wait  until  several  such
+different events  have all  happened merely  requires  a  sequence  of
+accept statements.  To  wait  for  one  only  of  several  alternative
+possible events  is not  easy, and  for this  purpose we introduce the
+select statement.  As will  become evident,  the select  statement has
+great expressive power.
+<p>
+The select  statement has some analogy with the case statement, and in
+its simplest  form allows one of several alternative accept statements
+to be obeyed.
+<p>
+As an  example, suppose  we wish  a variable  to be accessible to many
+tasks, but  nevertheless wish  to prevent more than one task at a time
+from accessing  it. Moreover  suppose we wish to provide facilities to
+read the  variable and  to write a new value to it. The following task
+provides the entries READ and WRITE for this.
+<p>
+<table border cellpadding=6><tr><td><pre>
+task PROTECTED_VARIABLE is
+  entry READ (V  :  out ITEM);
+  entry WRITE(E  :  in ITEM);
+end;
+
+task body PROTECTED_VARIABLE is
+  VARIABLE :  ITEM;
+begin
+  loop
+    select
+      accept READ(V :  out ITEM) do
+        V :=  VARIABLE;
+      end;
+    or
+      accept WRITE(E :  in ITEM) do
+        VARIABLE :=  E;
+      end;
+    end select;
+  end loop;
+end PROTECTED_VARIABLE;
+</pre></td></tr></table>
+<p>
+A call of READ outputs the value of the variable to the parameter V. A
+call of WRITE inputs the value of the expression E passed as parameter
+into the variable.
+<p>
+The select  statement allows  the task to accept either READ or WRITE.
+On entry  to the  select statement,  if neither a READ nor a WRITE has
+been called, the task waits for the first of either and then obeys the
+appropriate accept statement. If one has already been called then that
+call is  immediately accepted.  If however  both entries  have already
+been called  (obviously by  two or  more other  tasks) then one of the
+alternatives is chosen arbitrarily.
+<p>
+In the  more general  case each  alternative may  include  a  guarding
+condition. These  conditions are all evaluated at the beginning of the
+select statement,  and only  those alternatives  whose guards are true
+are considered  in the  subsequent selection.  An absent  guard is  of
+course considered  to be  true. If  all guards  are false,  so that no
+alternative can be considered, then it is an error (unless there is an
+else part  as described  later in  this section) and the PROGRAM_ERROR
+exception is raised. An alternative whose guard is true (or absent) is
+said to  be open.  An alternative  whose guard  is false is said to be
+closed. The  guard is  written as a Boolean expression preceded by the
+word  when  and  followed  by  "=&gt;",  in  the  same  manner  as  other
+preconditions in Ada.
+<p>
+It should also be noted that each alternative may also include further
+statements  following   the  rendezvous  body  of  the  accept.  These
+additional statements  are  executed  in  the  normal  way  after  the
+rendezvous has been completed.
+<p>
+The following  example of  a bounded  buffer illustrates  the  use  of
+guards.
+<p>
+<table border cellpadding=6><tr><td><pre>
+task BUFFER is
+  entry READ (V  :  out ITEM);
+  entry WRITE(E  :  in ITEM);
+end;
+
+task body BUFFER is
+  SIZE                :  constant :=  10;
+  POOL                :  array (1 .. SIZE) of ITEM;
+  IN_INDEX, OUT_INDEX :  INTEGER range 1 .. SIZE  :=  1;
+  COUNT               :  INTEGER range 0 .. SIZE  :=  0;
+begin
+  loop
+    select
+      when COUNT &lt; SIZE  =&gt;         -- not full
+        accept WRITE(E :  in ITEM) do
+          POOL(IN_INDEX) :=  E;
+        end;
+        IN_INDEX :=  IN_INDEX mod SIZE + 1;
+        COUNT    :=  COUNT + 1;
+    or
+      when COUNT &gt; 0  =&gt;            -- not empty
+        accept READ(V :  out ITEM) do
+          V :=  POOL(OUT_INDEX);
+        end;
+        OUT_INDEX  :=  OUT_INDEX mod SIZE + 1;
+        COUNT      :=  COUNT - 1;
+    end select;
+  end loop;
+end BUFFER;
+</pre></td></tr></table>
+<p>
+The variables  IN_INDEX and  OUT_INDEX index the ends of the currently
+used part  of the buffer and COUNT indicates how many items are in the
+buffer. Note  how obvious  the guards are. A READ can only be accepted
+when the  buffer is  not empty,  and a WRITE can only be accepted when
+the buffer  is  not  full.  The  reader  is  invited  to  compare  the
+readability of the solution presented here with the example written in
+other languages in <a href="ratl-13-02.html#13.3.2">section 13.3.2</a>.
+<p>
+It should  be noted  that the  updating of  the  values  of  IN_INDEX,
+OUT_INDEX and COUNT is not done within the rendezvous. This allows the
+calling task  to continue  as soon as possible, but does not cause any
+problem of  potential interference  because these objects are local to
+BUFFER and so cannot be seen by any external task.
+<p>
+In many situations it is desirable to enforce a protocol on the use of
+entries. This  can be  done by  placing the task within a package body
+and then  providing access  to the  entries via procedures declared in
+the package  specification. This  technique also illustrates the point
+that a  package provides  visibility control  whereas a  task provides
+parallelism.
+<p>
+As an  example consider  an extension  of the task PROTECTED_VARIABLE,
+which allows  several tasks  to READ  simultaneously but  only one  to
+WRITE, and  then only  when no  tasks are  reading. It is written as a
+package READER_WRITER containing a task CONTROL.
+<p>
+<table border cellpadding=6><tr><td><pre>
+package READER_WRITER is
+  procedure READ (V :  out ITEM);
+  procedure WRITE(E :  in ITEM);
+end;
+
+package body READER_WRITER is
+  VARIABLE :  ITEM;
+
+  task CONTROL is
+    entry START_READ;
+    entry STOP_READ;
+    entry WRITE(E :  in ITEM);
+  end;
+
+  task body CONTROL is
+    READERS :  NATURAL  :=  0;
+  begin
+    accept WRITE(E :  in ITEM) do
+      VARIABLE :=  E;
+    end;
+
+    loop
+      select
+        accept START_READ;
+        READERS :=  READERS + 1;
+      or
+        accept STOP_READ;
+        READERS :=  READERS - 1;
+      or
+        when READERS = 0  =&gt;
+          accept WRITE(E :  in ITEM) do
+            VARIABLE :=  E;
+          end;
+      end select;
+    end loop;
+  end CONTROL;
+
+  procedure READ(V :  out ITEM) is
+  begin
+    CONTROL.START_READ;
+    V :=  VARIABLE;
+    CONTROL.STOP_READ;
+  end;
+
+  procedure WRITE(E :  in ITEM) is
+  begin
+    CONTROL.WRITE(E);
+  end;
+
+end READER_WRITER;
+</pre></td></tr></table>
+<p>
+In this  example READ  and  WRITE  are  procedures  and  not  entries.
+However, since  entries are  called in the same way as procedures, the
+effective interface  from the  point of  view of  the  caller  remains
+unchanged. Of  course the  compiled calling code may be different, but
+this need not concern the user.
+<p>
+This example  also  illustrates  the  use  of  more  than  one  accept
+statement  corresponding   to  the   internal  entry  WRITE  (in  this
+particular example  the bodies  are the same, but this need not be the
+case). It  shows that  a task  can be  viewed as  a sort of coroutine,
+where entry  calls can  achieve different  actions  depending  on  the
+current point of execution of the task.
+<p>
+We now  consider a  further elaboration  of this  example that gives a
+better distribution  of priority between readers and writers. Normally
+writers have  priority over  readers, and  a new  reader should not be
+permitted to start if there is a writer waiting.
+<p>
+Moreover, all  waiting readers  at the  end of  a  write  should  have
+priority over  the next  writer. In  order to program this strategy we
+use the  attribute E'COUNT  of an entry E, which denotes the number of
+tasks waiting  in the  queue for  the entry. The use of this attribute
+requires some  care as  explained below.  We illustrate  this point by
+means of  two different  formulations of  this problem.  In the  first
+formulation the declaration
+<p>
+<PRE>    STILL_WAITING :  INTEGER  :=  0;</PRE>
+<p>
+is added  to the  declarative part  of the  body of  CONTROL  and  the
+statement part now becomes as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+begin
+  accept WRITE(E :  in ITEM) do
+    VARIABLE :=  E;
+    STILL_WAITING :=  START_READ'COUNT;
+  end;
+
+  loop
+    select
+      when WRITE'COUNT = 0 or STILL_WAITING &gt; 0  =&gt;
+        accept START_READ;
+        READERS :=  READERS + 1;
+        if STILL_WAITING &gt; 0 then
+          STILL_WAITING :=  STILL_WAITING - 1;
+        end if;
+    or
+      accept STOP_READ;
+      READERS :=  READERS - 1;
+    or
+      when READERS = 0 and STILL_WAITING = 0  =&gt;
+        accept WRITE(E :  in ITEM) do
+          VARIABLE :=  E;
+          STILL_WAITING :=  START_READ'COUNT;
+        end;
+    end select;
+  end loop;
+end;
+</pre></td></tr></table>
+<p>
+In this  formulation, STILL_WAITING  is the  number of  readers  still
+waiting of those who were waiting when the previous write finished.
+<p>
+The first-in-first-out  queue discipline  is necessary for the correct
+working of  this example.  At the  end of  each write,  the number  of
+readers waiting  is noted  in STILL_WAITING.  A reader  is accepted if
+there are  still old  readers waiting  to be  served, or  if nobody is
+waiting to  write; hence  the test  of STILL_WAITING  in the  guard of
+accept START_READ and the decrement of STILL_WAITING after the body of
+START_READ. Similarly,  the guard  of accept  WRITE ensures that a new
+writer is  only served  if there  are neither  current readers nor old
+readers still waiting.
+<p>
+The above  formulation should  be treated  with caution. Thus consider
+what happens  if one  of the  waiting readers  is aborted while in the
+queue on the entry START_READ, and after the value of START_READ'COUNT
+has been  assigned to  STILL_WAITING. The  value of STILL_WAITING will
+then become  inconsistent and  the next writer will be further delayed
+until a new reader arrives.
+<p>
+This illustrates  a general  danger with  using the COUNT attribute in
+guards, since  any task  that has  issued an entry call can be aborted
+between the  evaluation of  COUNT  and  the  execution  of  an  accept
+statement based on the value of COUNT.
+<p>
+We will now reformulate the above example by introducing the else part
+of the  select statement.  A select statement may contain an else part
+following the  various possibly  guarded alternatives.  The else  part
+cannot be guarded. If all guards are false, or an immediate rendezvous
+is not  possible, then  the else  part is  obeyed. If there is an else
+part then PROGRAM_ERROR cannot arise.
+<p>
+In the  reformulated example,  STILL_WAITING is no longer required and
+the main loop now becomes as follows:
+<table border cellpadding=6><tr><td><pre>
+loop
+  select
+    when WRITE'COUNT = 0  =&gt;
+      accept START_READ;
+      READERS :=  READERS + 1;
+  or
+      accept STOP_READ;
+      READERS :=  READERS - 1;
+  or
+    when READERS = 0  =&gt;
+      accept WRITE(E :  in ITEM) do
+        VARIABLE :=  E;
+      end;
+      loop
+        select
+          accept START_READ;
+          READERS :=  READERS + 1;
+        else
+          exit;
+        end select;
+      end loop;
+  end select;
+end loop;
+</pre></td></tr></table>
+<p>
+After accepting  a WRITE the task loops, accepting as many START_READs
+as can  immediately be processed. Of course the behavior is marginally
+different, but the general objective is satisfied. The loop ought also
+to follow  the initial  WRITE, but  because of  the constraints on the
+position of an accept statement it cannot be placed in a procedure.
+<p>
+It should be observed that none of the above solutions to this problem
+is satisfactory  if the  calling tasks  are aborted.  They  have  been
+introduced in  order to  illustrate various features of Ada and not as
+solutions to the classic readers and writers problem.
+<p>
+It is  worth noting  that the entries in the various alternatives need
+not be  distinct (although they usually will be). If two or more prove
+to be  the same  then the  usual rule  of arbitrary selection applies.
+This may  be felt  surprising. One motivation here is the fact that if
+several alternatives  are open,  one of them is chosen arbitrarily and
+there  is   hence  no  reason  to  disallow  the  same  entry  in  two
+alternatives. Another  motivation is  the  existence  of  families  of
+entries. If  E(I) and  E(J) were  two  entries  and  they  had  to  be
+different, then  a tedious  runtime check would be necessary. The rule
+thus allows  different actions to be programmed in a simple way on the
+same entry but according to different guards.
+<p>
+Note that  the guards  are all  evaluated at  the start  of the select
+statement only.  The alternative  semantics of evaluating a guard only
+when an  entry is  called was  considered and  rejected.  The  problem
+concerns the  indivisibility of evaluating the guard and accepting the
+call together.  One could  not afford  to make  the  guard  evaluation
+indivisible, and  so it  would be  possible for the calling task to be
+aborted during  the guard  evaluation. This  would cause  havoc if the
+guard proved to be true.
+<p>
+Guard evaluation  at the  start  of  the  select  statement  could  be
+criticized on  the grounds that the value of a guard may be changed by
+another task  before an  alternative is  chosen. This  is not  a  good
+argument since even if the guard were evaluated when the corresponding
+alternative is  chosen, there  is no  guarantee that  it might  not be
+immediately changed.  In either case there is a danger with the use of
+asynchronously modifiable  guards (such  as  those  containing  COUNT,
+CLOCK, and  so on). Note that in practice most guards are local to the
+task that  contains the  select statement.  In addition  they are most
+often  very   simple.  Consequently  several  optimizations  of  guard
+evaluation are possible.
+<p>
+The rule  for choosing one of the open alternatives has been stated to
+be arbitrary.  This should  be interpreted  as meaning  that it is not
+defined by  the language  but is  rather left to the implementation to
+choose an appropriate efficient algorithm. However, the algorithm used
+should not  be unduly  predictable, and  any program  that relies on a
+particular algorithm  is not  portable. Thus  one could not assume for
+instance that  the alternatives were taken in some order. If a uniform
+strategy is  desired, then  it must be programmed by using appropriate
+guarding conditions.
+<p>
+The need for the else part has been adequately demonstrated by earlier
+examples. It  should be  observed that  the select  statement allows a
+server to  choose between  different accept  statements. There  is  no
+corresponding mechanism  for a  caller to  choose between the first of
+several calls.  This is  because of  a fundamental  design decision: a
+task can  be on  at most  one queue at a time. The main motivation for
+this decision is simplicity and efficiency of implementation.
+
+<H3><BR><a name="13.2.6">13.2.6 Timing</a></H3>
+
+Timing  facilities  are  provided  by  the  delay  statement  and  the
+predefined package CALENDAR.
+<p>
+The delay  statement holds  up execution  of the task for at least the
+specified time interval. Thus:
+<PRE>    delay 2.0;</PRE>
+<p>
+The expression  following delay  is of the predefined fixed point type
+DURATION, and  gives the  interval in  seconds. The type DURATION is a
+fixed point type so that the addition of durations can be done without
+systematic loss  of accuracy. The sum of two fixed point model numbers
+is always  a model  number; this is not so with a floating point type.
+However, the  use of  a real  type rather  than an integer type allows
+convenient literals for fractions of a second.
+<p>
+The user can declare constants such as
+<PRE>    MINUTES : constant :=  60.0;</PRE>
+<p>
+and then naturally write
+<PRE>    delay 6 &#42; MINUTES;</PRE>
+<p>
+The predefined  package CALENDAR  (see <a href="http://archive.adaic.com/standards/83lrm/html/lrm-09-06.html#9.6">RM  9.6</a>) provides the type TIME
+(which is  a combined time and date), access to the clock, and various
+operations on times and durations.
+<p>
+The type  TIME is  private so  that each  implementation can choose an
+appropriate internal  structure. The  current time  is provided by the
+function  CLOCK,  of  type  TIME,  which  returns  its  result  in  an
+indivisible manner, thereby avoiding difficulties around midnight. The
+individual components,  year, month, day, and duration since midnight,
+can then  be obtained  from a  TIME  by  various  selector  functions.
+Appropriate overloadings  of +,  -, and the relational operators allow
+the addition, subtraction, and comparison of times and durations.
+<p>
+As an  example of  the use of the package CALENDAR, the following text
+calls  the  procedure  ACTION  at  almost  regular  intervals  without
+cumulative drift.
+<table border cellpadding=6><tr><td><pre>
+declare
+  use CALENDAR;
+  INTERVAL   :  constant DURATION  :=  10 &#42; MINUTES;
+  NEXT_TIME  :  TIME  :=  CLOCK + INTERVAL;
+begin
+  loop
+    delay NEXT_TIME - CLOCK;
+    ACTION;
+    NEXT_TIME :=  NEXT_TIME + INTERVAL;
+  end loop;
+end;
+</pre></td></tr></table>
+
+<H3><BR><a name="13.2.7">13.2.7 Timed and Conditional Communication</a></H3>
+
+A delay  statement may  occur instead of an accept statement within an
+alternative of  a select  statement, and may have a guard in the usual
+way. Such  a delay statement may be used to provide a time-out for the
+select statement.  If no  rendezvous has occurred within the specified
+interval then  the statement  list following  the delay  statement  is
+executed. Of  course if  a rendezvous  occurs before  the interval has
+expired, then  the delay  is canceled  and  the  select  statement  is
+executed normally.
+<p>
+As an  example we can consider a task to drive a chain printer. If the
+printer does  not receive any printing order for ten seconds, then the
+chain has  to be stopped. Once it has stopped, a further print request
+will cause it to restart but a one-second delay must take place before
+printing commences.
+<table border cellpadding=6><tr><td><pre>
+task PRINTER_DRIVER is
+  entry PRINT(L :  LINE);
+end;
+
+task body PRINTER_DRIVER is
+  CHAIN_GOING  :  BOOLEAN  :=  FALSE;
+  BUFFER       :  LINE;
+begin
+  loop
+    select
+      accept PRINT(L :  LINE) do
+        BUFFER :=  L;
+      end;
+      if not CHAIN_GOING then
+        -- start the chain
+        delay 1.0;
+        CHAIN_GOING :=  TRUE;
+      end if;
+      -- print the line
+    or
+      when CHAIN_GOING =&gt;
+        delay 10.0;
+        -- stop the chain
+        CHAIN_GOING :=  FALSE;
+    end select;
+  end loop;
+end;
+</pre></td></tr></table>
+<p>
+A select statement may have several alternatives starting with a delay
+statement. This  extends the  general rule  that the  entries  in  the
+different alternatives need not be distinct. If there are several open
+delay alternatives then the one with the shortest delay is chosen.
+<p>
+A select  statement is  not allowed to have delay alternatives as well
+as an  else part;  the else  part would always take precedence anyway.
+Moreover, at least one alternative must have an accept statement.
+<p>
+Further variations  on the  select statement  allow entry  calls to be
+conditional or to be timed out. These take the form
+<table border cellpadding=6><tr><td><pre>
+select
+  T.E( ... );      -- entry call
+else
+  -- statements to be obeyed if call
+  -- not immediately accepted
+end select;
+</pre></td></tr></table>
+<p>
+and
+<table border cellpadding=6><tr><td><pre>
+select
+  T.E( ... );      -- entry call
+or
+  delay EXPRESSION;
+  -- statements to be obeyed if call
+  -- not accepted within specified duration
+end select;
+</pre></td></tr></table>
+<p>
+respectively.
+<p>
+It should  be noted  that such  select statements  do  not  allow  the
+possibility of calling one of several entries (by analogy with obeying
+one of  several  accept  statements).  To  do  so  would  violate  the
+principle that  a task  may not  be on two or more entry queues at the
+same time.
+<p>
+The timed  and conditional forms of entry call are provided because of
+their convenience.  Such features  can be programmed using agent tasks
+and the  abort statement,  but  only  with  some  difficulty  if  race
+conditions are to be avoided.
+<p>
+Timed entry  calls present difficulties which are similar to, but less
+severe than,  those associated  with abort  statements. For example, a
+task may  be removed  from an  entry queue because the call timed out,
+and thereby  invalidate a  decision based  on the  value of  the COUNT
+attribute. However  such dangers can be overcome by hiding the task in
+a package so that all entry calls are via a procedure.
+
+<H3><BR><a name="13.2.8">13.2.8 Interrupts</a></H3>
+
+Hardware interrupts  can be  handled by  interpreting them as external
+entry calls.  A representation clause is used to link the entry to the
+interrupt, thus:
+<p>
+<table border cellpadding=6><tr><td><pre>
+task DEVICE_DRIVER is
+  entry IO_DONE;
+  ...
+  for IO_DONE use at 4;
+end;
+</pre></td></tr></table>
+<p>
+The value  following at  is of  type ADDRESS  (as explained in <a href="ratl-15-06.html#15.6.1">section
+15.6.1</a>), and  interpreted in  a machine-dependent manner. For example,
+it could be a physical address, an index into a table of records, or a
+binary number representing encoded information.
+<p>
+The interrupt  is processed  when the task owning the entry performs a
+rendezvous by using a corresponding accept statement:
+<p>
+<PRE>    accept IO_DONE;</PRE>
+<p>
+The behavior  regarding multiple interrupts and masking depends on the
+implementation, but  may be  compared to  the various  forms of  entry
+calls. Interrupts  that are queued correspond to normal calls, whereas
+interrupts that  are lost  if not  immediately processed correspond to
+conditional entry calls.
+<p>
+The hypothetical task that makes the entry call behaves as if it had a
+priority higher  than that  of any user task. It then follows from the
+normal priority rules that interrupts get obeyed immediately, provided
+of course  that the  handling task  is waiting  at  the  corresponding
+accept statement.
+<p>
+An interrupt  may provide  control information  via  one  or  more  in
+parameters of the entry. Clearly an entry associated with an interrupt
+cannot have  out or in out parameters because there is no real calling
+task to whom to pass the values.
+
+<H3><BR><a name="13.2.9">13.2.9 Task Types</a></H3>
+
+It is  often important to have many similar tasks, and also to be able
+to create them in a dynamic manner. This can be done with task types.
+<p>
+A task type declaration is similar to a single task declaration except
+that type follows task in the specification. Thus
+<p>
+<table border cellpadding=6><tr><td><pre>
+task type T is
+  entry E( ... );
+  ...
+end;
+
+task body T is
+  ...
+end T;
+</pre></td></tr></table>
+<p>
+This just  creates a  template. Actual  tasks are then created, as are
+other objects, by an object declaration
+<p>
+<PRE>    X :  T;</PRE>
+<p>
+or through an access type and an allocator
+<p>
+<table border cellpadding=6><tr><td><pre>
+type REF_T is access T;
+
+RX :  REF_T :=  new T;
+</pre></td></tr></table>
+<p>
+Tasks  so   declared  become  active  at  the  begin  following  their
+declaration, or  at the  end of  the allocator in the case of accessed
+tasks. The  termination rules are as before except that accessed tasks
+are dependent on the unit containing the access type definition rather
+than the  allocator; this  accords with  the normal  scope  rules  for
+objects created by an allocator.
+<p>
+Task objects  can be  used in  structures in the usual way; thus tasks
+may be components of arrays and records. Task types are limited types;
+this is because a task object is permanently bound to the created task
+and so assignment would make no sense. However, task identities can be
+manipulated by the use of access types.
+<p>
+An important application of task types is in the creation of agents. A
+simple example is provided by the following messenger task type.
+<p>
+<table border cellpadding=6><tr><td><pre>
+task type MESSENGER is
+  entry DEPOSIT (X :  in ITEM);
+  entry COLLECT(X :  out ITEM);
+end;
+
+task body MESSENGER is
+  STORE :  ITEM;
+begin
+  accept DEPOSIT(X :  in ITEM) do
+    STORE :=  X;
+  end;
+  accept COLLECT(X :  out ITEM) do
+    X :=  STORE;
+  end;
+end MESSENGER;
+</pre></td></tr></table>
+<p>
+A messenger  is a  carrier of an ITEM. It is given to him by a call of
+DEPOSIT and retrieved by a call of COLLECT. Note that a messenger dies
+after a single use.
+<p>
+Such a messenger can be used to solve the problem of a customer asking
+for a  service and  wishing to  do other  things while waiting for the
+result. The  essence of the solution is for the customer to leave with
+the server  the address of a messenger who will later communicate with
+the customer.  In the  following  solution  the  service  consists  of
+repairing an  item. The  repaired item  is passed back to the customer
+via the messenger. Note the need for the access type
+   type AGENT is access MESSENGER;
+<p>
+The server and customer are as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+task SERVER is
+  entry REPAIR(X :  ITEM;  A :  AGENT);
+end;
+
+task body SERVER is
+  JOB         :  ITEM;
+  THE_AGENT   :  AGENT;
+begin
+  loop
+    accept REPAIR(X :  ITEM;  A :  AGENT) do
+      JOB         :=  X;
+      THE_AGENT   :=  A;
+    end;
+    -- doing the repair of the item JOB
+    THE_AGENT.DEPOSIT(JOB);
+  end loop;
+end SERVER;
+
+task CUSTOMER;
+
+task body CUSTOMER is
+
+  MY_ITEM    :  ITEM;
+  MY_AGENT   :  AGENT  :=  new MESSENGER;
+begin
+  ...
+  SERVER.REPAIR(MY_ITEM,  MY_AGENT);
+  ...
+  MY_AGENT.COLLECT(MY_ITEM);
+  ...
+end CUSTOMER;
+</pre></td></tr></table>
+<p>
+The agent  task serves  two very  important purposes. First it enables
+the customer  and server to be decoupled. This means that the customer
+can do  other things while the server does the repair, and equally the
+server does  not have  to wait  for the  customer to  collect the item
+before dealing  with the  next  customer.  Second,  and  perhaps  more
+important, it  enables the customer to be of an arbitrary task type by
+factoring off  the required  entry  DEPOSIT.  Without  the  agent  the
+customer would  have to have the entry DEPOSIT, and this would in fact
+mean that  all customers  would have to be of the same task type; this
+would, of course, be intolerable.
+<p>
+A natural  use of task types occurs when there are several copies of a
+piece of  physical equipment,  and a  distinct  but  similar  task  is
+required to drive each one. Thus suppose we have ten line printers and
+wish to  drive each  one by  a distinct task such as PRINTER_DRIVER of
+<a href="#13.2.7">section 13.2.7</a>.
+<p>
+We could declare a task type with specification
+<p>
+<table border cellpadding=6><tr><td><pre>
+task type PRINTER_DRIVER is
+  entry PRINT(L :  LINE);
+end;
+</pre></td></tr></table>
+<p>
+The task  body would  be as  before. We could then declare an array of
+tasks thus
+<p>
+<PRE>    PRINTER :  array (1 .. 10) of PRINTER_DRIVER;</PRE>
+<p>
+A particular  task is  then designated  by indexing  the array  in the
+usual way and so an entry could be called thus
+<p>
+<PRE>    PRINTER(I).PRINT(MY_LINE);</PRE>
+<p>
+It is  often convenient  to rename  an entry  in such circumstances so
+that calls are abbreviated. Thus:
+<p>
+<PRE>    procedure PRINT_6 (L :  LINE) renames PRINTER(6).PRINT;</PRE>
+<p>
+The introduction of task types in Ada gives much additional capability
+especially since, in conjunction with access types, the number of such
+tasks can  be dynamically  determined quite independently of the block
+structure. Objects  of task  types  can  also  be  used  to  implement
+abstract data types.
+<p>
+Task types  are  valuable  in  handling  certain  task  identification
+problems, as  illustrated by the agent mechanism described above; this
+avoids introducing  anonymous untyped  task variables which would have
+raised complex problems of run-time type checking.
+<p>
+Another important use that would have been made of such anonymous task
+variables can  be covered  by other  existing  language  concepts.  It
+corresponds to the case of a server that needs to be able to recognize
+its customers. In such a case limited private types provide a facility
+whereby a  key may  be created  and handed  to a  task  on  its  first
+request. On  later requests  the task shows the key, thus enabling the
+server to  recognize the  owner. The  private type  mechanism prevents
+forgery of  the key.  There is a risk that keys will get reused in the
+future, since a normal mechanism would be to represent each new key as
+the next  integer. This  risk is  no more  than that  associated  with
+remembered task  activation variables  and indeed  can be minimized to
+any required  degree by  using a  key composed  of a record of several
+integers. Thus  using just  two 16-bit  words a  new key can be issued
+every second for 136 years without duplication.
+
+<H3><BR><a name="13.2.10">13.2.10 The Terminate Alternative</a></H3>
+
+It will  have been  noticed that  many of the examples of server tasks
+have had bodies containing endless loops. This means of course that it
+would never  be possible  to leave  the unit  on  which  such  a  task
+depended. An  entry could  be added which, when called, terminated the
+task, and  this could  then be  called prior  to  quitting  the  unit.
+However, this  would often be inconvenient. Moreover, the existence of
+task types  and the use of tasks as objects, and especially as a means
+of implementing  private types  where the active nature of the private
+type  is   hidden  from   the  user,   makes  such  a  technique  most
+unsatisfactory.
+<p>
+In order  to cope  with such  circumstances, a  special form of select
+alternative may  be used  which automatically has the required effect.
+Thus a select statement can take the form
+<table border cellpadding=6><tr><td><pre>
+select
+  accept A( ... )
+    ...
+or
+  accept B( ... )
+    ...
+or
+  terminate;
+end select;
+</pre></td></tr></table>
+<p>
+The terminate  alternative is  taken if  the unit  on which  the  task
+depends has  completed,  and  all  sibling  and  dependent  tasks  are
+terminated or  similarly able  to select  a terminate  alternative. In
+such a  situation all  the tasks  are dormant and could not be called,
+and so they can all become terminated together.
+
+<H3><BR><a name="13.2.11">13.2.11 Families of Entries and Scheduling</a></H3>
+
+The key  to designing  parallel tasks  in Ada  lies in the realization
+that queues are associated with entries and only entries and that such
+queues are  handled in  a strictly  first-in-first-out manner. In many
+situations it is convenient to be able to dissect a queue into several
+subqueues. This  can be  done by  using a  family of entries, which is
+very like a one-dimensional array.
+<p>
+A family  of entries  is declared  by adding  a discrete  range to the
+entry name in the declaration. Thus
+<PRE>    entry TRANSFER(1 .. 200)(D :  DATA);</PRE>
+<p>
+declares a family of 200 entries each of which has the parameter D.
+<p>
+A particular entry is called by the use of an index as expected
+<PRE>    TRANSFER(I)(DATA_VALUE);</PRE>
+<p>
+In a  corresponding accept  statement, the particular member has to be
+indicated by  appending an actual index to the family name. It is then
+followed by the formal parameter list, if any, in the usual way.
+<p>
+<table border cellpadding=6><tr><td><pre>
+accept TRANSFER(I)(D :  DATA) do
+  ...
+end TRANSFER;
+</pre></td></tr></table>
+<p>
+Our example  is that  of scheduling  a  queue  of  requests  for  data
+transfers to  or from  a moving-head  disk. In  order to minimize head
+movement the  requests are grouped into separate queues for each track
+and all  the requests for a particular track are serviced together. It
+would be possible to consider each track as a separate physical entity
+demanding its  own task. We would then use an array of tasks. However,
+the tracks are not independent. The disk head can serve only one track
+at a  time and  so the parallelism obtained by using many tasks is not
+necessary. Instead  the transfers  are handled  by a single slave task
+with a family of entries. There is an entry for each track so that the
+queues are  independent. A separate task controls the arm movement and
+the choice  of track for the slave task. The two tasks are embedded in
+a package as usual.
+<table border cellpadding=6><tr><td><pre>
+package DISK_HEAD_SCHEDULER is
+  type TRACK is range 1 .. 200;
+  type DATA   is ...      -- other parameters of transfer
+  procedure TRANSMIT(TN :  TRACK;  D :  DATA);
+end;
+
+package body DISK_HEAD_SCHEDULER is
+  type DIRECTION is (UP, DOWN);
+  INVERSE :  constant array (DIRECTION) of DIRECTION :=
+                    (UP =&gt;  DOWN,  DOWN =&gt;  UP);
+  STEP    :  constant array (DIRECTION) of INTEGER range -1 .. 1 :=
+                    (UP  =&gt; 1,  DOWN =&gt;  -1);
+  WAITING :  array (TRACK) of INTEGER  :=  (TRACK =&gt;  0);
+  COUNT   :  array (DIRECTION) of INTEGER  :=  (DIRECTION =&gt;  0);
+  MOVE    :  DIRECTION  :=  DOWN;
+  ARM_POSITION :  TRACK  :=  1;
+
+  task CONTROL is
+    entry SIGN_IN(T :  TRACK);
+    entry FIND_TRACK(REQUESTS   :  out INTEGER;
+                   TRACK_NO   :  out TRACK);
+  end;
+
+  task TRACK_MANAGER is
+    entry TRANSFER(TRACK)(D :  DATA);
+  end;
+
+  procedure TRANSMIT(TN :  TRACK;  D :  DATA) is
+  begin
+    CONTROL.SIGN_IN(TN);
+    TRACK_MANAGER.TRANSFER(TN)(D);
+  end;
+
+  task body TRACK_MANAGER is
+    NO_OF_REQUESTS :  INTEGER;
+    CURRENT_TRACK :  TRACK;
+  begin
+    loop
+      CONTROL.FIND_TRACK(NO_OF_REQUESTS,  CURRENT_TRACK);
+      while NO_OF_REQUESTS &gt; 0 loop
+        accept TRANSFER(CURRENT_TRACK)(D :  DATA) do
+          -- do actual I/O
+          NO_OF_REQUESTS :=  NO_OF_REQUESTS - 1;
+        end TRANSFER;
+      end loop;
+    end loop;
+  end TRACK_MANAGER;
+
+  task body CONTROL is
+  begin
+    loop
+      select
+        when COUNT(UP) + COUNT(DOWN) &gt; 0 =&gt;
+          accept FIND_TRACK(REQUESTS   :  out INTEGER;
+                    TRACK_NO :  out TRACK) do
+            if COUNT(MOVE) = 0 then
+              MOVE :=  INVERSE(MOVE);
+            else
+              ARM_POSITION :=  ARM_POSITION + STEP(MOVE);
+            end if;
+            while WAITING(ARM_POSITION) = 0 loop
+              ARM_POSITION :=  ARM_POSITION + STEP(MOVE);
+            end loop;
+            COUNT(MOVE) :=  COUNT(MOVE) -
+                               WAITING(ARM_POSITION);
+            REQUESTS :=  WAITING(ARM_POSITION);
+            TRACK_NO :=  ARM_POSITION;
+            WAITING(ARM_POSITION) :=  0;
+          end FIND_TRACK;
+      or
+        accept SIGN_IN(T :  TRACK) do
+          if T &lt; ARM_POSITION then
+            COUNT(DOWN) :=  COUNT(DOWN) + 1;
+          elsif T &gt; ARM_POSITION then
+            COUNT(UP) :=  COUNT(UP) + 1;
+          else
+            COUNT(INVERSE(MOVE)) :=  COUNT(INVERSE(MOVE)) + 1;
+          end if;
+          WAITING(T) :=  WAITING(T) + 1;
+        end SIGN_IN;
+      end select;
+    end loop;
+  end CONTROL;
+end DISK_HEAD_SCHEDULER;
+</pre></td></tr></table>
+<p>
+The user  indicates his  requests by  calling the  procedure TRANSMIT.
+This in turn calls the entry SIGN_IN in the task CONTROL which records
+the request.  The user  then waits  on the  call of TRANSFER until the
+slave task  TRACK_MANAGER is  ready to  perform transfers on the track
+concerned.
+<p>
+The slave  task TRACK_MANAGER  calls the  entry FIND_TRACK in order to
+determine which  track should be handled next. CONTROL only honors the
+call when  there are requests outstanding (COUNT(UP)+COUNT(DOWN) &gt; 0).
+If there  are requests  outstanding,  an  extended  rendezvous  occurs
+during  which   the  arm   is  moved   and  the  data  transferred  to
+TRACK_MANAGER.
+<p>
+Note the  accept statement  within TRACK_MANAGER, which references the
+member CURRENT_TRACK  of the family TRANSFER and so finally deals with
+the user who has been waiting in TRANSMIT.
+<p>
+It  should   be  pointed   out  that   the  example  given  is  purely
+illustrative. No  genuine disk  head scheduler  would need  to  be  so
+heavily engineered. A perfectly adequate solution is to allow only two
+calls to  TRACK_MANAGER at  a time  and to  sort these  into the  more
+efficient order. If a disk queue frequently exceeds two items then the
+system is  grossly  overloaded  anyway  and  elaborate  scheduling  is
+unlikely to help.
+<p>
+The above  example shows  how a  family of  entries could  be used  to
+dissect a  queue into  subqueues. The first-in-first-out nature of the
+entry queue  might be thought to be a severe constraint in cases where
+some requests  may be  of high  priority and also in cases where later
+similar requests  could be  satisfied even  though earlier ones had to
+wait.
+<p>
+The handling of requests with priorities is easily achieved by the use
+of separate  entries for each level. A family can conveniently be used
+for that  purpose.  The  following  example  illustrates  an  approach
+suitable for a small number of levels.
+<table border cellpadding=6><tr><td><pre>
+type LEVEL is (URGENT, MEDIUM, LOW);
+task CONTROL is
+  entry REQUEST(LEVEL)(D :  DATA);
+end;
+
+task body CONTROL is
+  ...
+  select
+    accept REQUEST(URGENT)(D :  DATA) do
+      ...
+    end;
+  or when REQUEST(URGENT)'COUNT = 0 =&gt;
+    accept REQUEST(MEDIUM)(D :  DATA) do
+      ...
+    end;
+  or when REQUEST(URGENT)'COUNT = 0
+    and   REQUEST(MEDIUM)'COUNT = 0 =&gt;
+    accept REQUEST(LOW)(D :  DATA) do
+      ...
+    end;
+  end select;
+  ...
+end CONTROL;
+</pre></td></tr></table>
+<p>
+For a  larger  number  of  levels,  this  approach  is  obviously  not
+satisfactory. An  alternative possibility  at first  sight is  just to
+scan all the values of the family thus
+<table border cellpadding=6><tr><td><pre>
+task body CONTROL is
+  ...
+begin
+  loop
+    for I in LEVEL loop
+      select
+        accept REQUEST(I) (D : DATA) do
+          ...
+        end;
+        exit;
+      else
+        null;
+      end select;
+    end loop;
+  end loop;
+end CONTROL;
+</pre></td></tr></table>
+<p>
+Unfortunately this  is not  satisfactory since the task will busy-wait
+when there are no requests outstanding.
+<p>
+An acceptable solution is to use a double interaction with the control
+task and  this is best structured by placing the task inside a package
+as illustrated below:
+<table border cellpadding=6><tr><td><pre>
+package CONTROLLER is
+  type LEVEL is range 1 .. 50;
+  procedure REQUEST(L :  LEVEL;  D :  DATA);
+end;
+
+package body CONTROLLER is
+  task CONTROL is
+    entry SIGN_IN(L :  LEVEL);
+    entry PERFORM(LEVEL)(D :  DATA);
+  end;
+  task body CONTROL is
+    PENDING  :  array (LEVEL) of INTEGER :=  (LEVEL =&gt;  0);
+    TOTAL    :  INTEGER  :=  0;
+  begin
+    loop
+      if TOTAL = 0 then
+        -- no request to be served: wait if necessary
+        accept SIGN_IN(L :  LEVEL) do
+          PENDING(L) :=  PENDING(L) + 1;
+          TOTAL  :=  1;
+        end SIGN_IN;
+      end if;
+      loop       -- accept any pending SIGN_IN call without waiting
+        select
+          accept SIGN_IN(L :  LEVEL) do
+            PENDING(L)  :=  PENDING(L) + 1;
+            TOTAL :=  TOTAL + 1;
+          end SIGN_IN;
+        else
+          exit;
+        end select;
+      end loop;
+
+      for I in LEVEL loop
+        if PENDING(I) &gt; 0 then
+          accept PERFORM(I)(D :  DATA) do
+            -- satisfy the request of highest level
+          end;
+          PENDING(I) :=  PENDING(I) - 1;
+          TOTAL :=  TOTAL -1;
+          exit;     -- restart main loop in order to accept new requests
+        end if;
+      end loop;
+    end loop;
+  end CONTROL;
+
+  procedure REQUEST(L :  LEVEL;  D :  DATA) is
+  begin
+    CONTROL.SIGN_IN(L);
+    CONTROL.PERFORM(L)(D);
+  end;
+end CONTROLLER;
+</pre></td></tr></table>
+<p>
+In order  to service  a request,  a call  to  SIGN_IN  must  first  be
+accepted, and its occurrence recorded in the global counter TOTAL, and
+the appropriate  PENDING counter.  In a  second step,  the appropriate
+entry of the family PERFORM must be accepted. CONTROL proceeds by
+<ul>
+<li>waiting for  the first  SIGN_IN if  all previous requests have been
+   serviced;
+<p>
+<li>accepting all pending calls to SIGN_IN;
+<p>
+<li>executing the request with the highest priority;
+<p>
+<li>going back to the beginning of the loop to take care of any call to
+   SIGN_IN that has arrived in the meantime.
+</ul>
+
+We will now illustrate a very general mechanism which in effect allows
+the items in a queue on a simple entry to be processed in an arbitrary
+order. The  example is of a controller for the allocation of groups of
+items from  a set of resources. The generality is emphasized by making
+the package generic.
+<table border cellpadding=6><tr><td><pre>
+generic
+  type RESOURCE is (&lt;&gt;);
+package MULTI_RESOURCE_CONTROL is
+  type RESOURCE_SET is array (RESOURCE) of BOOLEAN;
+  procedure RESERVE(GROUP :  RESOURCE_SET);
+  procedure RELEASE(GROUP :  RESOURCE_SET);
+end;
+
+package body MULTI_RESOURCE_CONTROL is
+  EMPTY   :  constant RESOURCE_SET  :=  (RESOURCE =&gt;  FALSE);
+  USED    :  RESOURCE_SET  :=  EMPTY;
+  WAITERS :  INTEGER  :=  0;
+
+  task CONTROL is
+    entry FIRST (ASKED  :  RESOURCE_SET;  OK :  out BOOLEAN);
+    entry AGAIN (ASKED  :  RESOURCE_SET;  OK :  out BOOLEAN);
+    entry RELEASE       (GROUP  :  RESOURCE_SET);
+  end;
+
+  procedure RESERVE(GROUP :  RESOURCE_SET) is
+    POSSIBLE :  BOOLEAN;
+  begin
+    CONTROL.FIRST(GROUP, POSSIBLE);
+    while not POSSIBLE loop    -- if at first you don't succeed, try, try again
+      CONTROL.AGAIN(GROUP, POSSIBLE);
+    end loop;
+  end;
+
+  procedure TRY(ASKED :  RESOURCE_SET;  OK :  out BOOLEAN) is
+  begin
+    if (USED and ASKED) = EMPTY then
+      USED :=  USED or ASKED;
+      OK    :=  TRUE;         -- allocation successful
+    else
+      OK    :=  FALSE;        -- not possible, try again later
+    end if;
+  end;
+
+  procedure RELEASE(GROUP :  RESOURCE_SET) is
+  begin
+    CONTROL.RELEASE(GROUP);
+  end;
+
+  task body CONTROL is
+  begin
+    loop
+      select
+        accept FIRST(ASKED :  RESOURCE_SET;  OK :  out BOOLEAN) do
+          TRY(ASKED, OK);
+          if not OK then
+            WAITERS :=  WAITERS + 1;
+          end if;
+        end;
+      or
+        accept RELEASE(GROUP :  RESOURCE_SET) do
+          USED :=  USED and not GROUP;
+        end;     -- now find a user for the released resource
+        for I in 1 .. WAITERS loop
+          accept AGAIN(ASKED :  RESOURCE_SET;  OK :  out BOOLEAN) do
+            TRY(ASKED, OK);
+            if OK then
+              WAITERS :=  WAITERS - 1;
+            end if;
+          end;
+        end loop;
+      end select;
+    end loop;
+  end CONTROL;
+end MULTI_RESOURCE_CONTROL;
+</pre></td></tr></table>
+<p>
+The user  requests and  obtains an  arbitrary group  of  resources  by
+calling the  procedure RESERVE  and returns  resources by  calling the
+procedure RELEASE. The procedure RESERVE makes an immediate attempt to
+acquire the  resources by calling the entry FIRST. If they are not all
+available, OK  is returned  false and the request is queued by calling
+AGAIN. It  should be  noted that  FIRST  is  always  honored  promptly
+(except when  the controller  is busy  with RELEASE)  whereas AGAIN is
+only considered  when a  RELEASE occurs. Thus all requests that cannot
+be satisfied  immediately  are  placed  on  the  AGAIN  queue.  It  is
+important that these requests are not serviced on a first-in-first-out
+basis but rather that when some resources are released the requests in
+the queue  that can  then be  fully satisfied  should be  honored. The
+technique is to scan the queue by doing a rendezvous with AGAIN and to
+allow each  user (in  RESERVE) to place itself back on the queue if it
+cannot get  the resources  it requires. In order that each user should
+have only  one retry  the loop  is controlled by the variable WAITERS.
+This indicates how many tasks have called FIRST unsuccessfully and are
+waiting in the system. We cannot use AGAIN'COUNT since resources might
+be released  between a  task unsuccessfully calling FIRST and actually
+calling AGAIN.
+<p>
+The above solution is reasonably satisfactory, although not completely
+fair. Tasks  could reenter  the AGAIN  queue in  a slightly  different
+order because of the race conditions.
+<p>
+However, it  should be realized that the solutions in this section are
+not satisfactory  if the  tasks involved  can be  aborted. One general
+approach in  such circumstances  is to  use agent  tasks that  can  be
+relied upon.  Nevertheless, entirely  satisfactory solutions  in  such
+circumstances are  not easily  obtained. There  seems to be a conflict
+between the  intrinsic high  level features of Ada and low level queue
+manipulation. It  should be realized however that the tasking features
+of Ada are aimed at cooperating systems.
+
+<center>
+<hr width=60%>
+&#164; <a href="ratl-13-03.html#13.3"><b>NEXT</b></a>
+&#164; <a href="ratl-13-01.html#13.1"><b>PREVIOUS</b></a>
+&#164; <a href="ratl-13.html#13"><b>UP</b></a>
+&#164; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#164; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#164;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+</BODY></HTML>

@@ -1,0 +1,313 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 10.2: Line-Oriented Portable Dining Philosophers Example
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 10: Complete Examples</H2>
+
+<H3><a name="10.2">10.2    Line-Oriented Portable Dining Philosophers Example</a></H3>
+<BLOCKQUOTE><H6>Michael B. Feldman<BR>
+Dept. of Electrical Engineering and Computer Science<BR>
+The George Washington University<BR>
+Washington, DC 20052<BR><BR>
+(202) 994-5253<BR>
+<a href="mailto://mfeldman@seas.gwu.edu">mfeldman@seas.gwu.edu</a><BR><BR>
+Copyright 1991, Michael B. Feldman<BR>
+These programs may be freely copied, distributed, and modified for educational 
+purposes but not for profit.  If you modify or enhance the program (for 
+example, to use other display systems), please send Dr. Feldman a copy of the 
+modified code, either on diskette or by e-mail.</H6></BLOCKQUOTE><P>
+This system is an elaborate implementation of Edsger Dijkstra's famous Dining  
+Philosophers; a classical demonstration of deadlock problems in concurrent  
+programming.<P>
+This example uses the numeric types from the Menu-Driven User Interface   
+example. At least one compiler (Ada/Ed) does not support floating-point  
+precision greater than 6 digits.  In this case, <CODE>Big_Float</CODE> will need a smaller  
+precision (digits 6 for Ada/Ed).
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------
+
+with SPC_Numeric_Types; 
+use  SPC_Numeric_Types; 
+package Random is
+
+   -- Simple pseudo-random number generator package. 
+   -- Adapted from the Ada literature by 
+   -- Michael B. Feldman, The George Washington University, 
+   -- November 1990.
+   
+   procedure Set_Seed (N : in     Medium_Positive);
+   
+   function Unit_Random return Medium_Float;
+   
+   --returns a float &gt;=0.0 and &lt;1.0
+   
+   function Random_Int (N : in     Medium_Positive) 
+         return Medium_Positive;
+         
+   --return a random integer in the range 1..N
+   
+end Random;
+
+------------------------------------------------------------------------<P>
+package Chop is
+
+   task type Stick is
+   
+      entry Pick_Up; 
+      entry Put_Down;
+      
+   end Stick;
+   
+end Chop;
+
+------------------------------------------------------------------------
+
+with SPC_Numeric_Types; 
+use  SPC_Numeric_Types; 
+package Phil is<P>
+   task type Philosopher is<P>
+      entry Come_To_Life (My_ID      : in     Medium_Natural; 
+                          Chopstick1 : in     Medium_Natural; 
+                          Chopstick2 : in     Medium_Natural);<P>
+   end Philosopher;<P>
+   type States is 
+         (Breathing,       Thinking,        Eating,        Done_Eating, 
+          Got_One_Stick,   Got_Other_Stick);<P>
+end Phil;<P>
+------------------------------------------------------------------------<P>
+with SPC_Numeric_Types; 
+use  SPC_Numeric_Types; 
+with Chop; 
+with Phil;<P>
+package Room is<P>
+   Table_Size : constant := 5; 
+   subtype Table_Type is Medium_Natural range 1 .. Table_Size;<P>
+   Sticks : array (Table_Type) of Chop.Stick;<P>
+   task Head_Waiter is<P>
+      entry Open_The_Room; 
+      entry Report_State (Which_Phil : in     Table_Type; 
+                          State      : in     Phil.States; 
+                          How_Long   : in     Medium_Natural := 0);<P>
+   end Head_Waiter;<P>
+end Room;<P>
+------------------------------------------------------------------------<P>
+with Room; 
+procedure Diners is 
+begin 
+   Room.Head_Waiter.Open_The_Room;<P>
+   loop 
+      delay 20.0; 
+   end loop; 
+end Diners;<P>
+------------------------------------------------------------------------<P>
+with Calendar; 
+with SPC_Numeric_Types;<P>
+use  Calendar; 
+use  SPC_Numeric_Types;<P>
+package body Random is<P>
+   -- Body of random number generator package. 
+   -- Adapted from the Ada literature by 
+   -- Michael B. Feldman, The George Washington University, 
+   -- November 1990.<P>
+   Modulus : constant := 9_317;<P>
+   subtype Seed_Range is Medium_Integer range 0 .. Modulus - 1;<P>
+   Seed : Seed_Range; 
+   Default_Seed : Seed_Range;<P>
+   procedure Set_Seed 
+         (N : in     Medium_Positive) is separate;<P>
+   function Unit_Random 
+         return Medium_Float is separate;<P>
+   function Random_Int 
+         (N : in     Medium_Positive) 
+         return Medium_Positive is separate;<P>
+begin 
+   Default_Seed := 
+         Medium_Integer(Big_Integer(Seconds(Clock)) mod Modulus); 
+   Seed := Default_Seed; 
+end Random;<P>
+------------------------------------------------------------------------<P>
+separate (Random) 
+procedure Set_Seed (N : in     Medium_Positive) is 
+begin 
+   Seed := Seed_Range(N); 
+end Set_Seed;<P>
+------------------------------------------------------------------------<P>
+separate (Random) 
+function Unit_Random return Medium_Float is<P>
+   Multiplier : constant    := 421; 
+   Increment  : constant    := 2_073; 
+   Result     : Medium_Float;<P>
+begin  -- Unit_Random<P>
+   Seed  := (Multiplier * Seed + Increment) mod Modulus;<P>
+   Result := Medium_Float(Seed) / Medium_Float(Modulus); 
+   return Result;<P>
+exception 
+   when Constraint_Error | Numeric_Error =&gt; 
+      Seed := Medium_Integer 
+               ((Multiplier * Big_Integer(Seed) + Increment) mod 
+                Modulus);<P>
+      Result := Medium_Float(Seed) / Medium_Float(Modulus); 
+      return Result;<P>
+end Unit_Random;<P>
+------------------------------------------------------------------------<P>
+separate (Random) 
+function Random_Int (N : in     Medium_Positive) 
+      return Medium_Positive is<P>
+   Result : Medium_Positive range 1 .. N;<P>
+begin  -- Random_Int<P>
+   Result := Medium_Positive(Medium_Float(N) * Unit_Random + 0.5); 
+   return Result;<P>
+exception 
+   when Constraint_Error | Numeric_Error =&gt; 
+      return 1;<P>
+end Random_Int;<P>
+------------------------------------------------------------------------<P>
+package body Chop is<P>
+   task body Stick is 
+   begin<P>
+      loop 
+         select 
+            accept Pick_Up; 
+            accept Put_Down; 
+         or 
+            terminate; 
+         end select; 
+      end loop;<P>
+   -- No exception handler is needed here. 
+   end Stick;<P>
+end Chop;<P>
+------------------------------------------------------------------------<P>
+with SPC_Numeric_Types; 
+with Room; 
+with Random;<P>
+use  SPC_Numeric_Types;<P>
+package body Phil is<P>
+   task body Philosopher is<P>
+      type Life_Time is range 1 .. 100_000;<P>
+      Who_Am_I    : Medium_Natural; 
+      First_Grab  : Medium_Natural; 
+      Second_Grab : Medium_Natural; 
+      Meal_Time   : Medium_Natural; 
+      Think_Time  : Medium_Natural;<P>
+   begin  -- Philosopher 
+      accept Come_To_Life (My_ID      : in     Medium_Natural; 
+                           Chopstick1 : in     Medium_Natural; 
+                           Chopstick2 : in     Medium_Natural) do 
+         Who_Am_I    := My_ID; 
+         First_Grab  := Chopstick1; 
+         Second_Grab := Chopstick2;<P>
+      end Come_To_Life;<P>
+      Room.Head_Waiter.Report_State(Who_Am_I, Breathing);<P>
+      for Meal in Life_Time loop<P>
+         Room.Sticks(First_Grab).Pick_Up; 
+         Room.Head_Waiter.Report_State 
+                  (Who_Am_I, Got_One_Stick, First_Grab);<P>
+         Room.Sticks(Second_Grab).Pick_Up; 
+         Room.Head_Waiter.Report_State 
+                  (Who_Am_I, Got_Other_Stick, Second_Grab);<P>
+         Meal_Time := Random.Random_Int(10); 
+         Room.Head_Waiter.Report_State(Who_Am_I, Eating, Meal_Time);<P>
+         delay Duration(Meal_Time); 
+         Room.Head_Waiter.Report_State(Who_Am_I, Done_Eating);<P>
+         Room.Sticks(First_Grab).Put_Down; 
+         Room.Sticks(Second_Grab).Put_Down;<P>
+         Think_Time := Random.Random_Int(10); 
+         Room.Head_Waiter.Report_State 
+                  (Who_Am_I, Thinking, Think_Time); 
+         delay Duration(Think_Time);<P>
+      end loop;<P>
+   -- No exception handler is needed here. 
+   end Philosopher;<P>
+end Phil;<P>
+------------------------------------------------------------------------<P>
+with SPC_Numeric_Types; 
+use  SPC_Numeric_Types; 
+with Text_IO; 
+with Chop; 
+with Phil; 
+with Calendar;<P>
+pragma Elaborate (Phil); 
+package body Room is<P>
+   -- A line-oriented version of the Room package, for line-oriented 
+   -- terminals like IBM 3270's where the user cannot do ASCII 
+   -- screen control. 
+   -- This is the only file in the dining philosophers system that 
+   -- needs changing to use in a line-oriented environment. 
+   -- Michael B. Feldman, The George Washington University, 
+   -- November 1990.<P>
+   Phils : array (Table_Type) of Phil.Philosopher;<P>
+   type Phil_Name is (Dijkstra, Texel, Booch, Ichbiah, Stroustrup);<P>
+   task body Head_Waiter is<P>
+      T : Medium_Natural; 
+      Start_Time : Calendar.Time;<P>
+      Phil_Names : constant array (Table_Type) of String (1 .. 18) 
+                 := (&quot;Eddy Dijkstra     &quot;, &quot;Putnam Texel      &quot;, 
+                     &quot;Grady Booch       &quot;, &quot;Jean Ichbiah      &quot;, 
+                     &quot;Bjarne Stroustrup &quot;);<P>
+      Blanks : constant String := &quot;     &quot;;<P>
+   begin  -- Head_Waiter<P>
+      accept Open_The_Room; 
+      Start_Time := Calendar.Clock;<P>
+      Phils(1).Come_To_Life(1, 1, 2); 
+      Phils(3).Come_To_Life(3, 3, 4); 
+      Phils(2).Come_To_Life(2, 2, 3); 
+      Phils(5).Come_To_Life(5, 1, 5); 
+      Phils(4).Come_To_Life(4, 4, 5);<P>
+      loop 
+         select 
+            accept Report_State (Which_Phil : in     Table_Type; 
+                                 State      : in     Phil.States; 
+                                 How_Long   : in     Medium_Natural 
+                                            := 0) do 
+               T := Medium_Natural 
+                        (Calendar.&quot;-&quot;(Calendar.Clock, Start_Time)); 
+               Text_IO.Put (&quot;T=&quot; &amp; Medium_Natural'Image(T) &amp; &quot; &quot; &amp; 
+                            Blanks(1 .. Positive(Which_Phil)) &amp; 
+                            Phil_Names(Which_Phil));<P>
+               case State is<P>
+                  when Phil.Breathing =&gt; 
+                     Text_IO.Put(&quot;Breathing&quot;);<P>
+                  when Phil.Thinking =&gt; 
+                     Text_IO.Put (&quot;Thinking&quot; &amp; 
+                                  Medium_Natural'Image(How_Long) &amp; 
+                                  &quot; seconds.&quot;);<P>
+                  when Phil.Eating =&gt; 
+                     Text_IO.Put (&quot;Eating&quot; &amp; 
+                                  Medium_Natural'Image(How_Long) &amp; 
+                                  &quot; seconds.&quot;);<P>
+                  when Phil.Done_Eating =&gt; 
+                     Text_IO.Put(&quot;Yum-yum (burp)&quot;);<P>
+                  when Phil.Got_One_Stick =&gt; 
+                     Text_IO.Put (&quot;First chopstick&quot; &amp; 
+                                  Medium_Natural'Image(How_Long));<P>
+                  when Phil.Got_Other_Stick =&gt; 
+                     Text_IO.Put (&quot;Second chopstick&quot; &amp; 
+                                  Medium_Natural'Image(How_Long));<P>
+               end case;  -- State<P>
+               Text_IO.New_Line; 
+            end Report_State;
+            
+      or 
+            terminate; 
+         end select;
+         
+      end loop;
+      
+   -- An exception handler is not needed here. 
+   end Head_Waiter;
+   
+end Room;
+
+------------------------------------------------------------------------</pre></td></tr></table>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

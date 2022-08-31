@@ -1,0 +1,523 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Limited types and return statements</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-4-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>4.5 Limited types and return statements</H1>
+<div class="Normal">The general idea of a limited type is to restrict 
+the operations that a user can do on the type to just those provided 
+by the author of the type and in particular to prevent the user from 
+doing assignment and thus making copies of objects of the type.<A NAME="I1138"></A></div>
+<div class="Normal">However, limited types have always been a problem. 
+In Ada 83 the concept of limitedness was confused with that of private 
+types. Thus in Ada 83 we only had limited private types (although task 
+types were inherently limited).</div>
+<div class="Normal">Ada 95 brought significant improvement by two changes. 
+It allowed limitedness to be separated from privateness. It also allowed 
+the redefinition of equality for all types whereas Ada 83 forbade this 
+for limited types. In Ada 95, the key property of a limited type is that 
+assignment is not predefined and cannot be defined (equality is not predefined 
+either but it can be defined). The general idea of course is that there 
+are some types for which it would be wrong for the user to be able to 
+make copies of objects. This particularly applies to types involved in 
+resource control and types implemented using access types.</div>
+<div class="Normal">However, although Ada 95 greatly improved the situation 
+regarding limited types, nevertheless two major difficulties have remained. 
+One concerns the initialization of objects and the other concerns the 
+results of functions.</div>
+<div class="Normal">The first problem is that Ada 95 treats initialization 
+as a process of assigning the initial value to the object concerned (hence 
+the use of <SPAN Class="swiss">:=</SPAN> unlike some Algol based languages 
+which use <SPAN Class="swiss">=</SPAN> for initialization and <SPAN Class="swiss">:=</SPAN> 
+for assignment). And since initialization is treated as assignment it 
+is forbidden for limited types. This means that we cannot initialize 
+objects of a limited type nor can we declare constants of a limited type. 
+We cannot declare constants because they have to be initialized and yet 
+initialization is forbidden. This is more annoying in Ada 95 since we 
+can make a type limited but not private.<A NAME="I1139"></A><A NAME="I1140"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">The following example 
+was discussed in the Introduction&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;is&nbsp;<B>limited</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;B:&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that this type 
+is explicitly limited (but not private) but its components are not limited. 
+If we declare an object of type <SPAN Class="swiss">T</SPAN> in Ada 95 
+then we have to initialize the components (by assigning to them) individually 
+thus&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;X:&nbsp;T;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;X.A&nbsp;:=&nbsp;10;&nbsp;&nbsp;X.B&nbsp;:=&nbsp;True;&nbsp;&nbsp;X.C&nbsp;:=&nbsp;45.7;</div>
+<div class="Normal">Not only is this annoying but it is prone to errors 
+as well. If we add a further component <SPAN Class="swiss">D</SPAN> to 
+the type <SPAN Class="swiss">T</SPAN> then we might forget to initialize 
+it. One of the advantages of aggregates is that we have to supply all 
+the components which automatically provides full coverage analysis.<A NAME="I1141"></A></div>
+<div class="Normal">This problem did not arise in Ada 83 because we could 
+not make a type limited without making it also private and so the individual 
+components were not visible anyway.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 2005 overcomes 
+the difficulty by stating that initialization by an aggregate is not 
+actually assignment even though depicted by the same symbol. This permits<A NAME="I1142"></A> 
+</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;X:&nbsp;T&nbsp;:=&nbsp;(A&nbsp;=&gt;&nbsp;10,&nbsp;&nbsp;B&nbsp;=&gt;&nbsp;True,&nbsp;&nbsp;C&nbsp;=&gt;&nbsp;45.7);</div>
+<div class="Normal">We should think of the individual components as being 
+initialized individually <I>in situ</I> &ndash; an actual aggregated 
+value is not created and then assigned.</div>
+<div class="Normal">The reader might recall that the same thing happens 
+when an aggregate is used to initialize a controlled type; this was not 
+as Ada 95 was originally defined but it was corrected in <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00083.TXT">AI-83</A> 
+and consolidated in the 2001 Corrigendum <A HREF="Rat-0-2.html#R2">[2]</A>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can now declare 
+a constant of a limited type as expected<A NAME="I1143"></A>&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;X:&nbsp;<B>constant</B>&nbsp;T&nbsp;:=&nbsp;(A&nbsp;=&gt;&nbsp;10,&nbsp;&nbsp;B&nbsp;=&gt;&nbsp;True,&nbsp;&nbsp;C&nbsp;=&gt;&nbsp;45.7);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Limited aggregates 
+can be used in a number of other contexts as well&nbsp;</div>
+<div class="Bulleted">as the default expression in a component declaration,</div>
+<div class="Bulleted-NoPrefix" style="margin-bottom: 0.3em">so if we 
+nest the type <SPAN Class="swiss">T</SPAN> inside some other type (which 
+itself then is always limited &ndash; it could be explicitly limited 
+but there is a general rule that a type is implicitly limited if it has 
+a limited component) we might have&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Twrapper&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tcomp:&nbsp;T&nbsp;:=&nbsp;(0,&nbsp;False,&nbsp;0.0);<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Bulleted">as an expression in a record aggregate,</div>
+<div class="Bulleted-NoPrefix" style="margin-bottom: 0.3em">so again 
+using the type <SPAN Class="swiss">Twrapper</SPAN> as in</div>
+<div class="SwissExamples">XT:&nbsp;Twrapper&nbsp;:=&nbsp;(Tcomp&nbsp;=&gt;&nbsp;(1,&nbsp;True,&nbsp;1.0));</div>
+<div class="Bulleted">as an expression in an array aggregate similarly,</div>
+<div class="Bulleted-NoPrefix" style="margin-bottom: 0.3em">so we might 
+have&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Tarr&nbsp;<B>is&nbsp;array</B>&nbsp;(1&nbsp;..&nbsp;5)&nbsp;<B>of</B>&nbsp;T;</div>
+<div class="SwissExamples">Xarr:&nbsp;Tarr&nbsp;:=&nbsp;(1&nbsp;..&nbsp;5&nbsp;=&gt;&nbsp;(2,&nbsp;True,&nbsp;2.0));</div>
+<div class="Bulleted">as the expression for the ancestor part of an extension 
+aggregate,</div>
+<div class="Bulleted-NoPrefix" style="margin-bottom: 0.3em">so if <SPAN Class="swiss">TT</SPAN> 
+were tagged as in&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;TT<B>&nbsp;is&nbsp;tagged&nbsp;limited</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;B:&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;TTplus<B>&nbsp;is&nbsp;new</B>&nbsp;TT&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;D:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+...<BR>
+XTT:&nbsp;TTplus&nbsp;:=&nbsp;(TT'(1,&nbsp;True,&nbsp;1.0)&nbsp;<B>with</B>&nbsp;2);</div>
+<div class="Bulleted">as the expression in an initialized allocator,</div>
+<div class="Bulleted-NoPrefix" style="margin-bottom: 0.3em">so we might 
+have&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T_Ptr&nbsp;<B>is&nbsp;access</B>&nbsp;T;<BR>
+XT_Ptr:&nbsp;T_Ptr;<BR>
+...<BR>
+XT_Ptr&nbsp;:=&nbsp;<B>new</B>&nbsp;T'(3,&nbsp;False,&nbsp;3.0);</div>
+<div class="Bulleted" style="margin-bottom: 0.3em">as the actual parameter 
+for a subprogram parameter of a limited type of mode in&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(X:&nbsp;<B>in</B>&nbsp;T);<BR>
+...<BR>
+P((4,&nbsp;True,&nbsp;4.0));</div>
+<div class="Bulleted" style="margin-bottom: 0.3em">similarly as the 
+default expression for a parameter&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(X:&nbsp;<B>in</B>&nbsp;T&nbsp;:=&nbsp;(4,&nbsp;True,&nbsp;4.0));</div>
+<div class="Bulleted" style="margin-bottom: 0.3em">as the result in 
+a return statement&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;F(&nbsp;...&nbsp;)&nbsp;<B>return</B>&nbsp;T&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;(5,&nbsp;False,&nbsp;5.0);<BR>
+<B>end</B>&nbsp;F;</div>
+<div class="Bulleted-NoPrefix">this really concerns the other major change 
+to limited types which we shall return to in a moment.</div>
+<div class="Bulleted" style="margin-bottom: 0.3em">as the actual parameter 
+for a generic formal limited object parameter of mode in,&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;FT:&nbsp;<B>in</B>&nbsp;T;<BR>
+<B>package</B>&nbsp;P&nbsp;<B>is</B>&nbsp;...<BR>
+...<BR>
+<B>package</B>&nbsp;Q&nbsp;<B>is&nbsp;new</B>&nbsp;P(FT&nbsp;=&gt;&nbsp;(7,&nbsp;True,&nbsp;7.0));</div>
+<div class="Normal" style="margin-bottom: 0.4em">The last example is 
+interesting. Limited generic parameters were not allowed in Ada 95 at 
+all because there was no way of passing an actual parameter because the 
+generic parameter mechanism for an in parameter is considered to be assignment. 
+But now the actual parameter can be passed as an aggregate. An aggregate 
+can also be used as a default value for the parameter thus&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;FT:&nbsp;<B>in</B>&nbsp;T&nbsp;:=&nbsp;(0,&nbsp;False,&nbsp;0.0);<BR>
+<B>package</B>&nbsp;P&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal">Remember that there is a difference between subprogram 
+and generic parameters. Subprogram parameters were always allowed to 
+be of limited types since they are mostly implemented by reference and 
+no copying happens anyway. The only exception to this is with limited 
+private types where the full type is an elementary type.</div>
+<div class="Normal">The change in Ada 2005 is that an aggregate can be 
+used as the actual parameter in the case of a subprogram parameter of 
+mode <B>in</B> whereas that was not possible in Ada 95.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Sometimes a limited 
+type has components where an initial value cannot be given as in&nbsp;</div>
+<div class="SwissExamples"><B>protected&nbsp;type</B>&nbsp;Semaphore&nbsp;<B>is</B>&nbsp;...&nbsp;;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;PT&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Guard:&nbsp;Semaphore;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Finished:&nbsp;Boolean&nbsp;:=&nbsp;False;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Since a protected type 
+is inherently limited the type <SPAN Class="swiss">PT</SPAN> is also 
+limited because a type with a limited component is itself limited. Although 
+we cannot give an explicit initial value for a <SPAN Class="swiss">Semaphore</SPAN>, 
+we would still like to use an aggregate to get the coverage check. In 
+such cases we can use the box symbol <SPAN Class="swiss">&lt;&gt;</SPAN> 
+as described in the previous section to mean use the default value for 
+the type (if any). So we can write&nbsp;</div>
+<div class="SwissExamples">X:&nbsp;PT&nbsp;:=&nbsp;(Guard&nbsp;=&gt;&nbsp;&lt;&gt;,&nbsp;Count&nbsp;=&gt;&nbsp;0,&nbsp;Finished&nbsp;=&gt;&nbsp;&lt;&gt;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The major rule that 
+must always be obeyed is that values of limited types can never be copied. 
+Consider nested limited types&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Inner&nbsp;<B>is&nbsp;limited</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;L:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;M:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Outer&nbsp;<B>is&nbsp;limited</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X:&nbsp;Inner;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y:&nbsp;Integer;<BR>
+<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we declare an object 
+of type <SPAN Class="swiss">Inner</SPAN>&nbsp;</div>
+<div class="SwissExamples">An_Inner:&nbsp;Inner&nbsp;:=&nbsp;(L&nbsp;=&gt;&nbsp;2,&nbsp;M&nbsp;=&gt;&nbsp;2.0);</div>
+<div class="Normal" style="margin-bottom: 0.4em">then we could not use 
+<SPAN Class="swiss">An_Inner</SPAN> in an aggregate of type <SPAN Class="swiss">Outer</SPAN> 
+</div>
+<div class="SwissExamples">An_Outer:&nbsp;Outer&nbsp;:=&nbsp;(X&nbsp;=&gt;&nbsp;An_Inner,&nbsp;Y&nbsp;=&gt;&nbsp;3);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">This is illegal because 
+we would be copying the value. But we can use a nested aggregate as mentioned 
+earlier&nbsp;</div>
+<div class="SwissExamples">An_Outer:&nbsp;Outer&nbsp;:=&nbsp;(X&nbsp;=&gt;&nbsp;(2,&nbsp;2.0),&nbsp;Y&nbsp;=&gt;&nbsp;3);</div>
+<div class="Normal">The other major change to limited types concerns 
+returning values from functions.</div>
+<div class="Normal">We have seen that the ability to initialize an object 
+of a limited type with an aggregate solves the problem of giving an initial 
+value to a limited type provided that the type is not private.</div>
+<div class="Normal">Ada 2005 introduces a new approach to returning the 
+results from functions which can be used to solve this and other problems.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We will first consider 
+the case of a type that is limited such as&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is</B>&nbsp;<B>limited</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;B:&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can declare a function 
+that returns a value of type <SPAN Class="swiss">T</SPAN> provided that 
+the return does not involve any copying. For example we could have&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Init(X:&nbsp;Integer;&nbsp;Y:&nbsp;Boolean;&nbsp;Z:&nbsp;Float)&nbsp;<B>return</B>&nbsp;T&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;(X,&nbsp;Y,&nbsp;Z);<BR>
+<B>end</B>&nbsp;Init;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This function builds 
+the aggregate in place in the return expression and delivers it to the 
+location specified where the function is called. Such a function can 
+be called from precisely those places listed above where an aggregate 
+can be used to build a limited value in place. For example&nbsp;</div>
+<div class="SwissExamples">V:&nbsp;T&nbsp;:=&nbsp;Init(2,&nbsp;True,&nbsp;3.0);</div>
+<div class="Normal">So the function itself builds the value in the variable 
+<SPAN Class="swiss">V</SPAN> when constructing the returned value. Hence 
+the address of <SPAN Class="swiss">V</SPAN> is passed to the function 
+as a sort of hidden parameter.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Of course if <SPAN Class="swiss">T</SPAN> 
+is not private then this achieves no more than simply writing&nbsp;</div>
+<div class="SwissExamples">V:&nbsp;T&nbsp;:=&nbsp;(2,&nbsp;True,&nbsp;3.0);</div>
+<div class="Normal">But the function <SPAN Class="swiss">Init</SPAN> 
+can be used even if the type is private. It is in effect a constructor 
+function for the type. Moreover, the function <SPAN Class="swiss">Init</SPAN> 
+could be used to do some general calculation with the parameters before 
+delivering the final value and this brings considerable flexibility.<A NAME="I1144"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">We noted that such 
+a function can be called in all the places where an aggregate can be 
+used and this includes in a return expression of a similar function or 
+even itself&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Init_True(X:&nbsp;Integer;&nbsp;Z:&nbsp;Float)&nbsp;<B>return</B>&nbsp;T&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Init(X,&nbsp;True,&nbsp;Z);<BR>
+<B>end</B>&nbsp;Init_True;</div>
+<div class="Normal" style="margin-bottom: 0.4em">It could also be used 
+within an aggregate. Suppose we have a function to return a value of 
+the limited type <SPAN Class="swiss">Inner</SPAN> thus&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Make_Inner(X:&nbsp;Integer;&nbsp;Y:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Inner&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;(X,&nbsp;Y);<BR>
+<B>end</B>&nbsp;Make_Inner;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then not only could 
+we use it to initialize an object of type <SPAN Class="swiss">Inner</SPAN> 
+but we could use it in a declaration of an object of type <SPAN Class="swiss">Outer</SPAN> 
+thus&nbsp;</div>
+<div class="SwissExamples">An_Inner:&nbsp;Inner&nbsp;:=&nbsp;Make_Inner(2,&nbsp;2.0);<BR>
+An_Outer:&nbsp;Outer&nbsp;:=&nbsp;(X&nbsp;=&gt;&nbsp;Make_Inner(2,&nbsp;2.0),&nbsp;Y&nbsp;=&gt;&nbsp;3);</div>
+<div class="Normal">In the latter case the address of the component of 
+<SPAN Class="swiss">An_Outer</SPAN> is passed as the hidden parameter 
+to the function <SPAN Class="swiss">Make_Inner</SPAN>.</div>
+<div class="Normal">Being able to use a function in this way provides 
+much flexibility but sometimes even more flexibility is required. A new 
+form of return statement, the extended return statement, permits the 
+final returned object to be declared and then manipulated in a general 
+way before finally returning from the function. <A NAME="I1145"></A><A NAME="I1146"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">The basic structure 
+is&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Make(&nbsp;...&nbsp;)&nbsp;<B>return</B>&nbsp;T&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;T&nbsp;<B>do</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>declare&nbsp;R&nbsp;to&nbsp;be&nbsp;returned</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>here&nbsp;we&nbsp;can&nbsp;manipulate&nbsp;R&nbsp;in&nbsp;the&nbsp;usual&nbsp;way</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>in&nbsp;a&nbsp;sequence&nbsp;of&nbsp;statements</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;<BR>
+<B>end</B>&nbsp;Make;</div>
+<div class="Normal">The general idea is that the object <SPAN Class="swiss">R</SPAN> 
+is declared and can then be manipulated in an arbitrary way before being 
+finally returned. Note the use of the reserved word <B>do</B> to introduce 
+the statements in much the same way as in an accept statement. The sequence 
+ends with <B>end return</B> and at this point the function passes control 
+back to where it was called. Note that if the function had been called 
+in a construction such as the initialization of an object <SPAN Class="swiss">X</SPAN> 
+of a limited type <SPAN Class="swiss">T</SPAN> thus&nbsp;</div>
+<div class="SwissExamples">X:&nbsp;T&nbsp;:=&nbsp;Make(&nbsp;...&nbsp;);</div>
+<div class="Normal">then the variable <SPAN Class="swiss">R</SPAN> inside 
+the function is actually the variable <SPAN Class="swiss">X</SPAN> being 
+initialized. In other words the address of <SPAN Class="swiss">X</SPAN> 
+is passed as a hidden parameter to the function <SPAN Class="swiss">Make</SPAN> 
+in order to create the space for <SPAN Class="swiss">R</SPAN>. No copying 
+is therefore ever performed.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The sequence of statements 
+could have an exception handler&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;T&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>statements</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>exception</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>handlers</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we need local variables 
+within an extended return statement then we can declare an inner block 
+in the usual way&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;T&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>local&nbsp;declarations</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>statements</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The declaration of 
+<SPAN Class="swiss">R</SPAN> could have an initial value&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;T&nbsp;:=&nbsp;Init(&nbsp;...&nbsp;)&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Also, much as in an 
+accept statement, the <B>do</B> ... <B>end return</B> part can be omitted, 
+so we simply get&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;T;</div>
+<div class="Normal" style="margin-bottom: 0.4em">or</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;T&nbsp;:=&nbsp;Init(&nbsp;...&nbsp;);</div>
+<div class="Normal">which is handy if we just want to return the object 
+with its default or explicit initial value.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Observe that extended 
+return statements cannot be nested but could have simple return statements 
+inside&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;T&nbsp;:=&nbsp;Init(&nbsp;...&nbsp;)&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;...&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>result&nbsp;is&nbsp;R</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;</div>
+<div class="Normal">Note that simple return statements inside an extended 
+return statement do not have an expression since the result returned 
+is the object <SPAN Class="swiss">R</SPAN> declared in the extended return 
+statement itself.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Although extended return 
+statements cannot be nested there could nevertheless be several in a 
+function, perhaps in branches of an if statement or case statement. This 
+would be quite likely in the case of a type with discriminants&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Person(Sex:&nbsp;Gender)&nbsp;<B>is</B>&nbsp;...&nbsp;;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;F(&nbsp;...&nbsp;)&nbsp;<B>return</B>&nbsp;Person&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;...&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;Person(Sex&nbsp;=&gt;&nbsp;Male)&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;Person(Sex&nbsp;=&gt;&nbsp;Female)&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end</B>&nbsp;F;</div>
+<div class="Normal">This also illustrates the important point that although 
+we introduced these extended return statements in the context of greater 
+flexibility for limited types they can be used with any types at all 
+such as the nonlimited type <SPAN Class="swiss">Person</SPAN>. The mechanism 
+of passing a hidden parameter which is the address for the returned object 
+of course only applies to limited types. In the case of nonlimited types, 
+the result is simply delivered in the usual way.</div>
+<div class="Normal">We can also rename the result of a function call 
+&ndash; even if it is limited.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The result type of 
+a function can be constrained or unconstrained as in the case of the 
+type <SPAN Class="swiss">Person</SPAN> but the actual object delivered 
+must be of a definite subtype. For example suppose we have&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;UA&nbsp;<B>is&nbsp;array</B>&nbsp;(Integer&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;<B>of</B>&nbsp;Float;<BR>
+<B>subtype</B>&nbsp;CA&nbsp;<B>is</B>&nbsp;UA(1&nbsp;..&nbsp;10);</div>
+<div class="Normal">Then the type <SPAN Class="swiss">UA</SPAN> is unconstrained 
+but the subtype <SPAN Class="swiss">CA</SPAN> is constrained. We can 
+use both with extended return statements.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the constrained 
+case the subtype in the extended return statement has to statically match 
+(typically it will be the same textually but need not) thus&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Make(&nbsp;...&nbsp;)&nbsp;<B>return</B>&nbsp;CA&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;UA(1&nbsp;..&nbsp;10)&nbsp;<B>do&nbsp;&nbsp;&nbsp;&nbsp;</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>statically&nbsp;matches</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;<BR>
+<B>end</B>&nbsp;Make;</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the unconstrained 
+case the result <SPAN Class="swiss">R</SPAN> has to be constrained either 
+by its subtype or by its initial value. Thus&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Make(&nbsp;...&nbsp;)&nbsp;<B>return</B>&nbsp;UA&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;UA(1&nbsp;..&nbsp;N)&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;<BR>
+<B>end</B>&nbsp;Make;</div>
+<div class="Normal" style="margin-bottom: 0.4em">or</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Make(&nbsp;...&nbsp;)&nbsp;<B>return</B>&nbsp;UA&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;UA&nbsp;:=&nbsp;(1&nbsp;..&nbsp;N&nbsp;=&gt;&nbsp;0.0)&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;<BR>
+<B>end</B>&nbsp;Make;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The other important 
+change to the result of functions which was discussed in Section <A HREF="Rat-3-3.html">3.3</A> 
+is that the result type can be of an anonymous access type. So we can 
+write a function such as&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Mate_Of(A:&nbsp;<B>access</B>&nbsp;Animal'Class)&nbsp;<B>return&nbsp;access</B>&nbsp;&nbsp;Animal'Class;</div>
+<div class="Normal">The introduction of explicit access types for the 
+result means that Ada 2005 is able to dispense with the notion of returning 
+by reference.<A NAME="I1147"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">This does, however, 
+introduce a noticeable incompatibility between Ada 95 and Ada 2005. We 
+might for example have a pool of slave tasks acting as servers. Individual 
+slave tasks might be busy or idle. We might have a manager task which 
+allocates slave tasks to different jobs. The manager might declare the 
+tasks as an array&nbsp;</div>
+<div class="SwissExamples">Slaves:&nbsp;<B>array&nbsp;</B>(1&nbsp;..&nbsp;10)&nbsp;<B>of</B>&nbsp;TT;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>TT&nbsp;is&nbsp;some&nbsp;task&nbsp;type</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">and then have another 
+array of properties of the tasks such as&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Task_Data&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Active:&nbsp;Boolean&nbsp;:=&nbsp;False;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Job_Code:&nbsp;...&nbsp;;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+Slave_Data:&nbsp;<B>array&nbsp;</B>(1&nbsp;..&nbsp;10)&nbsp;<B>of</B>&nbsp;Task_Data;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We now need a function 
+to find an available slave. In Ada 95 we write&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Get_Slave&nbsp;<B>return</B>&nbsp;TT&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>find&nbsp;index&nbsp;K&nbsp;of&nbsp;first&nbsp;idle&nbsp;slave</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Slaves(K);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>in&nbsp;Ada&nbsp;95,&nbsp;not&nbsp;in&nbsp;Ada&nbsp;2005</I></SPAN><BR>
+<B>end</B>&nbsp;Get_Slave;</div>
+<div class="Normal">This is not permitted in Ada 2005. If the result 
+type is limited (as in this case) then the expression in the return statement 
+has to be an aggregate or function call and not an object such as <SPAN Class="swiss">Slaves(K)</SPAN>.</div>
+<div class="Normal">In Ada 2005 the function has to be rewritten to honestly 
+return an access value referring to the task type rather than invoking 
+the mysterious concept of returning by reference.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So we have to write 
+</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Get_Slave&nbsp;<B>return</B>&nbsp;<B>access</B>&nbsp;TT&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>find&nbsp;index&nbsp;K&nbsp;of&nbsp;first&nbsp;idle&nbsp;slave</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Slaves(K)'Access;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>in&nbsp;Ada&nbsp;2005</I></SPAN><BR>
+<B>end&nbsp;</B>Get_Slave;</div>
+<div class="Normal">and all the calls of <SPAN Class="swiss">Get_Slave</SPAN> 
+have to be changed to correspond as well.</div>
+<div class="Normal">This is perhaps the most serious incompatibility 
+between Ada 95 and Ada 2005. But then, at the end of the day, honesty 
+is the best policy.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-4-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

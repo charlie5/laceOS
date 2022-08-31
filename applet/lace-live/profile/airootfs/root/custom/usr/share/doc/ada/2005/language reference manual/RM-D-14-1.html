@@ -1,0 +1,184 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Execution Time Timers</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-14.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-14-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>D.14.1 Execution Time Timers</H1>
+<DIV Class="paranum">1/2</DIV>
+<DIV Class="Normal">This clause describes a language-defined package 
+that provides a facility for calling a handler when a task has used a 
+defined amount of CPU time.&nbsp;</DIV>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">2/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The following language-defined 
+library package exists:&nbsp;</DIV>
+<DIV Class="paranum">3/2</DIV>
+<DIV Class="Examples"><B>with</B>&nbsp;System;<BR>
+<B>package</B>&nbsp;Ada.Execution_Time.Timers&nbsp;<B>is</B><A NAME="I7002"></A></DIV>
+<DIV Class="paranum">4/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I7003"></A>Timer&nbsp;(T&nbsp;:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;constant</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ada.Task_Identification.Task_Id)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>tagged&nbsp;limited&nbsp;private</B>;</DIV>
+<DIV Class="paranum">5/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I7004"></A>Timer_Handler&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>access&nbsp;protected&nbsp;procedure</B>&nbsp;(TM&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Timer);</DIV>
+<DIV Class="paranum">6/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<A NAME="I7005"></A>Min_Handler_Ceiling&nbsp;:&nbsp;<B>constant</B>&nbsp;System.Any_Priority&nbsp;:=<BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;</DIV>
+<DIV Class="paranum">7/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I7006"></A>Set_Handler&nbsp;(TM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Timer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In_Time&nbsp;:&nbsp;<B>in</B>&nbsp;Time_Span;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Handler&nbsp;:&nbsp;<B>in</B>&nbsp;Timer_Handler);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I7007"></A>Set_Handler&nbsp;(TM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Timer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;At_Time&nbsp;:&nbsp;<B>in</B>&nbsp;CPU_Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Handler&nbsp;:&nbsp;<B>in</B>&nbsp;Timer_Handler);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I7008"></A>Current_Handler&nbsp;(TM&nbsp;:&nbsp;Timer)&nbsp;<B>return</B>&nbsp;Timer_Handler;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I7009"></A>Cancel_Handler&nbsp;(TM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in&nbsp;out</B>&nbsp;Timer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cancelled&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<B>out</B>&nbsp;Boolean);</DIV>
+<DIV Class="paranum">8/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I7010"></A>Time_Remaining&nbsp;(TM&nbsp;:&nbsp;Timer)&nbsp;<B>return</B>&nbsp;Time_Span;</DIV>
+<DIV Class="paranum">9/2</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<A NAME="I7011"></A>Timer_Resource_Error&nbsp;:&nbsp;<B>exception</B>;</DIV>
+<DIV Class="paranum">10/2</DIV>
+<DIV Class="Examples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;&nbsp;not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language<BR>
+<B>end</B>&nbsp;Ada.Execution_Time.Timers;</DIV>
+<DIV Class="paranum">11/2</DIV>
+<DIV Class="Normal">&nbsp;The type Timer represents an execution-time event 
+for a single task and is capable of detecting execution-time overruns. 
+The access discriminant T identifies the task concerned. The type Timer 
+needs finalization (see <A HREF="RM-7-6.html">7.6</A>).</DIV>
+<DIV Class="paranum">12/2</DIV>
+<DIV Class="Normal">&nbsp;An object of type Timer is said to be <I>set</I> 
+if it is associated with a non-null value of type Timer_Handler and <I>cleared</I> 
+otherwise. All Timer objects are initially cleared. <A NAME="I7012"></A><A NAME="I7013"></A></DIV>
+<DIV Class="paranum">13/2</DIV>
+<DIV Class="Normal">&nbsp;The type Timer_Handler identifies a protected procedure 
+to be executed by the implementation when the timer expires. Such a protected 
+procedure is called a <I>handler</I>. <A NAME="I7014"></A></DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">14/2</DIV>
+<DIV Class="Normal">&nbsp;When a Timer object is created, or upon the first 
+call of a Set_Handler procedure with the timer as parameter, the resources 
+required to operate an execution-time timer based on the associated execution-time 
+clock are allocated and initialized. If this operation would exceed the 
+available resources, Timer_Resource_Error is raised.</DIV>
+<DIV Class="paranum">15/2</DIV>
+<DIV Class="Normal">&nbsp;The procedures Set_Handler associate the handler 
+Handler with the timer TM; if Handler is <B>null</B>, the timer is cleared, 
+otherwise it is set. The first procedure Set_Handler loads the timer 
+TM with an interval specified by the Time_Span parameter. In this mode, 
+the timer TM <I>expires</I> when the execution time of the task identified 
+by TM.T.<B>all</B> has increased by In_Time; if In_Time is less than 
+or equal to zero, the timer expires immediately. The second procedure 
+Set_Handler loads the timer TM with the absolute value specified by At_Time. 
+In this mode, the timer TM expires when the execution time of the task 
+identified by TM.T.<B>all</B> reaches At_Time; if the value of At_Time 
+has already been reached when Set_Handler is called, the timer expires 
+immediately.<A NAME="I7015"></A></DIV>
+<DIV Class="paranum">16/2</DIV>
+<DIV Class="Normal">&nbsp;A call of a procedure Set_Handler for a timer that 
+is already set replaces the handler and the (absolute or relative) execution 
+time; if Handler is not <B>null</B>, the timer remains set.</DIV>
+<DIV Class="paranum">17/2</DIV>
+<DIV Class="Normal">&nbsp;When a timer expires, the associated handler is 
+executed, passing the timer as parameter. The initial action of the execution 
+of the handler is to clear the event.</DIV>
+<DIV Class="paranum">18/2</DIV>
+<DIV Class="Normal">&nbsp;The function Current_Handler returns the handler 
+associated with the timer TM if that timer is set; otherwise it returns 
+<B>null</B>.</DIV>
+<DIV Class="paranum">19/2</DIV>
+<DIV Class="Normal">&nbsp;The procedure Cancel_Handler clears the timer if 
+it is set. Cancelled is assigned True if the timer was set prior to it 
+being cleared; otherwise it is assigned False.</DIV>
+<DIV Class="paranum">20/2</DIV>
+<DIV Class="Normal">&nbsp;The function Time_Remaining returns the execution 
+time interval that remains until the timer TM would expire, if that timer 
+is set; otherwise it returns Time_Span_Zero.</DIV>
+<DIV Class="paranum">21/2</DIV>
+<DIV Class="Normal">&nbsp;The constant Min_Handler_Ceiling is the minimum 
+ceiling priority required for a protected object with a handler to ensure 
+that no ceiling violation will occur when that handler is invoked.</DIV>
+<DIV Class="paranum">22/2</DIV>
+<DIV Class="Normal">&nbsp;As part of the finalization of an object of type 
+Timer, the timer is cleared.</DIV>
+<DIV Class="paranum">23/2</DIV>
+<DIV Class="Normal">&nbsp;For all the subprograms defined in this package, 
+Tasking_Error is raised if the task identified by TM.T.<B>all</B> has 
+terminated, and Program_Error is raised if the value of TM.T.<B>all</B> 
+is Task_Identification.Null_Task_Id.</DIV>
+<DIV Class="paranum">24/2</DIV>
+<DIV Class="Normal">&nbsp;An exception propagated from a handler invoked as 
+part of the expiration of a timer has no effect.</DIV>
+
+<H4 Class="centered">Erroneous Execution</H4>
+<DIV Class="paranum">25/2</DIV>
+<DIV Class="Normal">&nbsp;<A NAME="I7016"></A>For a call of any of the subprograms 
+defined in this package, if the task identified by TM.T.<B>all</B> no 
+longer exists, the execution of the program is erroneous.</DIV>
+
+<H4 Class="centered">Implementation Requirements</H4>
+<DIV Class="paranum">26/2</DIV>
+<DIV Class="Normal">&nbsp;For a given Timer object, the implementation shall 
+perform the operations declared in this package atomically with respect 
+to any of these operations on the same Timer object. The replacement 
+of a handler by a call of Set_Handler shall be performed atomically with 
+respect to the execution of the handler.</DIV>
+<DIV Class="paranum">27/2</DIV>
+<DIV Class="Normal">&nbsp;When an object of type Timer is finalized, the system 
+resources used by the timer shall be deallocated.</DIV>
+
+<H4 Class="centered">Implementation Permissions</H4>
+<DIV Class="paranum">28/2</DIV>
+<DIV Class="Normal">&nbsp;Implementations may limit the number of timers that 
+can be defined for each task. If this limit is exceeded then Timer_Resource_Error 
+is raised.</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">29/2</DIV>
+<DIV Class="Notes">42&nbsp;&nbsp;A Timer_Handler can be associated with 
+several Timer objects.</DIV>
+<P><BR><BR></P>
+<HR>
+<P><BR></P>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-14.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-14-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

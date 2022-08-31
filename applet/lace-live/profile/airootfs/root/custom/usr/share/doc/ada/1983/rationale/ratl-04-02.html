@@ -1,0 +1,199 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 4.2: The Concept of Type</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 4: Types</H2>
+
+<H3><a name="4.2">4.2 The Concept of Type</a></H3>
+
+Ada provides  a capability to define new types. The language construct
+used to  declare a  new type is called a type declaration. Examples of
+type declarations appear below:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type INT is range -2&#42;&#42;24 .. 2&#42;&#42;24;                     -- integer type
+type SCALE is (LOW, MEDIUM, HIGH);                     -- enumeration type
+type MASS is digits 8 range 0.0 .. 1.0E9;              -- floating point type
+type VOLT is delta 0.01 range 0.0 .. 1_000.0;          -- fixed point type
+type LINE is array (1 .. 128) of CHARACTER;            -- array type
+type PAIR is record X, Y :  INTEGER; end record;       -- record type
+type MY_INT is new INTEGER;                            -- derived type
+type TEXT is access STRING;                            -- access type
+type FILE is limited private;                          -- private type
+</pre></td></tr></table>
+<p>
+As stated  in the  <a href="ratl-04-01.html#4.1">introduction</a>, a  type is  characterized by a set of
+values and  a set  of  operations.  To  illustrate  this  we  can  use
+enumeration types:  in many  ways they  are the simplest form of type,
+yet they  are  sufficient  to  discuss  the  most  important  aspects.
+Consider for example:
+<p>
+<PRE>    type DAY is (MON, TUE, WED, THU, FRI, SAT, SUN);
+</PRE><p>
+Each of  the identifiers  thus enumerated  is  called  an  enumeration
+literal and  can be  viewed as  a (parameterless) function that always
+delivers the  same value.  Hence we  have a  distinct value  for  each
+enumeration literal, and so we have seven values for the type DAY.
+<p>
+Consider now  the set  of operations  that is - implictly - defined by
+this type declaration. This set includes
+<UL>
+<li> Equality and inequality:&nbsp;&nbsp;<CODE> =   /=</CODE>
+<p>
+<li> Ordering relations:&nbsp;&nbsp;<CODE> &lt;   &lt;=   &gt;   &gt;=</CODE>
+<p>
+<li> The assignment basic operation:&nbsp;&nbsp;<CODE>:=</CODE>
+<p>
+<li> Other basic  operations called attributes. These all start with the
+   type name  followed by  an apostrophe  ('). They include attributes
+   such as
+<p>
+<table border cellpadding=6><tr><td><pre>
+DAY'FIRST      -- yields MON
+DAY'LAST       -- yields SUN
+</pre></td></tr></table>
+<p>
+   and other  attributes that  are functions  with a single parameter;
+   the latter include
+<p>
+<table border cellpadding=6><tr><td><pre>
+DAY'SUCC       --  for example,  DAY'SUCC(MON)    =  TUE
+DAY'PRED       --  for example,  DAY'PRED(TUE)    =  MON
+DAY'POS        --  for example,  DAY'POS(MON)     =  0
+DAY'VAL        --  for example,  DAY'VAL(0)       =  MON
+</pre></td></tr></table>
+<p>
+<li> Finally, the  basic operations involved in membership tests (in and
+   not in), and qualification by the type DAY itself.
+</ul>
+
+Thus the  declaration of the type DAY has implicitly defined the above
+set of  values and  operations, and  thereby what we are allowed to do
+with objects and values of type DAY. To appreciate the contribution of
+this concept to program reliability consider the interactions of three
+important rules in typed languages such as <a href="ratl-BIB.html#languages">Pascal</a> and Ada:
+<ol type=a>
+<li> All  objects   (variables  and   constants)  must  be
+   declared.
+<p>
+<li> The declaration of an object must specify its type.
+<p>
+<li> Any operation on an object must preserve its type.
+</ol>
+
+It results  from the  above rules  that  the  type  of  an  object  is
+invariant during program execution: it is the type given in the object
+declaration. All  properties characterized  by the  type are therefore
+static and  must be  checked at  compilation time by Ada compilers. To
+illustrate this point consider the additional declarations:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type DIRECTION is (NORTH, EAST, SOUTH, WEST);
+GOAL   :  DIRECTION;
+TODAY  :  DAY;
+START  :  DAY;
+</pre></td></tr></table>
+<p>
+With these  declarations,  an  Ada  compiler  will  accept  assignment
+statements such as
+<p>
+<table border cellpadding=6><tr><td><pre>
+TODAY  :=  MON;
+GOAL   :=  WEST;
+START  :=  TODAY;
+</pre></td></tr></table>
+<p>
+Consider for example the first one: TODAY is a variable declared to be
+of type  DAY; there  is an  assignment operation (:=) defined for this
+type; assignment  to a variable is allowed, but it requires a value of
+the same type: and there is actually a literal MON that yields a value
+of type  DAY. Using  similar simple rules, an Ada compiler must reject
+each of the following illegal assignment statements:
+<p>
+<table border cellpadding=6><tr><td><pre>
+TODAY :=  WEST;           -- Illegal: WEST is not a DAY value
+TODAY :=  5;              -- Illegal: 5 is not a DAY value
+TODAY :=  TODAY + START;  -- Illegal: "+" is not defined for DAYS
+</pre></td></tr></table>
+<p>
+In the  last case,  TODAY and  START are  both of  type  DAY  but  the
+operation "+"  is not  defined for this type and this knowledge allows
+rejection of the statement.
+<p>
+This example  demonstrates that  the contribution of enumeration types
+to the  quality of  programs goes far beyond increased readability. We
+could actually achieve a comparable degree of readability in languages
+such as  <a href="ratl-BIB.html#languages">Algol 68</a>,  which do not provide enumeration types (or even in
+<a href="ratl-BIB.html#languages">Fortran</a>, using  data or  parameter statements).  The set  of Algol  68 declarations could be as follows
+<p>
+<table border cellpadding=6><tr><td><pre>
+&oslash; days of the week: &oslash;
+int MON=1, TUE=2, WED=3, THU=4, FRI=5, SAT=6, SUN=7;
+&oslash; directions: &oslash;
+int NORTH=1, EAST=2, SOUTH=3, WEST=4;
+int GOAL, TODAY, START;
+</pre></td></tr></table>
+<p>
+thereby allowing  the same degree of readability as Ada for statements
+such as
+<p>
+<table border cellpadding=6><tr><td><pre>
+TODAY  :=  MON;
+GOAL   :=  WEST;
+START  :=  TODAY;
+</pre></td></tr></table>
+<p>
+The real  difference is  one of  reliability. The following statements
+would all  be accepted by an Algol 68 compiler, whereas they would all
+be rejected by an Ada compiler in the Ada formulation:
+<p>
+<table border cellpadding=6><tr><td><pre>
+TODAY  :=  WEST;
+TODAY  :=  8;
+TODAY  :=  TODAY + START;
+START  :=  2&#42;GOAL - NORTH + SUN&#42;WEST;
+</pre></td></tr></table>
+<p>
+By declaring  DAY as  an enumeration type we expressed the intent that
+there be  seven distinct  values with  well-defined  operations.  This
+intent was  expressed in a form that permits a compiler to verify that
+further  uses  of  days  are  consistent.  Furthermore,  in  declaring
+DIRECTION  to  be  a  different  type  (instead  of  having  a  single
+enumeration type with eleven values), we have conveyed our intent that
+days and directions should not be mixed; and again, we have done so in
+a form  that  allows  verification  at  compilation  time  by  an  Ada
+compiler.
+<p>
+In all cases to be examined in later sections, we will find that types
+allow the  explicit formulation  of certain  logical  requirements  of
+programs. Explicit formulation allows these logical requirements to be
+verified  by   a  mechanical   tool  -  the  Ada  compiler  -  thereby
+contributing to program reliability.
+
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-04-03.html#4.3"><b>NEXT</b></a>
+&#128; <a href="ratl-04-01.html#4.1"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-04.html#4"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

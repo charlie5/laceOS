@@ -1,0 +1,3377 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Two - Chapter 4
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-3.html> Previous </a> |
+<a href=rat95-p2-5.html> Next </a>
+<hr>
+
+<h1>
+4   Object Oriented Programming
+</h1>
+
+
+<p>
+This chapter describes the various ways in which object oriented
+programming is achieved in Ada 95.  The main facilities upon which this
+is based are
+</p>
+<ul>
+<li>
+    Record types which are marked as tagged may be extended with
+     additional components on derivation.
+<li>
+    The Class attribute may be applied to a tagged type and denotes the
+     corresponding class-wide type.
+<li>
+    Subprogram calls with formal parameters of a specific type called
+     with actual parameters of a class-wide type are dispatching calls.
+<li>
+    Types and subprograms may be specified as abstract.
+<li>
+    There are various new forms of generic parameter corresponding to
+     derived and tagged types.
+</ul>
+<p>
+These topics were discussed in some detail in Part One and are further
+discussed in other chapters in this part (see Chapter 3 for types,
+including abstract types and abstract subprograms, and Chapter 12 for
+generic parameters).  The discussion in this chapter is more idiomatic
+and concentrates on how the features are used in Ada 95 and briefly
+contrasts the approach with that of other object oriented languages.
+</p>
+
+<h2>
+<a name=1>
+4.1  Background and Concepts
+</a>
+</h2>
+
+<p>
+Ada has been traditionally associated with object oriented design [Booch
+86], which advocates the design of systems in terms of abstract data
+types using objects, operations on objects, and their encapsulation as
+private types within packages.  The "ingredients" of object oriented
+design may be summarized as follows:
+</p>
+<ul>
+<li>  
+Objects.  Entities that have structure and state.
+<li>
+Operations.  Actions on objects that may access or manipulate that state.
+<li>
+Encapsulation.  Some means of defining objects and their operations and
+     providing an abstract interface to them, while hiding their
+     implementation details.
+</ul>
+<p>
+   Ada 83 was well suited to supporting the paradigm of object oriented
+design.  Object oriented programming, as that term has evolved over the
+past decade, builds upon the base of object oriented design, adding two
+other ingredients: inheritance and polymorphism.  While the specific
+properties of these two facilities vary from one programming language to
+another, their essential characteristics may be stated as
+</p>
+<ul>
+<li>
+Inheritance.  A means for incrementally building new abstractions from
+     existing ones by "inheriting" their properties - without disturbing
+     the implementation of the original abstraction or the existing
+     clients.
+<li>
+Polymorphism.  A means of factoring out the differences among a
+     collection of abstractions, such that programs may be written in
+     terms of their common properties.
+</ul>
+<p>
+   Ada 83 has been described as an object based language; it does not
+have the support for inheritance and polymorphism found in fully object
+oriented languages (see 4.7).  Recognizing this, the Ada 9X Requirements
+reflect the need to provide improved support for this paradigm through
+three Study Topics [DoD 90] as follows.
+<pre>
+ S4.1-A(1) - Subprograms as Objects: Ada 9X should provide:
+
+ 1    an easily  implemented and  efficient  mechanism  for  dynamically
+      selecting a  subprogram that  is to  be called  with a  particular
+      argument list;
+
+ 2    a means  of separating the set of subprograms that can be selected
+      dynamically from the code that makes the selection.
+
+ S4.3-A(1) -  Reducing the  Need for Recompilation: Ada 9X recompilation
+ and related rules should be revised so it is easier for implementations
+ to minimize  the need for recompilation and for programs to use program
+ structures that reduce the need for recompilation.
+
+ S4.3-B(1) - Programming by Specialization/Extension:  Ada 9X shall make
+ it possible  to define  new  declared  entities  whose  properties  are
+ adapted from those of existing entities by the addition or modification
+ of properties or operations in such a way that:
+
+ *    the  original  entity's  definition  and  implementation  are  not
+      modified;
+
+ *    the new  entity (or  instances thereof)  can be  used anywhere the
+      original one could be, in exactly the same way.
+</pre>
+</p>
+<p>
+   Each of these Study topics can be understood in relation to object
+oriented programming.  S4.1-A(1) seeks the ability to associate
+operations (subprograms) with objects, and to dynamically select and
+execute those operations.  This is one basis on which to develop run-time
+polymorphism.
+</p>
+<p>
+   Among the various causes of excessive recompilation addressed by S4.3-
+A(1) are those arising from the breakage of an existing abstraction for
+the purpose of extending or otherwise reusing it to build a new
+abstraction.
+</p>
+<p>
+   The topic S4.3-B(1) implies the essence of object oriented programming
+as defined above.  Alternatively, one might think of this in terms of two
+programming paradigms
+</p>
+<ul>
+<li>
+Variant programming.  New abstractions may be constructed from existing
+     ones such that the programmer need only specify the differences
+     between the new and old abstractions.
+<li>
+Class-wide programming.  Classes of related abstractions may be handled
+     in a unified fashion, such that the programmer may systematically
+     ignore their differences when appropriate.
+</ul>
+<p>
+   Finally, it should be mentioned that there are two rather awkward
+problems to be addressed and solved in designing a compiled language for
+object oriented programming which retains efficiency and avoids
+unnecessary run-time decisions.
+</p>
+<ul>
+<li>
+Dispatching.  The means of indicating in the program text when
+     dispatching and especially redispatching is used as opposed to
+     static resolution.
+<li>
+Multiple Inheritance.  The means of inheriting components and operations
+     from two or more parent types.
+</ul>
+<p>
+   As will be seen, the solution adopted to these problems in Ada 95
+illustrates our concern for clarity and the advantages of the building
+block approach.
+</p>
+
+<h2>
+<a name=2>
+4.2  General Approach
+</a>
+</h2>
+
+<p>
+Ada 95 generalizes the type facilities of Ada 83 in order to provide more
+powerful mechanisms for variant and class-wide program development and
+composition.  Derived types in Ada 83 provided a simple inheritance
+mechanism: they inherited exactly the structure, operations, and values
+of their parent type.  This "inheritance" could be augmented with
+additional operations but not with additional components.  Ada 95
+generalizes type derivation to permit type extension as we saw in II.1.
+</p>
+<p>
+   A tagged record or private type may be extended with additional
+components on derivation.  Tagged objects are self-identifying; the tag
+indicates their specific type.  Tagged types provide a mechanism for
+single inheritance as found in object oriented programming languages such
+as Simula [Birtwistle 73] and Smalltalk [Goldberg 83].
+</p>
+<p>
+   The following example of type extension is inspired by [Seidewitz 91].
+We first declare
+<pre>
+   type Account_With_Interest is tagged
+      record
+         Identity: Account_Number := None;
+         Balance : Money := 0.00;
+         Rate    : Interest_Rate := 0.05;
+         Interest: Money := 0.00;
+      end record;
+
+   procedure Accrue_Interest(On_Account: in out Account_With_Interest;
+                             Over_Time : in Integer);
+
+
+   procedure Deduct_Charges(From: in out Account_With_Interest);
+</pre>
+and can then extend it
+<pre>
+   type Free_Checking_Account is new Account_With_Interest with
+      record
+         Minimum_Balance: Money := 500.00;
+         Transactions   : Natural := 0;
+      end record;
+
+   procedure Deposit(Into  : in out Free_Checking_Account;
+                     Amount: in Money);
+
+   procedure Withdraw(From  : in out Free_Checking_Account;
+                      Amount: in Money);
+
+   Insufficient_Funds: exception;   -- raised by Withdraw
+
+   procedure Deduct_Charges(From: in out Free_Checking_Account);
+</pre>
+</p>
+<p>
+The type Account_With_Interest is a tagged type.  The type
+Free_Checking_Account is derived from it, inheriting copies of its
+components (Identity, Balance, Rate, Interest) and its operations
+(Accrue_Interest and Deduct_Charges).  The derived type declaration has a
+record extension part that adds two additional components
+(Minimum_Balance and Transactions) to those inherited from the parent.
+The type adds some new operations (Deposit and Withdraw) and also
+overrides Deduct_Charges such that if the Balance was above the
+Minimum_Balance, no charges would be deducted.  All components of the
+type, whether inherited or declared as a part of the extension, are
+equally accessible (unlike "nested" record types).
+</p>
+<p>
+   In Ada 83, the types declared in the visible part of a package had
+special significance for Ada's abstraction mechanisms.  Such operations
+on user-defined types were first-class in a manner that parallels those
+of the predefined types.  For derived types, these operations, together
+with the implicitly declared basic operations, were the derivable
+operations on a type.
+</p>
+<p>
+   With the increased importance of derived types for object oriented
+programming in Ada 95, the notion of the operations closely related to a
+type in this manner is generalized.  The primitive operations of a type
+are those that are implicitly provided for the type and, for types
+immediately declared in a package specification, all subprograms with an
+operand or result of the type declared anywhere in that package
+specification.  The domain is therefore extended to include the private
+part (but not the body).
+</p>
+<p>
+   Thus, in Ada 95, the derivable operations of Ada 83 have become
+"primitive operations" and the restriction of these operations to the
+visible part of a package has been eliminated.  These changes support
+added capability: primitive operations may be private and a type and its
+derivatives may be declared in the same declarative region (this property
+is useful for building related abstractions and was used in the package
+New_Alert_System of Part One).
+</p>
+<p>
+   Primitive operations clarify the notion of an abstract data type for
+purposes of object oriented programming (inheritance and polymorphism)
+and genericity.  They are distinguished from the other operations of a
+type in the following ways
+</p>
+<ul>
+<li>
+Inheritance.  Primitive operations are the derivable (inherited)
+     operations.
+<li>
+Polymorphism.  Primitive operations are dispatching operations on tagged
+     types.
+<li>
+Genericity.  Primitive operations are the ones available within generic
+     templates parameterized by a class.
+</ul>
+<p>
+   Ada 83 used the term "class" (see [RM83 3.3]) to characterize
+collections of related types.  The class of a type determines how the
+type is declared, the types it can be converted to, its predefined
+operations, and its structure.  The class of a generic formal type
+parameter determines the operations that are available within the generic
+template.  Types within a class have common structure and operations (see
+III.1.2 for a further description of the class structure of Ada).
+</p>
+<p>
+   Ada 95 formalizes the Ada 83 notion of class.   A type and its direct
+and indirect derivatives, whether or not extended, constitute a
+derivation class.  This definition allows for user-defined classes based
+on derivation.  User-defined classes, like the language-defined classes,
+support type conversion, may be used to parameterize generic units and,
+in the case of tagged types, provide class-wide programming.
+</p>
+<p>
+   Explicit conversion is defined among types within a class, as it was
+in Ada 83 for types related by derivation, except that conversion is not
+allowed away from the root since additional components may be required.
+Such transformations require an extension aggregate as described in 3.8.
+</p>
+<p>
+   Thus, continuing the previous example, a value of
+Account_With_Interest can be extended to a value of Free_Checking_Account
+by providing values for the additional components Minimum_Balance and
+Transactions.
+<pre>
+   Old_Account: Account_With_Interest;
+   ...
+   New_Account: Free_Checking_Account :=
+         (Old_Account with Minimum_Balance => 0.00, Transactions => 0);
+</pre>
+</p>
+<p>
+   The Ada 95 rules for conversion between types in a class define the
+semantics of inherited operations in Ada 95 and are consistent with the
+semantics of inherited operations in Ada 83.  Calling an inherited
+operation is equivalent to calling the parent's corresponding operation
+with a conversion of the actual to the parent type.  Thus, inherited
+operations "ignore" the extension part.
+</p>
+<p>
+   User-defined classes may be employed to parameterize generic units.  A
+new kind of generic formal, a generic formal derived type, may be used.
+This kind of formal is matched by any type in the class rooted at the
+generic formal's specified ancestor type.
+</p>
+<p>
+   For each tagged type T, there is an associated class-wide type
+T'Class.  The set of values of T'Class is the discriminated union of the
+sets of values of T and all types derived directly or indirectly from T.
+Discrimination between the different specific types is with a type tag.
+This tag, associated with each value of a class-wide type, is the basis
+for run-time polymorphism in Ada 95.  Note that ordinary types are
+referred to as specific types to distinguish them from class-wide types.
+</p>
+<p>
+   The associated class-wide type T'Class is "dynamic" in the sense of
+[Abadi 91].  The values of the class-wide type can be thought of as pairs
+consisting of
+</p>
+<ul>
+<li>
+    A tag.  A type descriptor ranging over the types that are members of
+     the class; and
+<li>
+    A value.  The value taken from the specific type with the given tag.
+</ul>
+<p>
+   Such tag and value pairs are strongly typed, consistent with the
+philosophy of Ada.  But only the class, and not necessarily the type
+within that class, will generally be known statically.
+</p>
+<p>
+   Class-wide types have no primitive operations of their own.  However,
+explicit operations may be declared for such types, using T'Class as a
+subtype mark.  Such operations are "class-wide" and can be applied to
+objects of any specific type within the class as well as to objects of
+the class-wide type or a descendent class-wide type.
+</p>
+<p>
+   Thus the following functions
+<pre>
+   function Size_In_Bytes(Any_File: File'Class) return Natural;
+   function Get_File_From_User return File'Class;
+</pre>
+are class-wide operations and can be applied to all specific types of the
+class of types derived from the tagged type File.  No dispatching is
+involved; the one same function is called whatever the tag of the actual
+parameter.
+</p>
+<p>
+   On the other hand, when a primitive operation of a tagged type is
+called with an operand of the class-wide type, the operation to be
+executed is selected at run time based on the type tag of the operand.
+As mentioned before, this run-time selection is called dispatching, so
+primitive operations of tagged types are called dispatching operations.
+Dispatching provides a natural form of run-time polymorphism within
+classes of related (derived) types.  This variety of polymorphism is
+known as "inclusion polymorphism" [Cardelli 85].
+<pre>
+     +----------+---------------------------------+
+     |          |              formal             |
+     |   actual |     specific   |    class-wide   |
+     +----------+----------------+----------------+
+     |          |                |                |
+     | specific |  static binding|  class-wide op |
+     |          |                |                |
+     |----------+----------------+----------------|
+     |          |                |                |
+     |class-wide|   dispatching  | class-wide op  |
+     |          |                |                |
+     +----------+---------------------------------+
+
+                  Table 4-1: Kinds of Binding
+</pre>
+</p>
+<p>
+   An operand used to control dispatching is called a controlling
+operand.  A primitive operation may have several controlling operands; a
+primitive function may also have a controlling result.  For a further
+discussion on controlling operands and results see 4.5.
+</p>
+<p>
+   The different kinds of binding corresponding to the various
+combinations of actual and formal parameters are summarized in Table 4-1.
+</p>
+<p>
+   The following example shows how a type File might be the basis for a
+class of types relating to the implementation of an Ada library
+<pre>
+   type File is tagged private;
+   procedure View(F: File);
+      -- display file F on screen
+
+   type Directory is new File with private;
+   procedure View(D: Directory);
+      -- list directory D
+
+   type Ada_File is new File with private;
+   procedure View(A: Ada_File);
+      -- open A with Ada sensitive editor
+
+   type Ada_Library is
+      new Directory with private;
+   procedure View(L: Ada_Library);
+      -- list library units of L and their status
+
+   declare
+      A_File: File'Class := Get_File_From_User;
+   begin
+      View(A_File);   -- dispatches according to specific type of file
+   end;
+</pre>
+</p>
+<p>
+   The above example presents a user-defined class of File types.  The
+type File is tagged and hence the primitive operation View is
+dispatching.  View is overridden for each type in the class in order to
+provide a unique behavior for each type of File.  When View is called
+with a parameter that is of type File'Class, the tag will be used to
+determine the actual type within the class, and the call will dispatch to
+the View procedure for that type.  On the other hand if View is called
+with a specific type then the choice of View procedure to be called is
+determined at compile time.
+</p>
+<p>
+   The hierarchy of types in the above example is illustrated in Figure
+4-1.
+<pre>
+                            File
+                             |
+                             |
+                   +-------------------+
+                   |                   |
+                Directory           Ada_File
+                   |
+                   |
+                   |
+                   |
+               Ada_Library
+
+                Figure 4-1: The File Hierarchy
+</pre>
+</p>
+<p>
+   An earlier version of Ada 9X introduced class-wide types through the
+Class attribute for all derivation classes and not just those for tagged
+types.  This was discarded since many reviewers felt that the added
+flexibility was unwise.
+</p>
+<p>
+   Note also that universal types (for numeric types) behave much as
+class-wide types although there are differences, see 3.3.
+</p>
+<p>
+   When building an abstraction that is to form the basis of a class of
+types, it is often convenient not to provide actual subprograms for the
+root type but just abstract subprograms which can be replaced when
+inherited.  This is only allowed if the root type is declared as
+abstract; objects of an abstract type cannot exist.  This technique
+enables common class-wide parts of a system to be written without being
+dependent on the properties of any specific type at all.  Dispatching
+always works because it is known that there can never be any objects of
+the abstract type and so the abstract subprograms could never be called.
+This technique is illustrated in II.3.
+</p>
+
+<h3>
+<a name=2-1>
+4.2.1  Benefits of Approach
+</a>
+</h3>
+
+<p>
+A number of important practical criteria of concern to both existing and
+new users were taken into account when designing the object oriented
+facilities of Ada 95.
+</p>
+
+<dl>
+<dt>
+Compatibility
+<dd>
+<p>
+Legal Ada 83 programs should remain legal in Ada 95.  Ideally, existing
+Abstract Data Types (ADTs) should be reusable with newly developed ones -
+the new facilities should not be so radically different from mechanisms
+of Ada 83 that existing ADTs must be rebuilt before being reused.
+</p>
+<p>
+   Tagged type extension and class-wide types are built upon the Ada 83
+model of derived types.  Their use is optional, and their presence in the
+language does not affect Ada 83 programs.  Existing ADTs may be combined
+in some ways with new object oriented abstractions without modification.
+In other cases, it may be sufficient to add "tagged" to a type
+declaration, or to make other simple modifications such as changing an
+access type declaration to designate a class-wide type.  Of course, in
+order to exploit these facilities to the full, it will be necessary to
+take them into account during the design process.
+</p>
+<dt>
+     Consistency
+<dd>
+<p>
+The solution should be conceptually consistent with existing Ada
+programming models.  Intuitions about objects, types, subprograms,
+generic units, and so on should be preserved.
+</p>
+<p>
+   Ada 95 provides new capabilities in the context of a unified
+programming model: including types, operations and generic units.  Class-
+wide programming generalizes the classes developed in Ada 83 to user-
+defined classes.
+</p>
+<dt>
+Efficiency
+<dd>
+<p>
+The solution should offer efficient performance for users of the facility
+with, ideally, no distributed overhead for non-users.
+</p>
+<p>
+   The introduction of tagged types, and a distinct class-wide type
+associated with each specific type as the mechanism for dispatch, makes
+run-time polymorphism optional to programmers (in contrast to languages
+like Smalltalk), in two senses.
+</p>
+<ul>
+<li>
+     Programmers can choose whether or not to use object oriented
+     programming, by employing tagged and class-wide types.  Types
+     without tags incur no space or time overhead.  Only class-wide types
+     allow for class-wide type matching.
+<li>
+    Dispatching occurs only on primitive operations of tagged types and
+     only when an actual operand is of a class-wide type.
+</ul>
+<p>
+</p>
+<dt>
+Implementability
+<dd>
+<p>
+The solution should be readily implementable within current compiler
+technology, and provide opportunities for optimizations.
+</p>
+<p>
+   Dispatching may be implemented as an indirect jump through a table of
+subprograms indexed by the primitive operations.  This compares favorably
+with method look-up in many object oriented languages, and with the
+alternative of variant records and case statements, with their attendant
+variant checks, both in implementability and run-time efficiency.
+</p>
+</dl>
+
+<h2>
+<a name=3>
+4.3  Class Wide Types and Operations
+</a>
+</h2>
+
+<p>
+We have seen that a record or private type marked as tagged may be
+extended on derivation with additional components.  The run-time tag
+identifies information that allows class-wide operations on the class-
+wide type to allocate, copy, compare for equality, and perform any other
+primitive operations on objects of the class-wide type, in accordance
+with the requirements of the specific type identified by the tag.
+</p>
+<p>
+The tag is thus important to the inner workings of type extension and
+class-wide types in Ada 95 and is brought to the fore by using the
+reserved word tagged in the declaration of the type.  The concept of a
+tag is of course not new to programming languages but has a long
+precedent of use in Pascal (where it is used in the sense of discriminant
+in Ada) and is discussed by Hoare in [Dahl 72].  More recently the phrase
+type tag has been used by Wirth in connection with type extension [Wirth
+88].
+</p>
+<p>
+   The reader might find it helpful to understand the concept of the tag
+and the dispatching rules by considering the implementation model alluded
+to at the end of the last section.  We emphasize that this is just a
+possible model and does not imply that an implementation has to be done
+this way.  In this model the tag is a pointer to a dispatch table.  Each
+entry in the table points to the body of the subprogram for a primitive
+operation.  Dispatching is performed as an indirect jump through the
+table using the primitive operation as an index into the table.
+</p>
+<p>
+   As an illustration consider the class of Alert types declared in II.1
+in the package New_Alert_System.  These types form a tree as illustrated
+in II.2.  Recall that the root type Alert has primitive operations,
+Display, Handle and Log.  These are inherited by Low_Alert without any
+changes.  Medium_Alert inherits them from Alert but overrides Handle.
+High_Alert inherits from Medium_Alert and again overrides Handle and also
+adds Set_Alarm.  (For simplicity, we will ignore other predefined
+operations which also have "slots" in the dispatch table; such as
+assignment, the equality operator and the application of the Size
+attribute.)
+</p>
+<p>
+   The tags for the various types are illustrated in Figure 4-2.  A
+dispatching call, such as to Handle, is very cheaply implemented.  The
+code simply jumps indirectly to the contents of the table indexed by the
+fixed offset corresponding to Handle (one word in this example).  The
+base of the table is simply the value of the tag and this is part of the
+value of the class-wide object.  Note moreover that the dispatch table
+does not contain any class-wide operations (such as Process_Alerts in
+II.2) since these are not dispatching operations.
+</p>
+<p>
+   In addition to being used as formal parameters to class-wide
+operations, class-wide types may also be used as the designated type for
+an access type, and as the type of a declared object.  Access types
+designating a class-wide type are very important, since they allow the
+creation of heterogeneous linked data structures, such as trees and
+queues.
+<pre>
+   +---------------+     +----------+
+   |     Alert'Tag | --> | Display  | --> Display of Alert
+   +---------------+     |----------|
+                         | Handle   | --> Handle of Alert
+                         |----------|
+                         | Log      | --> Log of Alert
+                         +----------+
+
+   +---------------+     +----------+
+   | Low_Alert'Tag | --> |  Display | --> Display of Alert
+   +---------------+     |----------|
+                         |  Handle  | --> Handle of Alert
+                         |----------|
+                         |  Log     | --> Log of Alert
+                         +----------+
+
+   +----------------+     +----------+
+   |Medium_Alert'Tag| --> |  Display | --> Display of Alert
+   +----------------+     |----------|
+                          |  Handle  | --> Handle of Medium_Alert
+                          |----------|
+                          |  Log     | --> Log of Alert
+                          +----------+
+
+
+   +---------------+     +----------+
+   |High_Alert'Tag | --> | Display   | --> Display of Alert
+   +---------------+     |-----------|
+                         | Handle    | --> Handle of High_Alert
+                         |-----------|
+                         | Log       | --> Log of Alert
+                         |-----------|
+                         | Set_Alarm | --> Set_Alarm of High_Alert
+                         +----------+
+
+
+                  Figure 4-2: Tags and Dispatch Tables
+</pre>
+</p>
+<p>
+   Declared objects of a class-wide type are not as frequently used as
+are formal parameters and heap objects, but they are useful as
+intermediates in larger computations.  However, because there is no upper
+bound on the size of types in a class, a declared object of a class-wide
+type must be explicitly initialized.  This determines the size, the tag,
+and any discriminants for the object, and thereafter neither the tag nor
+the discriminants may be changed.  Of course, it is necessary for all
+class-wide objects to have a tag so that dispatching works without any
+unnecessary tests.  We have chosen to specify the tag by requiring an
+explicit initial value.
+</p>
+<p>
+   This indirectly provides a capability somewhat akin to declaration by
+association using like in Eiffel [Meyer 88].  We can thereby ensure, for
+example, that a locally declared class-wide object has the same tag as an
+actual parameter.
+</p>
+<p>
+   Note that discriminants of tagged types are not permitted to have
+defaults; this would have increased the complexity of the language to no
+great benefit since the tag of an object (specific and class-wide) cannot
+be changed and the tag is treated as a (hidden) discriminant.  It would
+be inconsistent to allow discriminants to be changed but not tags.
+</p>
+<p>
+   If assignment were allowed to change the tag or the discriminants,
+then the size of the class-wide object might have to grow, requiring a
+deallocation and reallocation as part of assignment.  We have avoided
+introducing operations in Ada 95 that involve this kind of implicit
+dynamic allocation at run-time.  Therefore, an explicit access value with
+explicit deallocation and reallocation is required if a programmer
+desires to have the equivalent of an unconstrained object of a class-wide
+type.
+</p>
+<p>
+   Note that Ada 83 required a similar approach for handling
+unconstrained arrays and unconstrained discriminated types without
+defaults for the discriminants.  In general, the way unconstrained
+composite types and their associated bounds or discriminants were handled
+in Ada 83 is a good model for how class-wide types and their associated
+type tags are handled in Ada 95.
+</p>
+<p>
+   The predefined equality operators and the membership tests are
+generalized to apply to class-wide types.  Like other predefined
+operations on such types, the implementation will depend on the
+particular specific type of the operands.  Unlike normal dispatching
+operations, however, Constraint_Error is not raised if the tags of the
+operands do not match.
+</p>
+<p>
+   For equality, tag mismatch is treated as inequality.  Only if the tags
+match is a dispatch then performed to the type-specific equality checking
+operation. This approach allows a program to safely compare two values of
+a class-wide tagged type for equality, without first checking that their
+tags match.  The fact that no exception is raised in such an equality
+check is consistent with the other predefined relational operators, as
+noted in [RM83 4.5.2(12)].
+</p>
+<p>
+   For a membership test such as X in S, where X is of a class-wide type,
+the tag of the value of the simple expression X is checked to see whether
+it belongs to the subtype mark S.  If the subtype mark S identifies a
+class-wide type, then the membership test determines whether the tag of
+the value identifies a specific type covered by the class-wide type.  If
+the subtype mark S identifies a specific tagged type, then the membership
+test determines whether the tag of the value equals the tag of that type.
+In any case, to be considered a member, the value must satisfy any
+constraints associated with the subtype mark.
+</p>
+<p>
+   The Tag attribute is defined for querying the tag of a specific type,
+or of an object of a class-wide type.  This allows two class-wide objects
+to be checked to see whether they have the same tag.  It is also possible
+to compare the tag of a class-wide object with the tag of a specific
+type; such a comparison is equivalent to a membership test.
+</p>
+<p>
+   Thus (using the alert example from Part One), the test
+<pre>
+   AC in Medium_Alert
+</pre>
+is identical to
+<pre>
+   AC'Tag = Medium_Alert'Tag
+</pre>
+but note that the test
+<pre>
+   AC in Medium_Alert'Class
+</pre>
+has no generally applicable equivalent in terms of explicit user checks
+on tags because we cannot talk about possible future extensions in terms
+of tags.  It is thus preferable to use membership tests rather than
+explicit testing of tags in order to ensure that our program is
+extensible.
+</p>
+<p>
+   The rules for membership tests on class-wide types are constructed so
+that certain simple type-specific behavior may be performed in a class-
+wide operation, without the need to declare and define a new primitive
+operation on all types within the class.
+</p>
+<p>
+   For example, given
+<pre>
+   type Expression_Node is tagged...
+
+   type Binary_Operator is new Expression_Node with ...
+
+   type Node_Ptr is access Expression_Node'Class;
+</pre>
+one could define the following operation Display on the access to class-
+wide type Node_Ptr
+<pre>
+   procedure Display(Expr: Node_Ptr; Prec: Positive := 1) is
+    -- display expr, parenthesized if necessary
+   begin
+      if Expr.all in Binary_Operator'Class then
+         -- handle the binary operator subclass
+         declare
+            Binop: constant Bin_Op_Ptr := Bin_Op_Ptr(Expr);
+               -- convert parameter to ptr to Binary_Operator
+               -- to gain access to its subclass operations
+         begin
+            if Precedence(Binop) < Prec then
+               -- parenthesize if lower precedence
+               Put('(');
+            end if;
+            -- display left, op, right, passing down precedence
+            Display(Binop.Left, Precedence(Binop));
+            Put(Symbol(Binop));
+            Display(Binop.Right, Precedence(Binop));
+            if Precedence(Binop) < Prec then
+               -- closing parenthesis if necessary
+               Put(')');
+            end if;
+         end;
+      else
+         -- handle the other kinds of expressions
+         ...
+      end if;
+   end Display;
+</pre>
+</p>
+<p>
+   An alternative, more "object-oriented" approach would be to define a
+separate Display primitive operation for each distinct type within the
+class.  See for example [Taft 93].
+</p>
+<p>
+   We conclude this section by discussing a number of important general
+principles regarding primitive operations and dispatching.  It is
+instructive to map these principles into the implementation model of the
+tag and dispatch table mentioned above; but remember that this is only a
+possible model although a very natural one.  We can refer to the entries
+in the dispatch table as "slots".
+</p>
+<p>
+   The first general principle is that dispatching always works without
+any checking at runtime; in other words that the subprogram referred to
+by the dispatch table for the tag value can always be safely called.  A
+number of individual rules ensure that this is true.  Perhaps the most
+important is that operations cannot be removed when deriving a new type;
+they can only be added or replaced.  This means that if an operation is
+primitive for a type then it is necessarily available for all
+(nonabstract) types in the class rooted at that type.  Another vital rule
+is that we cannot create an object of an abstract type; this prevents
+dispatching to an abstract subprogram (see 3.6.2).  Moreover, as
+discussed further in 4.5, the tag of an object can never be changed, so
+the tag of a declared object cannot be changed into the tag corresponding
+to a type without the appropriate operations.
+</p>
+<p>
+   Another important rule is that type extension is not allowed at a
+place which is not accessible from the parent type such as within an
+inner block.  This rule ensures that the accessibility of all specific
+types in a (tagged) class is the same and prevents a value from being
+assigned to a class wide object and thereby outlive its specific type.  A
+further consequence is that we cannot dispatch to a subprogram which is
+at an inner level and which might thereby attempt to access non-existent
+data.  Consider
+<pre>
+   package Outer is
+      type T is tagged ...;
+      procedure P(Object: T);  -- a dispatching operation
+      type A is access T'Class;
+      Global: A;
+   end Outer;
+
+   procedure Dodgy is
+      package Inner is
+         type NT is new T with ...;  -- an illegal extension
+         procedure P(Object: NT);    -- override
+      end;
+
+      package body Inner is
+        I: Integer := 0;
+        procedure P(Object: NT) is
+        begin
+           I := I + 1;  -- assign to variable local to Inner
+        end P;
+      end Inner;
+   begin
+      Global := new Inner.NT'( ...);
+   end Dodgy;
+
+   procedure Disaster is
+   begin
+      Dodgy;
+      P(Global.all);  -- dispatch to non-existent P
+   end Disaster;
+</pre>
+</p>
+<p>
+The procedure Dodgy attempts to declare the type NT and then assign an
+access to an object of the specific type to the class wide access
+variable Global.  If this were allowed then the call of P in the
+procedure Disaster would attempt to dispatch to the procedure inside
+Inner and thereby access the variable I which no longer exists.
+Disallowing extensions at an inner level prevents this sort of
+difficulty.
+</p>
+<p>
+   Note also that having all the types at the same accessibility level
+ensures that the "subprogram values" in the dispatch table can be
+implemented just as simple addresses; no level information is required.
+There is an analogy with access to subprogram values discussed in 3.7.2.
+</p>
+<p>
+   Another important principle is that the dispatch table is the same for
+all views of a type; in other words there is just one dispatch table
+common to both a partial view and a full view.  However, it can be the
+case that some operations are not visible from a partial view.  This is
+discussed further in 7.1.1.
+</p>
+<p>
+   Interestingly, it is also possible to have two operations of the same
+name (and profile), one visible from one view and the other from another
+view in such a way that they are never both visible from the same view;
+in this case they would occupy different slots in the dispatch table.
+These and related possibilities are also illustrated in detail in 7.1.1.
+</p>
+<p>
+   The freezing rules have an important impact on type extension.  The
+basic idea is that a record extension freezes the parent; the key impact
+is that further primitive operations cannot then be declared for the
+parent.  However, a private extension does not freeze the parent;
+freezing is postponed until the later full declaration.  See 13.5.1.
+</p>
+<p>
+   Finally, we summarize the rules regarding which operations are
+primitive.  The main rule is that only those operations with an operand
+or result of the type and declared immediately in the package
+specification with the type declaration (or type extension) are primitive
+operations.  (This general rule applies to both tagged and other types.)
+Note that if a type is not declared in a package specification then any
+operations declared in the same declarative region are not primitive and
+thus not inherited.  Because this might give rise to surprises,
+especially in the case of tagged types, it is in fact forbidden to call a
+nonprimitive operation in a dispatching way (that is with a class-wide
+actual); this eliminates the risk of accidentally declaring a tagged type
+and then finding that what were presumed to be primitive operations do
+not dispatch.
+</p>
+<p>
+   Note moreover that, in the case of a type extension, although new
+primitive operations cannot be added except in a package specification,
+primitive operations inherited from the parent may be overridden wherever
+the extension is declared and these overridden versions will of course be
+inherited by any further extension.  Thus new slots can only be created
+by a type declared or extended in a package specification, but existing
+slots may be overridden wherever a type extension is declared.  Consider
+<pre>
+   package P is
+      type T is tagged ...;
+      procedure Op1(X: T);    -- primitive of T
+   end P;
+
+   with P; use P;
+   package Q is
+      type NTQ is new T with ...;
+      procedure Op1(X: NTQ);    -- overrides inherited Op1 from T
+      procedure Op2(X: NTQ);    -- additional primitive of NTQ
+   end Q;
+
+   package body P is
+      type NTP is new T with ...;
+      procedure Op1(X: NTP);    -- overrides inherited Op1 from T
+      procedure Op2(X: NTP);    -- not a primitive of NTP
+   end P;
+</pre>
+</p>
+<p>
+   The type NTQ is declared immediately inside the specification of
+package Q and thus the operation Op2 is primitive.  On the other hand NTP
+is declared in the body of package P and thus although Op1 overrides the
+inherited Op1, nevertheless the operation Op2 is not primitive.
+</p>
+<p>
+   These rules are designed to give flexibility with minimum burden.
+Many type extensions will simply replace existing operations rather than
+add new ones and it seems a heavy burden to insist that these be in a
+package specification.  Indeed, in the case of the leaves of the tree of
+types, there is no need to add further primitive operations (if a type is
+a leaf then any new operation is not inherited by another type and thus
+there is no need to dispatch); but it is important to be able to override
+existing operations wherever the type is declared.  See the example in
+4.4.4.
+</p>
+<p>
+   A minor difference between tagged and nontagged types concerns the
+parameter modes of overriding operations.  In the case of tagged types an
+overriding operation must have the same parameter modes otherwise
+dispatching would not work.  In the case of nontagged types this does not
+matter and for compatibility with Ada 83, the modes need not be the same;
+note that overload resolution ignores parameter modes.
+</p>
+
+<h2>
+<a name=4>
+4.4  Examples of Use
+</a>
+</h2>
+
+<p>
+This section presents some of the ways in which Ada 95's object oriented
+programming features may be used and combined with other facilities to
+address a number of programming paradigms.
+</p>
+<p>
+   An important use of object oriented programming is variant
+programming.  This was amply illustrated by the example of processing
+alerts in Part One.  As we saw, the use of variant records can be both
+cumbersome and error prone [Wirth 88] whereas the use of type extension
+is both more flexible and entirely secure.
+</p>
+<p>
+   In this section we give other typical paradigms of use
+</p>
+<ul>
+<li>
+    An example of different approaches to a standard queue package that
+     can be used as a basis for a wide range of applications.
+<li>
+    An example of a more elaborate heterogeneous doubly linked list
+     abstraction.
+<li>
+    An example showing how alternative implementations can be provided
+     for the same abstraction.
+<li>
+    An example showing how type extension and dispatching can be used to
+     program iterators and similar applications.
+</ul>
+
+<h3>
+<a name=4-1>
+4.4.1  Queues
+</a>
+</h3>
+
+<p>
+In dealing with the alert example in II.2 we mentioned that the various
+alerts might be held on a queue ready for processing.  Such a queue must
+have the capability to be heterogeneous because the alerts are of
+different specific types.  This is a common requirement and it is
+therefore appropriate to develop a package that can be reused for a
+variety of applications.
+</p>
+<p>
+   However, the strong typing model of Ada 83 made it very difficult to
+write a common abstraction that could be reused without alteration even
+through the use of generics.  (Only homogeneous structures could be
+constructed with Ada 83 generic units.  Variant records could be used to
+provide some heterogeneity, but source code changes and possibly
+extensive recompilation were required to add new variants.)
+</p>
+<p>
+   There are several approaches that can be taken which have a different
+balance between convenience and efficiency.  We will explore a number of
+these in order to illustrate various considerations and potential
+pitfalls to be avoided.  We will start at the convenient end of the
+spectrum by considering a package which is generic with respect to the
+type of data on the queue.  The specification might be
+<pre>
+   generic
+      type Q_Data(<>) is private;
+   package Generic_Queues is
+      type Queue is limited private;
+      function Is_Empty(Q: Queue) return Boolean;
+      procedure Add_To_Queue(Q: access Queue; X: in Q_Data);
+      function Remove_From_Queue(Q: access Queue) return Q_Data;
+      Queue_Empty: exception;
+   private
+      ...
+   end Generic_Queues;
+</pre>
+</p>
+<p>
+   It is important to note that the formal type has an unknown
+discriminant part.  It can then be matched by a specific type or by a
+class wide type (see 12.5).  If we use a specific type then of course the
+queue is homogeneous but using a class wide type provides a heterogeneous
+queue.  Note also that the exported type Queue is limited private; the
+implementation will inevitably be in terms of pointers to a chained list
+and making it limited prevents the user from making a copy which might
+subsequently become nonsense; we will return to the implementation
+details in a moment.
+</p>
+<p>
+   Values are added to the queue by calling the procedure Add_To_Queue
+and removed by calling the function Remove_From_Queue.  Making the latter
+a procedure with profile
+<pre>
+   procedure Remove_From_Queue(Q: access Queue; X: out Q_Data);
+</pre>
+is rather restrictive because we cannot call the procedure with an
+uninitialized class-wide object (they are not allowed) and an initialized
+one will be constrained by its initial value.  Such a procedure is
+therefore only useful if we always know (by some other means) the
+anticipated specific type of the item being removed.  Using a function
+works because the returned result provides the initial value and thus the
+constraint.
+</p>
+<p>
+   Incidentally we made the parameter Q of the function an access
+parameter largely because an in out parameter is not allowed for
+functions.  We could have made it an in parameter but the internal
+implementation of the queue would then need an extra level of
+indirection.  See 6.1.2 for a fuller discussion on the merits of access
+versus in out parameters.  We also have to choose between declaring a
+queue directly and making it aliased or creating the queue with an
+allocator.  We choose the latter.
+</p>
+<p>
+   So for the alerts, we can write
+<pre>
+   package Alert_Queues is new Generic_Queues(Q_Data => Alert'Class);
+   use Alert_Queues;
+   type Queue_Ptr is access all Queue;
+   The_Queue: Queue_Ptr := new Queue;
+   ...
+   MA: Medium_Alert := ...;
+   ...
+   Add_To_Queue(The_Queue, MA);
+</pre>
+and a value could be retrieved by
+<pre>
+   Any_Alert: Alert'Class := Remove_From_Queue(The_Queue);
+</pre>
+where the result provides the constraint for Any_Alert.
+</p>
+<p>
+   Returning to the example in II.2, we could then call the first form of
+Process_Alerts by
+<pre>
+   Process_Alerts(Any_Alert);
+</pre>
+and indeed we could directly write
+<pre>
+   Process_Alerts(Remove_From_Queue(The_Queue));
+</pre>
+</p>
+<p>
+   It is often preferable to manipulate access values to tagged types
+rather than tagged type values themselves; partly because this avoids the
+cost of copying and perhaps more important it overcomes the problem of
+not knowing the size of the object in the case of a class wide type.  So
+an alternative approach would be to write
+<pre>
+   type Alert_Ptr is access all Alert'Class;
+   package Alert_Ptr_Queues is new Generic_Queues(Alert_Ptr);
+   use Alert_Ptr_Queues;
+   type Queue_Ptr is access all Queue;
+   The_Queue: Queue_Ptr := new Queue;
+   ...
+   New_Alert: Alert_Ptr := new Medium_Alert'(...);
+   ...
+   Add_To_Queue(The_Queue, New_Alert);
+</pre>
+and then in the body of the second form of Process_Alerts we could have
+<pre>
+   Next_Alert: Alert_Ptr := Remove_From_Queue(The_Queue);
+   ...
+   Handle(Next_Alert.all);
+</pre>
+</p>
+<p>
+   This second formulation is very straightforward since the queue is
+really homogeneous; all the elements are of the same access type and the
+heterogeneity comes from the nature of the accessed type.
+</p>
+<p>
+   We now return to consider how the generic package might be
+implemented.  An important point is that since the formal type is
+indefinite, we cannot declare an uninitialized object of the type or a
+record with a component of the type.  This forces us to use dynamic
+storage.  As a first attempt the private part might be
+<pre>
+   private
+      type Data_Ptr is access Q_Data;
+      type Node;
+      type Node_Ptr is access Node;
+      type Node is
+         record
+            D: Data_Ptr;
+            Next: Node_Ptr;
+         end record;
+      type Queue is
+         record
+            Head: Node_Ptr;
+            Tail: Node_Ptr;
+         end record;
+   end Generic_Queues;
+</pre>
+</p>
+<p>
+   This is an obvious approach although slightly cumbersome because of
+the double levels of indirection.  This causes a double allocation
+whenever a new data item is added; one for the node and one for the data
+itself.  Care is also needed in discarding storage when an item is
+removed.  The details are left to the reader.
+</p>
+<p>
+   A problem with the above approach is the encapsulation of the storage
+management.  Although the generic is very reusable it is somewhat costly
+because of the storage allocation overheads.  Of course if the queue were
+homogeneous and had a definite parameter without <> then it would be
+simpler because the values could be stored directly; we are paying for
+the generality.  Insisting that the parameter be definite would not be
+unreasonable because, as shown above, the client can always pass an
+access type.
+</p>
+<p>
+   A completely different approach is to arrange things so that the
+user's type provides the storage for the linking mechanism through type
+extension; this avoids the overheads of storage management but requires a
+little more effort on the part of the user.  Consider the following
+<pre>
+   package Queues is
+      type Queue is limited private;
+      type Queue_Element is abstract tagged private;
+      type Element_Ptr is access all Queue_Element'Class;
+      function Is_Empty(Q: Queue) return Boolean;
+      procedure Add_To_Queue(Q: access Queue; E: in Element_Ptr);
+      function Remove_From_Queue(Q: access Queue) return Element_Ptr;
+      Queue_Error: exception;
+   private
+      type Queue_Element is tagged
+         record
+            Next: Element_Ptr := null;
+         end record;
+      type Queue is limited
+         record
+            Head: Element_Ptr := null;
+            Tail: Element_Ptr := null;
+         end record;
+   end Queues;
+</pre>
+</p>
+<p>
+   The general idea is that the user extends the type Queue_Element with
+the data to be queued.  The linking is then done through the private
+component Next of which the user is not aware.  The body might be as
+follows
+<pre>
+   package body Queues is
+      function Is_Empty(Q: Queue) return Boolean is
+      begin
+         return Q.Head = null;
+      end Is_Empty;
+
+      procedure Add_To_Queue(Q: access Queue;
+                             E: in Element_Ptr) is
+      begin
+         if E.Next /= null then
+            raise Queue_Error:   -- already on a queue
+         end if;
+         if Q.Head = null then   -- list was empty
+            Q.Head := E;
+            Q.Tail := E;
+         else
+            Q.Tail.Next := E;
+            Q.Tail := E;
+         end if;
+      end Add_To_Queue;
+
+      function Remove_From_Queue(Q: access Queue)
+                            return Element_Ptr is
+         Result: Element_Ptr;
+      begin
+         if Is_Empty(Q) then
+            raise Queue_Error;
+         end if;
+         Result := Q.Head;
+         Q.Head := Result.Next;
+         Result.Next := null;
+         return Result;
+      end Remove_From_Queue;
+   end Queues;
+</pre>
+</p>
+<p>
+   Heterogeneous queues can be made because the type Element_Ptr is an
+access to class wide type.  There are a number of ways in which this
+approach can be used which we will now explore using the alert example.
+</p>
+<p>
+   The first point is that we cannot extend the queue element with a
+class wide type and so we cannot just make a single extension which
+directly contains any alert.  We could of course just extend with a
+component of the type Alert_Ptr and then add and remove alerts as follows
+<pre>
+   type Alert_Element is new Queue_Element with
+      record
+         The_Ptr: Alert_Ptr;
+      end record;
+   ...
+   type Queue_Ptr is access all Queue;
+   The_Queue: Queue_Ptr := new Queue;
+
+   ...
+   New_Alert: Alert_Ptr := new Medium_Alert'(...);
+   New_Element: Element_Ptr :=
+                     new Alert_Element'(Queue_Element with New_Alert);
+   Add_To_Queue(The_Queue, New_Element);
+
+
+   ...
+   Next_Alert := Alert_Element(Remove_From_Queue(The_Queue)).The_Ptr;
+</pre>
+</p>
+<p>
+Note the use of the extension aggregate with the subtype name as the
+ancestor part, see 3.6.1.
+</p>
+<p>
+   We could create distinct element types for each alert level although
+this has its own problems as will soon become apparent.  If we write
+<pre>
+   type Low_Element is new Queue_Element with
+      record
+         LA: Low_Alert;
+      end record;
+
+   type Medium_Element is new Queue_Element with
+      record
+         MA: Medium_Alert;
+      end record;
+   ...
+</pre>
+then adding alerts to the queue is relatively straightforward.
+<pre>
+   MA: Medium_Alert := ...;
+   New_Element: Element_Ptr :=
+                     new Medium_Element'(Queue_Element with MA);
+   Add_To_Queue(The_Queue, New_Element);
+</pre>
+</p>
+<p>
+   Removing an alert in this formulation is less straightforward since we
+have to identify its specific type by interrogating the tag thus
+<pre>
+   Next_Element: Element_Ptr := Remove_From_Queue(The_Queue);
+   ...
+   if Next_Element'Tag = Low_Element'Tag then
+      Process_Alerts(Low_Element(Next_Element).LA);
+</pre>
+</p>
+<p>
+   Unfortunately this brings us back to variant programming which we try
+to avoid.  The essence of the difficulty is that we have dispersed the
+alerts into the different queue elements and lost their commonality.
+There are two possible different approaches.  The best is to plan ahead
+and ensure that the complete alert hierarchy is developed with the common
+queue element already in place.  Following II.3, we can write
+<pre>
+   with Queues; use Queues;
+   package Base_Alert_System is
+      type Alert is abstract new Queue_Element with null record;
+      procedure Handle(A: in out Alert) is abstract;
+   end Base_Alert_System;
+</pre>
+and then we develop all the rest of the alert structure as before.  Now
+all alerts themselves have the linking mechanism already in them and can
+be directly placed on a queue.  So we can now simply write
+<pre>
+   New_Alert: Alert_Ptr := new Medium_Alert'(...);
+   Add_To_Queue(Queue, New_Alert);
+   ...
+   Next_Alert := Alert_Ptr(Remove_From_Queue(The_Queue));
+</pre>
+</p>
+<p>
+   Note that we have to convert the result to the type Alert_Ptr.  This
+conversion requires a runtime check which always passes (because we have
+only placed alerts on the queue).
+</p>
+<p>
+   An important point to note with this approach is that each element can
+be on only one queue at a time.  An attempt to place an element on a
+second queue will result in Queue_Error.  Note that when an element is
+removed from a queue, its Next component is set to null so that it can
+then be placed on another queue.  Observe that if we consider the
+elements as like real objects then they can only be in one place at a
+time and hence only on one queue at a time; so the restriction should not
+be unrealistic.
+</p>
+<p>
+   If it is quite impossible to modify an existing hierarchy to
+incorporate the link in the root (perhaps because we do not have the
+source), then it is still possible to avoid the variant difficulty when
+removing elements from the queue.  The idea is to add a dispatching
+operation which can extract the particular alert; we can write
+<pre>
+   with Queues; use Queues;
+   package Alert_Elements is
+      type Data_Element is abstract new Queue_Element with null record;
+      type Data_Element_Ptr is access all Data_Element'Class;
+      function Extract(D: Data_Element) return Alert'Class is abstract;
+   end Alert_Elements;
+</pre>
+</p>
+<p>
+   By introducing the type Data_Element we provide a place to attach the
+required dispatching operation.  Note of course that Extract only applies
+to the class rooted at Data_Element and not the class rooted at
+Queue_Element.
+</p>
+<p>
+   We can now declare the various types such as Low_Element for each
+alert type as extensions of Data_Element and provide an appropriate
+function Extract for each such as
+<pre>
+   type Low_Element is new Data_Element with
+      record
+         LA: Low_Alert;
+      end record;
+
+   function Extract(D: access Low_Element) return Alert'Class is
+   begin
+      return D.LA;
+   end Extract;
+</pre>
+</p>
+<p>
+We can add alerts to the queue much as before but removing alerts is now
+much simpler.  Having copied the pointer to the removed element into
+Next_Element we can then convert to the type Data_Element and then call
+Extract thus
+<pre>
+   Next_Element: Element_Ptr := Remove_From_Queue(The_Queue);
+   Any_Alert: Alert'Class := Extract(Data_Element_Ptr(Next_Element));
+</pre>
+so that dispatching to the appropriate function Extract occurs thereby
+overcoming the need for variant programming.
+</p>
+<p>
+   Although this mechanism works, it is vulnerable to error if the alert
+structure is extended.  There is a risk that the corresponding extension
+to the element structure might be forgotten in which case a value of an
+extended type will not be extracted properly.
+</p>
+<p>
+   We continue this rather long discussion by considering how the
+original generic queue package could be implemented in terms of the
+second package.  The private part and body might be
+<pre>
+   private
+      type Data_Ptr is access Q_Data;
+      type Q_Element is new Queues.Queue_Element with
+         record
+            D: Data_Ptr;
+         end record;
+      type Queue is new Queues.Queue;
+   end Generic_Queues;
+
+   package body Generic_Queues is
+      function Is_Empty(Q: Queue) return Boolean is
+      begin
+         return Queues.Is_Empty(Queues.Queue(Q));
+      end Is_Empty;
+
+      procedure Add_To_Queue(Q: access Queue; X: in Q_Data) is
+      begin
+         Queues.Add_To_Queue(Queues.Queue(Q),
+            new Q_Element'(Queues.Queue_Element with new Q_Data'(X)));
+      end Add_To_Queue;
+
+      function Remove_From_Queue(Q: access Queue) return Q_Data is
+      begin
+         if Is_Empty(Q) then
+            raise Queue_Empty;
+         end if;
+         declare
+            Q_E_P: Queues.Element_Ptr :=
+                             Queues.Remove_From_Queue(Queues.Queue(Q));
+            D_P: Data_Ptr := Q_Element(Q_E_P.all).D;
+            Result: Q.Data := D_P.all;
+         begin
+            -- can now discard storage occupied by the queue element
+            -- and the data; assuming suitable unchecked conversions
+            Free(Q_E_P);  Free(D_P);
+            return Result;
+         end;
+      end Remove_From_Queue;
+   end Generic_Queues;
+</pre>
+</p>
+<p>
+   Note that we have to take care not to lose access to the storage so
+that it can be freed.  In particular the result is copied into a local
+variable; this is allowed despite the type being indefinite because the
+variable is initialized.  Another point is that Is_Empty, Add_To_Queue
+and Remove_From_Queue can be slightly simplified since Queue is derived
+from Queues.Queue and therefore inherits subprograms with the same
+identifiers (although different profiles).  For example we could simply
+write
+<pre>
+      procedure Add_To_Queue(Q: access Queue; X: in Q_Data) is
+      begin
+         Add_To_Queue(Q,
+            new Q_Element'(Queues.Queue_Element with new Q_Data'(X)));
+      end Add_To_Queue;
+</pre>
+</p>
+<p>
+   The implementation of the generic queue package involves much copying
+of the data; nevertheless it provides a clean interface and hides all the
+problems.  However, the lower level package is almost as easy to use if
+the data is structured correctly.  Intermediate designs are also
+possible; for example a generic package that accepts any definite type.
+The two subprograms could then both be procedures with in out parameters
+and less indirection would be required.
+</p>
+<p>
+   We conclude with some general observations.  It is much easier to
+manipulate access values when dealing with class wide data.  This is
+largely because of the difficulties of storing such data.  We also note
+that object oriented programming requires thought especially if variant
+programming is to be avoided.  There is a general difficulty in finding
+out what is coming which is particularly obvious with input-output; it is
+easy to write dispatching output operations but generally impossible for
+input.
+</p>
+
+<h3>
+<a name=4-2>
+4.4.2  Heterogeneous Lists
+</a>
+</h3>
+<p>
+For the next example we consider doubly-linked lists which are a common
+programming technique.
+</p>
+<p>
+   The implementation shown below uses tagged types and somewhat similar
+techniques to the second queue package in the last section although at a
+lower level of abstraction.
+<pre>
+   package Doubly_Linked is
+
+      type Node_Type is tagged limited private;
+      type Node_Ptr is access all Node_Type'Class;
+
+      -- define add/remove operations,
+      -- assuming head of list is a single Node_Ptr
+      procedure Add(Item: Node_Ptr; Head: in out Node_Ptr);
+        -- add new node at head of list
+      procedure Remove(Item: Node_Ptr; Head: in out Node_Ptr);
+        -- remove node from list, update Head if necessary
+
+      -- define functions to iterate forward or backward over list
+      function Next(Item: Node_Ptr) return Node_Ptr;
+      function Prev(Item: Node_Ptr) return Node_Ptr;
+   private
+      type Node_Type is tagged limited
+         record
+            Prev: Node_Ptr := null;
+            Next: Node_Ptr := null;
+            -- other components to be added by extension
+         end record;
+   end Doubly_Linked;
+</pre>
+</p>
+<p>
+   This illustrates the specification of a simple doubly linked list
+abstraction that may be extended with additional components and
+operations to create useful heterogeneous linked lists.  It is similar to
+the second queue example in that the user extends the type Node_Type to
+contain the required data and it allows heterogeneous lists because the
+type Node_Ptr is an access to class wide type and thus allows the various
+nodes of different specific types to be linked together.
+</p>
+<p>
+   A difference is that the user refers to the list through the parameter
+Head which is also of the type Node_Ptr.  Being doubly linked there is no
+need to separately maintain a reference to the tail of the list.  And
+indeed it is possible to create variations which deal with circular
+lists.
+</p>
+<p>
+   The procedure Add places a new item at the start of the list but in
+contrast to the queue example, the procedure Remove takes the given item
+from wherever it is in the list.  The procedures Next and Prev enable the
+user to move over the list as required.
+</p>
+<p>
+   The details of the implementation are not shown but should ensure
+correct behavior when dealing with an empty list and should also guard
+against adding an item which is already on the list (or another list) or
+removing something not on the list.
+</p>
+<p>
+   We can now use the Doubly_Linked abstraction to demonstrate
+programming by extension.  We implement a keyed association abstraction
+using an extension of Doubly_Linked.Node_Type.  The generic package
+Association takes a Key_Type, an equality operation defined on the
+Key_Type and a hash function defined on the Key_Type.  The exported type
+Element_Type is intended to be further extended with the data to be
+associated with the key.
+<pre>
+   with Doubly_Linked;
+   generic
+      type Key_Type is limited private;
+      with function "="(Left, Right: Key_Type) return Boolean is <>;
+      with function Hash(Key: Key_Type) return Integer is <>;
+   package Association is
+
+      type Element_Type is new Doubly_Linked.Node_Type with
+         record
+            Key: Key_Type;
+         end record;
+      type Element_Ptr is new Doubly_Linked.Node_Ptr;
+
+      function Key(E: Element_Ptr) return Key_Type;
+
+      type Association_Table(Size: Positive) is limited private;
+        -- size determines size of hash table
+
+      procedure Enter(Table  : in out Association_Table;
+                      Element: in Element_Ptr);
+
+      function Lookup(Table: in Association_Table;
+                      Key  : in Key_Type) return Element_Ptr;
+
+      -- other operations on Association_Table (eg, an iterator)...
+   private
+      type Element_Ptr_Array is array (Integer range <>) of Element_Ptr;
+      type Association_Table(Size: Positive) is
+         record
+            Buckets: Element_Ptr_Array(1 .. Size);
+         end record;
+   end Association;
+</pre>
+</p>
+<p>
+   An Association_Table is a hash table, where each hash value has an
+associated doubly-linked list of elements.  The elements may be of any
+type derived from Element_Type.  The head of each list is of the type
+Element_Ptr which is itself derived from Node_Ptr (an untagged derived
+type).  All the primitive operations (Add, Remove etc) which apply to
+Node_Ptr are thus inherited by Element_Ptr.  The function Key returns the
+key component of the object referred to as parameter.
+</p>
+<p>
+   We can now go on to define a symbol table for a simple language with
+types, objects, and functions using the association structure.  The
+symbol table allows different types of entries for each of types, objects
+and functions.
+<pre>
+   with Association;
+   package Symbol_Table_Pkg is
+
+      type Identifier is access String;
+        -- symbol table key is pointer to string
+        -- allowing arbitrary length identifiers
+      function Equal(Left, Right: Identifier) return Boolean;
+      function Hash(Key: Identifier) return Integer;
+
+      -- instantiate Association to produce symbol table
+      package Symbol_Association is
+        new Association(Identifier, Equal, Hash);
+      subtype Symbol_Table is
+        Symbol_Association.Association_Table;
+
+      -- define the three kinds of symbol table elements
+      -- using type extension
+      type Type_Symbol is new Symbol_Association.Element_Type with
+         record
+            Category: Type_Category;
+            Size    : Natural;
+         end record;
+      type Type_Ptr is access Type_Symbol;
+
+      type Object_Symbol is new Symbol_Association.Element_Type with
+         record
+            Object_Type : Type_Ptr;
+            Stack_Offset: Integer;
+         end record;
+
+      type Function_Symbol is new Symbol_Association.Element_Type with
+         record
+            Return_Type  : Type_Ptr;
+            Formals      : Symbol_Table(5);   -- very small hash table
+
+            Locals       : Symbol_Table(19);  -- bigger hash table
+            Function_Body: Statement_List;
+         end record;
+   end Symbol_Table_Pkg;
+</pre>
+</p>
+<p>
+   A type Symbol_Table is produced by instantiating the generic
+Association with a key that is a pointer to a string.  Then three
+extensions of Element_Type are declared, each of which may be entered
+into the symbol table.  An interesting point is that the elements for the
+type Function_Symbol each themselves contain internal symbol tables.
+</p>
+<p>
+   The body of the generic Association package might be as follows
+<pre>
+   package body Association is
+      procedure Enter(Table: in out Association_Table;
+                      Element: Element_Ptr) is
+                        -- enter new element into association table.
+         Hash_Index: constant Integer :=
+           (Hash(Element.Key) mod Table.Size) + 1;
+         use Doubly_Linked;
+      begin
+         -- add to linked list of appropriate bucket
+         Add(Element, Table.Buckets(Hash_Index));
+      end Enter;
+
+      function Key(E: Element_Ptr) return Key_Type is
+      begin
+         return Element_Type(E.all).Key;
+      end Key;
+
+      function Lookup(Table: Association_Table;
+                      Key: Key_Type) return Element_Ptr is
+                        -- look up element in association table.
+         Hash_Index: constant Integer :=
+           (Hash(Key) mod Table.Size) + 1;
+         Ptr: Element_Ptr := Table.Buckets(Hash_Index); -- head of list
+         use Doubly_Linked;
+      begin
+         -- Scan doubly-linked list for element with
+         -- matching key.  Return null if none found.
+         while Ptr /= null loop
+            if Key(Ptr).Key = Key then
+               return Ptr;  -- matching element found and returned
+            end if;
+            Ptr := Next(Ptr);
+         end loop;
+         return null;  -- no matching element found
+      end Lookup;
+
+   end Association;
+</pre>
+</p>
+<p>
+   The operations Enter and Lookup are implemented in a straightforward
+manner using the operations of the type Element_Ptr inherited from
+Node_Ptr.
+</p>
+<p>
+   The function Key is interesting.  Note first that since Element_Ptr is
+derived from Node_Ptr its accessed type is also Node_Type'Class (this is
+a nontagged derivation and when we derive from an access type the
+accessed type of the derived type is the same as its parent as in Ada
+83).  So the expression E.all is of the type Node_Type'Class.  It is then
+converted to the specific type Element_Type (this is away from the root
+and so involves a run-time check which will always succeed in this
+example) and the component is then selected.
+</p>
+<p>
+   Note that since the type Node_Ptr is visible we could declare an
+object directly and pass an access to it as parameter to the function
+Key; this would raise Constraint_Error because the function Key is
+designed to operate on elements and not on nodes in general.  We could
+overcome this by making the types Element_Type and Element_Ptr private so
+that the underlying relationship to the type Node_Type is hidden.
+</p>
+
+<h3>
+<a name=4-3>
+4.4.3  Multiple Implementations
+</a>
+</h3>
+
+<p>
+A very important aspect of object oriented programming is the ability to
+provide different implementations of the one abstraction.  One can do
+this to some extent in Ada 83 in that one package could have alternate
+bodies.  But only one implementation can be used in one program.
+</p>
+<p>
+   It is worth noting that the possibility of multiple implementations of
+an abstraction has been recognized for some time [Guttag 77].  However,
+when abstraction facilities were incorporated into conventional compiled
+languages, a single implementation per interface was typically adopted
+for pragmatic reasons [Dijkstra 72].  This is illustrated by CLU [Liskov
+77] and Modula [Wirth 77] as well as Ada 83.  It was really C++
+[Stroustrup 91] that was the first main-stream systems programming
+language that recognized that the dynamic binding inherent in having
+objects identify their own implementation could be provided while
+preserving performance.
+</p>
+<p>
+   Thus, with a true object oriented language, the common structure of
+the types and their operations provided by inheritance enable different
+types to be treated as different realizations of a common abstraction.
+The tag of an object indicates its implementation and allows a dynamic
+binding between the client and the appropriate implementation.
+</p>
+<p>
+   We can thus develop different implementations of a single abstraction,
+such as a family of list types [LaLonde 89], matrices (dense or sparse),
+or set types, as in the next example.
+</p>
+<p>
+   The specification of an Abstract_Sets package might be
+<pre>
+   -- Given
+      subtype Set_Element is Natural;
+
+   package Abstract_Sets is
+
+      type Set is abstract tagged private;
+
+      -- empty set
+      function Empty return Set is abstract;
+
+      -- build set with 1 element
+      function Unit(Element: Set_Element) return Set is abstract;
+
+      -- union of two sets
+      function Union(Left, Right: Set) return Set is abstract;
+
+      -- intersection of two sets
+      function Intersection(Left, Right: Set) return Set is abstract;
+
+      -- remove an element from a set
+      procedure Take(From: in out Set;
+                     Element: out Set_Element) is abstract;
+
+      Element_Too_Large: exception;
+   private
+      type Set is abstract tagged null record;
+   end Abstract_Sets;
+</pre>
+</p>
+<p>
+   The package provides an abstract specification of sets.  The Set type
+definition is an abstract tagged private type, whose full type
+declaration is a null record.  It defines a set of primitive operations
+on Set that are abstract subprograms.  Abstract subprograms do not have
+bodies and cannot be called directly.  However, as primitive operations,
+they are inherited.  Derivatives of Set must override these abstract
+operations to provide their own implementations.  Derivatives of Set can
+extend the root type with components providing the desired data
+representation, and can then implement the primitive operations for that
+representation.
+</p>
+<p>
+   As an example, one might build an implementation using bit vectors
+<pre>
+   with Abstract_Sets;
+   package Bit_Vector_Sets is
+
+      type Bit_Set is new Abstract_Sets.Set with private;
+
+      -- Override the abstract operations
+      function Empty return Bit_Set;
+      function Unit(Element: Set_Element) return Bit_Set;
+      function Union(Left, Right: Bit_Set) return Bit_Set;
+      function Intersection(Left, Right: Bit_Set) return Bit_Set;
+      procedure Take(From: in out Bit_Set;
+                     Element: out Set_Element);
+
+   private
+      Bit_Set_Size: constant := 64;
+      type Bit_Vector is
+         array (Set_Element range 0 .. Bit_Set_Size-1) of Boolean;
+      pragma Pack(Bit_Vector);
+
+      type Bit_Set is new Abstract_Sets.Set with
+         record
+            Data: Bit_Vector;
+         end record;
+   end Bit_Vector_Sets;
+
+   package body Bit_Vector_Sets is
+
+      function Empty return Bit_Set is
+      begin
+         return (Data => (others => False));
+      end;
+
+      function Unit(Element: Set_Element) return Bit_Set is
+         S: Bit_Set := Empty;
+      begin
+         S.Data(Element) := True;
+         return S;
+      end;
+
+      function Union(Left, Right: Bit_Set) return Bit_Set is
+      begin
+         return (Data => Left.Data or Right.Data);
+      end;
+         ...
+   end Bit_Vector_Sets;
+</pre>
+</p>
+<p>
+   An alternative implementation more appropriate to very sparse sets
+might be based on using linked records containing the elements present in
+a set.  We could then write a program which contained both forms of sets;
+we could convert from one representation to any other by using
+<pre>
+   procedure Convert(From: in Set'Class; To: out Set'Class) is
+      Temp: Set'Class := From;
+      Elem: Set_Element;
+   begin
+      -- build up target set, one element at a time
+      To := Empty;
+      while Temp /= Empty loop
+         Take(Temp, Elem);
+         To := Union(To, Unit(Elem));
+      end loop;
+   end Convert;
+</pre>
+</p>
+<p>
+   This procedure dispatches onto the appropriate operations according to
+the specific type of its parameters.  Remember that all variables of
+class-wide types (such as Temp) have to be initialized since class-wide
+subtypes are indefinite and the tag is given by the tag of the initial
+value.  Note that the equality operators are also dispatching operations
+so that the expression Temp /= Empty uses the equality operation for the
+type of From.  Furthermore, assignment is also a dispatching operation
+although this is not often apparent.  In this example, however, if the
+type of From were a linked list then a deep copy would be required
+otherwise the original value could be damaged when the copy is
+decomposed.  Such a deep copy can be performed by using a controlled type
+for the inner implementation of the list as explained in 7.4.
+</p>
+<p>
+   Finally, note that the abstract sets package could have been generic
+<pre>
+   generic
+      type Set_Element is private;
+   package Abstract_Sets is ...
+</pre>
+and this would have added an extra dimension for the possibility of
+reuse.
+</p>
+
+<h3>
+<a name=4-4>
+4.4.4  Iterators
+</a>
+</h3>
+
+<p>
+It is a common requirement to wish to apply some operation over all
+members of a set.  One approach was discussed in 3.7.1 using access
+discriminants.  In this section we show a rather different technique
+using type extension and dispatching.  (We start by assuming the example
+is not generic and consider the impact of genericity later.)
+</p>
+<p>
+   Consider
+<pre>
+   type Element is ...
+
+   package Sets is
+      type Set is limited private;
+      ... -- various set operations
+      type Iterator is abstract tagged null record;
+      procedure Iterate(S: Set; IC: Iterator'Class);
+      procedure Action(E: in out Element;
+                       I: in out Iterator) is abstract;
+   private
+      type Node;
+      type Ptr is access Node;
+      type Node is
+         record
+            E: Element;
+            Next: Ptr;
+         end record;
+      type Set is new Ptr;   -- implement as singly-linked list
+   end Sets;
+
+   package body Sets is
+      ... -- bodies of the various set operations
+
+      procedure Iterate(S: Set; IC: Iterator'Class) is
+         This: Ptr := Ptr(S);
+      begin
+          while This /= null loop
+             Action(This.E, IC);  -- dispatch
+             This := This.Next;
+          end loop;
+      end Iterate:
+
+   end Sets;
+</pre>
+</p>
+<p>
+This introduces an abstract type Iterator which has a primitive
+subprogram Action.  The procedure Iterate loops over the set and calls by
+dispatching the procedure Action corresponding to the specific type of
+the object of the Iterator class.  The main purpose of the Iterator type
+therefore is to identify by dispatching the particular Action to be
+performed.
+</p>
+<p>
+   The simple example of counting the number of elements in a set can now
+be written as follows.
+<pre>
+   package Sets.Stuff is
+      function Count(S: Set) return Natural;
+   end Sets.Stuff;
+
+
+   package body Sets.Stuff is
+
+      type Count_Iterator is new Iterator with
+         record
+            Result: Natural := 0;
+         end record;
+
+      procedure Action(E: in out Element;
+                       I: in out Count_Iterator) is
+      begin
+         I.Result := I.Result + 1;
+      end Action;
+
+      function Count(S: Set) return Natural is
+         I: Count_Iterator;
+      begin
+         Iterate(S, I);
+         return I.Result;
+      end Count;
+   end Sets.Stuff;
+</pre>
+</p>
+<p>
+   The type Count_Iterator is an extension of the abstract type Iterator
+and the specific procedure Action does the counting.  The result is
+accumulated in a component of the type Count_Iterator and is thereby made
+accessible to the procedure Action; this component is initialized to zero
+when the Count_Iterator is declared inside the function Count.
+</p>
+<p>
+   Observe that the type extension is not immediately within a package
+specification and so it is not possible to add new primitive operations
+to it.  Nevertheless it is possible to override inherited operations such
+as Action as explained in 4.3.  If, for some reason, we wanted to declare
+additional primitive operations then we would have to introduce an
+internal package.  Note also that we cannot put the type extension inside
+the function Count because this would break the accessibility rules by
+making the type extension at a deeper level than the parent type as
+explained in 3.4.
+</p>
+<p>
+   A further point is that if the parent package Sets were generic with
+the type Element being a formal parameter as in the example with access
+discriminants in 3.7.1, then the child package Sets.Stuff would also have
+to be generic.  In that case it would be necessary to move the type
+extension and the overriding operation Action into the private part of
+Sets.Stuff for reasons explained in 12.5.
+   More general actions can be written in a similar manner.  Any
+parameters or results for the action are passed as components in the
+iterator type.  A general procedure to perform some action might be
+<pre>
+   procedure General(S: Set; P: Parameters) is
+      I: General_Iterator;
+   begin
+      ...  -- copy parameters into iterator
+      Iterate(S, I);
+      ...  -- copy any results from iterator back to parameters
+   end General;
+</pre>
+and the type General_Iterator and the corresponding Action procedure take
+the form
+<pre>
+   type General_Iterator is new Iterator with
+      record
+         ... -- components for parameters and workspace
+      end record;
+
+   procedure Action(E: in out Element;
+                    I: in out General_Iterator) is
+   begin
+      E := ...;  -- do something to element using data from iterator
+   end Action;
+</pre>
+</p>
+<p>
+   It is instructive to compare this example with the corresponding
+example using access discriminants in 3.7.1.  Wherever possible similar
+identifiers have been used to make the analogy easier.  The analogy could
+be made closer by putting the function Sets.Count of 3.7.1 inside a
+package as here.
+</p>
+<p>
+   Perhaps the most striking difference is that the two mechanisms are
+"inside out" to each other in some sense.  A notable thing about the
+access discriminant approach is that the looping mechanism has to be
+written out for each action.  Using type extension the loop is written
+out once and the dispatching call of Action reaches out to the specific
+routine required.
+</p>
+<p>
+   The type extension approach has a close similarity to the potential
+method using an access to subprogram value as a parameter.  We would like
+to write something like
+<pre>
+   procedure Iterate(S: Set;
+                Action: access procedure(E: in out Element)) is
+      This: Ptr := Ptr(S);
+   begin
+      while This /= null loop
+         Action(This.E);
+         This := This.Next;
+      end loop;
+   end Iterate;
+</pre>
+and then
+<pre>
+   function Count(S: Set) return Natural is
+      Result: Natural := 0;
+
+      procedure Count_Action(E: in out Element) is
+      begin
+         Result := Result + 1;
+      end Count_Action;
+
+   begin
+      Iterate(S, Count_Action'Access);
+      return Result;
+   end Count;
+</pre>
+but unfortunately we cannot have anonymous access to subprogram
+parameters as explained in 3.7.2.  Declaring a named access type so that
+the above starts
+<pre>
+   type Action_Type is access procedure(E: in out Element);
+   ...
+   procedure Iterate(S: Set; Action: Action_Type) is ...
+</pre>
+does not work either because then the access to the internal procedure
+Count_Action is illegal.  We have to make the procedure internal so that
+it can manipulate the variable Result.  Note that we would not wish to
+make Result global because that would not work in multitasking programs.
+See the further discussion in 3.7.2 which also shows how the difficulties
+can be overcome with generics.
+</p>
+<p>
+   The reason for disallowing more general access to subprogram values is
+that they would require extra information regarding the environment of
+the procedure (in this case giving addressability of the variable
+Result).  The call of the formal procedure and the dispatching call both
+serve similar purposes; they enable the iterate procedure to call out to
+the specific action procedure.  In both cases extra information is
+required; the type extension method enables it to be passed in the type
+itself.  The formal procedure method needs it within the underlying
+implementation and for a number of reasons this is considered too heavy a
+burden in the general case.
+</p>
+<p>
+   As mentioned earlier, there is a close analogy between the
+restrictions which ensure that a procedure value is (nearly) always a
+single address and those which ensure that a dispatching value is always
+a single address.
+</p>
+
+<h2>
+<a name=5>
+4.5  Dispatching and Redispatching
+</a>
+</h2>
+
+<p>
+It is important to understand exactly when dispatching (dynamic binding)
+is used as opposed to the static resolution of binding familiar from Ada
+83.  The basic principle is that dispatching is used only when a
+controlling operand is of a class-wide type.  In order to facilitate the
+discussion we will reconsider the New_Alert_System introduced in II.1.
+The call
+<pre>
+   Handle(A);  -- A of type Alert'Class
+</pre>
+in the procedure Process_Alerts in II.2 is a dispatching call.  The value
+of the tag of A is used to determine which procedure Handle to call and
+this is determined at run time.
+</p>
+<p>
+   On the other hand a call such as
+<pre>
+   Handle(Alert(MA));
+</pre>
+in the procedure Handle belonging to the type Medium_Alert is not a
+dispatching call because the type of the operand is the specific type
+Alert as a result of the explicit type conversion.
+</p>
+<p>
+   It is also possible to dispatch on the result of a function when the
+context of the call determines the tag.  Such a result is called a
+controlling result.
+</p>
+<p>
+   It is an important principle that all controlling operands and results
+of a call must have the same tag.  If they are statically determined
+then, of course, this is checked at compile time.  If they are
+dynamically determined (for example, variables of a class-wide type) then
+again the actual values must all have the same tag and of course this
+check has to be made at run time; Constraint_Error is raised if the check
+fails.  In order to avoid confusion a mixed situation whereby some tags
+are statically determined and some are dynamically determined is not
+allowed.  Thus in the case of the sets example in the previous section,
+it is illegal to write
+<pre>
+   S: Bit_Set := ...
+   T: Set'Class := ...
+   ...
+   S := Union(S, T);  -- illegal
+</pre>
+even though at run-time it might be the case that the tag of the value of
+T might be Bit_Set'Tag.  But we could write
+<pre>
+   S := Union(S, Bit_Set(T));
+</pre>
+and the view conversion will check that T is in Bit_Set'Class (the tag of
+T does not have to be Bit_Set'Tag; it could be of any specific type that
+can be converted to Bit_Set).
+</p>
+<p>
+   A special case arises when the tag is indeterminate.  Consider for
+example the statement
+<pre>
+   To := Empty;
+</pre>
+in the procedure Convert.  The parameterless function Empty has a
+controlling result but there is no controlling operand to determine the
+tag.  Consequently the tag is determined from the class-wide parameter To
+which is the destination of the assignment.  Of course, the tag of To is
+dynamically determined and this value is used for dispatching on Empty.
+The statement
+<pre>
+   To := Union(To, Unit(Elem));
+</pre>
+similarly causes dispatching on both Union and Unit according to the tag
+of To.
+</p>
+<p>
+   Another rule designed to avoid complexity is that it is not legal for
+a subprogram to have controlling operands or result of different tagged
+types.  Although it is legal to declare two tagged types in the same
+package, it is not legal to declare a subprogram that has operands or
+result of both types in that same package.  This can, of course, be done
+outside the package but then the subprogram is not a primitive operation
+of the types and does not dispatch anyway.
+</p>
+<p>
+   The difficulty with allowing such mixed controlling operands is that
+it would not be clear how to achieve the various possible combinations of
+derived operations if both types were derived.  If the effect of such
+mixed operands is required then one type can be replaced by the
+corresponding class-wide type.  See [RM95 3.9.2].
+</p>
+<p>
+   The rules for type conversion (see 3.8) are also designed for clarity.
+Type conversion is always allowed towards the root of a tree of tagged
+types and so we can convert a Medium_Alert into an Alert as in the call
+<pre>
+   Handle(Alert(MA));
+</pre>
+</p>
+<p>
+On the other hand we cannot convert a specific type away from the root
+(there might be missing components); we have to use an extension
+aggregate even if there are no extra components.  So we can "extend" an
+Alert into a Low_Alert by
+<pre>
+   LA := (A with null record);
+</pre>
+where we have to write null record because there are no extra components.
+</p>
+<p>
+   We can however convert a value of a class-wide type to a specific type
+as in
+<pre>
+   MA: Medium_Alert := Medium_Alert(AC);
+</pre>
+where AC is of the type Alert'Class.  In such a case there is a run-time
+check that the current value of the class-wide parameter AC has a tag
+that identifies a specific type for which the conversion is possible.
+Hence it must identify the type Medium_Alert or a type derived from it so
+that the conversion is not away from the root of the tree.  In other
+words we check that the value of AC is actually in Medium_Alert'Class.
+</p>
+<p>
+   As mentioned in 3.8 some conversions are what is known as view
+conversions.  This means that the underlying object is not changed but we
+merely get a different view of it.
+</p>
+<p>
+   Almost all conversions of tagged types are view conversions.  For
+example the conversion in
+<pre>
+   Handle(Alert(MA));
+</pre>
+is a view conversion.  The value passed on to the call of Handle (that
+with parameter of type Alert) is in fact the same value as held in MA but
+the components relating to the type Medium_Alert are no longer visible.
+And in fact the tag still relates to the underlying value and this might
+even be the tag for High_Alert because it could have been view converted
+all the way down the tree.  Remember also that tagged types are passed by
+reference.
+</p>
+<p>
+   However, if we did an assignment as in
+<pre>
+   MA := Medium_Alert(HA);
+</pre>
+then the tag of MA would not be changed and would not reflect that of the
+value in HA.  All that happens is that the values of the components
+appropriate to the type of MA are copied from the object HA.  Other
+components are of course ignored.
+</p>
+<p>
+   Furthermore, if MA were not a locally declared variable but an out or
+in out parameter, then again the tag of MA would not be changed.
+Remember, however, that the tag of MA in this case need not itself be
+Medium_Alert'Tag since a formal parameter is simply giving a view of the
+actual parameter and the tag of that could be of any type derived from
+Medium_Alert.  But we do know that both sides of the assignment have the
+components appropriate to Medium_Alert and so the assignment works.
+</p>
+<p>
+   Note moreover that conversions of tagged types are allowed as the
+target of an assignment; thus
+<pre>
+   AC: Alert'Class := ...
+   ...
+   Medium_Alert(AC) := MA;
+</pre>
+will check that the tag of AC corresponds to Medium_Alert or a type
+derived from it (or in other words checks that AC in Medium_Alert'Class
+is true) and then copies just those components corresponding to the
+Medium_Alert view from the right hand side to the left hand side.
+</p>
+<p>
+   It might help to summarize the golden rules
+</p>
+<ul>
+<li>
+    the tag of an object never changes; this applies to both specific
+     and class-wide types,
+<li>
+    conversion can never be away from the root, conversion never changes
+     the tag.
+</ul>
+<p>
+   The fact that a view conversion does not change the tag is absolutely
+vital for the implementation of what is known as redispatching.
+</p>
+<p>
+   There are often situations where one would like "multiple dispatch"
+either within a class, or between two or more classes.  Ingalls cites a
+number of canonical examples such as displaying various kinds of
+graphical objects on different kinds of displays, event types and
+handlers, and unification and pattern matching [Ingalls 86]; he suggests
+a solution for Smalltalk-80 that is more modular than a single dispatch
+on one parameter, followed by a case statement on the dynamic type of a
+second parameter.  Multiple dispatch is possible in Ada 95 via class-wide
+types.  We first consider the simple case of redispatching within the
+same class.
+</p>
+<p>
+   It often happens that after one dispatching operation we apply a
+further common (and inherited) operation and so need to dispatch once
+more to an operation of the original type.  If the original tag were lost
+then this would not be possible.
+</p>
+<p>
+   Consider again (from II.1)
+<pre>
+   procedure Handle(MA: in out Medium_Alert) is
+   begin
+      Handle(Alert(MA));           -- handle as plain Alert
+      MA.Action_Officer := Assign_Volunteer;
+      Display(MA, Console);
+   end Handle;
+</pre>
+in which there is a call of the procedure Display.  This call is not a
+dispatching call because the parameter is of a specific type (and indeed
+there is only one procedure Display which is inherited by all the types).
+</p>
+<p>
+   As written it has been assumed that the display operation is the same
+for all alerts.  However, suppose that in fact it was desired to express
+the message in different ways according to the level of the alert (in
+different colors perhaps or flashing).
+</p>
+<p>
+   It would be possible to do this by using the Tag attribute to look at
+the original value of the tag by writing
+<pre>
+   procedure Display(A: Alert; On: Device) is
+      AC: Alert'Class renames Alert'Class(A);
+   begin
+      if AC'Tag = Low_Alert'Tag then
+         -- display a low alert
+      elsif AC'Tag = Medium_Alert'Tag then
+         -- display a medium alert
+      else
+         -- display a high alert
+      end if;
+   end Display;
+</pre>
+</p>
+<p>
+Note that we could have written
+<pre>
+   AC: Alert'Class := A;
+</pre>
+rather than the renaming but this would cause an unnecessary assignment.
+Note moreover that we cannot apply the Tag attribute to an object of a
+specific type; it would be rather surprising for A'Tag not to be
+Alert'Tag.
+</p>
+<p>
+   However, using tags in this way inside the body of Display is quite
+inappropriate since it has reintroduced the rigid nature of variant
+programming and could not specifically recognize an alert which is a
+later extension.
+</p>
+<p>
+   The proper approach is to use redispatching.  If we need a different
+display mechanism for the different alert levels then we write distinct
+procedures for each one (thus overriding the procedure inherited from the
+root level) and then redispatch in the various procedures Handle as
+follows
+<pre>
+   procedure Handle(MA: in out Medium_Alert) is
+   begin
+      Handle(Alert(MA));              -- handle as plain Alert
+      MA.Action_Officer := Assign_Volunteer;
+      Display(Medium_Alert'Class(MA), Console);  -- redispatch
+   end Handle;
+</pre>
+</p>
+<p>
+This will work properly and the message will be displayed according to
+the specific type of the original alert.
+</p>
+<p>
+   Another possibility is that the type Device might not be represented
+as a simple enumeration, but instead as a record type, with components
+representing various aspects of the device.  A class of device types
+could be constructed using tagged types and type extension.  Each kind of
+device must implement an Output operation that each kind of alert will
+use to implement its Display operation.  In order to call the appropriate
+Output procedure two dispatching operations are involved.  First, the
+type of the alert parameter controls the dispatch to the Display
+procedure, and then within that procedure a dispatch on the Device
+parameter will select the appropriate Output operation for the device
+being used as a display.  This double dispatching can be accommodated by
+making Display a class-wide operation of the device class.  The Display
+procedure for Alert then becomes
+<pre>
+   procedure Display(A: Alert; On: Device'Class) is
+   begin
+      ...
+      Output(On);  -- dispatch on On
+      ...
+   end Display;
+</pre>
+so that within each Display procedure, a call to Output, with parameter
+On will dispatch to the appropriate operation for the Device.
+</p>
+<p>
+   Note once more that it would not have been legal for the specification
+of Display to have been
+<pre>
+   procedure Display(A: Alert; On: Device);
+</pre>
+since a procedure cannot have controlling operands of more than one
+tagged type.
+</p>
+
+<h2>
+<a name=6>
+4.6  Multiple Inheritance
+</a>
+</h2>
+
+<p>
+Some languages permit a derived type, or class, to have more than one
+parent. These languages are said to support "multiple inheritance".
+Multiple inheritance is a second-generation object oriented programming
+mechanism. It originated in MIT's FLAVORS extension to LISP; a precursor
+to the Common Lisp Object System.
+</p>
+<p>
+   Multiple inheritance poses awkward problems if approached naively, as
+pointed out by [Budd 91].  There are two conceptual difficulties; what to
+do if an operation with a given profile belongs to both parents - which,
+if any, is inherited and how could we distinguish them; and what to do if
+the same component belongs to both parents from a common ancestor - are
+there two copies or only one?  There are also implementation difficulties
+associated with these conceptual difficulties.
+</p>
+<p>
+   However, most uses of multiple inheritance fall into one of three
+idioms each of which can be implemented in Ada 95 using facilities such
+as access discriminants, generic units and type composition in
+conjunction with the Ada 95 type extension as will be illustrated in the
+next few sections.
+</p>
+<p>
+   Given the need to balance the benefits of language defined multiple
+inheritance with the complexity of the revised language, the potential
+for distributed overhead caused by multiple inheritance, and the scope of
+the revision, we chose to support multiple inheritance with a building
+block approach rather than an extra language construct.
+</p>
+
+<h3>
+<a name=6-1>
+4.6.1  Combining Implementation and Abstraction
+</a>
+</h3>
+
+<p>
+The first form of multiple inheritance is, to quote N. Guimaraes of AT&T,
+"to combine two classes, one that defines the protocol of the component,
+and another that provides an implementation"  [Guimaraes 91].  In
+languages such as Eiffel and C++, where classes are the only form of
+module, inheritance is the most common mechanism for combining
+abstractions.  For instance, an Eiffel class Bounded_Stack[T], could be
+constructed by inheriting from an abstract class Stack[T] and a second
+class Array[T].  Class Array[T] would then be used to implement the
+abstract operations not defined by class Stack[T].  The programmer must
+specify the implementation of each such operation, and ideally, the array
+operations should also be hidden from users of Bounded_Stack[T].  The
+effect of this idiom of multiple inheritance could be achieved in Ada 83
+through type composition - inheritance is not required.  In Ada, one may
+implement one type in terms of another, and hide that implementation as a
+private type.
+<pre>
+   package Bounded is
+      type Bounded_Stack(Size: Natural := 0) is private;
+      procedure Push(S: in out Bounded_Stack; Element: T);
+      procedure Pop(S: in out Bounded_Stack);
+      function Top(S: Bounded_Stack) return T;
+   private
+      type T_Array is array (Integer range <>) of T;
+      type Bounded_Stack(Size: Natural := 0) is
+         record
+            Data: T_Array(1..Size);
+         end record;
+   end Bounded;
+</pre>
+</p>
+<p>
+   Using the idiom of section 4.4.3 where we discussed the set
+abstraction, we could derive from a tagged abstract type Stack, and
+implement bounded stacks as arrays.  In either case, the operations on
+Bounded_Stack must be explicitly declared, whether being defined or
+overridden.
+</p>
+
+<h3>
+<a name=6-2>
+4.6.2  Mixin Inheritance
+</a>
+</h3>
+
+<p>
+A second idiomatic use of multiple inheritance can be termed mixin
+inheritance. In mixin inheritance, one of the parent classes cannot have
+instances of its own and exists only to provide a set of properties for
+classes inheriting from it.  Typically, this abstract, mixin class has
+been isolated solely for the purpose of combining with other classes.
+Ada 95 can provide mixin inheritance using tagged type extension (single
+inheritance) and generic units.  The generic template defines the mixin.
+The type supplied as generic actual parameter determines the parent.
+</p>
+<p>
+   Thus we can write
+<pre>
+   generic
+      type S is abstract tagged private;
+   package P is
+      type T is abstract new S with private;
+      -- operations on T
+   private
+      type T is abstract new S with
+         record
+            -- additional components
+         end record;
+   end P;
+</pre>
+where the body provides the operations and the specification exports the
+extended type.
+</p>
+<p>
+   We can then use an instantiation of P to add the operations of T to
+any existing tagged type and the resulting type will of course still be
+in the class of the type passed as actual parameter.  Note that in this
+idiom we have specified both the formal type and the exported type as
+abstract.  This enables the supplied actual type to be abstract.  We
+could declare a cascade of types in this manner thereby adding an
+unbounded sequence of properties to the original type.  We would finally
+make one further extension in order to declare a type which was not
+abstract.
+</p>
+<p>
+   As a concrete example, the following generic package adds the property
+of having multiple versions to any tagged type.
+<pre>
+   with OM;  -- Object Manager provides unique object IDs
+   with VM;  -- Version Manager provides version control
+   generic
+      type Parent is abstract tagged private;
+   package Versioned is
+
+      -- A versioned object has an ID, which identifies
+      -- the set of versions of that object, plus a version
+      -- number that, combined with the ID, identifies an
+      -- object uniquely.
+      type Versioned_Object is abstract new Parent with private;
+
+      -- given an object, return a new version of that object
+      procedure Create_New_Version(O    : in  Versioned_Object
+                                   New_O: out Versioned_Object);
+      -- given an object, returns its version number
+      function Version_Number(O: Versioned_Object)
+                                           return VM.Version_Number;
+      -- given an object and a version number, return that
+      -- version of the object
+      procedure Get_Version(
+        ID_From: in  Versioned_Object;
+        Version: in  VM.Version_Number;
+        Object : out Versioned_Object);
+
+   private
+
+      type Versioned_Object is abstract new Parent with
+         record
+            ID     : OM.Object_ID := OM.Unique_ID;
+            Version: VM.Version_Number := VM.Initial_Version;
+         end record;
+
+   end Versioned;
+</pre>
+</p>
+<p>
+   An important variation on this approach allows us to extend a type
+privately with generic operations that the client cannot see.  This
+relies on the fact that the full type corresponding to a private
+extension need not be directly derived from the given ancestor.  Thus the
+full type corresponding to
+<pre>
+   type Special_Object is new Ancestor with private;
+</pre>
+need not be directly derived from Ancestor; it could be indirectly
+derived from Ancestor.  We can therefore write
+<pre>
+   private
+      package Q is new P(Ancestor);
+      type Special_Object is new Q.T with null record;
+</pre>
+and then the type Special_Object will also have all the components and
+properties of the type T in the generic package P.  As written, these
+are, of course, not visible to the client but subprograms in the visible
+part of the package in which Special_Object is declared could be
+implemented in terms of them.  Note also that the type Special_Object is
+not abstract even though the type Q.T is abstract.
+</p>
+<p>
+   As another example of mixin inheritance reconsider the second queue
+package in 4.4.1.  We could make it generic thus
+<pre>
+   generic
+      type Data(<>) is abstract tagged private;
+   package Queues is
+      type Queue is limited private;
+      type Queue_Element is abstract new Data with private;
+      type Element_Ptr is access all Queue_Element'Class;
+      function Is_Empty(Q: Queue) return Boolean;
+      procedure Add_To_Queue(Q: access Queue; E: in Element_Ptr);
+      function Remove_From_Queue(Q: access Queue) return Element_Ptr;
+      Queue_Error: exception;
+   private
+</pre>
+and then the modified base of the alert system could be
+<pre>
+   with Queues;
+   package Base_Alert_System is
+      type Root_Alert is abstract tagged null record;
+      package Alert_Queues is new Queues(Root_Alert);
+      subtype Alert_Queue is Alert_Queues.Queue;
+      type Alert is
+               abstract new Alert_Queues.Queue_Element with null record;
+      procedure Handle(A in out Alert) is abstract;
+   end Base_Alert_System;
+</pre>
+with the rest of the structure much as before.  The major difference is
+that only alerts can be placed on an alert queue declared as
+<pre>
+   type Alert_Queue_Ptr is access all Alert_Queue;
+   The_Queue: Alert_Queue_Ptr := new Alert_Queue;
+   ...
+</pre>
+whereas previously all queues were quite general.  With this formulation
+there is no risk of placing an alert on a queue of some other type such
+as animals.  Thus although the queue is heterogeneous, nevertheless it is
+constrained to accept only objects of the appropriate class.
+</p>
+<p>
+   This example also illustrates the use of a series of abstract types.
+We start with Root_Alert which is abstract and exists in order to
+characterize the queues; add the queue element property and thus export
+Queue_Element which is itself abstract; we then derive the abstract Alert
+which forms the true base of the alert system and provides the ability to
+declare the dispatching operation Handle.  Only then do we develop
+specific types for the alerts themselves.
+</p>
+<p>
+   Our final example shows how a window system could be constructed and
+illustrates the cascade of mixins mentioned above.  We start with a basic
+window and various operations
+<pre>
+   type Basic_Window is tagged limited private;
+   procedure Display(W: in Basic_Window);
+   procedure Mouse_Click(W: in out Basic_Window;
+                         Where: in Mouse_Coords);
+   ...
+</pre>
+and then we define a number of mixin generics of the familiar pattern
+such as
+<pre>
+   generic
+      type Some_Window is abstract new Basic_Window with private;
+   package Label_Mixin is
+      type Window_With_Label is abstract new Some_Window with private;
+      -- override some operations
+      procedure Display(W: in Window_With_Label);
+
+      -- add some new ones
+      procedure Set_Label(W: in out Window_With_Label;
+                          S: in String);
+      function Label(W: Window_With_Label) return String;
+   private
+      type Window_With_Label is abstract new Some_Window with
+         record
+            Label: String_Quark := Null_Quark;
+            -- an X-Windows like unique ID for a string
+         end record;
+   end Label_Mixin;
+</pre>
+</p>
+<p>
+   Note that this is slightly different to our previous examples since it
+can only be applied to the type Basic_Window or a type derived from
+Basic_Window.
+</p>
+<p>
+   In the generic body we can implement the overriden and new operations,
+using any inherited operations as necessary.  Thus the new version of
+Display applicable to a Window_With_Label might be
+<pre>
+   procedure Display(W: Window_With_Label) is
+   begin
+      Display(Some_Window(W));
+      -- display normally using operation of parent type
+      if W.Label /= Null_Quark then
+         -- now display the label if not null
+         Display_On_Screen(XCoord(W), YCoord(W)-5, Value(W.Label));
+      end if;
+   end Display;
+</pre>
+where the functions XCoord and YCoord are inherited from Basic_Window and
+give the coordinates for where to display the label.
+</p>
+<p>
+   We might declare a whole series of such packages and then finally
+write
+<pre>
+   package Frame is
+      type My_Window is new Basic_Window with private;
+      ...-- exported operations
+   private
+      package Add_Label is new Label_Mixin(Basic_Window);
+      package Add_Border is
+                new Border_Mixin(Add_Label.Window_With_Label);
+      package Add_Menu_Bar is
+                new Menu_Bar_Mixin(Add_Border.Window_With_Border);
+
+      type My_Window is
+                new Add_Menu_Bar.Window_With_Menu_Bar with null record;
+   end Frame;
+</pre>
+</p>
+<p>
+Observe that the final declaration has a null extension; it could add
+further components if required.  The various operations exported from the
+individual mixins can be exported selectively from the package Frame by
+suitable renamings in the package body.
+</p>
+
+<h3>
+<a name=6-3>
+4.6.3  Multiple Views
+</a>
+</h3>
+
+<p>
+Finally, there are uses of multiple inheritance where the derived type or
+class is truly a derivative of more than one parent and clients of that
+type want to "view it" as any of its parents.  This may be accomplished
+in Ada 95 using access discriminants which effectively enable us to
+parameterize one record with another.
+</p>
+<p>
+   An access discriminant can be used to enable a component of a record
+to obtain the identity of the record in which it is embedded (see 3.4.1).
+This enables complex chained structures to be created and can provide
+multiple views of a structure.  Consider
+<pre>
+      type Outer is limited private;
+
+   private
+
+      type Inner(Ptr: access Outer) is limited ...
+
+      type Outer is limited
+         record
+            ...
+            Component: Inner(Outer'Access);
+            ...
+         end record;
+</pre>
+</p>
+<p>
+   The Component of type Inner has an access discriminant Ptr which
+refers back to the enclosing instance of the record Outer.  This is
+because the attribute Access applied to the name of a record type inside
+its declaration refers to the current instance of the type.  This is
+similar to the way in which the name of a task type refers to the current
+task inside its own body rather than to the type itself; see [RM83
+9.1(4)].  If we now declare an object of the type Outer
+<pre>
+   Obj: Outer;
+</pre>
+then the self-referential structure created is as shown in Figure 4-3.
+Note that the structure becomes self-referential automatically.  This is
+not the same as the effect that would be obtained with a record in which
+an instance might happen to have a component referring to itself as a
+consequence of an assignment.  All instances of the type Outer will refer
+to themselves; Ptr cannot change because discriminants are constant.
+</p>
+<p>
+   This simple example on its own is of little interest.  However, the
+types Inner and Outer can both be extensions of other types and these
+other types might themselves be chained structures.  For example, the
+type Inner might be an extension of some type Node containing components
+which access other objects of the type Node in order to create a tree.
+Note in particular that Inner could also be
+<pre>
+   type Inner(Ptr: access Outer'Class) is new Node with ...
+</pre>
+so that heterogeneous chains can be constructed.  (Outer has to be tagged
+in this case.)  The important point is that we can navigate over the tree
+which consists of the components of type Inner linked together but at any
+point in the tree we can reach to the enclosing Outer record as a whole
+by the access discriminant Ptr.
+</p>
+<p>
+   It should be noted that an access discriminant is only allowed for a
+limited type.  This avoids copying problems with the self-referring
+components and dangling references.
+</p>
+<p>
+   We now return to the window example of the previous section and show
+how access discriminants can be used to effectively mix together two
+hierarchies.
+</p>
+<p>
+   Suppose that as well as the hierarchy of windows which concern areas
+on the screen, we also have a hierarchy of monitors.
+<pre>
+              +--------------------------+
+              |                          |
+              |                          |
+              |                          |
+              |                          |
+              |      +-------------+     |  -+
+              +----> |             |     |   |
+                 +-  |-------------|     |   |
+                 |   |  Ptr        |-----+   |
+                 |   |-------------|         |
+       Component |   |             |         |
+        of type -|   |.............|         |   Object
+         Inner   |   |             |         |-- of type
+                 |   |.............|         |   Outer
+                 |   |             |         |
+                 +-  |-------------|         |
+                     |             |         |
+                     |             |         |
+                     |             |         |
+                     +-------------+        -+
+
+                Figure 4-3: A Self-Referential Structure
+</pre>
+</p>
+<p>
+   A monitor is a type which is designed to respond to change; it has a
+primitive operation Update which is called to perform the response.  An
+object that wishes to be monitored keeps a linked list of monitors and
+calls their Update operation whenever necessary; the chain may contain
+many different monitors according to what might need to be updated.  If
+we were doing a complex modelling application concerned with molecular
+structure then when we change the object we might wish to redraw some
+representation on the screen, make a record of the previous state,
+recompute the molecular weight and so on.  The various monitors each
+contain a reference to the monitored object.  The type monitored object
+itself contains a pointer to the start of the chain and is extended with
+additional information as needed by the application.  Thus we have
+<pre>
+   type Monitor;
+   type Monitor_Ptr is access all Monitor'Class;
+
+   type Monitored_Object is abstract tagged limited
+      record
+         First: Monitor_Ptr;  -- list of monitors
+         -- more components to be added by extension
+         -- according to the needs of the specific application
+      end record;
+
+   type Monitored_Object_Ptr is access all Monitored_Object'Class;
+
+   type Monitor is abstract tagged limited
+      record
+         Next: Monitor_Ptr;
+         Obj: Monitored_Object_Ptr;
+         -- more components to be added by extension
+         -- according to the needs of the specific monitor
+      end record;
+
+   procedure Update(M: in out Monitor) is abstract;
+   ...
+   procedure Notify(MO: Monitored_Object'Class) is
+      This_Mon: Monitor_Ptr := MO.First;
+   begin
+      while This_Mon /= null loop
+         Update(This_Mon.all);   -- dispatch for each monitor
+         This_Mon := This_Mon.Next;
+      end loop;
+   end Notify;
+</pre>
+where Notify is a class wide operation of the type Monitored_Object and
+calls all the Update operations of the monitors on the chain.  If our
+object representing the molecule has type Molecule then we would write
+<pre>
+   type Monitored_Molecule is new Monitored_Object with
+      record
+         M: Molecule;
+      end record;
+   ...
+   Proposed_Immortality_Drug: Monitored_Molecule;
+</pre>
+and then perform all our work on the monitored molecule and from time to
+time invoke the updates by calling
+<pre>
+   Notify(Proposed_Immortality_Drug);
+</pre>
+</p>
+<p>
+The configuration might be as in Figure 4-4.
+<pre>
+ +------------------+<-----------------+
+ |                  |                  |
+ |                  |                  |
+ |   +----------+   |   +----------+   |   +----------+
+ +-->| First    |---+-->| Next     |---+-->|          |
+     |----------|   |   |----------|   |   |----------|
+     | The      |   +---| Obj      |   +---|          |
+     | molecule |       |----------|       |----------|
+     |          |       | Special  |       |          |
+     |          |       | data for |       |          |
+     +----------+       | this     |       |          |
+                        | monitor  |       |          |
+                        +----------+       +----------+
+
+       The object             Two monitors on the chain
+
+                       Figure 4-4: A Monitor Chain
+</pre>
+</p>
+<p>
+   Now suppose we want to use one of our windows as part of the updating
+process so that, for example, the picture of the molecule is displayed
+within a window rather than directly on the raw screen.  In order to do
+this we need to hang the window display mechanism on the monitor chain so
+that an appropriate update causes the Display operation to be called.  In
+other words we need to create a Window that can act as a Monitor as well
+as a Window.  First we define a mixin that is a monitor and override its
+Update operation thus
+<pre>
+   type Monitor_Mixin(Win: access Basic_Window'Class) is
+                            new Monitor with null record;
+   procedure Update(M: in out Monitor_Mixin);
+</pre>
+</p>
+<p>
+The body for this might be
+<pre>
+   procedure Update(M: in out Monitor_Mixin) is
+      -- simply redisplay the window
+   begin
+      Display(M.Win.all);  -- this is a dispatching call
+   end Update;
+</pre>
+and now we can mix this Monitor_Mixin into any window type by writing
+<pre>
+   type Window_That_Monitors is new My_Window with
+      record
+         Mon: Monitor_Mixin(Window_That_Monitors'Access);
+      end record;
+</pre>
+where the inner component Mon has a discriminant that refers to the outer
+type.  The monitor component of this can now be linked into the chain as
+shown in Figure 4-5.  Calling Notify on the monitored molecule results in
+the various procedures Update being called.  The Update for the type
+Monitor_Mixin calls the Display for the type Window_That_Monitors of
+which it is part and this has access to all the information about the
+window as well as the information about being a monitor.
+<pre>
+                         +-------------------+
+                         |                   |
+                         |    +----------+   |
+                         +--->|These     |   |
+                              |are the   |   |
+                              |components|   |
+                              |for       |   |
+                              |My_Window |   |
+     +------------------+     |          |   |
+     |                  |     |----------|   |
+     |                  |     | Win      |---+
+     |   +----------+   |     |----------|
+     +-->| First    |---+---->| Next     |---------->
+         |----------|   |     |----------|
+         | The      |   +-----| Obj      |
+         | molecule |         +----------+
+         |          |
+         |          |
+         +----------+
+
+
+            Figure 4-5: The Window-that-Monitors in the Chain
+</pre>
+</p>
+<p>
+   We could of course define a more sophisticated type Monitor_Mixin that
+did other things as well as simply calling the Display operation of the
+associated window.
+</p>
+<p>
+   The examples in this and the previous section show that Ada 95
+provides support for the construction of effectively arbitrary multiple
+inheritance hierarchies.  This has been achieved without having intrinsic
+multiple inheritance which could be a pervasive implementation burden on
+simple single inheritance applications.
+</p>
+
+<h2>
+<a name=7>
+4.7  Relationship with Previous Work
+</a>
+</h2>
+
+<p>
+Object oriented programming originated with Simula [Birtwistle 73].
+Simula was designed to be an almost upward compatible extension of Algol
+60, inspired by the application domain of simulation, although it is
+really a general purpose programming language.  The key insights from
+simulation were that it is useful to think of a complex simulation as
+being organized around a collection of autonomous, interacting objects,
+and that the construction of such simulations could be facilitated by
+abstracting this notion of object into a language construct.
+</p>
+<p>
+   Simula introduced the notion of a class as an abstraction mechanism
+over objects.  A class is a template for creating objects with a common
+data structure and operations on that data structure.  These operations
+determine the possible behavior of the objects of the class.  Operations
+may be sensitive to the current state of the object, and may update that
+state by changing the values of the data structure.
+</p>
+<p>
+   A Simula class definition specifies a data structure for the class,
+the operations on that data, and a body used to initialize objects of the
+class upon their creation, like the sequence of statements in a package
+body.  The data definition and procedure declarations constitute the
+class's interface to programmers.  The Simula class is somewhere between
+a data type and a module.  Instances of the class may be declared,
+assigned to variables, and passed as parameters, like values of a typical
+data type.
+</p>
+<p>
+   Simula introduced a means to define new classes from old ones; a class
+could "inherit" from another class, deriving its structure and operations
+from that "parent".  The new class could augment or override its
+inheritance, adding new data and new operations, or replacing one or more
+of its operations.  Data could not be removed.
+</p>
+<p>
+   Smalltalk [Goldberg 83] was influenced by Simula's notion of class and
+subclassing.  While Simula was a compiled language, Smalltalk was
+interpreted. It was originally intended as an interactive, systems
+programming language for Alan Kay's Dynabook project.
+</p>
+<p>
+   Smalltalk introduced the "message-passing" style of invoking
+operations.  A message is a request to an object to invoke an operation.
+The set of messages that an object recognizes and is capable of
+responding to is called its "protocol" and is determined by the class of
+the object.  When an object is sent a message, a search begins in the
+class of the object class for a method (operation definition)
+corresponding to the message.  If not found, the search continues in the
+parent class (superclass), this continues upward in the class hierarchy
+until either an appropriate method is found or the root of the hierarchy
+is reached without success, in which case an error is signaled.
+</p>
+<p>
+   The historical fact that some early object oriented languages were
+interpreted has contributed to the impression that their mechanisms are
+necessarily too inefficient for real-time or production use.  Many object
+oriented languages (including Simula) also use implicit reference
+semantics (in which all variables are really pointers), thereby raising
+the issue of run-time storage management.  It was these efficiency
+considerations that apparently prevented Ada 83 from providing
+inheritance and polymorphism, given Ada's overriding concerns with run-
+time efficiency, and type safety [Brosgol 89].  More recently, there have
+been a number of languages developed that support object oriented
+programming in a relatively safe, compiled, and efficient style,
+including Trellis/Owl [Schaffert 86], Eiffel [Meyer 88], Modula-3 [Nelson
+91] and C++ [Ellis 90].
+</p>
+<p>
+   The essence of the evolution of OOPLs has thus been to obtain an
+appropriate balance between compile-time and run-time identification of
+the operations to be performed.  If the identification is at run-time
+then the operations are usually called methods; alternative terms are
+virtual functions (C++, Simula) and dispatching operations (the Ada 95
+term).
+</p>
+<p>
+   In Smalltalk-80, for example, method invocations have the form
+<pre>
+   receiver Methodname Argstomethod
+</pre>
+where receiver is the name of the target object.
+</p>
+<p>
+   This syntax simplifies dispatch; the dispatch is determined solely by
+the class of the receiver of the message.  Eiffel and C++ also use the
+"distinguished receiver" approach.
+</p>
+<p>
+   In languages where a function or procedure call syntax is permitted,
+and where more than one argument of the call may be of the class, the
+situation is more complex.  Trellis/Owl [Schaffert 86]) follows the
+Smalltalk-80 tradition and arbitrarily designates the first parameter of
+the call as determining the dispatch.  Some languages distinguish this
+parameter by its appearance as a prefix in the call.
+</p>
+<p>
+   Other possible schemes include
+</p>
+<ol>
+<li>
+    All controlled parameters within the class must share the same type
+     tag.
+<li>
+    The programmer must select a parameter as the controlling one, as a
+     part of the declaration of the parameter's mode.
+<li>
+    All controlled parameters must share the same code for the operation
+     (their dispatch tables must all point to the same code body for that
+     operation).
+<li>
+    The most specific type within the class ("nearest ancestor")
+     applicable to all of the parameters is used.
+<li>
+    The most general type within the class ("furthest ancestor", the
+     root) applicable to all of the parameters is used.
+</ol>
+<p>
+Ada 95 has adopted (1).  This is a logical choice, given that the
+dispatching operations of a type are the primitive operations of that
+type and are derived from those of the root type with systematic
+replacement.  So, in Ada 95, more than one operand, or even the result,
+may control the dispatch.  For a primitive operation of a type T, the
+dispatching is controlled by the operands of type T, and the result if it
+is of type T.
+</p>
+<p>
+   There are a number of other important differences between Ada 95 and
+other languages; these differences are designed to add clarity (which
+encourages programmers to write the correct code) and safety (which
+prevents disaster if they do not).
+</p>
+<p>
+   The first difference is that in Ada 95, an operation is only
+dispatching when applied to an actual parameter of a class-wide type.  In
+other OOPLs, a dispatch is possible whenever an object reference or
+pointer is used as the prefix to the operation.  In Ada 95 terms, this
+means that references/pointers in such OOPLs are always treated as though
+they designate a class-wide type.  Ada 95 allows a formal parameter or an
+access value to have a specific type as its "referent" (this is the
+default, preserving upward compatibility and safety).  Ada 95 also allows
+an actual parameter or an access value to have a class-wide type as its
+referent, in which case dispatching is also possible.
+</p>
+<p>
+   A second difference is that, in Ada 95, if a type T is tagged, then
+all of its primitive operations are dispatching operations; when passed a
+class-wide operand, they dispatch.  In C++, only those particular member
+functions identified as virtual involve a run-time dispatch.  In Ada 95,
+a (non-dispatching) class-wide operation may be defined by explicitly
+declaring it with a formal parameter of type T'Class.  No dispatch is
+performed in this case, because the body of a class-wide operation
+expects its actual parameter to still be class-wide.  Note that, as in
+C++, a run-time dispatch may ultimately occur, when such an operation
+calls a dispatching operation somewhere within its body.  This is
+illustrated by the procedure Process_Alerts in II.2.
+</p>
+<p>
+   A final and important difference between Ada 95 and some other OOPLs
+is that dispatching is safe in the sense that a call to a dispatching
+operation always has a well-defined implementation to dispatch to.  In
+some OOPLs, such as Smalltalk, it is possible to send a message to an
+object that has no method for handling that message; a run-time error
+results.  In Ada, such errors are always detected at compile time.
+</p>
+<p>
+   When a primitive operation is called with class-wide operands in all
+controlling positions, a run-time check is made that all of these
+controlling operands have the same tag value, and the result is defined
+to return this same tag value.  This common tag value is called the
+controlling tag value for the call, and identifies the specific type
+whose corresponding primitive operation is used to implement this call.
+</p>
+<p>
+   This requirement that all controlling operands have the same tag value
+reflects an existing Ada 83 rule for derived types.  The type of all
+operands of a parent type are systematically replaced with the derived
+type when inheriting a primitive operation.  A primitive operation can
+only be a primitive operation of one tagged type.  It is possible but
+unusual for a primitive operation to also operate on another type within
+the same class (but it would not be primitive for that other type).
+Typically, each primitive operation operates only on one type within the
+class, and may return this same type.
+</p>
+<p>
+   By treating all controlling operands symmetrically, we avoid some of
+the difficulties and anomalies encountered in other OOPLs with binary
+operations.  For example, taking the intersection of two sets is viewed
+as a symmetric operation as opposed to thinking of one set as being
+special (the "receiver"), with the other set being a mere argument.
+</p>
+<p>
+   By allowing the result context to control the dispatch, we allow
+parameterless functions to be used to represent type-specific literals,
+like an empty set in a tagged set class.  See the discussion on the
+procedure Convert in 4.5.
+</p>
+<p>
+   There is no need to use run-time dispatch when a controlling operand
+or result has a statically known specific type.   (A mixture of static
+and dynamically determined tags is not allowed.)  In this case, the
+specific type's implementation of the primitive operation is then called
+directly (this is effectively a case of "static" binding).
+</p>
+<p>
+   As discussed in 4.3, the canonical implementation model for a type tag
+is a pointer to a run-time type descriptor, containing pointers to
+subprogram bodies implementing each of the primitive operations.  This
+implementation model means that the call on a dispatching operation
+involves only tag-equality checks (if there is more than one controlling
+operand), and then a call through the appropriate subprogram pointer.
+The overhead for such a call is bounded, and can be kept to two or three
+instructions in most cases, ensuring that dispatching operations can be
+used even in demanding real-time applications.  Note that this overhead
+is typically less than the overhead of using case statements and variant
+records.
+</p>
+<p>
+   For a tagged type T, even the implicitly provided operations (such as
+Object'Size and assignment if nonlimited) use dispatching internally when
+applied to a class-wide operand, to allow for new components that might
+be added by type extension.
+</p>
+<p>
+   Generally, for each primitive operation of a parent type, a type
+extension may either inherit the original implementation, or it may
+override it.  For an operation that had an operand of the parent type, if
+not overridden it becomes an operation with an operand of the type
+extension, which simply ignores (and does not affect) the extension part
+of the operand.  However, for an operation that returned a result of the
+parent type, if not overridden, it becomes an abstract operation that has
+no implementation for the extension.  This is because the extension part
+of the result would not be defined for such an operation.
+</p>
+<p>
+   Abstract operations allow a type to have a specification for an
+operation but no implementation for it, effectively requiring that each
+derivative define its own.  Such operations have no default
+implementation, preventing a derivative from mistakenly inheriting a
+meaningless implementation.  Abstract operations correspond to deferred
+methods or virtual methods in Smalltalk and C++.  The corresponding class
+is called an abstract superclass.
+</p>
+<p>
+   If a tagged type has an abstract primitive operation, then it must be
+declared as an abstract type, and no objects with a tag identifying that
+type may be created.  This means that a call to an abstract operation
+will always dispatch to some non-abstract implementation that is defined
+for some derivative.  No run-time check is needed to detect whether an
+operation is abstract, because no objects with the tag for an abstract
+type can ever be created.
+</p>
+<p>
+   To conclude, the model of type extension and polymorphism in Ada 95
+combines efficiency of implementation, clarity of program text and
+security in a cohesive manner.  It provides the additional flexibility
+sought in an object oriented language without compromising the security
+which was the cornerstone of Ada 83.
+</p>
+
+<h2>
+<a name=8>
+4.8  Requirements Summary
+</a>
+</h2>
+
+<p>
+The three major study topics
+<pre>
+     S4.1-A(1) - Subprograms as Objects
+
+     S4.3-A(1) - Reducing the Need for Recompilation
+
+     S4.3-B(1) - Programming by Specialization/Extension
+</pre>
+are directly addressed and satisfied by the facilities discussed in this
+chapter.
+</p>
+
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-3.html> Previous </a> |
+<a href=rat95-p2-5.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

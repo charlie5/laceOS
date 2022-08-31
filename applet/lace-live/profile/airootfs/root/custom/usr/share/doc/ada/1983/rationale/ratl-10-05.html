@@ -1,0 +1,253 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 10.5: The Implementation of Separate Compilation</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 10: Separate Compilation and Libraries</H2>
+
+<H3><a name="10.5">10.5 The Implementation of Separate Compilation</a></H3>
+
+The  Ada  separate  compilation  facility  can  be  implemented  at  a
+reasonable cost  for the  simple strategy  where the quantum of change
+recognized by  the compiler  is the  compilation or recompilation of a
+single unit.  The model  described below  is similar  to the technique
+used in compilers for the <a href="ratl-BIB.html#languages">Lis</a> language.
+
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#10.5.1">10.5.1 Principle of Separate Compilation</a><BR>
+<a href="#10.5.2">10.5.2 Details of the Actions Performed by the Compiler</a><BR>
+<a href="#10.5.3">10.5.3 Treatment of Package Bodies</a><BR>
+<a href="#10.5.4">10.5.4 Summary of the Information Contained in a Library File</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="10.5.1">10.5.1 Principle of Separate Compilation</a></H3>
+
+As mentioned  before, the Ada separate compilation facility involves a
+program library  that records  information on compilation units and on
+dependence relations between them.
+<p>
+The library  file associated with the program library can be organized
+as a  collection of  records: one  for each  compilation  unit.  If  a
+compilation unit  includes declarations  that are  potentially visible
+from other  compilation units, the corresponding record must contain a
+description of  these declarations  - commonly  called a symbol table.
+This need arises in the following cases:
+
+<ul>
+<li><b>Any library  unit:</b> The  symbol table describes the specification of
+   the package, subprogram, or generic unit.
+<p>
+<li><b>Any compilation  unit that has subunits:</b> The symbol table describes
+   the declarative environment of each stub.
+</ul>
+
+These symbol  tables are produced and managed by the compiler. For the
+compilation of  a given  unit, the  compiler must  first retrieve  the
+symbol tables  that describe  the current  context, and  then assemble
+them as  appropriate. In  other words,  the compiler must construct an
+integrated symbol  table that describes visibility for the compilation
+unit as if the program were not split into separate texts.
+<p>
+In order  to perform  this task it is useful to consider the following
+forest structure  (a collection of genealogical trees), which reflects
+the declaration of units and subunits:
+<ol type=a>
+<li>Each library unit is a root.
+<p>
+<li>The parent  unit of a subunit is the compilation unit
+   that contains the corresponding body stub.
+</ol>
+
+This structure is necessary for the determination of visibility rules.
+Hence it  must be recorded in the library file and updated as new body
+stubs are encountered, and as new units are compiled.
+<p>
+Finally, for each compilation unit, the list of library units that are
+mentioned by  its context  clause must  be kept.  The forest structure
+will help  for determining  the symbol  tables to  be  retrieved,  for
+checking the  validity of  context clauses  and  for  determining  the
+recompilations that  need to  be done  as a  consequence  of  previous
+recompilations. Naturally,  the compiler may also use this information
+to assist the user with recompilations.
+<p>
+To check for required recompilations, the compiler may use a system of
+time-stamping that  reflects  the  order  in  which  compilations  are
+submitted: a  unique compilation  date is  associated with  the symbol
+table of each compilation unit.
+
+<H3><BR><a name="10.5.2">10.5.2 Details of the Actions Performed by the Compiler</a></H3>
+
+The following  major actions  must be performed during the compilation
+of a compilation unit:
+<p>
+<DL>
+<DT><b>Determination of the compilation context</b>
+<p>
+<DD>The context clause is analyzed and the name of the compilation unit is
+recognized. Using  the full  name of  the  subunit  (given  after  the
+reserved word  separate), the genealogy of a subunit can be found: its
+parent, grandparent,  and so  on up  to the  ancestor library  unit. A
+combined with  clause is  formed by  merging the  with clauses  of the
+genealogy.
+<p>
+
+<DT><b>Checking the validity of the compilation context</b>
+<p>
+<DD>Any unit mentioned by a context clause must be a library unit.
+<p>
+The following checks must be performed:
+<p>
+<ul type=disc>
+<li>In the  genealogy, each  subunit must  have been compiled after its
+   parent.
+<p>
+<li>Each compilation  unit of  the genealogy  must have  been  compiled
+   after any library unit mentioned by its context clause.
+<p>
+<li>Each library  unit mentioned  by the  combined context  clause must
+   still be  valid: A  compilation unit  is no  longer  valid  if  its
+   context clause names a library unit that is no longer valid or that
+   has been compiled after the compilation unit itself.
+</ul>
+<p>
+Compilation may  proceed only  if all  these checks succeed. Otherwise
+diagnostics, a  list of  required recompilations,  and  a  recommended
+recompilation order may be printed by the compiler.
+<p>
+
+<DT><b>Table loading</b>
+<p>
+<DD>The symbol tables of the library units named by the merged with clause
+may now  be assembled.  For a  subunit the constitution of the current
+context also  involves nesting  the declarative  parts of the units of
+the genealogy  - layer  by layer,  from the  ancestor to the immediate
+parent.
+<p>
+This table  assembly may  involve establishing  some links between the
+individual symbol  tables, since  they may  refer to  each other  (for
+example, an  identifier declared  in a  given package may be of a type
+declared in another package).
+<p>
+
+<DT><b>Update of the forest structure, table unloading</b>
+<p>
+<DD>At the  end of  the compilation  of a  compilation unit,  the date  of
+compilation must  be updated.  For a library unit, and for a unit that
+contains body  stubs (and  therefore has subunits), a new symbol table
+must be  stored in  the library  file  in  a  suitable  format.  Newly
+declared subunits must be entered in the forest. If a new library unit
+is compiled, a root must be added to the forest.
+<p>
+The forest  structure can  be used  to mark  units  that  have  become
+invalid as  a consequence  of the  current compilation  and for  which
+recompilation will therefore be needed.
+</DL>
+
+<H3><BR><a name="10.5.3">10.5.3 Treatment of Package Bodies</a></H3>
+
+For a  given package,  the two disjoint units (specification and body)
+must be  viewed as  defining complementary aspects of the same logical
+entity. Consequently  it will  be convenient  for the  user to  have a
+single object module, and not two. In order to achieve this effect the
+code produced  during the compilation of the package specification, if
+any, may  be kept  in some  intermediate form  in the  record that  is
+associated with  the package  in  the  program  library.  Later,  when
+compiling the package body, this initial code may be recovered and the
+compilations may  proceed as  if the two units were concatenated. (The
+code produced  for the  specification must  still be retained, in case
+the body is recompiled.)
+
+<H3><BR><a name="10.5.4">10.5.4 Summary of the Information Contained
+in a Library File</a></H3>
+
+The library  file contains  a representation  of the  forest structure
+discussed above.  Each node of a tree corresponds to a subunit, except
+the root, which is always a library unit. A node contains:
+<ul>
+<li>The name of the unit or subunit.
+<p>
+<li>Its nature: subprogram, package, generic unit, or task unit.
+<p>
+<li>Its compilation date and that of the associated unit body, if there
+   is one.
+<p>
+<li>The list of library units mentioned in the context clause.
+<p>
+<li>A symbol  table, if  the compilation  unit is a library unit and in
+   any case if it includes body stubs (has subunits).
+<p>
+<li>Possibly, a boolean component indicating need for recompilation.
+</ul>
+
+The record  for a  given node  is created  either when  the stub for a
+subunit is  analyzed (and  then initialized in the state recompilation
+needed), or  during compilation  in the  case of  a library unit. This
+record is updated during compilations. The record for a subunit may be
+deleted from the library file upon recompilation of the parent unit if
+this unit no longer has a corresponding body stub.
+<p>
+Each  individual  symbol  table  should  be  kept  in  a  format  that
+simplifies establishment  of the  relations between  different  symbol
+tables when  they are  assembled. As  an  example,  consider  the  two
+following packages:
+<p>
+<table border cellpadding=6><tr><td><pre>
+package D is
+  type T is ...
+  ...
+end D;
+
+with D;
+package E is
+  use D;
+  X :  T;
+  ...
+end E;
+</pre></td></tr></table>
+<p>
+Given the  symbol table  entry for  the declaration  of X,  it must be
+possible to find the symbol table entry for its type T.
+<p>
+If internal references are used to represent such relations, they must
+be relocated  when the  symbol tables are assembled. Methods involving
+relocation information,  or a  mapping into virtual memory can be used
+to support this table assembly.
+<p>
+Note, finally,  that symbol tables may be transferred from the library
+file of one program to that of another program. The internal structure
+adopted for symbol tables should permit this.
+
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-10-06.html#10.6"><b>NEXT</b></a>
+&#128; <a href="ratl-10-04.html#10.4"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-10.html#10"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

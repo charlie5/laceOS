@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 11.6: Exceptions and Optimization</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="11.6">11.6</A>.  Exceptions and Optimization  </H2>
+<A HREF="lrm-11-05.html#11.5"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-11.html#11"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-11-07.html#11.7"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The purpose of this section is to specify the  conditions  under  which  an
+implementation  is  allowed  to  perform  certain actions either earlier or
+later than specified by other rules of the language. 
+<P>
+In general, when the language rules specify an order  for  certain  actions
+(the  canonical order), an implementation may only use an alternative order
+if it can guarantee that the effect of the program is not  changed  by  the
+reordering.   In particular, no exception should arise for the execution of
+the reordered program if none arises for the execution of  the  program  in
+the canonical order.  When, on the other hand, the order of certain actions
+is   not   defined   by  the  language,  any  order  can  be  used  by  the
+implementation.  (For example, the arguments of a predefined  operator  can
+be  evaluated  in  any   order  since the rules given in section <a href="lrm-04-05.html#4.5">4.5</a> do not
+require a specific order of evaluation.) 
+<P>
+Additional freedom is left to  an  implementation  for  reordering  actions
+involving  predefined  operations  that  are either predefined operators or
+basic operations other than assignments.  This freedom is left, as  defined
+below,  even in the case where the execution of these predefined operations
+may propagate a (predefined) exception: 
+<ol>
+<li>For the purpose of establishing whether the same effect is obtained by
+the  execution  of  certain  actions  in  the  canonical  and  in   an
+alternative  order,  it  can  be  assumed  that none of the predefined
+operations  invoked  by  these  actions  propagates   a   (predefined)
+exception, provided that the two following requirements are met by the
+alternative  order:   first,  an  operation must not be invoked in the   
+alternative order if  it  is  not  invoked  in  the  canonical  order;
+second,  for  each  operation, the innermost enclosing frame or accept
+statement must be  the  same  in  the  alternative  order  as  in  the
+canonical order, and the same exception handlers must apply.<br><br> 
+<li>Within an expression, the association of operators  with  operands  is
+specified  by  the  syntax.   However,  for  a  sequence of predefined
+operators of  the  same  precedence  level  (and  in  the  absence  of
+parentheses  imposing  a  specific  association),  any  association of
+operators with operands is  allowed  if  it  satisfies  the  following
+requirement:   an  integer  result  must be equal to that given by the
+canonical left-to-right order;  a  real  result  must  belong  to  the
+result  model  interval  defined for the canonical left-to-right order
+(see <a href="lrm-04-05.html#4.5.7">4.5.7</a>).  Such a reordering is allowed even if it  may  remove  an
+exception, or introduce a further predefined exception. 
+</ol>
+Similarly,  additional  freedom  is  left  to  an  implementation  for  the
+evaluation  of  numeric  simple  expressions.   For  the  evaluation  of  a  
+predefined  operation, an implementation is allowed to use the operation of
+a type that has a range wider than that of the base type of  the  operands,
+provided  that  this  delivers  the  exact  result  (or a result within the
+declared accuracy, in the case of a real type), even if  some  intermediate
+results   lie   outside   the  range  of  the  base  type.   The  exception
+NUMERIC_ERROR need not be raised in such a case.   In  particular,  if  the
+numeric  expression  is an operand of a predefined relational operator, the
+exception NUMERIC_ERROR need  not  be  raised  by  the  evaluation  of  the
+relation, provided that the correct BOOLEAN result is obtained.   
+<P>
+A preedefined  operation  need  not be invoked at all, if its only possible
+effect is to propagate a predefined  exception.   Similarly,  a  predefined
+operation  need  not  be invoked if the removal of subsequent operations by
+the above rule renders this invocation ineffective. 
+<P>
+Notes: 
+<P>
+Rule (b) applies to predefined  operators  but  not  to  the  short-circuit
+control forms. 
+<P>
+The  expression SPEED &lt; 300_000.0  can  be replaced by TRUE if the value
+300_000.0 lies outside the base type of SPEED,  even  though  the  implicit
+conversion  of the numeric literal would raise the exception NUMERIC_ERROR. 
+<P>
+Example: 
+<pre>
+    declare
+       N : INTEGER;
+    begin
+       N := 0;               --  (1)
+       for J in 1 .. 10 loop
+          N := N + J**A(K);  --  A and K are global variables
+       end loop;
+       PUT(N);
+    exception
+       when others =&gt; PUT("Some error arose"); PUT(N);
+    end; 
+</pre>
+<P>
+The evaluation of A(K) may be  performed  before  the  loop,  and  possibly
+immediately before the assignment statement (1) even if this evaluation can
+raise  an exception.  Consequently, within the exception handler, the value
+of N is either the undefined initial value or a value later  assigned.   On
+the  other  hand, the evaluation of A(K) cannot be moved before begin since
+an exception would then be  handled  by  a  different  handler.   For  this
+reason, the initialization of N in the declaration itself would exclude the
+possibility of having an undefined initial value of N in the handler. 
+<P>
+<b>References:</b>   <A HREF="lrm-09-05.html#9.5">accept  statement</A>,
+<A HREF="lrm-04-05.html#4.5.7">accuracy  of  real operations</A>,
+<A HREF="lrm-05-02.html#5.2">assignment</A>,
+<A HREF="lrm-03-03.html#3.3">base type</A>,
+<A HREF="lrm-03-03.html#3.3.3">basic operation</A>,
+<A HREF="lrm-04-06.html#4.6">conversion</A>,
+<A HREF="lrm-11.html#11">error   situation</A>,
+<A HREF="lrm-11.html#11">exception</A>,
+<A HREF="lrm-11-02.html#11.2">exception   handler</A>,
+<A HREF="lrm-11-02.html#11.2">frame</A>,
+<A HREF="lrm-11-01.html#11.1">numeric_error   exception</A>,
+<A HREF="lrm-04-05.html#4.5">predefined   operator</A>,
+<A HREF="lrm-08-06.html#8.6">predefined subprogram</A>,
+<A HREF="lrm-11-04.html#11.4">propagation  of  an  exception</A>,
+<A HREF="lrm-03-05.html#3.5.6">real  type</A>,
+<A HREF="lrm-03-02.html#3.2.1">undefined value</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-14-05.html#14.5.4">14.5.4&nbsp;Implementation of Exception Handling</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

@@ -1,0 +1,1834 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part One - Chapter 3
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p1-2.html> Previous </a> |
+<a href=rat95-p2.html> Next </a>
+<hr>
+
+<h1>
+III   Overview of the Ada Language
+</h1>
+
+<p>
+   In addition to these aspects, the language supports real-time
+programming, with facilities to define the invocation, synchronization,
+and timing of parallel tasks.  It also supports systems programming, with
+facilities that allow access to system-dependent properties, and precise
+control over the representation of data.
+</p>
+<p>
+   The fact that the limited and predominantly upward compatible
+enhancements incorported in Ada 95 allow it to support state-of-the-art
+programming in the nineties and beyond, reconfirms the validity of Ada's
+underlying principles, and is a proof of the excellent foundation
+provided by the original design.
+</p>
+
+<a name=1>
+<h2>
+III.1  Objects, Types, Classes and Operations
+</h2>
+</a>
+
+<p>
+This describes two fundamental concepts of Ada: types, which determine a
+set of values with associated operations, and objects, which are
+instances of those types.  Objects hold values.  Variables are objects
+whose values can be changed; constants are objects whose values cannot be
+changed.
+</p>
+
+<h3>
+<a name=1-1>
+III.1.1  Objects and Their Types
+</a>
+</h3>
+
+<p>
+Every object has an associated type.  The type determines a set of
+possible values that the object can contain, and the operations that can
+be applied to it.  Users write declarations to define new types and
+objects.
+</p>
+<p>
+   Ada is a block-structured language in which the scope of declarations,
+including object and type declarations, is static.  Static scoping means
+that the visibility of names does not depend on the input data when the
+program is run, but only on the textual structure of the program.  Static
+properties such as visibility can be changed only by modifying and
+recompiling the source code.
+</p>
+<p>
+   Objects are created when the executing program enters the scope where
+they are declared (elaboration); they are deleted when the execution
+leaves that scope (finalization).  In addition, allocators are executable
+operations that create objects dynamically.  An allocator produces an
+access value (a value of an access type), which provides access to the
+dynamically created object.  An access value is said to designate an
+object.  Access objects are only allowed to designate objects of the type
+specified by the access type.  Access types correspond to pointer types
+or references in other programming languages.
+</p>
+<p>
+   A type, together with a (possibly null) constraint, forms a subtype.
+User-defined subtypes constrain the values of the subtype to a subset of
+the values of the type.  Subtype constraints are useful for run-time
+error detection, because they show the programmer's intent.  Subtypes
+also allow an optimizing compiler to make more efficient use of hardware
+resources, because they give the compiler more information about the
+behavior of the program.
+</p>
+<p>
+   User-defined types provide a finer classification of objects than the
+predefined types, and hence greater assurance that operations are applied
+to only those objects for which the operations are meaningful.
+</p>
+
+<h3>
+<a name=1-2>
+III.1.2  Types, Classes and Views
+</a>
+</h3>
+
+<p>
+Types in Ada can be categorized in a number of different ways.  There are
+elementary types, which cannot be decomposed further, and composite types
+which, as the term implies, are composed of a number of components.  The
+most important form of composite type is the record which comprises a
+number of named components themselves of arbitrary and possibly different
+types.
+</p>
+<p>
+   Records in Ada 95 are generalized to be extensible and form the basis
+for object-oriented programming.  Such extensible record types are known
+as tagged types; values of such types include a tag denoting the type
+which is used at runtime to distinguish between different types.  Record
+types not marked as tagged may not be extended and correspond to the
+record types of Ada 83.
+</p>
+<p>
+   New types may be formed by derivation from any existing type which is
+then known as the parent type.  A derived type inherits the components
+and primitive operations of the parent type.  In the case of deriving
+from a tagged record type, new components can be added thereby extending
+the type.  In all cases new operations can be added and existing
+operations replaced.
+</p>
+<p>
+   The set of types derived directly or indirectly from a specific type,
+together with that type form a derivation class.  The types in a class
+share certain properties (they all have the components of the common
+ancestor or root type for example) and this may be exploited in a number
+of ways.  Treating the types in a class interchangeably by taking
+advantage of such common properties is termed polymorphism.
+</p>
+<p>
+   There are two means of using polymorphism in Ada.  Static polymorphism
+is provided through the generic parameter mechanism whereby a generic
+unit may at compile time be instantiated with any type from a class of
+types.  Dynamic polymorphism is provided through the use of so-called
+class-wide types and the distinction is then made at runtime on the basis
+of the value of a tag.
+</p>
+<p>
+   A class-wide type is declared implicitly whenever a tagged record type
+is defined.  The set of values of the class-wide type is the union of the
+sets of values of all the types of the class.  Values of class-wide types
+are distinguished at runtime by the value of the tag giving class-wide
+programming or dynamic polymorphism.  The class-wide type associated with
+a tagged record type T is denoted by the attribute T'Class.  Objects and
+operations may be defined for such class-wide types in the usual way.
+</p>
+<p>
+   As well as derivation classes, Ada also groups types into a number of
+predefined classes with common operations.  This aids the description of
+the language and, moreover, the common properties of certain of these
+predefined classes may be exploited through the generic mechanism.
+</p>
+<p>
+   A broad hierarchical classification of Ada types is illustrated in
+Figure III-1.  The following summary of the various types gives their key
+properties.
+</p>
+<ul>
+<li>
+     A type is either an elementary type or a composite type.  Elementary
+     types cannot be decomposed further whereas the composite types have
+     an inner structure.  The elementary types can be further categorized
+     into the scalar types and access types.  The composite types
+     comprise familiar array and record types plus the protected and task
+     types which are concerned with multitasking.
+<li>
+    Scalar types are themselves subdivided into the discrete types and
+     the real types.  The discrete types have certain important common
+     properties; for example, they may be used to index array types.  The
+     discrete types are the enumeration types and the integer types.  The
+     integer types in turn comprise signed integer types and modular
+     (unsigned) types.  The real types comprise the other forms of
+     numeric types.
+<li>
+    An enumeration type defines an ordered set of distinct enumeration
+     literals, for example a list of states or an alphabet of characters.
+     The enumeration types Boolean, Character (the 8-bit ISO standard
+     character set) and Wide_Character (the 16-bit ISO standard character
+     set) are predefined.
+<pre>
+                         All Types
+                            |
+            +---------------+-----------+
+            |                           |
+       Elementary Types           Composite Types
+            |                           |
+    +-------+--+             +------+---+---+---------+
+    |          |             |      |       |         |
+  access     scalar       array  record   protected  task
+               |
+        +------+----------------+
+        |                       |
+        |      +====================================+
+     discrete  |              real                  |
+        |      |                |                   |
+    +---------------+       +---+----------+        |
+    |          |    |       |              |        |   Numeric Types
+ enumeration   | integer  float          fixed      |
+               |    |                      |        |
+               | +--+----+            +----+--+     |
+               | |       |            |       |     |
+               |signed  modular  decimal   ordinary |
+               +====================================+
+
+
+                         Figure III-1: Ada Type Hierarchy
+</pre>
+
+<li>
+    The numeric types do not exactly fit the hierarchy as presented, but
+     there are certain properties that are common to all numeric types
+     (such as the availability of arithmetic operations), so we have
+     indicated this by a double box surrounding the numeric types.
+     Numeric types provide a means of performing approximate or exact
+     numerical computations.  Approximate computations may be performed
+     using either fixed point types with absolute error bounds, or
+     floating point types with relative error bounds.  Exact computations
+     may be performed with either integer types, which denote sets of
+     consecutive integers, or with decimal fixed point types.  The
+     numeric types Integer, Float and Duration are predefined.
+<li>
+    Access types, the remaining form of elementary type, allow the
+     construction of linked data structures.  The value of an access type
+     is, in essence, a pointer to an object of another type, the accessed
+     type.  The accessed type may be any type.  In particular the
+     accessed type may be a class-wide type thereby allowing the
+     construction of heterogeneous linked data structures.  Access types
+     may be used to designate objects created by allocators, declared
+     objects (provided they are marked as aliased) and subprograms.
+<li>
+    Array types allow definitions of composite objects with indexable
+     components all of the same subtype.  Array types may be of one or
+     more dimensions.  The types of the indexes must be discrete.    The
+     array types String and Wide_String are predefined.
+<li>
+    Record types are composite types with named components not
+     necessarily of the same type.  Record types may be tagged or
+     untagged.  A tagged record type may be extended upon derivation and
+     gives rise to a class-wide type which forms the basis for dynamic
+     polymorphism.  A tagged record type may also be marked abstract in
+     which case no objects of the type may be declared; an abstract type
+     may have abstract subprograms (these have no body).  Abstract types
+     and subprograms form a foundation from which concrete types may be
+     derived.
+<li>
+    Protected types are composite types that provide synchronized access
+     to their inner components via a number of protected operations.
+     Objects of protected types are passive and do not have a distinct
+     thread of control; the mutual exclusion is provided automatically.
+<li>
+    Task types are composite types which are used to define active units
+     of processing.  Each object of a task type  has its own thread of
+     control.
+</ul>
+<p>
+   Record, protected and task types may be parameterized by special
+components called discriminants.  A discriminant may be either of a
+discrete type or of an access type.  A discriminant of a discrete type
+may be used to control the structure or size of an object.  More
+generally, a discriminant of an access type may be used to parameterize a
+type with a reference to an object of another type.  A discriminant may
+also be used in the initialization of an object of a protected or task
+type.
+</p>
+<p>
+   Ada provides a special syntax for defining new types within the
+various categories as illustrated by the following examples.
+<pre>
+   type Display_Color is   -- an enumeration type
+      (Red, Orange, Yellow, Green, Blue, Violet);
+
+   type Color_Mask is   -- an array type
+      array (Display_Color) of Boolean;
+
+   type Money is   -- a decimal fixed type
+      delta 0.01 digits 18;
+
+   type Payment is   -- a record type
+      record
+         Amount: Money;
+         Due_Date: Date;
+         Paid: Boolean;
+      end record;
+
+   task type Device is   -- a task type
+      entry Reset;
+   end Device;
+
+   type Dev is access Device;   -- an access type
+
+   protected type Semaphore is   -- a protected type
+      procedure Release;
+      entry Seize;
+   private
+      Mutex: Boolean := False;
+   end Semaphore;
+</pre>
+</p>
+<p>
+   The following example illustrates a tagged type and type extension.  A
+tagged type declaration takes the form
+<pre>
+   type Animal is tagged
+      record
+         Species: Species_Name;
+         Weight: Grams;
+      end record;
+</pre>
+and we may then declare
+<pre>
+   function Image(A: Animal) return String;
+      -- Returns a human-readable identification of an Animal
+
+   The type Animal could then be extended as follows
+
+   type Mammal is new Animal with
+      record
+         Hair_Color: Color_Enum;
+      end record;
+</pre>
+and a corresponding
+<pre>
+   function Image(M: Mammal) return String;
+      -- Returns a human-readable identification of a Mammal
+</pre>
+</p>
+<p>
+   The type Mammal has all the components of Animal and adds an
+additional component to describe the color of the mammal's hair.  The
+process of extension and refinement could continue with other types such
+as Reptile and Primate leading to a tree-structured hierarchy of classes
+as depicted in Figure III-2.
+<pre>
+                      Animal'Class
+                          |
+                   +-------------+
+                   |             |
+              Reptile'Class   Mammal'Class
+                                 |
+                                 |
+                                 |
+                             Primate'Class
+
+
+               Figure III-2: A Derivation Class Hierarchy
+</pre>
+</p>
+<p>
+   It is important to observe that we have shown the hierarchy in terms
+of the class-wide types such as Mammal'Class rather than the specific
+types such as Mammal.  This is to emphasize the fact that the type Mammal
+is not a subtype of Animal; Mammal and Animal are distinct types and
+values of one type cannot be directly assigned to objects of the other
+type.  However, a value can be converted to an ancestor type (any type if
+untagged) of the same derivation class by using a type conversion; a
+value of a descendant tagged type can be formed by using an extension
+aggregate.
+</p>
+<p>
+   There are a number of other important concepts concerning types
+regarding the visibility of their components and operations which may be
+described as providing different views of a type.
+</p>
+<p>
+   For example, a private type is a type defined in a package whereby the
+full details of the implementation of the type are only visible inside
+the body and private part of the package.  Private types are of
+fundamental importance in providing data abstraction.
+</p>
+<p>
+   Furthermore, a limited type is a type for which certain operations
+such as predefined assignment are not available.  A type may be
+inherently limited (such as a task type or a protected type or a record
+type marked explicitly as limited) or it may be that just a certain view
+is limited.  Thus a private type may be declared as limited and the full
+type as seen by the body need not be limited.
+</p>
+
+<h3>
+<a name=1-3>
+III.1.3  Operations and Overloading
+</a>
+</h3>
+
+<p>
+There is a set of operations associated with each type.  An operation is
+associated with a type if it takes parameters of the type, or returns a
+result of the type.  Some operations are implicitly  provided when a type
+is defined; others are explicitly declared by the user.
+</p>
+<p>
+   A set of operations is implicitly provided for each type declaration.
+Which operations are implicitly provided depends on the type, and may
+include any of the following
+<ul>
+<li>
+    Syntactic constructs, such as assignment, component selection,
+     literals and attributes.  These use special syntax specific to the
+     operation.
+     For example, an attribute takes the form X'Attr, where X is the name
+     of an entity, and Attr is the name of an attribute of that entity.
+     Thus, Integer'First yields the lower bound of the type Integer.
+<li>
+    Predefined operators.  These are taken from this set of 21 operator
+     symbols
+<ul>
+<li>
+           Logical operators:     and or xor
+<li>
+           Relational operators:  = /= < <= > >=
+<li>
+           Binary adding operators:    + - &
+<li>
+           Unary adding operators:     + -
+<li>
+           Multiplying operators: * / mod rem
+<li>
+           Highest precedence operators:    ** abs not
+</ul>
+<li>
+    Enumeration literals.
+<li>
+    Derived operations, which are inherited by a derived type from its
+     parent type (as explained below).
+</ul>
+<p>
+   The explicitly declared operations of the type are the subprograms
+that are explicitly declared to take a parameter of the type, or to
+return a result of the type.  There are two kinds of subprograms:
+procedures and functions.  A procedure defines a sequence of actions; a
+procedure call is a statement that invokes those actions.  A function is
+like a procedure, but also returns a result; a function call is an
+expression that produces the result when evaluated.  Subprogram calls may
+be indirect, through an access value.
+</p>
+<p>
+   Procedures may take parameters of mode in, which allows reading of the
+parameters, mode out, which allows writing of the parameters, and mode in
+out, which allows both reading and writing of the parameters.  In Ada 95,
+a parameter of mode out behaves like a variable and both reading and
+writing are allowed; however, it is not initialized by the actual
+parameter.  All function parameters are of mode in.  An in parameter may
+be an access parameter.  Within the subprogram, an access parameter may
+be dereferenced to allow reading and writing of the designated object.
+</p>
+<p>
+   The primitive operations of a type are the implicitly provided
+operations of the type, and, for a type immediately declared within a
+package specification, those subprograms of the type that are also
+explicitly declared immediately within the same package specification.  A
+derived type inherits the primitive operations of its parent type, which
+may then be overridden.
+</p>
+<p>
+   The name of an explicitly declared subprogram is a designator, that
+is, an identifier or an operator symbol (see the list of operator symbols
+above).  Operators are a syntactic convenience; the operator notation is
+always equivalent to a function call.  For example, X + 1 is equivalent
+to "+"(X, 1).  When defining new types, users can supply their own
+implementations for any or all of these operators, and use the new
+operators in expressions in the same way that predefined operators are
+used.
+</p>
+<p>
+   The benefits of being able to use the operator symbol "+" to refer to
+the addition function for every numeric type are apparent.  The
+alternative of having to create a unique name for each type's addition
+function would be cumbersome at best.
+</p>
+<p>
+   The operators are just one example of overloading, where a designator
+(e.g., "+") is used as the name for more than one entity.  Another
+example of overloading occurs whenever a new type is derived from an
+existing one.  The new type inherits operations from the parent type,
+including the designators by which the operations are named; these
+designators are overloaded on the old and new types.  Finally, the user
+may introduce overloading simply by defining several subprograms that
+have the same name.  Overloaded subprograms must be distinguishable by
+their parameter and result types.
+</p>
+<p>
+   The user can also provide new meanings for existing operators.  For
+example, a new meaning of "=" can be provided for all types (only for
+limited types in Ada 83).
+</p>
+<p>
+   Ada compilers must determine a unique meaning for every designator in
+a program.  The process of making this determination is called overload
+resolution.  The compiler uses the context in which the designator is
+used, including the parameter and result types of subprograms, to perform
+the overload resolution.  If a designator cannot be resolved to a single
+meaning, then the program is illegal; such ambiguities can be avoided by
+specifying the types of subexpressions explicitly.
+</p>
+<p>
+   Many attributes are defined by the language.  Attributes denote
+various properties, often defined for various classes of Ada's type
+hierarchy.  In some cases, attributes are user-specifiable via an
+attribute definition clause, allowing users to specify a property of an
+entity that would otherwise be chosen by default.  For example, the
+ability to read and write values of a type from an external medium is
+provided by the operations T'Read and T'Write.  By writing
+<pre>
+   type Matrix is ...
+   for Matrix'Read use My_Matrix_Reader;
+   for Matrix'Write use My_Matrix_Writer;
+</pre>
+the predefined operations are overridden by the user's own subprograms.
+</p>
+
+<h3>
+<a name=1-4>
+III.1.4  Class Wide Types and Dispatching
+</a>
+</h3>
+
+<p>
+Associated with each tagged type T is a class-wide type T'Class.  Class-
+wide types have no operations of their own.  However, users may define
+explicit operations on class-wide types.  For example
+<pre>
+   procedure Print(A: in Animal'Class);
+      -- Print human-readable information about an Animal
+</pre>
+</p>
+<p>
+   The procedure Print may be applied to any object within the class of
+animals described above.
+</p>
+<p>
+   A programmer can define several operations having the same name, even
+though each operation has a different implementation.  The ability to
+give distinct operations the same name can be used to indicate that these
+operations have similar, or related, semantics.  When the intended
+operation can be determined at compile time, based on its parameter and
+result types, overloading of subprogram names is used.  For example, the
+predefined package Text_IO contains many operations called Put, all of
+which write a value of some type to a file.  The implementation of Put is
+different for different types.
+</p>
+<p>
+   Dispatching provides run-time selection of the proper implementation
+in situations where the type of an argument to an operation cannot be
+determined until the program is executed, and in fact might be different
+each time the operation is invoked.
+</p>
+<p>
+   Ada 95 provides dispatching on the primitive operations of tagged
+types.  When a primitive operation of a tagged type is called with an
+actual parameter of a class-wide type, the appropriate implementation is
+chosen based on the tag of the actual value.  This choice is made at run
+time and represents the essence of dynamic polymorphism.  (Note that, in
+some cases, the tag can be determined at compile time; this is simply
+regarded as an optimization.)
+</p>
+<p>
+   Continuing the example from above, we demonstrate both overloading and
+dispatching
+<pre>
+   procedure Print(S: in String);
+      -- Print a string
+
+   procedure Print(A: in Animal'Class) is
+      -- Print information on an animal
+   begin
+      Print(Image(A));
+   end Print;
+</pre>
+</p>
+<p>
+   The Print operation is overloaded.  One version is defined for String
+and a second is defined for Animal'Class.  The call to Print within the
+second version resolves at compile time to the version of Print defined
+on String (because Image returns a String); no dispatching is involved.
+On the other hand, Image (see example in III.1.2) is indeed a dispatching
+operation: depending on the tag of A the version of Image associated with
+Animal or Mammal etc, will be called and this choice is made at runtime.
+</p>
+
+<h3>
+<a name=1-5>
+III.1.5  Abstraction and Static Evaluation
+</a>
+</h3>
+
+<p>
+The emphasis on high performance in Ada applications, and the requirement
+to support interfacing to special hardware devices, mean that Ada
+programmers must be able to engineer the low-level mapping of algorithms
+and data structures onto physical hardware.  On the other hand, to build
+large systems, programmers must operate at a high level of abstraction
+and compose systems from understandable building blocks.  The Ada type
+system and facilities for separate compilation are ideally suited to
+reconciling these seemingly conflicting requirements.
+</p>
+<p>
+   Ada's support for static checking and evaluation make it a powerful
+tool, both for the abstract specification of algorithms, and for low-
+level systems programming and the coding of hardware-dependent
+algorithms.  By static, we mean computations whose results can be
+determined by analyzing the source code without knowing the values of
+input data or any other environmental parameters that can change between
+executions of the program.
+</p>
+<p>
+   Ada requires static type checking.  The "scope" (applicability or
+lifetime) of declarations is determined by the source code.  Careful
+attention is given to when the sizes of objects are determined.  Some
+objects' sizes are static, and other objects' sizes are not known until
+run time, but are fixed when the objects are created.  The size of an
+object is only allowed to change during program execution if the object's
+size depends on discriminant values, and the discriminants have a default
+value.  Other variable-size data structures can be created using
+dynamically allocated objects and access types.
+</p>
+<p>
+   Ada supports users who want to express their algorithms at the
+abstract level and depend on the compiler to choose efficient
+implementations, as well as users who need to specify implementation
+details but also want to declare the associated abstractions to the
+compiler to facilitate checking during both initial development and
+maintenance.
+</p>
+
+<a name=2>
+<h2>
+III.2  Statements, Expressions and Elaboration
+</h2>
+</a>
+
+<p>
+Statements are executed at run time to cause an action to occur.
+Expressions are evaluated at run time to produce a value of some type.
+Names are also evaluated at run time in the general case; names refer to
+objects (containing values) or to other entities such as subprograms and
+types.  Declarations are elaborated at run time to produce a new entity
+with a given name.
+</p>
+<p>
+   Many expressions and subtype constraints are statically known.
+Indeed, the Ada compiler is required to evaluate certain expressions and
+subtypes at compile time.  For example, it is common that all information
+about a declaration is known at compile time; in such cases, the run-time
+elaboration need not actually execute any machine code.  The language
+defines a mechanism that allows Ada compilers to preelaborate certain
+kinds of units; i.e., the actual actions needed to do the elaboration are
+done once before the program is ever run instead of many times, each time
+it is run.
+</p>
+
+<h3>
+<a name=2-1>
+III.2.1  Declarative Parts
+</a>
+</h3>
+
+<p>
+Several constructs of the language contain a declarative part followed by
+a sequence of statements.  For example, a procedure body takes the form
+<pre>
+   procedure P(...) is
+      I: Integer := 1;  -- this is the declarative part
+      ...
+   begin
+      ...               -- this is the statement sequence
+      I := I * 2;
+      ...
+   end P;
+</pre>
+</p>
+<p>
+   The execution of the procedure body first elaborates all of the
+declarations given in the declarative part in the order given.  It then
+executes the sequence of statements in the order given (unless a transfer
+of control causes execution to go somewhere other than to the next
+statement in the sequence).
+</p>
+<p>
+   The effect of elaborating the declarations is to cause the declared
+entities to come into existence, and to perform other declaration-
+specific actions.  For example, the elaboration of a variable declaration
+may initialize the variable to the value of some expression.  Often, such
+expressions are evaluated at compile time.  However, if the declarations
+contain non-static expressions, then the elaboration will need to
+evaluate those expressions at run-time.
+</p>
+<p>
+   Controlled types allow programmers a means to define what happens to
+objects at the beginning and end of their lifetimes.  For such types, the
+programmer may define an initialization operation, to be automatically
+invoked when an object of the type is elaborated, and a finalization
+operation to be automatically invoked when the object becomes
+inaccessible.  (Declared objects become inaccessible when their scope is
+left.  Objects created by allocators become inaccessible when
+Unchecked_Deallocation is called, or when the scope of the access type is
+left.)  Controlled types provide a means to reliably program dynamic data
+structures, prevent storage leakage, and leave resources in a consistent
+state.
+</p>
+
+<h3>
+<a name=2-2>
+III.2.2  Assignments and Control Structures
+</a>
+</h3>
+
+<p>
+An assignment statement causes the value of a variable to be replaced by
+that of an expression of the same type.  Assignment is normally performed
+by a simple bit copy of the value provided by the expression.  However,
+in the case of nonlimited controlled types, assignment can be redefined
+by the user.
+</p>
+<p>
+   Case statements and if statements allow selection of an enclosed
+sequence of statements based on the value of an expression.  The loop
+statement allows an enclosed sequence of statements to be executed
+repeatedly, as directed by an iteration scheme, or until an exit
+statement is encountered.  A goto statement transfers control to a place
+marked with a label.  Additional control mechanisms associated with
+multitasking and exception handling are discussed below (see III.4 and
+III.5).
+</p>
+
+<h3>
+<a name=2-3>
+III.2.3  Expressions
+</a>
+</h3>
+
+<p>
+Expressions may appear in many contexts, within both declarations and
+statements.  Expressions are similar to expressions in most programming
+languages: they may refer to variables, constants and literals, and they
+may use any of the value-returning operations described in III.1.3.  An
+expression produces a value.  Every expression has a type that is known
+at compile time.
+</p>
+
+<a name=3>
+<h2>
+III.3  System Construction
+</h2>
+</a>
+
+<p>
+Ada was designed specifically to support the construction of large,
+complex, software systems.  Therefore, it must allow the composition of
+programs from small, understandable building blocks, while still allowing
+programmers to engineer the low-level mapping of algorithms and data
+structures onto physical hardware.  Ada provides support for modern
+software development techniques with the following capabilities
+</p>
+<ul>
+<li>
+  Packaging, the grouping together of logically related entities into
+     packages.
+<li>
+    Information hiding, where the programmer defines the interface of a
+     program unit for the users of that unit, and separately defines the
+     implementation of the unit.
+<li>
+    Object-oriented programming, where objects can be defined in terms
+     of preexisting objects with possible extension, overload resolution
+     can be used to select operations at compile time, and dispatching
+     can be used to select operations at run time.
+<li>
+    Construction of software systems from large numbers of separately
+     compiled units stored in a library, with full compile-time checking
+     of interfaces between separately compiled units.
+<li>
+    Class-wide programming.
+<li>
+    Construction of mixed language systems, that is programs written in
+     more than one programming language.
+</ul>
+<p>
+   The following subsections describe this support in more detail.
+</p>
+
+<h3>
+<a name=3-1>
+III.3.1  Program Units
+</a>
+</h3>
+
+<p>
+Ada programs are composed of the following kinds of program units
+</p>
+<ul>
+<li>
+    Subprograms - functions and procedures.
+<li>
+    Packages - groups of logically related entities.
+<li>
+    Generic units - parameterized templates for subprograms and
+     packages.
+<li>
+    Tasks - active entities that may run in parallel with each other.
+<li>
+    Protected objects - passive entities that protect data shared by
+     multiple tasks.
+</ul>
+<p>
+   Program units may be nested within each other, in the same way as in
+other block-structured languages.  Furthermore, they may be separately
+compiled.
+</p>
+<p>
+   As we shall see later, packages at the so-called library level may
+have child units.  Ada has a hierarchical structure both at the external
+level of compilation and internal to a program unit.
+</p>
+<p>
+   Each program unit may be given in two parts: The specification defines
+the interface between the unit (the "server") and its users ("clients").
+The body defines the implementation of the unit; users do not depend on
+the implementation details.
+</p>
+<p>
+   For packages, the specification consists of the visible part and the
+private part.  The visible part defines the logical interface to the
+package.  The private part defines the physical interface to the package,
+which is needed to generate efficient code, but has no effect on the
+logical properties of the entities exported by the package.  Thus, the
+private part may be thought of as part of the implementation of the
+package, although it is syntactically part of the specification in order
+to ease the generation of efficient code.
+</p>
+<p>
+   The various parts of a package take the following form
+<pre>
+    -- this is a package specification:
+   package Example is
+      -- this is the visible part
+      -- declarations of exported entities appear here
+      type Counter is private;
+      procedure Reset(C: in out Counter);
+      procedure Increment(C: in out Counter);
+      --
+   private
+      -- this is the private part
+      -- declarations appearing here are not exported
+      type Counter is range 0 .. Max;
+   end Example;
+
+    -- this is the corresponding package body:
+   package body Example is
+
+      -- implementations of exported subprograms appear here
+      -- entities that are used only in the implementation
+      -- are also declared here
+      Zero: constant Counter := 0;
+        -- declaration of constant only used in the body
+
+      procedure Reset(C: in out Counter) is
+      begin
+         C := Zero;
+      end Reset;
+
+      procedure Increment(C: in out Counter) is
+      begin
+         C := C + 1;
+      end Increment;
+
+   end Example;
+</pre>
+</p>
+<p>
+
+   Tasks and protected objects may also have a private part.
+</p>
+
+<h3>
+<a name=3-2>
+III.3.2  Private Types and Information Hiding
+</a>
+</h3>
+
+<p>
+Packages support information hiding in the sense that users of the
+package cannot depend on the implementation details that appear in the
+package body.  Private types provide additional information-hiding
+capability.  By declaring a type and its operations in the visible part
+of a package specification, the user can create a new abstract data type.
+</p>
+<p>
+   When a type is declared in a package specification, its implementation
+details may be hidden by declaring the type to be private.  The
+implementation details are given later, as a full type declaration in the
+private part of the package.
+</p>
+<p>
+   The user of a private type is not allowed to use information about the
+full type.  Users may declare objects of the private type, use the
+assignment and equality operations, and use any operations declared as
+subprograms in the visible part of the package.  The private type
+declaration may allow users to refer to discriminants of the type, or it
+may keep them hidden.  A private type may also be declared as limited, in
+which case even assignment and predefined equality operations are not
+available (although the programmer may define an equality operation and
+export it from the package where the type is declared).
+</p>
+<p>
+   In the private part, in the body of the package, and in the
+appropriate parts of child library units (see III.3.6), the type is not
+private: all operations of the type may be used in these places.  For
+example, if the full type declaration declares an array type, then
+outside users of the type are not allowed to index array components,
+because these implementation details are hidden.  However, code in the
+package body is allowed the complete set of array operations, because it
+can see the full type declaration.
+</p>
+
+<h3>
+<a name=3-3>
+III.3.3  Object Oriented Programming
+</a>
+</h3>
+
+<p>
+Modern software development practices call for building programs from
+reusable parts, and for extending existing systems.  Ada supports such
+practices through object oriented programming features.  The basic
+principle of object oriented programming is to be able to define one part
+of a program as an extension of another, pre-existing, part.  The basic
+building blocks of object-oriented programming were discussed in III.1.
+</p>
+<p>
+   Abstract data types may be defined in Ada using packages and private
+types.  Types may be extended by adding new packages, deriving from
+existing types, and adding new operations to derived types.  For non-
+tagged types, such extension is "static" in the sense that the compiler
+determines which operations apply to which objects according to the
+typing and overloading rules.  For tagged types, however, operation
+selection is determined at run time, using the tag carried by each such
+object.  This allows easy extension of existing types.  To add a new
+tagged type, the programmer derives from an existing tagged parent type,
+possibly adding new record components.  The programmer may override
+existing operations with new implementations.  Then, all calls to the
+existing operation will automatically call the new operation in the
+appropriate cases; there is no need to change or even to recompile such
+pre-existing code.  For tagged types, it is possible to write class-wide
+operations by defining subprograms that take parameters of a class-wide
+type.  Class-wide programming allows the programmer to avoid redundancy
+in cases where an operation makes sense for all types in a class, and
+where the implementation of that operation is essentially the same for
+all types in the class.
+</p>
+
+<h3>
+<a name=3-4>
+III.3.4  Generic Units
+</a>
+</h3>
+
+<p>
+Generic program units allow parameterization of program units.  The
+parameters can be types and subprograms as well as objects.  A normal
+(non-generic) program unit is produced by instantiating a generic unit;
+the normal program unit is said to be an instance of the generic unit.
+An instance of a generic package is a package; an instance of a generic
+subprogram is a subprogram.
+</p>
+<p>
+   The instance is a copy of the generic unit, with actual parameters
+substituted for generic formal parameters.  Generic units may be
+implemented by actually generating new code for each instance, or by
+sharing the code for multiple instances, and passing information about
+the parameters at run time.
+</p>
+<p>
+   An example of a generic package is a generic linked list package that
+works for any element type.  The data type of the elements would be
+passed in as a parameter.  The algorithms for manipulating the lists are
+independent of the actual element type.  Instances of the generic package
+would support linked lists with a particular element type.  If the
+element type is a tagged class-wide type, then heterogeneous lists can be
+created, containing elements of any type in the class.  Generic formal
+derived types permit generic units to be developed for derivation
+classes.  Generic formal packages allow a generic unit to be
+parameterized by an instance of another generic package.
+</p>
+
+<h3>
+<a name=3-5>
+III.3.5  Separate Compilation
+</a>
+</h3>
+
+<p>
+Ada allows the specifications and bodies of program units to be
+separately compiled.  A separately compiled piece of code is called a
+compilation unit.  The Ada compiler provides the same level of compile-
+time checking across compilation units as it does within a single
+compilation unit.  For example, in a procedure call, the actual
+parameters must match the types declared for the formal parameters.  This
+rule is checked whether the procedure declaration and the procedure call
+are in the same compilation unit, or different compilation units.
+</p>
+<p>
+   Ada compilers work within the context of a program environment, which
+contains information about the compilation units in a program.  This
+information is used in part to check rules across compilation unit
+boundaries.  There are rules about order of compilation that ensure that
+the compiler always has enough information to check all the rules.  For
+example, a specification must be within the environment before all units
+that have visibility to names declared in that specification can be
+compiled.
+</p>
+
+<h3>
+<a name=3-6>
+III.3.6  Library Units
+</a>
+</h3>
+
+<p>
+A program environment contains information concerning a collection of
+library units.  Library units may be packages, subprograms, or generic
+units.
+</p>
+<p>
+   Package library units may have child library units.  Thus, an entire
+hierarchy of library units may be created: the root of each tree is
+called a root library unit; the tree contains the root library unit, plus
+all of its children and their descendants.
+</p>
+<p>
+   A library unit specification and its body are compilation units; that
+is, they may be compiled separately.
+</p>
+<p>
+   Visibility among library units is achieved using context clauses; a
+compilation unit can see a particular library unit if it names that
+library unit in a context clause.  Both root library units and child
+units may be named in a context clause.  In addition, the child library
+units of a parent can see the parent, including the parent's private
+declarations, and the body of a unit always has visibility into its
+specification.
+</p>
+<p>
+   Child units may be used to reduce recompilation costs.  Apart from
+dependencies created by context clauses, the immediate children of a
+given unit may be recompiled in any order.  Therefore, if an existing
+library unit is extended by adding a child unit, the existing unit need
+not be recompiled; adding a child is accomplished without changing the
+source code of the parent.  More importantly, other units that depend on
+the existing parent unit will not need to be recompiled.
+</p>
+<p>
+   The root library units are considered to be children of package
+Standard: context clauses and compilation ordering rules work the same
+way.  Thus, child units are a straightforward generalization of Ada 83
+library units.
+</p>
+<p>
+   As an example consider the following
+<pre>
+   package Root is
+      -- specification of a root library unit
+      ...
+   end Root;
+
+   -------------------------------
+
+   package Root.Child is
+      -- specification of a child library unit
+      ...
+   end Root.Child;
+
+   -------------------------------
+
+   package body Root.Child is
+      -- body of the child library unit
+      ...
+   end Root.Child;
+
+   -------------------------------
+
+   private package Root.Local_Definitions is
+      -- a private child package specification
+      ...
+   end Root.Local_Definitions;
+
+   -------------------------------
+
+   package body Root is
+       -- body of the root library unit
+      ...
+   end Root;
+</pre>
+</p>
+<p>
+   The lines in the above example indicate the separate compilation
+units; they may be submitted to the compiler separately.  Note that the
+child library units are clearly distinguishable by their expanded names
+(based on the parent's name).  The example also shows a private child
+package - a private child unit is visible only within the hierarchy of
+units rooted at its parent.
+</p>
+<p>
+   Sometimes, the body of a library unit becomes very large, because it
+contains one or more nested bodies.  In such cases, Ada allows the nested
+bodies to be separately compiled as subunits.  The nested body is
+replaced by a body stub.  The subunit, which is given separately, must
+name its parent unit.  Visibility within the subunit is as if it had
+appeared at the place where its body stub occurs.  Subunits also support
+an incremental style of top-down development, because a unit may be
+compiled with one or more body stubs - allowing the development of those
+bodies to be deferred.
+</p>
+
+<h3>
+<a name=3-7>
+III.3.7  Program Composition
+</a>
+</h3>
+
+<p>
+An executable software system is known in Ada as a program.  A program is
+composed of one or more compilation units.
+</p>
+<p>
+   A program may be divided into separate partitions, which may represent
+separate address spaces.  Implementations may provide mechanisms for
+user-defined inter-partition communication.  The Distributed Systems
+annex defines a minimal standard interface for such communication.
+Partitions are intended to support distributed processing, as explained
+in the annex.  Of course, many programs will not be partitioned; such
+programs consist of a single partition.
+</p>
+<p>
+   To build a partition, the user identifies a set of library units to be
+included.  The partition consists of those library units, plus other
+library units depended on by the named units.  The Ada implementation
+automatically constructs this set of units before run time.
+</p>
+<p>
+   Each partition has an environment task, which is provided
+automatically by the Ada implementation.  A partition may have a main
+subprogram, which must be a library unit subprogram.  The environment
+task elaborates all of the library units that are part of the partition,
+and their bodies, in an appropriate order, and then calls the main
+subprogram, if any.  The library units and the main program may create
+other tasks.  Thus, an executing partition may contain a hierarchy of
+tasks, rooted at the environment task.
+</p>
+
+<h3>
+<a name=3-8>
+III.3.8  Interfacing to Other Languages
+</a>
+</h3>
+
+<p>
+Large programs are often composed of parts written in several languages.
+Ada supports this by allowing inter-language subprogram calls, in both
+directions, and inter-language variable references, in both directions.
+The user specifies these interfaces using pragmas.
+</p>
+
+<a name=4>
+<h2>
+III.4  Multitasking
+</h2>
+</a>
+
+<p>
+Ada tasking provides a structured approach to concurrent processing under
+the control of an Ada run-time system, which provides services such as
+scheduling and synchronization.  This describes tasks and the methods
+that are used for synchronizing task execution and for communicating
+between tasks.
+</p>
+<p>
+   Tasking is intended to support tightly coupled systems in which the
+communication mechanisms may be implemented in terms of shared memory.
+Distributed processing, where the processors are loosely coupled, is
+addressed in the Distributed Systems annex.
+</p>
+
+<h3>
+<a name=4-1>
+III.4.1  Tasks
+</a>
+</h3>
+
+<p>
+Tasks are entities whose execution may proceed in parallel.  A task has a
+thread of control.  Different tasks proceed independently, except at
+points where they synchronize.
+</p>
+<p>
+   If there is a sufficient number of processors, then all tasks may
+execute in parallel.  Usually, however, there are more tasks than
+processors; in this case, the tasks will time-share the existing
+processors, and the execution of multiple tasks will be interleaved on
+the same processor.
+</p>
+<p>
+   A task is an object of a task type.  There may be more than one object
+of a given task type.  All objects of a given task type have the same
+entries (interface), and share the same code (body).  As a result they
+all execute the same algorithm.  Different task objects of the same type
+may be parameterized using discriminants.  Task types are inherently
+limited types; assignment and equality operations are forbidden.
+</p>
+<p>
+   Task objects are created in the same ways as other objects: they may
+be declared by an object declaration, or created dynamically using an
+allocator.  Tasks may be nested within other program units, in the same
+manner as subprograms and packages.
+</p>
+<p>
+   All tasks created by a given declarative part or allocator are
+activated in parallel.  This means that they can logically start running
+in parallel with each other.  The task that created these tasks waits
+until they have all finished elaborating their declarative parts; it then
+continues running in parallel with the tasks it created.
+</p>
+<p>
+   Every task has a master, which is the task, subprogram, block
+statement, or accept statement which contains the declaration of the task
+object (or an access type designating the task type, in some
+circumstances).  The task is said to depend on its master.  The task
+executing the master is called the parent task.  Before leaving a master,
+the parent task waits for all dependent tasks.  When all of those have
+been terminated, or are ready to terminate, the parent task proceeds.
+Tasks may be terminated prematurely with the abort statement.
+</p>
+
+<h3>
+<a name=4-2>
+III.4.2  Communication and Synchronization
+</a>
+</h3>
+
+<p>
+For multiple tasks to cooperate, there must be mechanisms that allow the
+tasks to communicate and to synchronize their execution.  Synchronization
+and communication usually go hand-in-hand.  Ada tasks synchronize and
+communicate in the following situations
+</p>
+<ul>
+<li>
+    Tasks synchronize during activation and termination (as just
+     explained).
+<li>
+    Protected objects provide synchronized access to shared data.
+<li>
+    Rendezvous are used for synchronous communication between a pair of
+     tasks.
+<li>
+    Finally, unprotected access to shared variables is allowed, but
+     requires a disciplined protocol to be followed by the communicating
+     tasks.
+</ul>
+<p>
+   This flexibility allows the user to choose the appropriate
+synchronization and communication mechanisms for the problem at hand.
+They are depicted in Table III-1.
+<pre>
++----------------------------------------------------------------------+
+| Ada feature      Synchronization              Communication          |
+|----------------------------------------------------------------------|
+|                                                                      |
+|Task Creation     (not needed)                 Creator initializes    |
+|                                               discriminants          |
+|                                               of new task            |
+|                                                                      |
+|Task Activation   Creator waits for tasks      Activation failure     |
+|                  being activated              might be reported      |
+|                                                                      |
+|Task Termination  Master waits for             (none)                 |
+|                  children                                            |
+|                                                                      |
+|Rendezvous        Entry caller and acceptor    Entry parameters are   |
+|                  wait for each other          passed between the     |
+|                                               entry callerand the    |
+|                                               acceptor               |
+|                                                                      |
+|Protected Object  Mutual exclusion during      Tasks communicate      |
+|                  data access; queued          indirectly by          |
+|                  waiting for entry barriers   reading and writing the|
+|                                               components of          |
+|                                               protected objects      |
+|                                                                      |
+|Unprotected       User-defined, low-level      Reading and writing of |
+|Shared Variables  synchronization              shared variables       |
++----------------------------------------------------------------------+
+
+        Table III-1: Summary of Communication and Synchronization
+</pre>
+</p>
+
+<h3>
+<a name=4-3>
+III.4.3  Protected Objects
+</a>
+</h3>
+
+<p>
+Protected types are used to synchronize access to shared data.  A
+protected type may contain components in a private part.  Moreover, a
+protected type may also contain functions, procedures, and entries - the
+protected operations of the protected type.  The data being shared is
+declared either as components of the protected type, or as global
+variables, possibly designated by the components of the protected type.
+Protected types are inherently limited.
+</p>
+<p>
+   Calls to the protected operations are synchronized as follows.
+Protected functions provide shared read-only access to the shared data.
+Multiple tasks may execute protected functions at the same time.
+Protected procedures and entries provide exclusive read/write access to
+the shared data.  If any task is executing a protected procedure or
+entry, then no other tasks are allowed to execute any protected operation
+at the same time; if they try, they must wait.
+</p>
+<p>
+   Protected objects provide a safe and efficient method of synchronizing
+shared data access.  They are safe, because they perform the necessary
+synchronization operations automatically, and because all synchronizing
+operations are collected together syntactically.  (This is in contrast to
+lower-level mechanisms such as semaphores, where the user of the shared
+data must remember to lock and unlock the semaphore.)  They are
+efficient, because their intended implementation is close to the
+hardware: such as spin-locks in multiprocessor systems.
+</p>
+
+<h3>
+<a name=4-4>
+III.4.4  Protected Operations and Entries
+</a>
+</h3>
+
+<p>
+Protected types may export functions, procedures, and entries as
+described above.  Tasks may export entries.  All of these operations are
+called using similar syntax: OBJ.OP(...), where OBJ is the name of the
+task or protected object, OP is the name of the operation, and (...)
+represents any actual parameters.  Information is passed back and forth
+using in, in out, out parameters.  It is the responsibility of the
+programmer to ensure that operations of protected objects execute for a
+bounded and short period of time.
+</p>
+<p>
+   A client task which calls an entry of a server task or protected
+object may be blocked and placed on a queue.  When a server task accepts
+the entry call from a client task, we say that the two tasks are in
+rendezvous.  At the beginning and the end of the rendezvous, data may be
+exchanged via parameters.  When the rendezvous is over, the two tasks
+each continue execution in parallel.
+</p>
+<p>
+   Entries of protected objects are controlled by barrier expressions.
+When a task calls the entry, it can execute the operation immediately if
+the barrier expression is true; otherwise, the caller is placed on a
+queue until the barrier has become true.  Protected functions and
+procedures do not have barrier expressions and, therefore, calls on them
+need not be queued.
+</p>
+<p>
+   From within a rendezvous or the entry body of a protected type it is
+possible to complete the interaction by requeuing on a further entry;
+this avoids race conditions which might occur with two quite distinct
+interactions.
+</p>
+<p>
+   Entries may also be declared in the private part of a task or
+protected object and thus not visible to external clients.  Such entries
+may be called by internal tasks or by requeuing.
+</p>
+
+<h3>
+<a name=4-5>
+III.4.5  Select Statements
+</a>
+</h3>
+
+<p>
+Select statements are used to specify that a task is willing to wait for
+any of a number of alternative events.  Select statements take various
+forms.
+</p>
+<p>
+   Select statements used by a server task may contain
+</p>
+<ul>
+<li>
+    One or more accept alternatives, which indicate that the task is
+     willing to accept one of several entries; that is, the task waits
+     for another task to call one of those entries.
+<li>
+    An optional terminate alternative, which allows a server task to
+     specify that it is willing to terminate if there is no more work to
+     do (i.e., all other tasks that depend on the same master are either
+     terminated or are waiting at terminate alternatives).
+</ul>
+<p>
+   Select statements used by a client task may contain
+</p>
+<ul>
+<li>
+    One entry call alternative, which indicates that the task is waiting
+     for an entry to be executed.  That is, the task waits either for the
+     server task to accept the entry, or for the  protected object
+     barrier to become true.
+</ul>
+<p>
+   Both of these forms of select statement can also contain, either
+</p>
+<ul>
+<li>
+    A delay alternative, which allows a task to specify an action to be
+     taken if communication is not started within a given period of time,
+</ul>
+<p>
+     or
+</p>
+<ul>
+<li>
+    An else part, which allows a task to specify an action to be taken
+     if communication is not immediately possible.
+</ul>
+<p>
+   Whichever alternative becomes available first is chosen.  Each
+alternative specifies an action to be executed if and when the
+alternative is chosen.
+</p>
+<p>
+   The final form of select statement provides for an asynchronous
+transfer of control; it contains
+</p>
+<ul>
+<li>
+  A triggering alternative, which may be a delay alternative or an
+     entry call followed by a sequence of statements, and
+<li>
+    An abortable part, which is aborted if the triggering alternative
+     completes before the abortable part itself completes.  Control is
+     then asynchronously transferred from somewhere in the abortable part
+     to the statements of the triggering alternative.  If the abortable
+     part completes before being aborted, then the triggering alternative
+     is cancelled and execution continues at the next statement after the
+     select statement.
+</ul>
+
+<h3>
+<a name=4-6>
+III.4.6  Timing
+</a>
+</h3>
+
+<p>
+Ada provides features for measuring real time.  A task may read the clock
+to find out what time it is.  A task may delay for a certain period of
+time, or until a specific time.
+</p>
+<p>
+   As mentioned above, a delay alternative may be used to provide a time-
+out for communication or as a triggering event for initiating an
+asynchronous transfer of control.
+</p>
+
+<h3>
+<a name=4-7>
+III.4.7  Scheduling
+</a>
+</h3>
+
+<p>
+Ada separates the concepts of synchronization and scheduling.
+Synchronization operations determine when tasks must block, and when they
+are ready to run.  Scheduling is the method of allocating processors to
+ready tasks.  The default scheduling policy is defined by the language.
+The Real-Time Systems annex defines another, priority-based, scheduling
+policy, based on a dispatching model.  Finally, implementations are
+allowed to add their own policies, which can be specified by pragmas.
+</p>
+
+<a name=5>
+<h2>
+III.5  Exception Handling
+</h2>
+</a>
+
+<p>
+Most programs need to recover gracefully from errors that occur during
+execution.  Exception handling allows programs to handle such error
+situations without ceasing to operate.
+</p>
+<p>
+   An exception is used to name a particular kind of error situation.
+Some exceptions are predefined by the language; others may be defined by
+the user.  Exceptions are declared in the same way as other entities
+<pre>
+   Buffer_Full_Error: exception;
+</pre>
+This exception might be used to represent the situation of a program
+trying to insert data into a buffer which is already full.
+</p>
+<p>
+   When the exceptional situation happens, the exception is raised.
+Language-defined exceptions are raised for errors in using predefined
+features of the language.  These exceptions correspond to run-time errors
+in other languages.  For example, the language-defined exception
+Constraint_Error is raised when a subtype constraint is violated at run
+time.  User-defined exceptions are raised by the raise statement.  To
+continue the Buffer_Full_Error example above, the implementation of the
+buffer data type might contain statements such as
+<pre>
+
+   if Buffer_Index > Max_Buffer_Size then
+      raise Buffer_Full_Error;
+   end if;
+</pre>
+</p>
+<p>
+   Subprograms, package bodies, block statements, task bodies, entry
+bodies, and accept statements may have exception handlers.  An exception
+handler specifies an action that should be performed when a particular
+exception is raised.  When an exception is raised, the execution of the
+current sequence of statements is abandoned, and control is transferred
+to the exception handler, if there is one.  Thus, the action of the
+exception handler replaces the rest of the execution of the sequence of
+statements that caused the error condition.  If there is no exception
+handler in a particular scope, then the exception is propagated to the
+calling scope.  If the exception is propagated all the way out to the
+scope of the environment task, then execution of the program is
+abandoned; this is similar to the way in which program execution is
+abandoned in other languages when run-time errors are detected.
+</p>
+<p>
+   The following example shows a block with two exception handlers
+<pre>
+   begin
+      ...
+   exception
+      when Buffer_Full_Error =>
+         Reset_Buffer;
+      when Error: others =>
+         Put_Line("Unexpected exception raised:");
+         Put_Line(Ada.Exceptions.Exception_Information(Error));
+   end;
+</pre>
+</p>
+<p>
+   The handlers recognize two situations: if Buffer_Full_Error is raised,
+the buffer is reset.  If any other exception is raised, information about
+that exception is printed.  For many applications, it is useful to get
+such information about an exception when it occurs.  A handler may have a
+choice parameter (Error in the example above) of type
+Exception_Occurrence.  The predefined function Exception_Information
+takes a parameter of this type and returns a String, providing
+information (including the name) about the exception.  These and other
+related facilities are defined in a child of package Ada.
+</p>
+
+<a name=6>
+<h2>
+III.6  Low Level Programming
+</h2>
+</a>
+
+<p>
+Although the majority of program text can be written in a machine-
+independent manner, most large software systems contain small portions
+that need to depend on low-level machine characteristics.  Ada allows
+such dependence, while still allowing the high-level aspects of the
+algorithms and data structures to be described in an abstract manner.
+Many of an implementation's machine-specific characteristics are
+accessible through the package System.  This defines storage-related
+types, an Address type, and relational and arithmetic operations on
+addresses.
+</p>
+
+<h3>
+<a name=6-1>
+III.6.1  Pragmas
+</a>
+</h3>
+
+<p>
+A pragma is used to convey information to the compiler; it is similar to
+a compiler directive supported by other languages.  A pragma begins with
+the reserved word pragma, an identifier which is the name of the pragma,
+and optionally one or more arguments.
+</p>
+<p>
+   Some pragmas are defined by the language.  For example, pragma Inline
+indicates to the compiler that the code for a subprogram is to be
+expanded inline at each call whenever possible.  Most pragmas apply to a
+single object, type, or program unit.  Configuration pragmas are used to
+specify partition-wide or program-wide options.
+</p>
+<p>
+   Implementations may provide additional pragmas, as long as they do not
+syntactically conflict with existing ones or use reserved words.
+Unrecognized pragmas have no effect on a program, but their presence must
+be signaled with a warning message.
+</p>
+
+<h3>
+<a name=6-2>
+III.6.2  Specifying Representations
+</a>
+</h3>
+
+<p>
+Normally, the programmer lets the Ada compiler choose the most efficient
+way of representing objects.  However, Ada also provides representation
+clauses, which allow the user to specify the representation of an
+individual object, or of all objects of a type.  Other representation
+clauses apply to program units.
+</p>
+<p>
+   The programmer may need to specify that the representation matches the
+representation used by some hardware or software external to the Ada
+program, in order to interface to that external entity.  Or, the
+programmer may wish to specify a more efficient representation of certain
+objects in cases where the compiler does not have enough information to
+determine the best (most efficient) representation.  In either case, data
+types and objects are first declared in the normal manner, giving their
+logical properties.  Later in the same declarative part, the programmer
+gives the representation clauses.
+</p>
+<p>
+   In addition to representation clauses, the language defines certain
+pragmas that control aspects of representation.  Implementations may
+provide additional representation pragmas.
+</p>
+<p>
+   There are predefined attributes that allow users to query aspects of
+representation.  These are useful when the programmer needs to write code
+that depends upon the representation, although the user might not need to
+control the representation.
+</p>
+<p>
+   In the absence of representation clauses or pragmas, the compiler is
+free to choose any representation.
+</p>
+
+<h3>
+<a name=6-3>
+III.6.3  Unprotected Shared Variables
+</a>
+</h3>
+
+<p>
+In Ada, variables may be shared among tasks according to the normal
+visibility rules: if two tasks can see the name of the same variable,
+then they may use that variable as shared data.  However, it is up to the
+programmer to properly synchronize access to these shared variables.  In
+most cases, data sharing can be achieved more safely with protected
+objects; unprotected shared variables are primarily used in low-level
+systems programming.  Ada allows the user to specify certain aspects of
+memory allocation and code generation that may affect synchronization by
+specifying variables as volatile or atomic.
+</p>
+
+<h3>
+<a name=6-4>
+III.6.4  Unchecked Programming
+</a>
+</h3>
+
+<p>
+Ada provides features for bypassing certain language restrictions.  These
+features are unchecked; it is the programmer's responsibility to make
+sure that they do not violate the assumptions of the rest of the program.
+For example, there are mechanisms for manipulating access types that
+might leave dangling pointers, and there is a mechanism for converting
+data from one type to another, bypassing the type-checking rules.
+</p>
+<p>
+   The generic function Unchecked_Deallocation frees storage allocated by
+an allocator.  It is unchecked in the sense that it can leave dangling
+pointers.
+</p>
+<p>
+   The generic function Unchecked_Conversion converts data from one type
+to another, bypassing all type-checking rules.  The conversion is done
+simply by reinterpreting the bit pattern as a value of the target type;
+no conversion actually happens at run time (except possibly bit padding
+or truncation).
+</p>
+<p>
+   The attribute P'Unchecked_Access returns a typed access value to any
+aliased object of the appropriate type, bypassing the accessibility
+checking rules (but not the type rules).
+</p>
+
+<a name=7>
+<h2>
+III.7  Standard Library
+</h2>
+</a>
+
+<p>
+All implementations provide a standard library of various packages.  This
+includes the predefined package Standard which defines the predefined
+types such as Integer, and the package System which defines various
+entities relating to the implementation.
+</p>
+<p>
+   The standard library also includes packages Ada and Interfaces.  The
+package Ada includes child packages for computing elementary functions
+and generating random numbers as well as child packages for string
+handling and character manipulation.  The package Interfaces defines
+facilities for interfacing to other languages.
+</p>
+
+<h3>
+<a name=7-1>
+III.7.1  Input Output
+</a>
+</h3>
+
+<p>
+Input-output capabilities are provided in Ada by predefined packages and
+generic packages.
+</p>
+<ul>
+<li>
+    Sequential files present a logical view of files as sequences of
+     elements.  Successive read or write operations to a sequential file
+     result in the transfer of consecutive elements.  The generic package
+     Sequential_IO may be instantiated for any type to provide operations
+     for creating, opening, closing, deleting, reading and writing
+     sequential files.  All elements of a Sequential_IO file are of the
+     same type, although if the type is a tagged class-wide type, the
+     elements may have different tags.
+<li>
+    Direct files present a logical view of files as indexed sets of
+     elements.  The index allows elements to be read or written at any
+     position within a file.  The generic package Direct_IO provides
+     operations similar to Sequential_IO.  In addition, Direct_IO
+     provides operations for determining the current position and size of
+     a file, and setting the position in the file, in terms of element
+     numbers.
+<li>
+    The Text_IO package provides facilities for input and output in a
+     human-readable form.
+<li>
+    A stream presents a logical view of a file (or other external medium
+     such as a buffer or network channel) as a sequence of stream
+     elements.  Stream input and output are predefined through attributes
+     for all nonlimited types.  Users may override these default
+     attributes and the stream operations.
+</ul>
+
+<a name=8>
+<h2>
+III.8  Application Specific Facilities
+</h2>
+</a>
+
+<p>
+Previous sections of this Overview have focused on the Core of the Ada
+language.  Implementations may provide additional features, not by
+extending the language itself, but by providing specialized packages and
+implementation-defined pragmas and attributes.  In order to encourage
+uniformity among implementations, without restricting functionality, the
+Specialized Needs Annexes define standards for such additional
+functionality for specific application areas.  Implementations are not
+required to support all of these features.  For example, an
+implementation specifically targeted to embedded machines might support
+the application-specific features for Real-Time Systems, but not the
+application-specific features for Information Systems.
+</p>
+<p>
+   The application areas discussed in the Annexes are
+</p>
+<ul>
+<li>
+    Systems Programming, including access to machine operations,
+     interrupts, elaboration control, low-level shared variables, and
+     task identification facilities.
+<li>
+    Real-Time Systems, including priorities, queuing and scheduling
+     policies, monotonic time, delay accuracy, immediate abort and a
+     simple tasking model.
+<li>
+    Distributed Systems, including a model for Ada program distribution
+     into partitions and inter-partition communication.
+<li>
+    Information Systems, including detailed support for decimal types
+     and picture formatting.
+<li>
+    Numerics, including a model of real arithmetic plus packages for
+     complex numbers.
+<li>
+    Safety and Security, including pragmas relating to the proof of
+     correctness of programs.
+</ul>
+
+<a name=9>
+<h2>
+III.9  Summary
+</h2>
+</a>
+
+<p>
+The goal of this chapter has been to provide a broad overview of the
+whole of the Ada language.  It also demonstrates that the changes to the
+language represent a natural extension to the original design of Ada.  As
+a consequence, the incompatibilities between Ada 83 and Ada 95 are
+minimal.  Those of practical significance are described in detail in
+Appendix X.
+</p>
+
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p1-2.html> Previous </a> |
+<a href=rat95-p2.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Input-Output for Integer Types</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.CodeIndented {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 5.2em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-10-7.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-10-9.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>A.10.8 Input-Output for Integer Types</H1>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal">The following procedures are defined in the generic 
+packages Integer_IO and Modular_IO, which have to be instantiated for 
+the appropriate signed integer or modular type respectively (indicated 
+by Num in the specifications).</DIV>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">Values are output as 
+decimal or based literals, without low line characters or exponent, and, 
+for Integer_IO, preceded by a minus sign if negative. The format (which 
+includes any leading spaces and minus sign) can be specified by an optional 
+field width parameter. Values of widths of fields in output formats are 
+of the nonnegative integer subtype Field. Values of bases are of the 
+integer subtype Number_Base.&nbsp;</DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Examples" Style="margin-bottom: 0.9em"><B>subtype</B>&nbsp;Number_Base&nbsp;<B>is</B>&nbsp;Integer&nbsp;<B>range</B>&nbsp;2&nbsp;..&nbsp;16;</DIV>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The default field width 
+and base to be used by output procedures are defined by the following 
+variables that are declared in the generic packages Integer_IO and Modular_IO:</DIV>
+<DIV Class="paranum">5</DIV>
+<DIV Class="Examples" Style="margin-bottom: 0.9em">Default_Width&nbsp;:&nbsp;Field&nbsp;:=&nbsp;Num'Width;<BR>
+Default_Base&nbsp;&nbsp;:&nbsp;Number_Base&nbsp;:=&nbsp;10;</DIV>
+<DIV Class="paranum">6</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The following procedures 
+are provided:&nbsp;</DIV>
+<DIV Class="paranum">7</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Get(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;&nbsp;Item&nbsp;:&nbsp;<B>out</B>&nbsp;Num;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;0);<BR>
+<B>procedure</B>&nbsp;Get(Item&nbsp;:&nbsp;<B>out</B>&nbsp;Num;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;0);</DIV>
+<DIV Class="paranum">8</DIV>
+<DIV Class="CodeIndented">If the value of the parameter Width is zero, 
+skips any leading blanks, line terminators, or page terminators, then 
+reads a plus sign if present or (for a signed type only) a minus sign 
+if present, then reads the longest possible sequence of characters matching 
+the syntax of a numeric literal without a point. If a nonzero value of 
+Width is supplied, then exactly Width characters are input, or the characters 
+(possibly none) up to a line terminator, whichever comes first; any skipped 
+leading blanks are included in the count.</DIV>
+<DIV Class="paranum">9</DIV>
+<DIV Class="CodeIndented">Returns, in the parameter Item, the value of 
+type Num that corresponds to the sequence input.</DIV>
+<DIV Class="paranum">10</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">The exception 
+Data_Error is propagated if the sequence of characters read does not 
+form a legal integer literal or if the value obtained is not of the subtype 
+Num (for Integer_IO) or is not in the base range of Num (for Modular_IO).</DIV>
+<DIV Class="paranum">11</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Put(File&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Width;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Base&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Number_Base&nbsp;:=&nbsp;Default_Base);<BR>
+<BR>
+<B>procedure</B>&nbsp;Put(Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Width;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Base&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Number_Base&nbsp;:=&nbsp;Default_Base);</DIV>
+<DIV Class="paranum">12</DIV>
+<DIV Class="CodeIndented">Outputs the value of the parameter Item as 
+an integer literal, with no low lines, no exponent, and no leading zeros 
+(but a single zero for the value zero), and a preceding minus sign for 
+a negative value.</DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="CodeIndented">If the resulting sequence of characters to 
+be output has fewer than Width characters, then leading spaces are first 
+output to make up the difference.</DIV>
+<DIV Class="paranum">14</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Uses the syntax 
+for decimal literal if the parameter Base has the value ten (either explicitly 
+or through Default_Base); otherwise, uses the syntax for based literal, 
+with any letters in upper case.</DIV>
+<DIV Class="paranum">15</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Get(From&nbsp;:&nbsp;<B>in</B>&nbsp;String;&nbsp;Item&nbsp;:&nbsp;<B>out</B>&nbsp;Num;&nbsp;Last&nbsp;:&nbsp;<B>out</B>&nbsp;Positive);</DIV>
+<DIV Class="paranum">16</DIV>
+<DIV Class="CodeIndented">Reads an integer value from the beginning of 
+the given string, following the same rules as the Get procedure that 
+reads an integer value from a file, but treating the end of the string 
+as a file terminator. Returns, in the parameter Item, the value of type 
+Num that corresponds to the sequence input. Returns in Last the index 
+value such that From(Last) is the last character read.</DIV>
+<DIV Class="paranum">17</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">The exception 
+Data_Error is propagated if the sequence input does not have the required 
+syntax or if the value obtained is not of the subtype Num.</DIV>
+<DIV Class="paranum">18</DIV>
+<DIV Class="Examples"><B>procedure</B>&nbsp;Put(To&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Base&nbsp;:&nbsp;<B>in</B>&nbsp;Number_Base&nbsp;:=&nbsp;Default_Base);</DIV>
+<DIV Class="paranum">19</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Outputs the value 
+of the parameter Item to the given string, following the same rule as 
+for output to a file, using the length of the given string as the value 
+for Width.&nbsp;</DIV>
+<DIV Class="paranum">20</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">Integer_Text_IO is 
+a library package that is a nongeneric equivalent to Text_IO.Integer_IO 
+for the predefined type Integer:&nbsp;</DIV>
+<DIV Class="paranum">21</DIV>
+<DIV Class="Examples"><B>with</B>&nbsp;Ada.Text_IO;<A NAME="I5828"></A><BR>
+<B>package</B>&nbsp;Ada.Integer_Text_IO&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;Ada.Text_IO.Integer_IO(Integer);</DIV>
+<DIV Class="paranum">22</DIV>
+<DIV Class="Normal">For each predefined signed integer type, a nongeneric 
+equivalent to Text_IO.Integer_IO is provided, with names such as Ada.Long_Integer_Text_IO.</DIV>
+
+<H4 Class="centered">Implementation Permissions</H4>
+<DIV Class="paranum">23</DIV>
+<DIV Class="Normal">The nongeneric equivalent packages may, but need 
+not, be actual instantiations of the generic package for the appropriate 
+predefined type.</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">24</DIV>
+<DIV Class="Notes">29&nbsp;&nbsp;For Modular_IO, execution of Get propagates 
+Data_Error if the sequence of characters read forms an integer literal 
+outside the range 0..Num'Last.&nbsp;</DIV>
+
+<H4 Class="centered">Examples</H4>
+<DIV Class="paranum">25/1</DIV>
+<DIV Class="Examples"><SPAN STYLE="font-size: 80%"><I>This paragraph 
+was deleted.</I></SPAN></DIV>
+<DIV Class="paranum">26</DIV>
+<DIV Class="Examples"><B>package</B>&nbsp;Int_IO&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;Integer_IO(Small_Int);&nbsp;<B>use</B>&nbsp;Int_IO;<BR>
+--<SPAN Class="roman"><I>&nbsp;default&nbsp;format&nbsp;used&nbsp;at&nbsp;instantiation,</I></SPAN><BR>
+--<SPAN Class="roman"><I>&nbsp;Default_Width&nbsp;=&nbsp;4,&nbsp;Default_Base&nbsp;=&nbsp;10</I></SPAN></DIV>
+<DIV Class="paranum">27</DIV>
+<DIV Class="Examples">Put(126);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&quot;b126&quot;</I></SPAN><BR>
+Put(-126,&nbsp;7);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&quot;bbb&ndash;&#8203;126&quot;</I></SPAN><BR>
+Put(126,&nbsp;Width&nbsp;=&gt;&nbsp;13,&nbsp;Base&nbsp;=&gt;&nbsp;2);&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&quot;bbb2#1111110#&quot;</I></SPAN></DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-10-7.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-A-10-9.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

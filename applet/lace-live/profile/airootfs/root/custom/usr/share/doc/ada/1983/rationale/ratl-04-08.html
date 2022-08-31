@@ -1,0 +1,461 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 4.8: Mutability</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 4: Types</H2>
+
+<H3><a name="4.8">4.8 Mutability</a></H3>
+
+The term  mutability refers  to the  ability to  change the value of a
+discriminant of  a given  record (by  a whole  record assignment). The
+problems addressed  in this  discussion of  mutability  are  those  of
+efficiency of  representation and  efficiency of implementation of the
+parameter passing rules.
+<p>
+As regards  efficiency of representation, consider again our canonical
+examples of  types with  discriminants. Then for unconstrained objects
+such as
+<p>
+<table border cellpadding=6><tr><td><pre>
+ANYONE   :  PERSON;
+ANYLINE  :  LINE;
+</pre></td></tr></table>
+<p>
+we expect  the compiler  to reserve  enough storage to accommodate the
+largest possible  value for  the type  considered. For example, in the
+case of  ANYLINE, 200  characters must  be  reserved  for  the  string
+component ANYLINE.DATA.  On the  other hand,  for constrained  objects
+such as:
+<p>
+<table border cellpadding=6><tr><td><pre>
+PAUL  :  PERSON(SEX =&gt;  M);
+JOAN  :  PERSON(SEX =&gt;  F);
+TITLE :  LINE(SIZE    =&gt;  30);
+</pre></td></tr></table>
+<p>
+we expect  the compiler  to reserve  no more space than is dictated by
+the corresponding  constraint. Thus  in the  case of  TITLE,  just  30
+characters are needed for the corresponding string.
+<p>
+Parameter passing  rules for  objects of  record types  do not specify
+whether the  effect is  to be  achieved by  copy or  by reference. For
+example, for  an in  out parameter  the semantics  specifies that both
+reading and  updating of  the associated actual parameter are allowed.
+But the  implementation has  freedom to implement parameter passing by
+copy (for  example, for  small objects)  or by reference (for example,
+for large  objects): this should not matter for correct programs, that
+is, for  programs that  are not  erroneous. The  motivation for  these
+rules is  discussed  elsewhere  (<a href="ratl-08-02.html#8.2">see  8.2</a>),  but  consider  now  their
+interactions with representation and mutability.
+<p>
+Consider for  example a  procedure to invert a given line (arrange the
+letters in reverse order) using the function MIRROR previously defined
+for strings (<a href="ratl-04-05.html#4.5">see 4.5</a>):
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure INVERT(L :  in out LINE) is
+begin
+  L.DATA :=  MIRROR(L.DATA);
+end;
+</pre></td></tr></table>
+<p>
+The formal  parameter must  have the  mode in out, since we update the
+formal  parameter.  This  procedure  can  be  used  indifferently  for
+constrained or unconstrained objects:
+<p>
+<table border cellpadding=6><tr><td><pre>
+INVERT(TITLE);         -- constrained
+INVERT(ANYLINE);       -- unconstrained
+</pre></td></tr></table>
+<p>
+In either  case, it  does not  matter whether  the compiler implements
+parameter passing  using the  by-copy or by-reference mechanism, since
+the procedure  does not change the size of the line. This would remain
+true if, in INVERT, we had used a whole record assignment such as
+<PRE>    L :=  (SIZE =&gt;  L.SIZE,  DATA =&gt;  MIRROR(L.DATA));</PRE>
+<p>
+But consider now a procedure, such as CHANGE, that performs mutations:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure CHANGE(L :  in out LINE) is
+  SAFE :  constant LINE :=  L;
+begin
+  ...
+  L :=  (SIZE =&gt;  45,   DATA =&gt;  ... );              -- (1)
+  ...
+  L :=  (SIZE =&gt;  117,  DATA =&gt;  ... );              -- (2)
+  ...
+  L :=  (SIZE =&gt;  SAFE.SIZE,  DATA =&gt;  MIRROR(SAFE.DATA));
+end;
+</pre></td></tr></table>
+<p>
+Calls with an unconstrained object such as
+<p>
+<PRE>    CHANGE(ANYLINE);</PRE>
+<p>
+clearly raise  no problem. But consider the treatment of a call with a
+constrained object, such as
+<p>
+<PRE>    CHANGE(TITLE);</PRE>
+<p>
+If the  parameter passing  semantics were  purely by copy, such a call
+would  be   acceptable:  before  the  call  the  unconstrained  formal
+parameter would  be initialized with the value of the actual parameter
+TITLE; upon  return, the value of the formal parameter would be copied
+back into  TITLE, and  this would  work since  the discriminant  value
+would be  the same  upon return  as  before  the  call.  However,  the
+important optimization of passing large records by reference would not
+be possible.  (Alternatively assignments  such as  (1) and  (2)  would
+require a local copy.)
+<p>
+The above  call will fail with the Ada semantics: the formal parameter
+is constrained  in exactly  the same  way  as  the  associated  actual
+parameter. For  the formal parameter L, the language actually provides
+the attribute
+<p>
+<PRE>    L'CONSTRAINED</PRE>
+<p>
+which is  TRUE if the associated actual parameter is constrained (such
+as TITLE),  FALSE if  unconstrained (such  as ANYLINE). In the case of
+the procedure  CHANGE called  with TITLE  as actual  parameter,  these
+rules mean  that the  assignment (1)  is incorrect, and will raise the
+exception CONSTRAINT_ERROR.
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#4.8.1">4.8.1  The Case Against Static Mutability</a><BR>
+<a href="#4.8.2">4.8.2  Implementation Considerations</a><BR>
+<b>
+     </TD>
+   </TR>
+</TABLE></center>
+<p>
+<H3><BR><a name="4.8.1">4.8.1 The Case Against Static Mutability</a></H3>
+
+The Ada  solution for  mutability,  as  presented  above,  is  dynamic
+solution, which  involves  dynamic  transmission  of  the  constrained
+attribute across subprogram calls. During the course of the Ada design
+several  solutions   that  allow   compilation-time  verification   of
+mutability were examined. We next review two of these static solutions
+and the reasons for their rejection.
+<p>
+One approach  to static  mutability would be to associate this quality
+with the  type itself:  allow  types  with  objects  that  are  always
+constrained (never  mutable), allow  types with objects that are never
+constrained (always  mutable), but  not types  with  both  constrained
+objects and unconstrained objects.
+<p>
+With this  approach the type PERSON would not be allowed, but we could
+declare the following types:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type HUMAN(SEX :  GENDER) is           -- immutable: must be constrained
+  record
+    AGE :  INTEGER range 0 .. 123;
+    case SEX is
+      ...                              -- as in PERSON
+    end case;
+  end record;
+
+-- What follows is not in Ada:
+
+type MUTANT(SEX :  GENDER  :=  F) is   -- cannot be constrained
+  mutable record
+    SELF :  HUMAN(SEX);
+  end record;
+</pre></td></tr></table>
+<p>
+A constraint  is required  for each  object of type HUMAN. This allows
+the compiler  to allocate  the exact  (minimum) space  needed for each
+such object.  Furthermore we know that this space cannot vary, because
+of the  constraint, so  that parameter passing by reference can safely
+be used for all objects of this type.
+<p>
+Conversely, no  constraint would  ever be  allowed for objects of type
+MUTANT, so  that the  maximum space  would be  allocated for each such
+object. Parameter passing by reference would therefore again be safe.
+<p>
+Whereas this solution allows efficient parameter passing by reference,
+its drawbacks  become apparent  precisely in those situations where we
+need to have both mutable and immutable objects. The first drawback is
+verbosity. Instead of writing the Ada declarations and statements:
+<p>
+<table border cellpadding=6><tr><td><pre>
+PAUL  :  PERSON(SEX =&gt;  M);     -- constrained
+JOAN  :  PERSON(SEX =&gt;  F);     -- constrained
+ANY   :  PERSON;                -- mutable
+...
+ANY   :=  PAUL;
+...   ANY.AGE    ...
+</pre></td></tr></table>
+<p>
+we would have to write:
+<p>
+<table border cellpadding=6><tr><td><pre>
+PAUL  :  PERSON(SEX =&gt;  M);     -- constrained
+JOAN  :  PERSON(SEX =&gt;  F);     -- constrained
+ANY   :  MUTANT;          -- mutable
+...
+ANY   :=  (M, PAUL);
+...    ANY.SELF.AGE    ...
+</pre></td></tr></table>
+<p>
+in which  the use  of mutable  objects is  complicated  by  the  extra
+component.
+<p>
+The second  - and  more important  - drawback  is in  terms  of  space
+efficiency. Consider  the formation  of any  structure  that  involves
+objects of  a given  type  with  different  discriminant  values:  for
+example a genealogy, using another formulation of the type PERSON with
+an access type:
+<p>
+<table border cellpadding=6><tr><td><pre>
+  ...
+type PERSON_NAME is access PERSON;
+
+type PERSON(SEX :  GENDER  :=  F) is
+  record
+    ...
+    FATHER   :  PERSON_NAME(SEX =&gt;  M);
+    MOTHER   :  PERSON_NAME(SEX =&gt;  F);
+    SPOUSE   :  PERSON_NAME;
+    SIBLING  :  PERSON_NAME;
+    ...
+  end record;
+
+MARY  :  PERSON_NAME(F)    :=  new PERSON'(SEX =&gt;  F, ... );
+JACK  :  PERSON_NAME(M)    :=  new PERSON'(SEX =&gt;  M, ... );
+</pre></td></tr></table>
+<p>
+The above Ada formulation will take advantage of the fact that objects
+dynamically created by allocators (see chapter 6) are constrained upon
+allocation.  For   example,  although  the  component  SPOUSE  is  not
+constrained (and  can thus  designate an  object of  either gender), a
+given gender  must be  selected upon  allocation,  and  the  allocated
+object is thereafter constrained by this value and is immutable:
+<p>
+<table border cellpadding=6><tr><td><pre>
+MARY.SPOUSE  :=  new PERSON'(SEX =&gt;  M, ... );
+JACK.SPOUSE  :=  new PERSON'(SEX =&gt;  F, ... );
+</pre></td></tr></table>
+<p>
+In terms  of space  efficiency this  is optimal:  the minimum space is
+reserved for  the object  designated by the SPOUSE component. With the
+static alternative  presently being  analyzed, however, this would not
+be the case. The component SPOUSE would have to be declared as follows
+(assuming the appropriate access type declaration):
+<p>
+<PRE>    SPOUSE :  MUTANT_NAME;</PRE>
+<p>
+so that the allocation for the above example would become:
+<p>
+<table border cellpadding=6><tr><td><pre>
+MARY.SPOUSE  :=  new MUTANT'( ... );
+JACK.SPOUSE  :=  new MUTANT'( ... );
+</pre></td></tr></table>
+<p>
+and in both cases we would have to allocate the maximum space.
+<p>
+The Ada  formulation therefore  allows  an  important  kind  of  space
+optimization. It  is very  well suited  to a quite common situation in
+the  construction   of  interrelated  data  structures:  although  the
+discriminant of the object designated by a given variable is not known
+statically (as  in the  case of  SPOUSE and  SIBLING) it  will be very
+unlikely to change after allocation. Conversely, the Ada concepts also
+allow the  declaration of  a type  such as MUTANT in terms of the type
+PERSON (the inconvenience is inverted):
+<p>
+<table border cellpadding=6><tr><td><pre>
+type MUTANT is             -- cannot be constrained
+  record
+    SELF :  PERSON;        -- unconstrained
+  end record;
+</pre></td></tr></table>
+<p>
+Another approach  to static  mutability  would  be  to  associate  the
+mutable quality  with formal  parameters, rather  than with types. For
+example, consider again the type LINE:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type LINE(SIZE :  LENGTH  :=  100) is
+  record
+    DATA :  STRING(1 .. SIZE);
+  end record;
+
+SPACE :  constant CHARACTER :=  ' ';
+</pre></td></tr></table>
+<p>
+Then we could define a procedure as follows
+<p>
+<table border cellpadding=6><tr><td><pre>
+-- The following is not in Ada:
+
+procedure BLANK(L :  in out LINE(&lt;&gt;)) is        -- not mutable
+begin
+  for N in 1 .. L.SIZE loop
+    L.DATA(N) :=  SPACE;
+  end loop;
+end;
+</pre></td></tr></table>
+<p>
+In this hypothetical formulation the subtype indication
+<p>
+<PRE>    LINE(&lt;&gt;)                    -- not in Ada</PRE>
+<p>
+would mean  that the formal parameter is indeed constrained (and hence
+immutable) although  the discriminant  values are  borrowed  from  the
+associated actual  parameter. Parameter  passing by reference would be
+quite  safe   because  of   the  immutability.   Conversely,  in  this
+formulation mutability  could be indicated by the type mark LINE alone
+as in
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure CHANGE(L :  in out LINE) is
+begin
+  L :=  (SIZE =&gt;  80,  DATA =&gt;  (1 .. 80 =&gt;  SPACE));
+end;
+</pre></td></tr></table>
+<p>
+and would be applicable only to objects that are unconstrained such as
+<p>
+<PRE>    ANYLINE :  LINE;</PRE>
+<p>
+thereby ensuring  the safety of by-reference parameter passing in this
+case as well.
+<p>
+The major  drawback of  this approach to static mutability (aside from
+the  additional  rules  and  notations)  is  that  it  would  make  it
+impossible to  define an operation that performs mutations in the case
+of unconstrained  objects but not in the case of constrained objects -
+note that  this is  actually what happens for the basic operation (:=)
+of assignment. Thus:
+<p>
+<table border cellpadding=6><tr><td><pre>
+PAUL  :  PERSON(SEX =&gt;  M); -- constrained
+JOAN  :  PERSON(SEX =&gt;  F); -- constrained
+ANY   :  PERSON;            -- unconstrained: initially SEX = F
+  ...
+ANY   :=  PAUL;             --  ":=" mutates
+ANY   :=  JOAN;             --  ":=" mutates again
+JOAN  :=  ANY;              --  ":=" does not mutate
+</pre></td></tr></table>
+<p>
+If this  property exists for assignment, we are likely to need it also
+for user-defined  operations, which  would not  be possible  with this
+static approach  to mutability.  For example, it would not be possible
+to write  a procedure  COPY that  copies the whole line in the case of
+unconstrained  lines   but  only  the  common  part  in  the  case  of
+constrained lines. Such a procedure can be written as follows in Ada:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure COPY(SOURCE :  in LINE;  TARGET :  out LINE) is
+begin
+  if TARGET'CONSTRAINED then
+    declare
+      SIZE :  LENGTH  :=  TARGET.SIZE;
+    begin
+      if  SIZE &gt; SOURCE.SIZE then
+        SIZE :=  SOURCE.SIZE;
+      end;
+      TARGET.DATA(1 .. SIZE) :=  SOURCE.DATA(1 .. SIZE);
+    end;
+  else
+    TARGET :=  SOURCE;
+  end if;
+end COPY;
+</pre></td></tr></table>
+
+<H3><BR><a name="4.8.2">4.8.2 Implementation Considerations</a></H3>
+
+The CONSTRAINED  attribute may  be implemented  in a  variety of ways.
+First there  are several  cases where we know the objects to be always
+immutable, so that no run-time representation of the attribute is ever
+required (CONSTRAINED is always true). These are:
+<ul>
+<li>Any object  whose type is a type with discriminants defined without
+   default expressions.
+
+<li>Any  object  designated  by  an  access  value:  such  objects  are
+   constrained by  the discriminant  value specified for the allocator
+   that creates the object.
+</ul>
+
+When run-time mutability information is needed for a formal parameter,
+the CONSTRAINED  attribute must be passed (as a descriptor) along with
+the actual parameter.
+<p>
+Note that  the CONSTRAINED  attribute cannot  be considered as part of
+the value  itself (that  is, as  a  component).  To  see  this  point,
+consider the following example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+subtype TITLE is LINE(SIZE =&gt;  45);
+ANYLINE :  LINE;
+  ...
+procedure SET(A_LINE :  in out LINE) is
+begin
+  ...
+end;
+
+  ...
+procedure PREPARE(A_TITLE :  in out TITLE) is
+begin
+  ...
+  SET(A_TITLE);
+  ...
+end;
+
+  ...
+ANYLINE :=  TITLE'(SIZE =&gt;  45,  DATA =&gt;  (others =&gt;  ' '));
+PREPARE(ANYLINE);
+</pre></td></tr></table>
+<p>
+Then if  the  CONSTRAINED  attribute  were  considered  as  a  boolean
+component of  the value of ANYLINE, it would have to be FALSE (and not
+updated by  the assignment of the value of A_TITLE). However, consider
+the call SET(A_TITLE) issued from the body of PREPARE when called with
+the actual parameter ANYLINE. We must have successively:
+<p>
+<table border cellpadding=6><tr><td><pre>
+ANYLINE'CONSTRAINED  =  FALSE -- since ANYLINE is declared as LINE
+A_TITLE'CONSTRAINED  =  TRUE  -- since A_TITLE is declared as TITLE
+A_LINE'CONSTRAINED   =  FALSE -- since A_LINE is declared as LINE
+</pre></td></tr></table>
+<p>
+But this  would not  be the  case in  our example:  For a by-reference
+implementation, A_TITLE  and A_LINE would both refer to ANYLINE; for a
+by-copy implementation the value of ANYLINE would be copied to A_TITLE
+and further  to A_LINE;  and for  either implementation  the attribute
+would be incorrect within the body of PREPARE, and if corrected there,
+within the body of SET.
+
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-05.html#5"><b>NEXT</b></a>
+&#128; <a href="ratl-04-07.html#4.7"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-04.html#4"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

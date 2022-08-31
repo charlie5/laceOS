@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Protected Subprograms and Protected Actions</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-5-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>9.5.1 Protected Subprograms and Protected Actions</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal"><A NAME="I3622"></A><A NAME="I3623"></A><A NAME="I3624"></A>A 
+<I>protected subprogram</I> is a subprogram declared immediately within 
+a <SPAN Class="swiss"><A HREF="RM-9-4.html#S0195">protected_definition</A></SPAN>. 
+Protected procedures provide exclusive read-write access to the data 
+of a protected object; protected functions provide concurrent read-only 
+access to the data.&nbsp;</DIV>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal">Within the body of a protected function (or a function 
+declared immediately within a <SPAN Class="swiss"><A HREF="RM-9-4.html#S0198">protected_body</A></SPAN>), 
+the current instance of the enclosing protected unit is defined to be 
+a constant (that is, its subcomponents may be read but not updated). 
+Within the body of a protected procedure (or a procedure declared immediately 
+within a <SPAN Class="swiss"><A HREF="RM-9-4.html#S0198">protected_body</A></SPAN>), 
+and within an <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0203">entry_body</A></SPAN>, 
+the current instance is defined to be a variable (updating is permitted). 
+</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Normal"><A NAME="I3625"></A>For the execution of a call on 
+a protected subprogram, the evaluation of the <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+and of the parameter associations, and any assigning back of <B>in out</B> 
+or <B>out</B> parameters, proceeds as for a normal subprogram call (see 
+<A HREF="RM-6-4.html">6.4</A>). If the call is an internal call (see 
+<A HREF="RM-9-5.html">9.5</A>), the body of the subprogram is executed 
+as for a normal subprogram call. If the call is an external call, then 
+the body of the subprogram is executed as part of a new <I>protected 
+action</I> on the target protected object; the protected action completes 
+after the body of the subprogram is executed. A protected action can 
+also be started by an entry call (see <A HREF="RM-9-5-3.html">9.5.3</A>).</DIV>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><A NAME="I3626"></A>A 
+new protected action is not started on a protected object while another 
+protected action on the same protected object is underway, unless both 
+actions are the result of a call on a protected function. This rule is 
+expressible in terms of the execution resource associated with the protected 
+object:&nbsp;</DIV>
+<DIV Class="paranum">5</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I3627"></A><A NAME="I3628"></A><I>Starting</I> 
+a protected action on a protected object corresponds to <I>acquiring</I> 
+the execution resource associated with the protected object, either for 
+concurrent read-only access if the protected action is for a call on 
+a protected function, or for exclusive read-write access otherwise;</LI></UL>
+<DIV Class="paranum">6</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I3629"></A><A NAME="I3630"></A><I>Completing</I> 
+the protected action corresponds to <I>releasing</I> the associated execution 
+resource.&nbsp;</LI></UL>
+<DIV Class="paranum">7</DIV>
+<DIV Class="Normal">After performing an operation on a protected object 
+other than a call on a protected function, but prior to completing the 
+associated protected action, the entry queues (if any) of the protected 
+object are serviced (see <A HREF="RM-9-5-3.html">9.5.3</A>).&nbsp;</DIV>
+
+<H4 Class="centered">Bounded (Run-Time) Errors</H4>
+<DIV Class="paranum">8</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><A NAME="I3631"></A>During 
+a protected action, it is a bounded error to invoke an operation that 
+is <I>potentially blocking</I>. <A NAME="I3632"></A><A NAME="I3633"></A>The 
+following are defined to be potentially blocking operations:&nbsp;</DIV>
+<DIV Class="paranum">9</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>a <SPAN Class="swiss"><A HREF="RM-9-7.html#S0212">select_statement</A></SPAN>;</LI></UL>
+<DIV Class="paranum">10</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>an <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0201">accept_statement</A></SPAN>;</LI></UL>
+<DIV Class="paranum">11</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>an <SPAN Class="swiss"><A HREF="RM-9-5-3.html#S0207">entry_call_statement</A></SPAN>;</LI></UL>
+<DIV Class="paranum">12</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>a <SPAN Class="swiss"><A HREF="RM-9-6.html#S0209">delay_statement</A></SPAN>;</LI></UL>
+<DIV Class="paranum">13</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>an <SPAN Class="swiss"><A HREF="RM-9-8.html#S0227">abort_statement</A></SPAN>;</LI></UL>
+<DIV Class="paranum">14</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>task creation or activation;</LI></UL>
+<DIV Class="paranum">15</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>an external call on a protected subprogram 
+(or an external requeue) with the same target object as that of the protected 
+action;&nbsp;</LI></UL>
+<DIV Class="paranum">16</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>a call on a subprogram whose body 
+contains a potentially blocking operation.&nbsp;</LI></UL>
+<DIV Class="paranum">17</DIV>
+<DIV Class="Normal"><A NAME="I3634"></A>If the bounded error is detected, 
+Program_Error is raised. If not detected, the bounded error might result 
+in deadlock or a (nested) protected action on the same target object.</DIV>
+<DIV Class="paranum">18</DIV>
+<DIV Class="Normal">Certain language-defined subprograms are potentially 
+blocking. In particular, the subprograms of the language-defined input-output 
+packages that manipulate files (implicitly or explicitly) are potentially 
+blocking. Other potentially blocking subprograms are identified where 
+they are defined. When not specified as potentially blocking, a language-defined 
+subprogram is nonblocking.&nbsp;</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">19</DIV>
+<DIV Class="Notes">18&nbsp;&nbsp;If two tasks both try to start a protected 
+action on a protected object, and at most one is calling a protected 
+function, then only one of the tasks can proceed. Although the other 
+task cannot proceed, it is not considered blocked, and it might be consuming 
+processing resources while it awaits its turn. There is no language-defined 
+ordering or queuing presumed for tasks competing to start a protected 
+action &mdash; on a multiprocessor such tasks might use busy-waiting; 
+for monoprocessor considerations, see <A HREF="RM-D-3.html">D.3</A>, 
+&ldquo;<A HREF="RM-D-3.html">Priority Ceiling Locking</A>&rdquo;.&nbsp;</DIV>
+<DIV Class="paranum">20</DIV>
+<DIV Class="Notes">19&nbsp;&nbsp;The body of a protected unit may contain 
+declarations and bodies for local subprograms. These are not visible 
+outside the protected unit.</DIV>
+<DIV Class="paranum">21</DIV>
+<DIV Class="Notes">20&nbsp;&nbsp;The body of a protected function can 
+contain internal calls on other protected functions, but not protected 
+procedures, because the current instance is a constant. On the other 
+hand, the body of a protected procedure can contain internal calls on 
+both protected functions and procedures.</DIV>
+<DIV Class="paranum">22</DIV>
+<DIV Class="Notes">21&nbsp;&nbsp;From within a protected action, an internal 
+call on a protected subprogram, or an external call on a protected subprogram 
+with a different target object is not considered a potentially blocking 
+operation.&nbsp;</DIV>
+<DIV Class="paranum">22.1/2</DIV>
+<DIV Class="Notes">22&nbsp;&nbsp;The <SPAN Class="swiss"><A HREF="RM-2-8.html#S0019">pragma</A></SPAN> 
+Detect_Blocking may be used to ensure that all executions of potentially 
+blocking operations during a protected action raise Program_Error. See 
+<A HREF="RM-H-5.html">H.5</A>.&nbsp;</DIV>
+
+<H4 Class="centered">Examples</H4>
+<DIV Class="paranum">23</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><I>Examples of protected 
+subprogram calls (see <A HREF="RM-9-4.html">9.4</A>):</I>&nbsp;</DIV>
+<DIV Class="paranum">24</DIV>
+<DIV Class="Examples">Shared_Array.Set_Component(N,&nbsp;E);<BR>
+E&nbsp;:=&nbsp;Shared_Array.Component(M);<BR>
+Control.Release;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-5-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

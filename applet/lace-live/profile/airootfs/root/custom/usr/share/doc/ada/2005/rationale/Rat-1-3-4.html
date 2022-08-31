@@ -1,0 +1,298 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Overview: Tasking and real-time facilities</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.WideHanging-Body {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 6.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DIV.WideHanging-Term {float: left; font-family: "Times New Roman", Times, serif; line-height: 122%; margin-top: 0em; margin-bottom: 0em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>1.3.4 Overview: Tasking and real-time facilities</H1>
+<div class="Normal">Unless mentioned otherwise all the changes in this 
+section concern the Real-Time Systems annex.</div>
+<div class="Normal" style="margin-bottom: 0.4em">First, the well-established 
+Ravenscar profile is included in Ada 2005  as directed by WG9. A profile 
+is a mode of operation and is specified  by the pragma <SPAN Class="swiss">Profile</SPAN> 
+which defines the particular profile to be used. Thus to ensure that 
+a program conforms to the Ravenscar profile we write<A NAME="I1029"></A> 
+</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Profile(Ravenscar);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The purpose of Ravenscar 
+is to restrict the use of many of the tasking  facilities so that the 
+effect of the program is predictable. This is very important for real-time 
+safety-critical systems. In the case of Ravenscar the pragma is equivalent 
+to the joint effect of the following pragmas</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Task_Dispatching_Policy(FIFO_Within_Priorities);<BR>
+<B>pragma</B>&nbsp;Locking_Policy(Ceiling_Locking);<BR>
+<B>pragma</B>&nbsp;Detect_Blocking;</div>
+<div class="Normal">plus a <B>pragma</B> <SPAN Class="swiss">Restrictions</SPAN> 
+with a host of arguments such as <SPAN Class="swiss">No_Abort_Statements</SPAN> 
+and <SPAN Class="swiss">No_Dynamic_Priorities</SPAN>.</div>
+<div class="Normal">The pragma <SPAN Class="swiss">Detect_Blocking</SPAN> 
+plus many of the <SPAN Class="swiss">Restrictions</SPAN> identifiers 
+are new to Ada 2005. Further details will be found in Section <A HREF="Rat-5-4.html">5.4</A>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 95 allows the priority 
+of a task to be changed but does not permit the ceiling priority of a 
+protected object to be changed. This is rectified in Ada 2005 by the 
+introduction of an attribute <SPAN Class="swiss">Priority</SPAN> for 
+protected objects and the ability to change it by a simple assignment 
+such as<A NAME="I1030"></A><A NAME="I1031"></A></div>
+<div class="SwissExamples">My_PO'Priority&nbsp;:=&nbsp;P;</div>
+<div class="Normal">inside a protected operation of the object <SPAN Class="swiss">My_PO</SPAN>. 
+The change takes effect at the end of the protected operation.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The monitoring and 
+control of execution time naturally are important for real-time programs.<A NAME="I1032"></A> 
+Ada 2005 includes packages for three different aspects of this</div>
+<div class="WideHanging-Term"><SPAN Class="swiss">Ada.Execution_Time</SPAN> 
+&ndash;</div><div class="WideHanging-Body"><br clear="left">
+This is the root package and enables the monitoring of execution time 
+of individual tasks.</div>
+<div class="WideHanging-Term"><SPAN Class="swiss">Ada.Execution_Time.Timers</SPAN> 
+&ndash;</div><div class="WideHanging-Body"><br clear="left">
+This provides facilities for defining and enabling timers and for establishing 
+a handler which is called by the run time system when the execution time 
+of the task reaches a given value.</div>
+<div class="WideHanging-Term"><SPAN Class="swiss">Ada.Execution_Time.Group_Budgets</SPAN> 
+&ndash;</div><div class="WideHanging-Body"><br clear="left">
+This allows several tasks to share a budget and provides means whereby 
+action can be taken when the budget expires.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The execution time 
+of a task or CPU time, as it is commonly called, is the time spent by 
+the system executing the task and services on its behalf. CPU times are 
+represented by the private type <SPAN Class="swiss">CPU_Time</SPAN>. 
+The CPU time of a particular task is obtained by calling the following 
+function <SPAN Class="swiss">Clock</SPAN> in the package <SPAN Class="swiss">Ada.Execution_Time</SPAN></div>
+<div class="SwissExamples"><B>function</B>&nbsp;Clock(T:&nbsp;Task_Id&nbsp;:=&nbsp;Current_Task)&nbsp;<B>return</B>&nbsp;CPU_Time;</div>
+<div class="Normal">A value of type <SPAN Class="swiss">CPU_Time</SPAN> 
+can be converted to a <SPAN Class="swiss">Seconds_Count</SPAN> plus residual 
+<SPAN Class="swiss">Time_Span</SPAN> by a procedure <SPAN Class="swiss">Split</SPAN> 
+similar to that in the package <SPAN Class="swiss">Ada.Real_Time</SPAN>. 
+Incidentally we are guaranteed that the granularity of CPU times is no 
+greater than one millisecond and that the range is at least 50 years.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In order to find out 
+when a task reaches a particular CPU time we use the facilities of the 
+child package <SPAN Class="swiss">Ada.Execution_Time.Timers</SPAN>. This 
+includes a discriminated type <SPAN Class="swiss">Timer</SPAN> and a 
+type <SPAN Class="swiss">Handler</SPAN> thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Timer(T:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;<B>constant</B>&nbsp;Task_Id)&nbsp;<B>is&nbsp;tagged&nbsp;limited&nbsp;private</B>;<BR>
+<B>type</B>&nbsp;Timer_Handler&nbsp;<B>is&nbsp;access&nbsp;protected&nbsp;procedure&nbsp;</B>(TM:&nbsp;<B>in&nbsp;out</B>&nbsp;Timer);</div>
+<div class="Normal">Note how the access discriminant illustrates the 
+use of both <B>not</B> <B>null</B> and <B>constant</B>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can then set the 
+timer to expire at some absolute time by</div>
+<div class="SwissExamples">Set_Handler(My_Timer,&nbsp;Time_Limit,&nbsp;My_Handler'Access);</div>
+<div class="Normal">and then when the CPU time of the task reaches <SPAN Class="swiss">Time_Limit</SPAN> 
+(of type <SPAN Class="swiss">CPU_Time</SPAN>), the protected procedure 
+<SPAN Class="swiss">My_Handler</SPAN> is executed. Note how the timer 
+object incorporates the information regarding the task concerned using 
+an access discriminant and that this is passed to the handler via its 
+parameter. Another version of <SPAN Class="swiss">Set_Handler</SPAN> 
+enables the timer to be triggered after a given interval (of type <SPAN Class="swiss">Time_Span</SPAN>).</div>
+<div class="Normal" style="margin-bottom: 0.4em">In order to program 
+various aperiodic servers it is necessary for tasks to share a CPU budget.<A NAME="I1033"></A> 
+This can be done using the child package <SPAN Class="swiss">Ada.Execution_Time.Group_Budgets</SPAN>. 
+In this case we have</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Group&nbsp;Budget&nbsp;<B>is&nbsp;tagged&nbsp;limited&nbsp;private</B>;<BR>
+<B>type</B>&nbsp;Group_Budget_Handler&nbsp;<B>is&nbsp;access&nbsp;protected&nbsp;procedure&nbsp;</B>(GB:&nbsp;<B>in&nbsp;out</B>&nbsp;Group_Budget);</div>
+<div class="Normal">The type <SPAN Class="swiss">Group_Budget</SPAN> 
+both identifies the group of tasks it belongs to and the size of the 
+budget. Various subprograms enable tasks to be added to and removed from 
+a group budget. Other procedures enable the budget to be set and replenished.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A procedure <SPAN Class="swiss">Set_Handler</SPAN> 
+associates a particular handler with a budget.</div>
+<div class="SwissExamples">Set_Handler(GB&nbsp;=&gt;&nbsp;My_Group_Budget,&nbsp;Handler&nbsp;=&gt;&nbsp;My_Handler'Access);</div>
+<div class="Normal">When the group budget expires the associated protected 
+procedure is executed.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A somewhat related 
+topic is that of low level timing events. The facilities are provided 
+by the package <SPAN Class="swiss">Ada.Real_Time.Timing_Events</SPAN>.<A NAME="I1034"></A> 
+In this case we have</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Timing_Event&nbsp;<B>is&nbsp;tagged&nbsp;limited&nbsp;private</B>;<BR>
+<B>type</B>&nbsp;Timing_Event_Handler&nbsp;<B>is&nbsp;access&nbsp;protected&nbsp;procedure</B>(Event:&nbsp;<B>in&nbsp;out&nbsp;</B>Timing_Event);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The idea here is that 
+a protected procedure can be nominated to be executed at some time in 
+the future. Thus to ring a pinger when our egg is boiled after four minutes 
+we might have a protected procedure</div>
+<div class="SwissExamples"><B>protected</B>&nbsp;<B>body</B>&nbsp;Egg&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Is_Done(Event:&nbsp;<B>in&nbsp;out</B>&nbsp;Timing_Event)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ring_The_Pinger;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Is_Done;<BR>
+<B>end</B>&nbsp;Egg;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then</div>
+<div class="SwissExamples">Egg_Done:&nbsp;Timing_Event;<BR>
+Four_Min:&nbsp;Time_Span&nbsp;:=&nbsp;Minutes(4);<BR>
+...<BR>
+Put_Egg_In_Water;<BR>
+Set_Handler(Event&nbsp;=&gt;&nbsp;Egg_Done,&nbsp;In_Time&nbsp;=&gt;&nbsp;Four_Min,&nbsp;Handler&nbsp;=&gt;&nbsp;Egg.Is_Done'Access);<BR>
+--&nbsp;<SPAN Class="roman"><I>&nbsp;now&nbsp;read&nbsp;newspaper&nbsp;whilst&nbsp;waiting&nbsp;for&nbsp;egg</I></SPAN></div>
+<div class="Normal">This facility is of course very low level and does 
+not involve Ada tasks at all. Note that we can set the event to occur 
+at some absolute time as well as at a relative time as above. Incidentally, 
+the function <SPAN Class="swiss">Minutes</SPAN> is a new function added 
+to the parent package <SPAN Class="swiss">Ada.Real_Time</SPAN>. Otherwise 
+we would have had to write something revolting such as <SPAN Class="swiss">4*60*Milliseconds(1000)</SPAN>. 
+A similar function <SPAN Class="swiss">Seconds</SPAN> has also been added.</div>
+<div class="Normal">There is a minor flaw in the above example. If we 
+are interrupted by the telephone between putting the egg in the water 
+and setting the handler then our egg will be overdone. We will see how 
+to cure this in Section <A HREF="Rat-5-6.html">5.6</A>.</div>
+<div class="Normal">Readers will recall the old problem of how tasks 
+can have a silent death. If something in a task goes wrong in Ada 95 
+and an exception is raised which is not handled by the task, then it 
+is propagated into thin air and just vanishes. It was always deemed impossible 
+for the exception to be handled by the enclosing unit because of the 
+inherent asynchronous nature of the event.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is overcome in 
+Ada 2005 by the package <SPAN Class="swiss">Ada.Task_Termination</SPAN> 
+which provides facilities for associating a protected procedure with 
+a task. The protected procedure is invoked when the task terminates with 
+an indication of the reason. Thus we might declare a protected object 
+<SPAN Class="swiss">Grim_Reaper</SPAN><A NAME="I1035"></A></div>
+<div class="SwissExamples"><B>protected</B>&nbsp;Grim_Reaper&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Last_Gasp(C:&nbsp;Cause_Of_Termination;&nbsp;T:&nbsp;Task_Id;&nbsp;X:&nbsp;Exception_Occurrence);<BR>
+<B>end</B>&nbsp;Grim_Reaper;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can then nominate 
+<SPAN Class="swiss">Last_Gasp</SPAN> as the protected procedure to be 
+called when task <SPAN Class="swiss">T</SPAN> dies by</div>
+<div class="SwissExamples">Set_Specific_Handler(T'Identity,&nbsp;Grim_Reaper.Last_Gasp'Access);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The body of the protected 
+procedure <SPAN Class="swiss">Last_Gasp</SPAN> might then log various 
+diagnostic messages</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Last_Gasp(C:&nbsp;Cause_Of_Termination;&nbsp;T:&nbsp;Task_Id;&nbsp;X:&nbsp;Exception_Occurrence)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>case</B>&nbsp;C&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Normal&nbsp;=&gt;&nbsp;<B>null</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Abnormal&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put_Log(&quot;Something&nbsp;nasty&nbsp;happened&quot;);&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Unhandled_Exception&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put_Log(&quot;Unhandled&nbsp;exception&nbsp;occurred&quot;);&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;case</B>;<BR>
+<B>end</B>&nbsp;Last_Gasp;</div>
+<div class="Normal">Remember that we should not call potentially blocking 
+operations such as Put to a file within a protected operation so we call 
+some procedure Put_Log which buffers the messages for later analysis.</div>
+<div class="Normal">There are three possible reasons for termination, 
+it could be normal, abnormal, or caused by an unhandled exception. In 
+the last case the parameter <SPAN Class="swiss">X</SPAN> gives details 
+of the exception occurrence.</div>
+<div class="Normal">Another area of increased flexibility in Ada 2005 
+is that of task dispatching policies. In Ada 95, the only predefined 
+policy is <SPAN Class="swiss">FIFO_Within_Priorities</SPAN> although 
+other policies are permitted. Ada 2005 provides further pragmas, policies 
+and packages which facilitate many different mechanisms such as non-preemption 
+within priorities, the familiar Round Robin using timeslicing, and the 
+more recently acclaimed Earliest Deadline First (EDF) policy. Moreover, 
+it is possible to mix different policies according to priority level 
+within a partition.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Various facilities 
+are provided by the package <SPAN Class="swiss">Ada.Dispatching</SPAN> 
+plus two child packages</div>
+<div class="WideHanging-Term"><SPAN Class="swiss">Ada.Dispatching</SPAN> 
+&ndash;</div><div class="WideHanging-Body"><br clear="left">
+This is the root package and simply declares an exception <SPAN Class="swiss">Dispatching_Policy_Error</SPAN>.</div>
+<div class="WideHanging-Term"><SPAN Class="swiss">Ada.Dispatching.Round_Robin</SPAN> 
+&ndash;</div><div class="WideHanging-Body"><br clear="left">
+This enables the setting of the time quanta for time slicing within one 
+or more priority levels.</div>
+<div class="WideHanging-Term"><SPAN Class="swiss">Ada.Dispatching.EDF</SPAN> 
+&ndash;</div><div class="WideHanging-Body"><br clear="left">
+This enables the setting of the deadlines for various tasks.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">A policy can be selected 
+for a whole partition by one of&nbsp;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Task_Dispatching_Policy(Non_Preemptive_FIFO_Within_Priorities);</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Task_Dispatching_Policy(Round_Robin_Within_Priorities);</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Task_Dispatching_Policy(EDF_Across_Priorities);</div>
+<div class="Normal" style="margin-bottom: 0.4em">In order to mix different 
+policies across different priority levels we use the pragma <SPAN Class="swiss">Priority_Specific_Dispatching</SPAN> 
+with various policy identifiers thus&nbsp;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Priority_Specific_Dispatching(Round_Robin_Within_Priorities,&nbsp;1,&nbsp;1);<BR>
+<B>pragma</B>&nbsp;Priority_Specific_Dispatching(EDF_Across_Priorities,&nbsp;2,&nbsp;10);<BR>
+<B>pragma</B>&nbsp;Priority_Specific_Dispatching(FIFO_Within_Priorities,&nbsp;11,&nbsp;24);</div>
+<div class="Normal">This sets Round Robin at priority level 1, EDF at 
+levels 2 to 10, and FIFO at levels 11 to 24.</div>
+<div class="Normal">The final topic in this section concerns the core 
+language and not the Real-Time Systems annex. Ada 2005 introduces a means 
+whereby object oriented and real-time features can be closely linked 
+together through inheritance.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Recall from Section 
+<A HREF="Rat-1-3-1.html">1.3.1</A> that we can declare an interface to 
+be limited thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;LI&nbsp;<B>is&nbsp;limited&nbsp;interface</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can also declare 
+an interface to be synchronized, task, or protected thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;SI&nbsp;<B>is&nbsp;synchronized&nbsp;interface</B>;<BR>
+<B>type</B>&nbsp;TI&nbsp;<B>is&nbsp;task&nbsp;interface</B>;<BR>
+<B>type</B>&nbsp;PI&nbsp;<B>is&nbsp;protected&nbsp;interface</B>;</div>
+<div class="Normal">A task interface or protected interface has to be 
+implemented by a task type or protected type respectively. However, a 
+synchronized interface can be implemented by either a task type or a 
+protected type. These interfaces can also be composed with certain restrictions. 
+Detailed examples will be found in Section <A HREF="Rat-5-3.html">5.3</A>.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

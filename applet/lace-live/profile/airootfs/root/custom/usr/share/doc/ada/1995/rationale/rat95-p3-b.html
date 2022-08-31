@@ -1,0 +1,718 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Three -Chapter B
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p3-a.html> Previous </a> |
+<a href=rat95-p3-c.html> Next </a>
+<hr>
+
+<h1>
+B   Interface to Other Languages
+</h1>
+
+<p>
+It is very important for Ada 95 programs to be able to interface
+effectively with systems written in other languages.  For example, the
+success of Ada 95 depends in part on its ability to cleanly and portably
+support interfaces to such systems as X Windows, POSIX, and commercial
+windows-based personal computer environments.  (The portability in
+question is the ability to take a given Ada program or binding that
+interfaces with an external system, and move it to an environment with
+the same external system but a different Ada implementation.)  To achieve
+this goal we have supplied three pragmas for interfacing with non-Ada
+software, and child packages Interfaces.C, Interfaces.COBOL, and
+Interfaces.Fortran which declare types, subprograms and other entities
+useful for interfacing with the three languages.  The root package
+Interfaces contains declarations for hardware-specific numeric types,
+described in 3.3.
+</p>
+
+<h2>
+<a name=1>
+B.1  Interfacing Pragmas
+</a>
+</h2>
+
+<p>
+Experience with pragma Interface in Ada 83 has uncovered a number of
+issues that may interfere with developing portable Ada code that is to be
+linked with foreign language modules.  We have therefore removed pragma
+Interface (though the implementation may choose still to support it for
+upward compatibility) and have added the three pragmas Import
+(effectively replacing Interface), Export and Convention which provide
+the following capabilities:
+</p>
+<ul>
+<li>
+    Calling Ada subprograms from other languages.  Ada 83 only supported
+     calls in one direction, from Ada to external code modules.
+<li>
+    Communicating with external systems via access to subprogram types.
+<li>
+    Specifying external names (and link names) where appropriate.  Most
+     Ada 83 implementations supported such an ability and it is
+     beneficial to users that it be standardized [Fowler 89].
+<li>
+    Communicating with external systems via objects and other entities.
+     Ada 83 only supported interfacing via subprogram calls.
+</ul>
+<p>
+   The following example illustrates how Ada 95 procedures can call and
+be called from a program written in the C language.
+<pre>
+   type XT_Callback is access
+      procedure (Widget_Id : in out XT_Intrinsics.Widget;
+                 Closure   : in X_Lib.X_Address;
+                 Call_Data : in X_Lib.X_Address);
+
+   pragma Convention(C, XT_Callback);
+
+   procedure XT_Add_Callback
+        (The_Widget    : in out XT_Intrinsics.Widget;
+         Callback_Name : in String;
+         Callback      : in XT_Callback;
+         Client_Data   : in XT_Intrinsics.XT_Pointer);
+
+   pragma Import(C, XT_Add_Callback, External_Name => "XtAddCallBack");
+
+   procedure My_Callback(Widget_Id : in out XT_Intrinsics.Widget;
+                         Closure   : in X_Lib.X_Address;
+                         Call_Data : in X_Lib.X_Address) is separate;
+
+   pragma Convention(C, My_Callback);
+
+   My_Widget : XT_Intrinsics.Widget;
+   ...
+   XT_Add_Callback(My_Widget,
+                   "Mousedown" & ASCII.Nul,
+                   My_Callback'Access,
+                   XT_Intrinsics.Null_Data);
+</pre>
+</p>
+<p>
+   The pragma Convention applies to the type XT_Callback, and indicates
+that values of this type designate subprograms callable from programs
+written in C.  The machine code generated for calls through the access
+values of the type XT_Callback will follow the conventions of the C
+compiler.
+</p>
+<p>
+   The pragma Import indicates that the procedure XT_Add_Callback is
+written with the calling conventions of a C compiler.  The third
+parameter of the pragma specifies the external name (in this case the C
+name) of the subprogram.
+</p>
+<p>
+   The pragma Convention also applies to My_Callback.  This informs the
+compiler that the procedure is written in Ada but is intended to be
+called from a C program, which may affect how it will reference its
+parameters.
+</p>
+<p>
+   My_Callback'Access will yield a value compatible with XT_Callback,
+because the same calling convention is specified for both.  Note that it
+is unnecessary to apply the pragma Export to My_Callback since, although
+called from the C program, it is called indirectly through the access to
+subprogram value and the Ada identifier itself is not required
+externally.
+</p>
+<p>
+   The pragmas Import and Export may omit the external name if it is the
+same as the Ada identifier.  A fourth parameter may be used to specify
+the link name if necessary.
+</p>
+<p>
+   The pragmas Import and Export may also be applied to objects.  In
+particular a deferred constant can be completed by a pragma Import; this
+specifies that the object is defined externally to the Ada program.
+Similarly a pragma Export can be used to indicate that an object is used
+externally.
+</p>
+<p>
+   A programmer would typically use pragma Export in situations where the
+main subprogram is written in the external language.  This raises some
+semantic issues, because correct execution of the exported Ada subprogram
+might depend on having certain Ada library units elaborated before the
+subprogram is invoked.  For example, the subprogram might reference
+library package data objects that are initialized by the package body; or
+the subprogram might execute a construct (such as an allocator) that
+requires the Ada run-time system to have been elaborated.  To handle such
+situations, Ada 95 advises the implementation [RM95 B.1(39)] to supply
+subprograms with link names "adainit" and "adafinal".  The adainit
+subprogram contains elaboration code for the Ada library units, and
+adafinal contains any needed finalization code (such as finalization of
+the environment task).  Thus a main subprogram written in the external
+language should call adainit before the first call to an Ada subprogram,
+and adafinal after the last.
+</p>
+
+<h2>
+<a name=2>
+B.2  C Interface Package
+</a>
+</h2>
+
+<p>
+The C interface package, Interfaces.C, supports importing C functions
+into Ada, and exporting Ada subprograms to C.  Since many bindings and
+other external systems are written in C, one of the more important
+objectives of Ada 95 is to ease the job of having Ada code work with such
+software.
+</p>
+<p>
+   Part of the issue in arranging an interface to a foreign language, of
+particular importance with C, is to allow an Ada subprogram to be called
+from code written in the foreign language.  This is handled in Ada 95
+through a combination of pragma Convention and access to subprogram
+types, as illustrated above.
+</p>
+<p>
+   Further child packages Interfaces.C.Strings and Interfaces.C.Pointers
+provide specialized functionality for dealing with C strings and
+pointers.
+</p>
+
+<h3>
+<a name=2-1>
+B.2.1 Scalar Types
+</a>
+</h3>
+
+<p>
+C's predefined integer, floating point, and character types are modelled
+directly in Interfaces.C.  The Ada implementation is responsible for
+defining the Ada types such that they have the same representation as the
+corresponding C types in the supported C implementation.
+</p>
+<p>
+   Since C parameters are passed copy-in, interfacing to a C function
+taking a scalar parameter is straightforward.  The program declares an
+Ada subprogram with an in parameter of the corresponding type.
+</p>
+<p>
+   A C function may have a t* parameter, where t is a scalar type, and
+where the caller is supposed to pass a reference to a scalar.  If such a
+function is imported, then the corresponding Ada subprogram would declare
+either an access T parameter, or an in out T parameter.
+</p>
+
+<h3>
+<a name=2-2>
+B.2.2 Strings
+</a>
+</h3>
+
+<p>
+C's string representation and manipulation come in several varieties, and
+we have tried to define the interface package so as to support the most
+typical applications.  The Interfaces.C package provides an
+implementation-defined character type, char, designed to model the C run-
+time character type.  This may or may not be the same as Ada's type
+Character; thus the package provides mappings between the types char and
+Character.  Unlike COBOL, the mappings between the C and Ada character
+types do not need to be dynamically modifiable; hence they are captured
+by functions.  In the common case where the character set is the same in
+C and Ada, the implementation should define the conversion functions
+through unchecked conversions expanded inline, with thus no run-time
+overhead.
+</p>
+<p>
+   One important application of the C interface package is for the
+programmer to compose a C string and pass it to a C function.  We provide
+several ways to accomplish this goal.  One approach is for the programmer
+to declare an object that will hold the C array, and then pass this array
+to the C function.  This is realized via the type char_array:
+<pre>
+   type char_array is array (size_t range <>) of char;
+</pre>
+</p>
+<p>
+   The programmer can declare an Ada String and convert it to a
+char_array (or simply declare a char_array directly), and pass the
+char_array as actual parameter to the C function that is expecting a char
+*.  The implication of pragma Import on the subprogram is that the
+char_array will be passed by reference, with no "descriptor" for the
+bounds; the compiler needs to implement this in such a way that what is
+passed is a pointer to the first element.
+</p>
+<p>
+   The package Interfaces.C , which provides the above conversions, is
+Pure; this extends its applicability in distributed applications that
+need to interface with C code.
+</p>
+<p>
+   An alternative approach for passing strings to C functions is for the
+programmer to obtain a C char pointer from an Ada String (or from a
+char_array) by invoking an allocation function.  The child package
+Interfaces.C.Strings provides a private type chars_ptr that corresponds
+to C's char *, and two allocation functions.  To avoid storage leakage,
+we also provide a Free procedure that releases the storage that was
+claimed by one of these allocate functions.  If one of these allocate
+functions is invoked from an Ada program, then it is the responsibility
+of the Ada program (rather than the called C function) to reclaim that
+storage.
+</p>
+<p>
+   It is typical for a C function that deals with strings to adopt the
+convention that the string is delimited by a nul character.  The C
+interface package supports this convention.  A constant nul of type char
+is declared, and the function Value(chars_ptr) in Interfaces.C.Strings
+returns a char_array up to and including the first nul in the array that
+the chars_ptr points to.
+</p>
+<p>
+   Some C functions that deal with strings do not assume nul termination;
+instead, the programmer passes an explicit length along with the pointer
+to the first element.  This style is also supported by Interfaces.C,
+since objects of type char_array need not be terminated by nul.
+</p>
+
+<h3>
+<a name=2-3>
+B.2.3 Pointers and Arrays
+</a>
+</h3>
+
+The generic package Interfaces.C.Pointers allows the Ada programmer to
+perform C-style operations on pointers.  It includes an access type
+Pointer, Value functions that dereference a Pointer and deliver the
+designated array, several pointer arithmetic operations, and "copy"
+procedures that copy the contents of a source pointer into the array
+designated by a destination pointer.  As in C, it treats an object Ptr of
+type Pointer as a pointer to the first element of an array, so that for
+example, adding 1 to Ptr yields a pointer to the second element of the
+array.
+</p>
+<p>
+   This generic package allows two styles of usage: one in which the
+array is terminated by a special terminator element; and another in which
+the programmer needs to keep track of the length.
+</p>
+<p>
+   This package may be used to interface with a C function that takes a
+"*" parameter.  The Pointer type emerging from an instantiation
+corresponds to the "*" parameter to the C function.
+</p>
+
+<h3>
+<a name=2-4>
+B.2.4 Structs
+</a>
+</h3>
+
+<p>
+If the C function expects a "struct *", the Ada programmer should declare
+a corresponding simple record type and apply pragma Convention to this
+type.  The Ada compiler will pass a reference to the record as the
+argument to the C function.  Of course, it is not realistic to expect
+that any Ada record could be passed as a C struct; [RM95, B.1] allows
+restrictions so that only a "C-eligible" record type T need be supported
+for pragma Convention(C, T).  For example, records with discriminants or
+dynamically-sized components need not be supported.  Nevertheless, the
+set of types for which pragma Convention needs to be supported is
+sufficiently broad to cover the kinds of interfaces that arise in
+practice.
+</p>
+<p>
+   In the (rare) situation where the C function takes a struct by value
+(for example a struct with a small number of small components), the
+programmer can declare a C function that takes a struct * and which then
+passes the value of its argument to the actual C function that is needed.
+</p>
+
+<h3>
+<a name=2-5>
+B.2.5 Example
+</a>
+</h3>
+
+<p>
+The following example shows a typical use of the C interface facilities.
+<pre>
+   -- Calling the C Library Function strcpy
+
+   with Interfaces.C;
+   procedure Test is
+      package C renames Interfaces.C;
+      use type C.char_array;
+      -- Call <string.h>strcpy:
+      -- C definition of strcpy:
+      --  char *strcpy(char *s1, const char *s2);
+      --    This function copies the string pointed to by s2
+      --    (including the terminating null character) into the
+      --    array pointed to by s1.  If copying takes place
+      --    between objects that overlap, the behavior is undefined.
+      --    The strcpy function returns the value of s1.
+      -- Note: since the C function's return value is of no interest,
+      -- the Ada interface is a procedure
+
+      procedure Strcpy(Target : out C.char_array;
+                       Source : in  C.char_array);
+      pragma Import(C, Strcpy, "strcpy");
+      Chars1:  C.char_array(1 .. 20);
+      Chars2:  C.char_array(1 .. 20);
+   begin
+      Chars2(1 .. 6) := "qwert" & C.Nul;
+      Strcpy(Chars1, Chars2);
+      -- Now Chars1(1 .. 6) = "qwert" & C.Nul
+   end Test;
+</pre>
+</p>
+
+<h2>
+<a name=3>
+B.3  COBOL Interface Package
+</a>
+</h2>
+
+<p>
+The package Interfaces.COBOL allows an Ada program to pass data as
+parameters to COBOL programs, allows an Ada program to make use of
+"external" data created by COBOL programs and stored in files or
+databases, and allows an Ada program to convert an Ada decimal type value
+to or from a COBOL representation.
+</p>
+<p>
+   In order to support the calling of and passing parameters to an
+existing COBOL program, the interface package supplies types that can be
+used in an Ada program as parameters to subprograms whose bodies will be
+in COBOL.  These types map to COBOL's alphanumeric and numeric data
+categories.
+</p>
+<p>
+   Several types are provided for support of alphanumeric data.  Since
+COBOL's run-time character set is not necessarily the same as Ada's,
+Interfaces.COBOL declares an implementation-defined character type
+COBOL_Character and mappings between Character and COBOL_Character.
+These mappings are visible variables (rather than, say, functions or
+constant arrays), since in the situation where COBOL_Character is EBCDIC,
+the flexibility of dynamically modifying the mappings is needed.
+Corresponding to COBOL's alphanumeric data is the array type
+Alphanumeric.
+</p>
+<p>
+   Numeric data may have either a "display" or "computational"
+representation in COBOL.  On the Ada side, the data is of a decimal fixed
+point type.  Passing an Ada decimal data item to a COBOL program requires
+conversion from the Ada decimal type to some type that reflects the
+representation expected on the COBOL side.
+</p>
+<dl>
+<dt>
+    Computational Representation
+<dd>
+<p>
+     Floating point representation is modelled by Ada floating point
+     types, Floating and Long_Floating.  Conversion between these types
+     and Ada decimal types is obtained directly, since the type name
+     serves as a conversion function.
+</p>
+<p>
+     Binary representation is modelled by an Ada integer type, Binary,
+     and possibly other types such as Long_Binary.  Conversion between,
+     say, Binary and a decimal type is through functions from an
+     instantiation of the generic package Decimal_Conversions.  An
+     integer conversion using say Binary as the target and an object of a
+     decimal type as the source does not work, since there would be no
+     way to take into account the scale implicitly associated with the
+     decimal type.
+</p>
+<p>
+     Packed decimal representation is modelled by the Ada array type
+     Packed_Decimal.  Conversion between packed decimal and a decimal
+     type is through functions from an instantiation of the generic
+     package Decimal_Conversions.
+</p>
+<dt>
+    Display Representation
+<dd>
+<p>
+     Display representation for numeric data is modelled by the array
+     type Numeric.  Conversion between display representation and a
+     decimal type is through functions from an instantiation of the
+     generic package Decimal_Conversions.  A parameter to the conversion
+     function indicates the desired interpretation of the data (e.g.,
+     signed leading separate, etc.)
+</p>
+</dl>
+<p>
+   The pragma Convention(COBOL, T) may be applied to a record type T to
+direct the compiler to choose a COBOL-compatible representation for
+objects of the type.
+</p>
+<p>
+   The package Interfaces.COBOL allows the Ada programmer to deal with
+data from files or databases created by a COBOL program.  For data that
+is alphanumeric, or in display or packed decimal format, the approach is
+the same as for passing parameters: instantiate Decimal_Conversions to
+obtain the needed conversion functions.  For binary data, the external
+representation is treated as a Byte array, and an instantiation of
+Decimal_Conversions produces a package that declares the needed
+conversion functions.  A parameter to the conversion function indicates
+the desired interpretation of the data (e.g., high- versus low-order byte
+first).
+</p>
+<p>
+   We had considered defining the binary conversion functions in terms of
+a Storage_Array rather than a Byte_Array for the "raw data".  However,
+Storage_Array reflects the properties of the machine that is running the
+Ada program, whereas the external file may have been produced in a
+different environment.  Thus it is simpler to use a model in terms of
+COBOL-character-sized units.
+</p>
+<p>
+   The following examples show typical uses of the COBOL interface.
+<pre>
+   with Interfaces.COBOL;
+   procedure Test_Call is
+      -- Calling a foreign COBOL program
+      -- Assume that a COBOL program PROG has the following declaration
+      --  in its LINKAGE section:
+      --  01 Parameter-Area
+      --     05 NAME   PIC X(20).
+      --     05 SSN    PIC X(9)
+      --     05 SALARY PIC 99999V99 USAGE COMP.
+      -- The effect of PROG is to update SALARY based on some algorithm
+
+      package COBOL renames Interfaces.COBOL;
+      type Salary_Type is delta 0.01 digits 7;
+
+      type COBOL_Record is
+         record
+            Name   : COBOL.Numeric(1 .. 20);
+            SSN    : COBOL.Numeric(1 .. 9);
+            Salary : COBOL.Binary;  -- Assume Binary = 32 bits
+         end record;
+      pragma Convention(COBOL, COBOL_Record);
+
+      procedure Prog(Item : in out COBOL_Record);
+      pragma Import(COBOL, Prog, "PROG");
+
+      package Salary_Conversions is
+
+         new COBOL.Decimal_Conversions(Salary_Type);
+
+      Some_Salary : Salary_Type := 12_345.67;
+      Some_Record : COBOL_Record :=
+         (Name   => "Johnson, John       ",
+          SSN    => "111223333",
+          Salary => Salary_Conversions.To_Binary(Some_Salary));
+
+   begin
+      Prog(Some_Record);
+      ...
+   end Test_Call;
+
+
+   with Interfaces.COBOL;
+   with COBOL_Sequential_IO; -- Assumed to be supplied by implementation
+   procedure Test_External_Formats is
+      -- Using data created by a COBOL program
+      -- Assume that a COBOL program has created a sequential file with
+      --  the following record structure, and that we need to
+      --  process the records in an Ada program
+      --  01 EMPLOYEE-RECORD
+      --     05 NAME    PIC X(20).
+      --     05 SSN     PIC X(9)
+      --     05 SALARY  PIC 99999V99 USAGE COMP.
+      --     05 ADJUST  PIC S999V999 SIGN LEADING SEPARATE
+      -- The COMP data is binary (32 bits), high-order byte first
+      package COBOL renames Interfaces.COBOL;
+
+      type Salary_Type is delta 0.01 digits 7 range 0.0 .. 99_999.99;
+      type Adjustments_Type is delta 0.001 digits 6;
+
+      type COBOL_Employee_Record_Type is  -- External representation
+         record
+            Name    : COBOL.Alphanumeric(1 .. 20);
+            SSN     : COBOL.Alphanumeric(1 .. 9);
+            Salary  : COBOL.Byte_Array(1 .. 4);
+            Adjust  : COBOL.Numeric(1 .. 7);  -- Sign and 6 digits
+         end record;
+      pragma Convention(COBOL, COBOL_Employee_Record_Type);
+
+      package COBOL_Employee_IO is
+         new COBOL_Sequential_IO(COBOL_Employee_Record_Type);
+      use COBOL_Employee_IO;
+
+      COBOL_File : File_Type;
+
+      type Ada_Employee_Record_Type is  -- Internal representation
+         record
+            Name    : String(1 .. 20);
+            SSN     : String(1 .. 9);
+            Salary  : Salary_Type;
+            Adjust  : Adjustments_Type;
+         end record;
+
+      COBOL_Record : COBOL_Employee_Record_Type;
+
+      Ada_Record   : Ada_Employee_Record_Type;
+
+      package Salary_Conversions is
+         new COBOL.Decimal_Conversions(Salary_Type);
+      use Salary_Conversions;
+      package Adjustments_Conversions is
+         new COBOL.Decimal_Conversions(Adjustments_Type);
+      use Adjustments_Conversions;
+
+   begin
+      Open(COBOL_File, Name => "Some_File");
+      loop
+         Read(COBOL_File, COBOL_Record);
+         Ada_Record.Name := To_Ada(COBOL_Record.Name);
+         Ada_Record.SSN  := To_Ada(COBOL_Record.SSN);
+         begin
+            Ada_Record.Salary :=
+               To_Decimal(COBOL_Record.Salary, High_Order_First);
+         exception
+            when Conversion_Error =>
+               ... -- Report "Invalid Salary Data"
+         end;
+         begin
+            Ada_Record.Adjust :=
+               To_Decimal(COBOL_Record.Adjust, Leading_Separate);
+         exception
+            when Conversion_Error =>
+               ... -- Report "Invalid Adjustment Data"
+         end;
+         ... -- Process Ada_Record
+      end loop;
+   exception
+      when End_Error => ...
+   end Test_External_Formats;
+</pre>
+</p>
+
+<h2>
+<a name=4>
+B.4  Fortran Interface Package
+</a>
+</h2>
+
+<p>
+Much mathematical software exists and continues to be written in Fortran
+and so there is a strong need for Ada programs to be able to interface to
+Fortran routines.  Ada programs should be able to call Fortran
+subprograms, or Fortran library routines, passing parameters mapped the
+way Fortran would map them.  Similarly, with increasing frequency, there
+will also be reasons for Fortran programs to call Ada subprograms as if
+they were written in Fortran (that is, with parameters passed in the
+normal way for Fortran).  The Numerics Annex recommends that the
+facilities for interfacing to Fortran described in the annex on Interface
+to Other Languages be implemented if Fortran is widely supported in the
+target environment.  Some high-performance mathematical software is also
+written in C, so a similar recommendation is made with regard to the
+facilities for interfacing to C.  We discuss only the Fortran interfacing
+facilities here.
+</p>
+<p>
+   Interfacing to Fortran is provided by the child package
+Interfaces.Fortran and the convention identifier Fortran in the
+interfacing pragmas.
+</p>
+<p>
+   The package Interfaces.Fortran defines types having the same names as
+the Fortran intrinsic types (except where they would conflict with the
+names of Ada types predefined in Standard, in which case they are given
+different names) and whose representations match the default
+representations of those types in the target Fortran implementation.
+Multiple Fortran interface packages may be provided if several different
+implementations of Fortran are to be accommodated in the target
+environment; each would have an identifier denoting the corresponding
+implementation of Fortran.  The same identifier would be used to denote
+that implementation in the interfacing pragmas.
+</p>
+<p>
+   Additional types may be added to a Fortran interface package as
+appropriate.  For example, the package for an implementation of Fortran
+77 might add declarations for Integer_Star_2, Integer_Star_4,
+Logical_Star_1, Logical_Star_4, and so on, while one for an
+implementation of Fortran 90 might add declarations for Integer_Kind_0,
+Integer_Kind_1, Real_Kind_0, Real_Kind_1, and so forth.
+</p>
+<p>
+   Use of the types defined in a Fortran interface package suffices when
+the application only requires scalar objects to be passed between Ada and
+Fortran subprograms.  The Convention pragma can be used to indicate that
+a multidimensional array is to be mapped in Fortran's column-major order,
+or that a record object declared in a library subprogram or package is to
+be mapped the way Fortran would map a common block (the Import or Export
+pragma would also be specified for the object), or that a record type is
+to be mapped the way Fortran 90 would map a corresponding type (called a
+"derived type" in Fortran 90).  Compatibility with Fortran 90's pointer
+types is provided by applying the Convention pragma to appropriate access
+types.
+</p>
+
+<h2>
+<a name=5>
+B.5  Requirements Summary
+</a>
+</h2>
+
+<p>
+   The requirement
+<pre>
+     R4.1-B(2) - Pragma Interface
+</pre>
+is met by the introduction of the pragmas Convention, Import and Export
+for the better control of interfaces to programs in other languages.
+</p>
+<p>
+   The study topic
+<pre>
+     S10.1-A(2) - Specification of Decimal Representation
+</pre>
+is met in part by the generic package
+Interfaces.COBOL.Decimal_Conversions.
+</p>
+<p>
+   The study topic
+<pre>
+     S10.2-A(1) - Alternate Character Set Support
+</pre>
+is satisfied in part by the facilities provided in
+Interfaces.COBOL.Decimal_Conversions.
+</p>
+<p>
+   The study topic
+<pre>
+     S10.3-A(1) - Interfacing with Data Base Systems
+</pre>
+is satisfied in part by the types and conversions in the package
+Interfaces.COBOL.
+</p>
+<p>
+   The study topic
+<pre>
+     S11.2-A(1) - Array Representation
+</pre>
+is met by the pragma Convention with a Fortran convention identifier, and
+more generally by the package Interfaces.Fortran.
+</p>
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p3-a.html> Previous </a> |
+<a href=rat95-p3-c.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

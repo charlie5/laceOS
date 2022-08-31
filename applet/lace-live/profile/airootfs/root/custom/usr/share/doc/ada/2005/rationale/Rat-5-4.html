@@ -1,0 +1,197 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>The Ravenscar profile</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>5.4 The Ravenscar profile</H1>
+<div class="Normal">The purpose of the Ravenscar profile is to restrict 
+the use of many tasking facilities so that the effect of the program 
+is predictable. The profile was defined by the International Real-Time 
+Ada Workshops which met twice at the remote village of Ravenscar on the 
+coast of Yorkshire in North-East England. A general description of the 
+principles and use of the profile in high integrity systems will be found 
+in an ISO/IEC Technical Report [2] and so we shall not cover that material 
+here.<A NAME="I1160"></A></div>
+<div class="Normal">Here is a historical interlude. It is reputed that 
+the hotel in which the workshops were held was originally built as a 
+retreat for King George III to keep a mistress. Another odd rumour is 
+that he ordered all the natural trees to be removed and replaced by metallic 
+ones whose metal leaves clattered in the wind. It also seems that Henry 
+Bolingbroke landed at Ravenscar in July 1399 on his way to take the throne 
+as Henry IV. Ravenscar is mentioned several times by Shakespeare in Act 
+II of King Richard II; it is spelt Ravenspurg which is slightly confusing 
+&ndash; maybe we need the ability to rename profile identifiers.</div>
+<div class="Normal" style="margin-bottom: 0.4em"><A NAME="I1161"></A><A NAME="I1162"></A>A 
+profile is a mode of operation and is specified by the pragma <SPAN Class="swiss">Profile</SPAN> 
+which defines the particular profile to be used. The syntax is&nbsp;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Profile(<SPAN Class="roman"><I>profile</I></SPAN>_identifier&nbsp;[&nbsp;,&nbsp;profile_argument_associations]);</div>
+<div class="Normal">where <SPAN Class="swiss">profile_argument_associations</SPAN> 
+is simply a list of pragma argument associations separated by commas.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Thus to ensure that 
+a program conforms to the Ravenscar profile we write&nbsp;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Profile(Ravenscar);</div>
+<div class="Normal">The general idea is that a profile is equivalent 
+to a set of configuration pragmas.</div>
+<div class="Normal">In the case of Ravenscar the pragma is equivalent 
+to the joint effect of the following pragmas&nbsp;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Task_Dispatching_Policy(FIFO_Within_Priorities);<BR>
+<B>pragma</B>&nbsp;Locking_Policy(Ceiling_Locking);<BR>
+<B>pragma</B>&nbsp;Detect_Blocking;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Restrictions(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Abort_Statements,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Dynamic_Attachment,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Dynamic_Priorities,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Implicit_Heap_Allocations,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Local_Protected_Objects,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Local_Timing_Events,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Protected_Type_Allocators,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Relative_Delay,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Requeue_Statements,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Select_Statements,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Specific_Termination_Handlers,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Task_Allocators,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Task_Hierarchy,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Task_Termination,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Simple_Barriers,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Max_Entry_Queue_Length&nbsp;=&gt;&nbsp;1,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Max_Protected_Entries&nbsp;=&gt;&nbsp;1,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Max_Task_Entries&nbsp;=&gt;&nbsp;0,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Dependence&nbsp;=&gt;&nbsp;Ada.Asynchronous_Task_Control,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Dependence&nbsp;=&gt;&nbsp;Ada.Calendar,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Dependence&nbsp;=&gt;&nbsp;Ada.Execution_Time.Group_Budget,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Dependence&nbsp;=&gt;&nbsp;Ada.Execution_Time.Timers,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Dependence&nbsp;=&gt;&nbsp;Ada.Task_Attributes);</div>
+<div class="Normal">The pragma <SPAN Class="swiss">Detect_Blocking</SPAN> 
+plus many of the Restrictions identifiers are new to Ada 2005. These 
+will now be described.</div>
+<div class="Normal">The pragma <SPAN Class="swiss">Detect_Blocking</SPAN>, 
+as its name implies, ensures that the implementation will detect a potentially 
+blocking operation in a protected operation and raise <SPAN Class="swiss">Program_Error</SPAN>. 
+Without this pragma the implementation is not required to detect blocking 
+and so tasks might be locked out for an unbounded time and the program 
+might even deadlock.<A NAME="I1163"></A><A NAME="I1164"></A></div>
+<div class="Normal">The identifier <SPAN Class="swiss">No_Dynamic_Attachment</SPAN> 
+means that there are no calls of the operations in the package <SPAN Class="swiss">Ada.Interrupts</SPAN>.<A NAME="I1165"></A></div>
+<div class="Normal">The identifier <SPAN Class="swiss">No_Dynamic_Priorities</SPAN> 
+means that there is no dependence on the package <SPAN Class="swiss">Ada.Priorities</SPAN> 
+as well as no uses of the attribute <SPAN Class="swiss">Priority</SPAN> 
+(this is a new attribute for protected objects as explained at the end 
+of this section).<A NAME="I1166"></A></div>
+<div class="Normal">Note that the rules are that you cannot read as well 
+as not write the priorities &ndash; this applies to both the procedure 
+for reading task priorities and reading the attribute for protected objects.</div>
+<div class="Normal">The identifier <SPAN Class="swiss">No_Local_Protected_Objects</SPAN> 
+means that protected objects can only be declared at library level and 
+the identifier <SPAN Class="swiss">No_Protected_Type_Allocators</SPAN> 
+means that there are no allocators for protected objects or objects containing 
+components of protected types.<A NAME="I1167"></A><A NAME="I1168"></A></div>
+<div class="Normal">The identifier <SPAN Class="swiss">No_Local_Timing_Events</SPAN> 
+means that objects of the type <SPAN Class="swiss">Timing_Event</SPAN> 
+in the package <SPAN Class="swiss">Ada.Real_Time.Timing_Events</SPAN> 
+can only be declared at library level. This package is described in Section 
+6 below.<A NAME="I1169"></A></div>
+<div class="Normal">The identifiers <SPAN Class="swiss">No_Relative_Delay</SPAN>, 
+<SPAN Class="swiss">No_Requeue_Statements</SPAN>, and <SPAN Class="swiss">No_Select_Statements</SPAN> 
+mean that there are no relative delay, requeue or select statements respectively.<A NAME="I1170"></A><A NAME="I1171"></A><A NAME="I1172"></A></div>
+<div class="Normal">The identifier <SPAN Class="swiss">No_Specific_Termination_Handlers</SPAN> 
+means that there are no calls of the procedure <SPAN Class="swiss">Set_Specific_Handler</SPAN> 
+or the function <SPAN Class="swiss">Specific_Handler</SPAN> in the package 
+<SPAN Class="swiss">Task_Termination</SPAN> and the identifier <SPAN Class="swiss">No_Task_Termination</SPAN> 
+means that all tasks should run for ever. Note that we are permitted 
+to set a fallback handler so that if any task does attempt to terminate 
+then it will be detected.<A NAME="I1173"></A><A NAME="I1174"></A></div>
+<div class="Normal">The identifier <SPAN Class="swiss">Simple_Barriers</SPAN> 
+means that the Boolean expression in a barrier of an entry of a protected 
+object shall be either a static expression (such as <SPAN Class="swiss">True</SPAN>) 
+or a Boolean component of the protected object itself.<A NAME="I1175"></A></div>
+<div class="Normal">The Restrictions identifier <SPAN Class="swiss">Max_Entry_Queue_Length</SPAN> 
+sets a limit on the number of calls permitted on an entry queue. It is 
+an important property of the Ravenscar profile that only one call is 
+permitted at a time on an entry queue of a protected object.<A NAME="I1176"></A></div>
+<div class="Normal">The identifier <SPAN Class="swiss">No_Dependence</SPAN> 
+is not specific to the Real-Time Systems annex and is properly described 
+in Section <A HREF="Rat-6-4.html">6.4</A>. In essence it indicates that 
+the program does not depend upon the given language defined package. 
+In this case it means that a program conforming to the Ravenscar profile 
+cannot use any of the packages <SPAN Class="swiss">Asynchronous_Task_Control</SPAN>, 
+<SPAN Class="swiss">Calendar</SPAN>, <SPAN Class="swiss">Execution_Time.Group_Budget</SPAN>, 
+<SPAN Class="swiss">Execution_Time.Timers</SPAN> and <SPAN Class="swiss">Task_Attributes</SPAN>. 
+Some of these packages are new and are described later in this chapter 
+(in Section <A HREF="Rat-5-6.html">5.6</A>).<A NAME="I1177"></A></div>
+<div class="Normal">Note that <SPAN Class="swiss">No_Dependence</SPAN> 
+cannot be used for <SPAN Class="swiss">No_Dynamic_Attachment</SPAN> because 
+that would prevent use of the child package <SPAN Class="swiss">Ada.Interrupts.Names</SPAN>.</div>
+<div class="Normal">All the other restrictions identifiers used by the 
+Ravenscar profile were already defined in Ada 95. Note also that the 
+identifier <SPAN Class="swiss">No_Asynchronous_Control</SPAN> has been 
+moved to <A HREF="http://www.adaic.org/resources/add_content/standards/05rm/html/RM-J-13.html">Annex 
+J</A> because it can now be replaced by the use of <SPAN Class="swiss">No_Dependence</SPAN>.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

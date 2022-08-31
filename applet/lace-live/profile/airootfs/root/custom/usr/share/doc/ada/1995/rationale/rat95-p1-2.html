@@ -1,0 +1,3033 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part One - Chapter 2
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p1-1.html> Previous </a> |
+<a href=rat95-p1-3.html> Next </a>
+<hr>
+
+<h1>
+II   Highlights of Ada 95
+</h1>
+
+
+<p>
+The brightest highlights of Ada 95 are its inherent
+reliability and its ability to provide abstraction through
+the package and private type.  These features already exist
+in Ada 83 and so in a real sense Ada 83 already contains the
+best of Ada 95.  Indeed, Ada 83 is already a very good
+language.  However, time and technology do not stand still,
+and Ada 95 is designed to meet increased requirements which
+have arisen from three directions.  These are: feedback from
+the use of existing paradigms; additional market
+requirements to match evolving hardware capability; and
+increased fundamental understanding which has introduced new
+paradigms.  As we will see, Ada 95 follows on from the
+tradition of excellence of Ada 83 and meets these additional
+requirements in an outstanding manner.
+</p>
+<p>
+  One of the great strengths of Ada 83 is its reliability.
+The strong typing and related features ensure that programs
+contain few surprises; most errors are detected at compile
+time and of those remaining many are detected by runtime
+constraints.  This aspect of Ada considerably reduces the
+costs and risks of program development compared for example
+with C or its derivatives such as C++.
+</p>
+<p>
+   However, Ada 83 has proved to be somewhat less flexible
+than might be desired in some circumstances.  For example,
+it has not always proved straightforward to interface to
+non-Ada systems.  Moreover, the type model coupled with the
+flat library mechanism can cause significant costs through
+the need for apparently unnecessary recompilation.
+</p>
+<p>
+   A prime goal of the design of Ada 95 has thus been to
+give the language a more open and extensible feel without
+losing the inherent integrity and efficiency of Ada 83.
+That is to keep the Software Engineering but allow more
+flexibility.
+</p>
+<p>
+   The additions in Ada 95 which contribute to this more
+flexible feel are type extension, the hierarchical library
+and the greater ability to manipulate pointers or
+references.
+</p>
+<p>
+   As a consequence, Ada 95 incorporates the benefits of
+Object Oriented languages without incurring the pervasive
+overheads of languages such as SmallTalk or the insecurity
+brought by the weak C foundation in the case of C++.  Ada 95
+remains a very strongly typed language but provides the
+prime benefits of all key aspects of the Object Oriented
+paradigm.
+</p>
+<p>
+  Another area of major change in Ada 95 is in the tasking
+model where the introduction of protected types allows a
+more efficient implementation of standard problems of shared
+data access.  This brings the benefits of speed provided by
+low-level primitives such as semaphores without the risks
+incurred by the use of such unstructured primitives.
+Moreover, the clearly data-oriented view brought by the
+protected types fits in naturally with the general spirit of
+the Object Oriented paradigm.
+</p>
+<p>
+   Other improvements to the tasking model allow a more
+flexible response to interrupts and other changes of state.
+</p>
+<p>
+   Ada 95 also incorporates numerous other minor changes
+reflecting feedback from the use of existing features as
+well as specific new features addressing the needs of
+specialized applications and communities.
+</p>
+<p>
+   This chapter highlights the major new features of Ada 95
+and the consequential benefits as seen by the general Ada
+user.
+</p>
+
+<a name=1>
+<h2>
+II.1  Programming by Extension
+</h2>
+</a>
+
+<p>
+The key idea of programming by extension is the ability to
+declare a new type that refines an existing parent type by
+inheriting, modifying or adding to both the existing
+components and the operations of the parent type.  A major
+goal is the reuse of existing reliable software without the
+need for recompilation and retesting.
+</p>
+<p>
+   Type extension in Ada 95 builds upon the existing Ada 83
+concept of a derived type.  In Ada 83, a derived type
+inherited the operations of its parent and could add new
+operations; however, it was not possible to add new
+components to the type.  The whole mechanism was thus
+somewhat static.  By contrast, in Ada 95 a derived type can
+also be extended to add new components.  As we will see, the
+mechanism is much more dynamic and allows greater
+flexibility through late binding and polymorphism.
+</p>
+<p>
+   In Ada 95, record types may be extended on derivation
+provided that they are marked as tagged.  Private types
+implemented as record types can also be marked as tagged.
+As the name implies, a tagged type has an associated tag.
+The word tag is familiar from Pascal where it is used to
+denote what in Ada is known as a discriminant; as we shall
+see later, the Ada 95 tag is effectively a hidden
+discriminant identifying the type and so the term is very
+appropriate.
+</p>
+<p>
+   As a very simple example suppose we wish to manipulate
+various kinds of geometrical objects which form some sort of
+hierarchy.  All objects will have a position given by their
+x- and y-coordinates.  So we can declare the root of the
+hierarchy as
+<pre>
+   type Object is tagged
+      record
+         X_Coord: Float;
+         Y_Coord: Float;
+      end record;
+</pre>
+</p>
+<p>
+The other types of geometrical objects will be derived
+(directly or indirectly) from this type.  For example we
+could have
+<pre>
+   type Circle is new Object with
+      record
+         Radius: Float;
+      end record;
+</pre>
+and the type Circle then has the three components X_Coord,
+Y_Coord and Radius.  It inherits the two coordinates from
+the type Object and the component Radius is added
+explicitly.
+</p>
+<p>
+   Sometimes it is convenient to derive a new type without
+adding any further components.  For example
+<pre>
+   type Point is new Object with null record;
+</pre>
+</p>
+<p>
+   In this last case we have derived Point from Object but
+naturally not added any new components.  However, since we
+are dealing with tagged types we have to explicitly add with
+null record; to indicate that we did not want any new
+components.  This has the advantage that it is always clear
+from a declaration whether a type is tagged or not.  Note
+that tagged is of course a new reserved word; Ada 95 has a
+small number (six) of such new reserved words.
+</p>
+<p>
+   A private type can also be marked as tagged
+<pre>
+   type Shape is tagged private;
+</pre>
+and the full type declaration must then (ultimately) be a
+tagged record
+<pre>
+   type Shape is tagged
+      record ...
+</pre>
+or derived from a tagged record such as Object.  On the
+other hand we might wish to make visible the fact that the
+type Shape is derived from Object and yet keep the
+additional components hidden.  In this case we would write
+<pre>
+   package Hidden_Shape is
+      type Shape is new Object with private;    -- client
+   view
+      ...
+   private
+      type Shape is new Object with  -- server view
+      record
+         -- the private components
+      end record;
+   end Hidden_Shape;
+</pre>
+</p>
+<p>
+   In this last case it is not necessary for the full
+declaration of Shape to be derived directly from the type
+Object.  There might be a chain of intermediate derived
+types (it could be derived from Circle); all that matters is
+that Shape is ultimately derived from Object.
+</p>
+<p>
+   Just as in Ada 83, derived types inherit the operations
+which "belong" to the parent type - these are called
+primitive operations in Ada 95.  User-written subprograms
+are classed as primitive operations if they are declared in
+the same package specification as the type and have the type
+as parameter or result.
+</p>
+<p>
+   Thus we might have declared a function giving the
+distance from the origin
+<pre>
+   function Distance(O: in Object) return Float is
+   begin
+      return Sqrt(O.X_Coord**2 + O.Y_Coord**2);
+   end Distance;
+</pre>
+</p>
+<p>
+   The type Circle would then sensibly inherit this
+function.  If however, we were concerned with the area of an
+object then we might start with
+<pre>
+   function Area(O: in Object) return Float is
+   begin
+      return 0.0;
+   end Area;
+</pre>
+which returns zero since a raw object has no area.  This
+would also be inherited by the type Circle but would be
+inappropriate; it would be more sensible to explicitly
+declare
+<pre>
+   function Area(C: in Circle) return Float is
+   begin
+
+      return Pi*C.Radius**2;
+   end Area;
+</pre>
+which will override the inherited operation.
+</p>
+<p>
+   It is possible to "convert" a value from the type Circle
+to Object and vice versa.  From circle to object is easy, we
+simply write
+<pre>
+   O: Object := (1.0, 0.5);
+   C: Circle := (0.0, 0.0, 12.2);
+   ...
+   O := Object(C);
+</pre>
+which effectively ignores the third component.  However,
+conversion in the other direction requires the provision of
+a value for the extra component and this is done by an
+extension aggregate thus
+<pre>
+   C := (O with 46.8);
+</pre>
+where the expression O is extended after with by the values
+of the extra components written just as in a normal
+aggregate.  In this case we only had to give a value for the
+radius.
+</p>
+<p>
+   We now consider a more practical example which
+illustrates the use of tagged types to build a system as a
+hierarchy of types and packages.  We will see how this
+allows the system to be extended without recompilation of
+the central part of the system.  By way of illustration we
+start by showing the rigid way this had to be programmed in
+Ada 83 by the use of variants.
+</p>
+<p>
+   Our system represents the processing of alerts (alarms)
+in a ground mission control station.  Alerts are of three
+levels of priority.  Low level alerts are merely logged,
+medium level alerts cause a person to be assigned to deal
+with the problem and high level alerts cause an alarm bell
+to ring if the matter is not dealt with by a specified time.
+In addition, a message is displayed on various devices
+according to its priority.
+</p>
+<p>
+   First consider how this might have be done in Ada 83
+<pre>
+   with Calendar;
+   package Alert_System is
+
+      type Priority is (Low, Medium, High);
+      type Device is (Teletype, Console, Big_Screen);
+
+      type Alert(P: Priority) is
+         record
+            Time_Of_Arrival: Calendar.Time;
+            Message: Text;
+            case P is
+               when Low => null;
+               when Medium | High =>
+                  Action_Officer: Person;
+                  case P is
+                     when Low | Medium => null;
+                     when High =>
+                        Ring_Alarm_At: Calendar.Time;
+                  end case;
+            end case;
+         end record;
+
+      procedure Display(A: in Alert; On: in Device);
+      procedure Handle(A: in out Alert);
+
+      procedure Log(A: in Alert);
+      procedure Set_Alarm(A: in Alert);
+
+   end Alert_System;
+</pre>
+</p>
+<p>
+   Each alert is represented as a discriminated record with
+the priority as the discriminant.  Perhaps surprisingly, the
+structure and processing depend on this discriminant in a
+quite complex manner.  One immediate difficulty is that we
+are more or less obliged to use nested variants because of
+the rule that all the components of a record have to have
+different identifiers.  The body of the procedure Handle
+might be
+<pre>
+   procedure Handle(A: in out Alert) is
+   begin
+      A.Time_Of_Arrival := Calendar.Clock;
+      Log(A);
+      Display(A, Teletype);
+      case A.P is
+         when Low => null;  -- nothing special
+         when Medium | High =>
+            A.Action_Officer := Assign_Volunteer;
+            Display(A, Console);
+            case A.P is
+               when Low | Medium => null;
+               when High =>
+                  Display(A, Big_Screen);
+                  Set_Alarm(A);
+            end case;
+      end case;
+   end Handle;
+</pre>
+</p>
+<p>
+   One problem with this approach is that the code is
+curiously complex due to the nested structure and
+consequently hard to maintain and error-prone.  If we try to
+avoid the nested case statement then we have to repeat some
+of the code.
+</p>
+<p>
+   A more serious problem is that if, for example, we need
+to add a further alert category, perhaps an emergency alert
+(which would mean adding another value to the type
+Priority), then the whole system will have to be modified
+and recompiled.  Existing reliable code will then be
+disturbed with the risk of subsequent errors.
+</p>
+<p>
+   In Ada 95 we can use a series of tagged types with a
+distinct procedure Handle for each one.  This completely
+eliminates the need for case statements or variants and
+indeed the type Priority itself is no longer required
+because it is now inherent in the types themselves (it is
+implicit in the tag).  The package specification now becomes
+<pre>
+   with Calendar;
+   package New_Alert_System is
+
+      type Device is (Teletype, Console, Big_Screen);
+
+      type Alert is tagged
+         record
+            Time_Of_Arrival: Calendar.Time;
+            Message: Text;
+         end record;
+
+      procedure Display(A: in Alert; On: in Device);
+      procedure Handle(A: in out Alert);
+      procedure Log(A: in Alert);
+
+
+      type Low_Alert is new Alert with null record;
+
+      type Medium_Alert is new Alert with
+         record
+            Action_Officer: Person;
+         end record;
+
+      -- now override inherited operation
+      procedure Handle(MA: in out Medium_Alert);
+
+      type High_Alert is new Medium_Alert with
+         record
+            Ring_Alarm_At: Calendar.Time;
+         end record;
+
+      procedure Handle(HA: in out High_Alert);
+      procedure Set_Alarm(HA: in High_Alert);
+
+   end New_Alert_System;
+</pre>
+</p>
+<p>
+   In this formulation the variant record is replaced with
+the tagged type Alert and three types derived from it.  Note
+that Ada 95 allows a type to be derived in the same package
+specification as the parent and to inherit all the primitive
+operations but we cannot add any new primitive operations to
+the parent after a type has been derived from it.  This is
+different to Ada 83 where the operations were not derivable
+until after the end of the package specification.  This
+change allows the related types to be conveniently
+encapsulated all in the same package.
+</p>
+<p>
+   The type Low_Alert is simply a copy of Alert (note with
+null record;) and could be dispensed with although it
+maintains equivalence with the Ada 83 version; Low_Alert
+inherits the procedure Handle from Alert.  The type
+Medium_Alert extends Alert and provides its own procedure
+Handle thus overriding the inherited version.  The type
+High_Alert further extends Medium_Alert and similarly
+provides its own procedure Handle.  Thus instead of a single
+procedure Handle containing complex case statements the Ada
+95 solution distributes the logic for handling alerts to
+each specific alert type without any redundancy.
+</p>
+<p>
+   Note that Low_Alert, Medium_Alert and High_Alert all also
+inherit the procedures Display and Log but without change.
+Finally, High_Alert adds the procedure Set_Alarm which is
+not used by the lower alert levels and thus it seems
+inappropriate to declare it for them.
+</p>
+<p>
+   The package body is as follows
+<pre>
+   package body New_Alert_System is
+
+      procedure Handle(A: in out Alert) is
+      begin
+         A.Time_Of_Arrival := Calendar.Clock;
+         Log(A);
+         Display(A, Teletype);
+      end Handle;
+
+      procedure Handle(MA: in out Medium_Alert) is
+      begin
+         Handle(Alert(MA)); -- handle as plain alert
+         MA.Action_Officer := Assign_Volunteer;
+         Display(MA, Console);
+      end Handle;
+
+
+      procedure Handle(HA: in out High_Alert) is
+      begin
+         Handle(Medium_Alert(HA)); -- conversion
+         Display(HA, Big_Screen);
+         Set_Alarm(HA);
+      end Handle;
+
+      procedure Display(A: in Alert; On: in Device) is separate;
+      procedure Log(A: in Alert) is separate;
+
+      procedure Set_Alarm(HA: in High_Alert) is separate;
+
+   end New_Alert_System;
+</pre>
+</p>
+<p>
+   Each distinct body for Handle contains just the code
+relevant to the type and delegates additional processing
+back to its parent using an explicit type conversion.  Note
+carefully that all type checking is static and so no runtime
+penalties are incurred with this structure (the variant
+checks have been avoided).
+</p>
+<p>
+   In the Ada 95 model a new alert level (perhaps
+Emergency_Alert) can be added without recompilation (and
+perhaps more importantly, without retesting) of the existing
+code.
+<pre>
+   with New_Alert_System;
+   package Emergency_Alert_System is
+
+      type Emergency_Alert is
+         new New_Alert_System.Alert with private;
+
+      procedure Handle(EA: in out Emergency_Alert);
+
+      procedure Display(EA: in Emergency_Alert;
+                        On: in New_Alert_System.Device);
+
+      procedure Log(EA: in Emergency_Alert);
+
+   private
+      ...
+   end Emergency_Alert_System;
+</pre>
+</p>
+<p>
+   In the Ada 83 model extensive recompilation would have
+been necessary since the variant records would have required
+redefinition.  Thus we see that Ada 95 truly provides
+Programming by Extension.
+</p>
+
+<a name=2>
+<h2>
+II.2  Class Wide Programming
+</h2>
+</a>
+
+<p>
+The facilities we have seen so far have allowed us to define
+a new type as an extension of an existing one.  We have
+introduced the different kinds of alerts as distinct but
+related types.  What we also need is a means to manipulate
+any kind of alert and to process it accordingly.  We do this
+through the introduction of the notion of class-wide types.
+</p>
+<p>
+   With each tagged type T there is an associated type
+T'Class.  This type comprises the union of all the types in
+the tree of derived types rooted at T.  The values of
+T'Class are thus the values of T and all its derived types.
+Moreover a value of any type derived from T can be
+implicitly converted to the type T'Class.
+ </p>
+<p>
+  Thus in the case of the type Alert the tree of types is
+as shown in Figure II-1.
+<pre>
+                                      Alert
+                                        |
+                                        |
+                         +--------------+----------------+
+                         |              |                |
+                      Low_Alert         |          Emergency_Alert
+                                        |
+                                        |
+                                    Medium_Alert
+                                        |
+                                        |
+                                     High_Alert
+
+
+                           Figure II-1: A Tree of Types
+</pre>
+</p>
+<p>
+   A value of any of the alert types can be implicitly
+converted to Alert'Class.  Note carefully that
+Medium_Alert'Class is not the same as Alert'Class; the
+former consists just of Medium_Alert and High_Alert.
+</p>
+<p>
+   Each value of a class-wide type has a tag which
+identifies its particular type from other types in the tree
+of types at runtime.  It is the existence of this tag which
+gives rise to the term tagged types.
+</p>
+<p>
+   The type T'Class is treated as an unconstrained type;
+this is because we cannot possibly know how much space could
+be required by any value of a class-wide type because the
+type might be extended.  As a consequence, although we can
+declare an object of a class-wide type we must initialize it
+and it is then constrained by the tag.
+</p>
+<p>
+   However, we can declare an access type referring to a
+class-wide type in which case the access could designate any
+value of the class-wide type from time to time.  The use of
+access types is therefore a key factor in class-wide
+programming.  Moreover, a parameter of a procedure can also
+be of a class-wide type.  There is a strong analogy between
+class-wide types and other unconstrained types such as array
+types.
+</p>
+<p>
+   We can now continue our example by considering how we
+might buffer up a series of alerts and process them in
+sequence.  The whole essence of the problem is that such a
+central routine cannot know of the individual types because
+we need it to work (without recompilation) even if we extend
+the system by adding a new alert type to it.
+</p>
+<p>
+   The central routine could thus take a class-wide value as
+its parameter so we might have
+<pre>
+   procedure Process_Alerts(AC: in out Alert'Class) is
+      ...
+   begin
+      ...
+      Handle(AC); -- dispatch according to tag
+      ...
+   end Process_Alerts;
+</pre>
+</p>
+<p>
+   In this case we do not know which procedure Handle to
+call until runtime because we do not know which specific
+type the alert belongs to.  However, AC is of a class-wide
+type and so its value includes a tag indicating the specific
+type of the value.  The choice of Handle is then determined
+by the value of this tag; the parameter is then implicitly
+converted to the appropriate specific alert type before
+being passed to the appropriate procedure Handle.
+</p>
+<p>
+   This runtime choice of procedure is called dispatching
+and is key to the flexibility of class-wide programming.
+</p>
+<p>
+   Before being processed, the alerts might be held on a
+heterogeneous queue using an access type
+<pre>
+   type Alert_Ptr is access Alert'Class;
+</pre>
+and the central routine could manipulate the alerts directly
+from such a queue
+<pre>
+   procedure Process_Alerts is
+      Next_Alert: Alert_Ptr;
+   begin
+      ...
+      Next_Alert := -- get next alert
+      ...
+      Handle(Next_Alert.all);  -- dispatch to appropriate
+   Handle
+      ...
+   end Process_Alerts;
+</pre>
+</p>
+<p>
+   In this case, the value of the object referred to by
+Next_Alert is of a class-wide type and so includes a tag
+indicating the specific type.  The parameter Next_Alert.all
+is thus dereferenced, the value of the tag gives the choice
+of Handle and the parameter is then implicitly converted as
+before and then passed to the chosen procedure Handle.
+</p>
+<p>
+   Dispatching may be implemented as a simple indirect jump
+through a table of subprograms indexed by the primitive
+operations such as Handle.  This is generally much more
+efficient than the alternative of variant records and case
+statements, with their attendant variant checks.
+</p>
+
+<a name=3>
+<h2>
+II.3  Abstract Types and Subprograms
+</h2>
+</a>
+
+<p>
+The final topic to be introduced in this brief introduction
+to the Object Oriented features of Ada 95 is the concept of
+abstract tagged types and abstract subprograms.  These are
+marked as abstract in their declaration.  The purpose of an
+abstract type is to provide a common foundation upon which
+useful types can be built by derivation.  An abstract
+subprogram is a sort of place holder for an operation to be
+provided (it does not have a body).
+</p>
+<p>
+   An abstract tagged type can have abstract primitive
+subprograms and these dispatch.  An abstract type on its own
+is of little use because we cannot declare an object of an
+abstract type.
+</p>
+<p>
+   Upon derivation from an abstract type we can provide
+actual subprograms for the abstract subprograms of the
+parent type (and it is in this sense that we said they were
+place holders).  If all the abstract subprograms are
+replaced by proper subprograms then the type need not be
+declared as abstract and we can then declare objects of the
+type in the usual way.  (The rules ensure that dispatching
+always works.)
+</p>
+<p>
+   Returning now to our example of processing alerts we
+could reformulate this so that the root type Alert was just
+an abstract type and then build the specific types upon
+this.  This would enable us to program and compile all the
+general infrastructure routines for processing all alerts
+such as Process_Alerts in the previous section without any
+concern at all for the individual alerts and indeed before
+deciding what they should contain.
+</p>
+<p>
+   The baseline package could then simply become
+<pre>
+   package Base_Alert_System is
+
+      type Alert is abstract tagged null record;
+      procedure Handle(A: in out Alert) is abstract;
+
+   end Base_Alert_System;
+</pre>
+in which we declare the type Alert as a tagged null record
+with just the procedure Handle as an abstract subprogram;
+this does not have a body.  (Note the abbreviated form for a
+null record declaration which saves us having to write
+record null; end record;)
+</p>
+<p>
+   We can now develop our alert infrastructure and then
+later add the normal alert system containing the three
+levels of alerts thus
+<pre>
+   with Calendar;
+   with Base_Alert_System;
+   package Normal_Alert_System is
+
+      type Device is (Teletype, Console, Big_Screen);
+
+      type Low_Alert is new Base_Alert_System.Alert with
+         record
+            Time_Of_Arrival: Calendar.Time;
+            Message: Text;
+         end record;
+
+      -- now provide actual subprogram for abstract one
+      procedure Handle(LA: in out Low_Alert);
+
+      procedure Display(LA: in Low_Alert; On: in Device);
+      procedure Log(LA: in Low_Alert);
+
+      type Medium_Alert is new Low_Alert with
+         record
+            Action_Officer: Person;
+         end record;
+
+      procedure Handle(MA: in out Medium_Alert);
+
+      type High_Alert is new Medium_Alert with
+         record
+            Ring_Alarm_At: Calendar.Time;
+         end record;
+
+      procedure Handle(HA: in out High_Alert);
+      procedure Set_Alarm(HA: in High_Alert);
+
+   end Normal_Alert_System;
+</pre>
+</p>
+<p>
+   In this revised formulation we must provide a procedure
+Handle for Low_Alert to meet the promise of the abstract
+type.  The procedures Display and Log now take a parameter
+of Low_Alert and the type Medium_Alert is more naturally
+derived from Low_Alert.
+</p>
+<p>
+   Note carefully that we did not make Display and Log
+abstract subprograms in the package Base_Alert_System.
+There was no need; it is only Handle that is required by the
+general infrastructure such as the procedure Process_Alerts
+and to add the others would weaken the abstraction and
+clutter the base level.
+</p>
+<p>
+   Corresponding changes are required to the package body;
+the procedure Handle previously applying to Alert now
+applies to Low_Alert and in the procedure Handle for
+Medium_Alert we need to change the type conversion in the
+call to the "parent" Handle which is of course now the
+procedure Handle for Low_Alert.  The two procedures thus
+become
+<pre>
+      procedure Handle(LA: in out Low_Alert) is
+      begin
+         LA.Time_Of_Arrival := Calendar.Clock;
+         Log(LA);
+         Display(LA, Teletype);
+      end Handle;
+
+      procedure Handle(MA: in out Medium_Alert) is
+      begin
+         Handle(Low_Alert(MA)); -- handle as low alert
+         MA.Action_Officer := Assign_Volunteer;
+         Display(MA, Console);
+      end Handle;
+</pre>
+</p>
+<p>
+   When we now add our Emergency_Alert we can choose to
+derive this from the baseline Alert as before or perhaps
+from some other point in the tree picking up the existing
+facilities of one of the other levels.
+</p>
+
+<a name=4>
+<h2>
+II.4  Summary of Type Extension
+</h2>
+</a>
+
+<p>
+The key points we have seen are as follows.
+</p>
+<p>
+   Ada 95 introduces the notion of tagged types.  Only
+record (and private) types can be tagged.  Values of tagged
+types carry a tag with them.  The tag indicates the specific
+type.  A tagged type can be extended on derivation with
+additional components.
+</p>
+<p>
+   Primitive operations of a type are inherited on
+derivation.  The primitive operations are those implicitly
+declared, plus, in the case of a type declared in a package
+specification, all subprograms with a parameter or result of
+that type also declared in the package specification.
+Primitive operations can be overridden on derivation and
+further ones added.
+</p>
+<p>
+   A tagged type can be declared as abstract and can have
+abstract primitive subprograms.  An abstract subprogram does
+not have a body but one can be provided on derivation.  An
+abstract type provides a foundation for building specific
+types with some common protocol.
+</p>
+<p>
+   T'Class denotes the class-wide type rooted at T.
+Implicit conversion is allowed to values of T'Class.
+Objects and parameters of T'Class are treated as
+unconstrained.  An appropriate access type can designate any
+value of T'Class.
+</p>
+<p>
+   Calling a primitive operation with an actual parameter of
+a class-wide type results in dispatching: that is the
+runtime selection of the operation according to the tag.
+This is often called late binding - a key property of Object
+Oriented languages.
+</p>
+<p>
+   Another term commonly encountered is polymorphism.
+Class-wide types are said to be polymorphic because their
+values are of different "shapes" (from the Greek poly, many,
+and morphe, form).  Polymorphism is another property of
+Object Oriented languages.
+</p>
+<p>
+   One of the main advantages of type extension is that it
+can be done without recompiling and retesting an existing
+stable system.  This is perhaps the most important overall
+characteristic of Object Oriented languages.
+</p>
+
+<a name=5>
+<h2>
+II.5  Dynamic Selection
+</h2>
+</a>
+
+<p>
+In the previous section we mentioned late binding; this
+simply means that the procedure to be called is identified
+late in the compile-link-run process.  All procedure calls
+were bound early in Ada 83 and this was one reason why the
+language felt so static; even the generic mechanism only
+deferred binding to instantiation which is still essentially
+a compile time process.
+</p>
+<p>
+   There were a number of reasons for taking such a static
+approach in Ada 83.  There was concern for the
+implementation cost of dynamic binding, it was also clear
+that the presence of dynamic binding would reduce the
+provability of programs, and moreover it was felt that the
+introduction of generics where subprograms could be passed
+as parameters would cater for practical situations where
+formal procedure parameters were used in other languages.
+</p>
+<p>
+   However, the absence of dynamic binding in Ada 83 has
+been unfortunate.  It is now realized that implementation
+costs are trivial and not necessarily pervasive; provability
+is not a relevant argument because we now know that in any
+safety-critical software where mathematical provability is a
+real issue, we only use a small subset of the language.  And
+furthermore, the generic mechanism has proved not to be a
+sufficiently flexible alternative anyway.
+</p>
+<p>
+   We have seen how dispatching in Ada 95 is one mechanism
+for late binding.  Another is provided by the manipulation
+of subprogram values through an extension of access types.
+</p>
+<p>
+   In Ada 95 an access type can refer to a subprogram; an
+access-to-subprogram value can be created by the Access
+attribute and a subprogram can be called indirectly by
+dereferencing such an access value.  Thus we can write
+<pre>
+   type Trig_Function is access function(F: Float) return
+   Float;
+   T: Trig_Function;
+   X, Theta: Float;
+</pre>
+and T can then "point to" functions such as Sin, Cos and
+Tan.  We can then assign an appropriate access-to-subprogram
+value to T by for example
+<pre>
+   T := Sin'Access;
+</pre>
+and later indirectly call the subprogram currently referred
+to by T as expected
+<pre>
+   X := T(Theta);
+</pre>
+which is really an abbreviation for
+<pre>
+   X := T.all(Theta);
+</pre>
+</p>
+<p>
+   Just as with many other uses of access types the .all is
+not usually required but it would be necessary if there were
+no parameters.
+</p>
+<p>
+   The access to subprogram mechanism can be used to program
+general dynamic selection and to pass subprograms as
+parameters.  It allows program call-back to be implemented
+in a natural and efficient manner.
+</p>
+<p>
+   There are a number of rules which ensure that access to
+subprogram values cannot be misused.  Conformance matching
+ensures that the subprogram always has the correct number
+and type of parameters and there are rules about
+accessibility that ensure that a subprogram is not called
+out of context.  Flexibility is thus gained without loss of
+integrity.
+</p>
+<p>
+  Simple classic numerical algorithms can now be
+implemented in Ada 95 in the same way as in languages such
+as Fortran but with complete security.  Thus an integration
+routine might have the following specification
+<pre>
+   type Integrand is access function(X: Float) return Float;
+
+   function Integrate(F: Integrand; From, To: Float;
+                      Accuracy: Float := 1.0E-7) return Float;
+</pre>
+and we might then write
+<pre>
+   Area := Integrate(Log'Access, 1.0, 2.0);
+</pre>
+which will compute the area under the curve for log(x) from
+1.0 to 2.0.  Within the body of the function Integrate there
+will be calls of the actual subprogram passed as a
+parameter; this is a simple form of call-back.
+</p>
+<p>
+   A common paradigm within the process industry is to
+implement sequencing control through successive calls of a
+number of interpreter actions.  A sequence compiler might
+interactively build an array of such actions which are then
+obeyed.  Thus we might have
+<pre>
+   type Action is access procedure;
+   Action_Sequence: array(1 .. N) of Action;
+
+   ... -- build the array
+
+       -- and then obey it
+   for I in Action_Sequence'Range loop
+      Action_Sequence(I).all;
+   end loop;
+</pre>
+</p>
+<p>
+   It is of course possible for a record (possibly private)
+to contain components whose types are access to subprogram
+types.  Consider the following example of a package which
+provides facilities associated with the actions obtained
+when we press keys on our keyboard or perhaps click our
+mouse on a window button.
+<pre>
+   package Push_Buttons is
+
+      type Button is private;
+
+      type Button_Response is access procedure(B: in out Button);
+
+      function Create(...) return Button;
+
+      procedure Push(B: in out Button);
+
+      procedure Set_Response(B: in out Button;
+                             R: in Button_Response);
+
+      procedure Default_Response(B: in out Button);
+
+      ...
+
+   private
+      type Button is
+         record
+            Response: Button_Response :=
+                          Default_Response'Access;
+            ...    -- other aspects of the button
+         end record;
+   end Push_Buttons;
+</pre>
+</p>
+<p>
+   A button is represented as a private record containing a
+number of components describing properties of the button
+(position on screen for example).  One component is an
+access to a procedure which is the action to be executed
+when the button is pushed.  Note carefully that the button
+value is passed to this procedure as a parameter so that the
+procedure can obtain access to the other components of the
+record describing the button.  The procedure Create fills in
+these other components and other functions (not shown)
+provide access to them.  The procedure Push invokes the
+action of clicking the mouse and an appropriate default
+procedure is provided which warns the user if the button has
+not been set.  The body might be as follows
+<pre>
+   package body Push_Buttons is
+
+      procedure Push(B: in out Button) is
+      begin
+         B.Response(B);  -- indirect call
+      end Push;
+
+      procedure Set_Response(B: in out Button;
+                             R: in Button_Response) is
+      begin
+         B.Response := R;  -- set procedure value in record
+      end Set_Response;
+
+      procedure Default_Response(B: in out Button) is
+      begin
+         Put("Button not set");
+         Monitor.Beep;
+      end Default_Response;
+
+      ...
+
+   end Push_Buttons;
+</pre>
+</p>
+<p>
+   We can now set the specific actions we want when a button
+is pushed.  Thus we might want some emergency action to take
+place when a big red button is pushed.
+<pre>
+   Big_Red_Button: Button;
+
+   procedure Emergency(B: in out Button) is
+   begin
+      -- call fire brigade etc
+   end Emergency;
+
+   ...
+
+   Set_Response(Big_Red_Button, Emergency'Access);
+   ...
+
+   Push(Big_Red_Button);
+</pre>
+</p>
+<p>
+   The reader will realize that the access to subprogram
+mechanism coupled with the inheritance and dispatching
+facilities described earlier enable very flexible yet secure
+dynamic structures to be programmed.
+</p>
+
+<a name=6>
+<h2>
+II.6  Other Access Types
+</h2>
+</a>
+
+<p>
+We have just seen how access types in Ada 95 have been
+extended to provide a means of manipulating subprogram
+values.  Access types have also been extended to provide
+more flexible access to objects.
+</p>
+<p>
+   In Ada 83, access values could only refer to objects
+dynamically created through the allocator mechanism (using
+new).  It was not possible to access objects declared in the
+normal way.  This approach was inherited from Pascal which
+had similar restrictions and was a reaction against the very
+flexible approach adopted by Algol 68 and C which can give
+rise to dangerous dangling references.
+</p>
+<p>
+   However, the ability to manipulate pointers is very
+valuable provided the risks can be overcome.  The view taken
+by Ada 83 has proved unnecessarily inflexible, especially
+when interfacing to external systems possibly written in
+other languages.
+</p>
+<p>
+   In Ada 95 we can declare a general access type such as
+<pre>
+   type Int_Ptr is access all Integer;
+</pre>
+and we can then assign the "address" of any variable of type
+Integer to a variable of type Int_Ptr provided that the
+designated variable is marked as aliased.  So we can write
+<pre>
+   IP: Int_Ptr;
+   I: aliased Integer;
+   ...
+   IP := I'Access;
+</pre>
+and we can then read and update the variable I through the
+access variable IP.  Note once more the use of 'Access.
+Note also that aliased is another new reserved word.
+</p>
+<p>
+   As with access to subprogram values there are rules that
+(at compile time) ensure that dangling references cannot
+arise.
+</p>
+<p>
+   A variation is that we can restrict the access to be
+read-only by replacing all in the type definition by
+constant.  This allows read-only access to any variable and
+also to a constant thus
+<pre>
+   type Const_Int_Ptr is access constant Integer;
+   CIP: Const_Int_Ptr;
+   I: aliased Integer;
+   C: aliased constant Integer := 1815;
+</pre>
+followed by
+<pre>
+   CIP := I'Access;  -- access to a variable, or
+   CIP := C'Access;  -- access to a constant
+</pre>
+</p>
+<p>
+   The type accessed by a general access type can of course
+be any type such as an array or record.  We can thus build
+chains from records statically declared.  Note that we can
+also use an allocator to generate general access values.
+Our chain could thus include a mixture of records from both
+storage mechanisms.
+</p>
+<p>
+   Finally note that the accessed object could be a
+component of a composite type.  Thus we could point into the
+middle of a record (provided the component is marked as
+aliased).  In a fast implementation of Conway's Game of Life
+a cell might contain access values directly referencing the
+component of its eight neighbors containing the counter
+saying whether the cell is alive or dead.
+<pre>
+   type Ref_Count is access constant Integer range 0 .. 1;
+   type Ref_Count_Array is array (Integer range <>) of
+   Ref_Count;
+
+   type Cell is
+      record
+         Life_Count: aliased Integer range 0 .. 1;
+         Total_Neighbor_Count: Integer range 0 .. 8;
+         Neighbor_Count: Ref_Count_Array(1 .. 8);
+         ...
+      end record;
+</pre>
+</p>
+<p>
+  We can now link the cells together according to our model
+by statements such as
+<pre>
+   This_Cell.Neighbor_Count(1) :=
+   Cell_To_The_North.Life_Count'Access;
+</pre>
+and then the heart of the computation which computes the sum
+of the life counts in the neighbors might be
+<pre>
+   C.Total_Neighbor_Count := 0;
+   for I in C.Neighbor_Count'Range loop
+      C.Total_Neighbor_Count :=
+          C.Total_Neighbor_Count + C.Neighbor_Count(I).all;
+   end loop;
+</pre>
+</p>
+<p>
+   Observe that we have given the type Ref_Count and the
+component Life_Count the same static subtypes so that they
+can be checked at compile time; this is not essential but
+avoids a run-time check that would otherwise be required if
+they did not statically match.
+</p>
+<p>
+   General access types can also be used to program static
+ragged arrays as for example a table of messages of
+different lengths.  The key to this is that the accessed
+type can be unconstrained (such as String) and thus we can
+have an array of pointers to strings of different lengths.
+In Ada 83 we would have had to allocate all the strings
+dynamically using an allocator.
+</p>
+<p>
+   In conclusion we have seen how the access types of Ada 83
+have been considerably enhanced in Ada 95 to allow much more
+flexible programming which is especially important in open
+systems while nevertheless retaining the inherent security
+missing in languages such as C and C++.
+</p>
+
+<a name=7>
+<h2>
+II.7  Hierarchical Libraries
+</h2>
+</a>
+
+<p>
+One of the great strengths of Ada is the library package
+where the distinct specification and body decouple the user
+interface to a package (the specification) from its
+implementation (the body).  This enables the details of the
+implementation and the clients to be recompiled separately
+without interference provided the specification remains
+stable.
+</p>
+<p>
+   However, although this works well for smallish programs
+it has proved cumbersome when programs become large or
+complex.  There are two aspects of the problem: the coarse
+control of visibility of private types and the inability to
+extend without recompilation.
+</p>
+<p>
+   There are occasions when we wish to write two logically
+distinct packages which nevertheless share a private type.
+We could not do this in Ada 83.  We either had to make the
+type not private so that both packages could see it with the
+unfortunate consequence that all the client packages could
+also see the type; this broke the abstraction.  Or, on the
+other hand, if we wished to keep the abstraction, then we
+had to merge the two packages together and this resulted in
+a large monolithic package with increased recompilation
+costs.  (We discount as naughty the use of tricks such as
+Unchecked_Conversion to get at the details of private
+types.)
+</p>
+<p>
+   The other aspect of the difficulty arose when we wished
+to extend an existing system by adding more facilities to
+it.  If we add to a package specification then naturally we
+have to recompile it but moreover we also have to recompile
+all existing clients even if the additions have no impact
+upon them.
+</p>
+<p>
+   In Ada 95 these and other similar problems are solved by
+the introduction of a hierarchical library structure
+containing child packages and child subprograms.  There are
+two kinds of children: public children and private children.
+We will just consider public children for the moment;
+private children are discussed in the next section.
+</p>
+<p>
+   Consider first the familiar example of a package for the
+manipulation of complex numbers.  It might contain the
+private type itself plus the four standard operations and
+also subprograms to construct and decompose a complex number
+taking a cartesian view.  Thus we might have
+<pre>
+   package Complex_Numbers is
+
+      type Complex is private;
+      function "+" (Left, Right: Complex) return Complex;
+      ... -- similarly "-", "*" and "/"
+
+      function Cartesian_To_Complex(Real, Imag: Float)
+   return Complex;
+      function Real_Part(X: Complex) return Float;
+      function Imag_Part(X: Complex) return Float;
+
+   private
+   ...
+   end Complex_Numbers;
+</pre>
+</p>
+<p>
+   We have deliberately not shown the completion of the
+private type since it is immaterial how it is implemented.
+Although this package gives the user a cartesian view of the
+type, nevertheless it certainly does not have to be
+implemented that way.
+</p>
+<p>
+   Some time later we might need to additionally provide a
+polar view by the provision of subprograms which construct
+and decompose a complex number from and to its polar
+coordinates.  In Ada 83 we could only do this by adding to
+the existing package and this forced us to recompile all the
+existing clients.
+</p>
+<p>
+   In Ada 95, however, we can add a child package as follows
+<pre>
+   package Complex_Numbers.Polar is
+
+      function Polar_To_Complex(R, Theta: Float) return
+   Complex;
+      function "abs" (Right: Complex) return Float;
+      function Arg(X: Complex) return Float;
+
+   end Complex_Numbers.Polar;
+</pre>
+and within the body of this package we can access the
+private type Complex itself.
+</p>
+<p>
+   Note the notation, a package having the name P.Q is a
+child package of its parent package P.  We can think of the
+child package as being declared inside the declarative
+region of its parent but after the end of the specification
+of its parent; most of the visibility rules stem from this
+model.  In other words the declarative region defined by the
+parent (which is primarily both the specification and body
+of the parent) also includes the space occupied by the text
+of the children; but it is important to realize that the
+children are inside that region and do not just extend it.
+Observe that the child does not need a with clause for the
+parent and that the entities of the parent are directly
+visible without a use clause.
+</p>
+<p>
+   In just the same way, library packages in Ada 95 can be
+thought of as being declared in the declarative region of
+the package Standard and after the end of its specification.
+Note that a child subprogram is not a primitive operation of
+a type declared in its parent's specification because the
+child is not declared in the specification but after it.
+</p>
+<p>
+   The important special visibility rule is that the private
+part (if any) and the body of the child have visibility of
+the private part of their parent.  (They naturally also have
+visibility of the visible part.)  However, the visible part
+of a (public) child package does not have visibility of the
+private part of its parent; if it did it would allow
+renaming and hence the export of the hidden private details
+to any client; this would break the abstraction of the
+private type (this rule does not apply to private children
+as explained later).
+</p>
+<p>
+   The body of the child package for our complex number
+example could simply be
+<pre>
+   package body Complex_Numbers.Polar is
+
+      -- bodies of Polar_To_Complex etc
+
+   end Complex_Numbers.Polar;
+</pre>
+</p>
+<p>
+   In order to access the procedures of the child package
+the client must have a with clause for the child package.
+However this also implicitly provides a with clause for the
+parent as well thereby saving us the burden of having to
+write one separately.  Thus we might have
+<pre>
+   with Complex_Numbers.Polar;
+   package Client is
+   ...
+</pre>
+and then within Client we can access the various subprograms
+in the usual way by writing Complex_Numbers.Real_Part or
+Complex_Numbers.Polar.Arg and so on.
+</p>
+<p>
+   Direct visibility can be obtained by use clauses as
+expected.  However, a use clause for the child does not
+imply one for the parent; but, because of the model that the
+child is in the declarative region of the parent, a use
+clause for the parent makes the child name itself directly
+visible.  So writing
+<pre>
+   with Complex_Numbers.Polar; use Complex_Numbers;
+</pre>
+now allows us to refer to the subprograms as Real_Part and
+Polar.Arg respectively.
+</p>
+<p>
+   We could of course have added
+<pre>
+   use Complex_Numbers.Polar;
+</pre>
+and we would then be able to refer to the subprogram
+Polar.Arg as just Arg.
+</p>
+<p>
+   Child packages thus neatly solve both the problem of
+sharing a private type over several compilation units and
+the problem of extending a package without recompiling the
+clients.  They thus provide another form of programming by
+extension.
+</p>
+<p>
+   A package may of course have several children.  In fact
+with hindsight it might have been more logical to have
+developed our complex number package as three packages: a
+parent containing the private type and the four arithmetic
+operations and then two child packages, one giving the
+cartesian view and the other giving the polar view of the
+type.  At a later date we could add yet another package
+providing perhaps the trigonometric functions on complex
+numbers and again this can be done without recompiling what
+has already been written and thus without the risk of
+introducing errors.
+</p>
+<p>
+   The extension mechanism provided by child packages fits
+neatly together with that provided by tagged types.  Thus a
+child package might itself have a private part and then
+within that part we might derive and extend a private type
+from the parent package.  This is illustrated by the
+following example which relates to the processing of widgets
+in a window system.
+<pre>
+   package XTK is
+      type Widget is tagged private;
+      type Widget_Access is access Widget'Class;
+      ...
+   private
+      type Widget is tagged
+         record
+            Parent: Widget_Access;
+            ...
+         end record;
+   end XTK;
+
+   -- now extend the Widget
+
+   package XTK.Color is
+      type Colored_Widget is new Widget with private;
+      ...
+   private
+      type Colored_Widget is new Widget with
+         record
+            Color: ...
+         end record;
+   end XTK.Color;
+</pre>
+</p>
+<p>
+   An interesting point with this construction is that
+clients at the parent level (those just withing XTK) only
+see the external properties common to all widgets, although
+by class-wide programming using Widget_Access, they may be
+manipulating colored widgets.  However, a client of
+XTK.Color also has access to the external properties of
+colored widgets because we have made the extended type
+visible (although still private of course).  It should be
+noted that in fact the private part of XTK.Color does not
+actually access the private part of XTK although it has
+visibility of it.  But of course the body of XTK.Color
+undoubtedly will and that is why we need a child package.
+</p>
+<p>
+   Another example is provided by the alert system discussed
+in II.1.  It would probably be better if the additional
+package concerning emergency alerts was actually a child of
+the main package thus
+<pre>
+   package New_Alert_System.Emergency is
+      type Emergency_Alert is new Alert with private;
+      ...
+   end New_Alert_System.Emergency;
+</pre>
+</p>
+<p>
+   The advantages are manifold.  The commonality of naming
+makes it clear that the child is indeed just a part of the
+total system; this is emphasized by not needing a with
+clause for the parent and that the entities in the parent
+are immediately visible.  In addition, although not required
+in this example, any private mechanisms in the private part
+of the parent would be visible to the child.  The
+alternative structure in II.3 where the baseline used an
+abstract type could also be rearranged.
+</p>
+<p>
+   The benefit of just the commonality of naming is very
+important since it prevents the inadvertent interference
+between different parts of subsystems.  This is used to good
+advantage in the arrangement of the Ada 95 predefined
+library as will be seen in II.13.
+</p>
+<p>
+   Finally, it is very important to realize that the child
+mechanism is hierarchical.  Children may have children to
+any level so we can build a complete tree providing
+decomposition of facilities in a natural manner.  A child
+may have a private part and this is then visible from its
+children but not its parent.
+</p>
+<p>
+   With regard to siblings a child can obviously only have
+visibility of a previously compiled sibling anyway.  And
+then the normal rules apply: a child can only see the
+visible part of its siblings.
+</p>
+<p>
+   A parent body may access (via with clauses) and thus
+depend upon its children and grandchildren.  A child body
+automatically depends upon its parent (and grandparent) and
+needs no with clause for them.  A child body can depend upon
+its siblings (again via with clauses).
+</p>
+
+<a name=8>
+<h2>
+II.8  Private Child Units
+</h2>
+</a>
+
+<p>
+In the previous section we introduced the concept of
+hierarchical child packages and showed how these allowed
+extension and continued privacy of private types without
+recompilation.  However, the whole idea was based on the
+provision of additional facilities for the client.  The
+specifications of the additional packages were all visible
+to the client.
+</p>
+<p>
+   In the development of large subsystems it often happens
+that we would like to decompose the system for
+implementation reasons but without giving any additional
+visibility to clients.
+</p>
+<p>
+   Ada 83 had a problem in this area which we have not yet
+addressed.  In Ada 83 the only means at our disposal for the
+decomposition of a body was the subunit.  However, although
+a subunit could be recompiled without affecting other
+subunits at the same level, any change to the top level body
+(which of course includes the stubs of the subunits)
+required all subunits to be recompiled.
+</p>
+<p>
+   Ada 95 also solves this problem by the provision of a
+form of child unit that is totally private to its parent.
+In order to illustrate this idea consider the following
+outline of an operating system.
+<pre>
+   package OS is
+      -- parent package defines types used throughout the
+   system
+      type File_Descriptor is private;
+      ...
+   private
+      type File_Descriptor is new Integer;
+   end OS;
+
+   package OS.Exceptions is
+      -- exceptions used throughout the system
+      File_Descriptor_Error,
+      File_Name_Error,
+      Permission_Error: exception;
+   end OS.Exceptions;
+
+   with OS.Exceptions;
+   package OS.File_Manager is
+      type File_Mode is (Read_Only, Write_Only, Read_Write);
+      function Open(File_Name: String; Mode: File_Mode)
+         return File_Descriptor;
+
+      procedure Close(File: in File_Descriptor);
+      ...
+   end OS.File_Manager;
+
+   procedure OS.Interpret(Command: String);
+
+   private package OS.Internals is
+      ...
+   end OS.Internals;
+
+   private package OS.Internals_Debug is
+      ...
+   end OS.Internals_Debug;
+</pre>
+</p>
+<p>
+   In this example the parent package contains the types
+used throughout the system.  There are then three public
+child units, the package OS.Exceptions containing various
+exceptions, the package OS.File_Manager which provides file
+open/close routines (note the explicit with clause for its
+sibling OS.Exceptions) and a procedure OS.Interpret which
+interprets a command line passed as a parameter.
+(Incidentally this illustrates that a child unit can be a
+subprogram as well as a package.  It can actually be any
+library unit and that includes a generic declaration and a
+generic instantiation.)  Finally we have two private child
+packages called OS.Internals and OS.Internals_Debug.
+</p>
+<p>
+   A private child (distinguished by starting with the word
+private) can be declared at any point in the child
+hierarchy.  The visibility rules for private children are
+similar to those for public children but there are two extra
+rules.
+</p>
+<p>
+   The first extra rule is that a private child is only
+visible within the subtree of the hierarchy whose root is
+its parent.  And moreover within that tree it is not visible
+to the specifications of any public siblings (although it is
+visible to their bodies).
+</p>
+<p>
+   In our example, since the private child is a direct child
+of the package OS, the package OS.Internals is visible to
+the bodies of OS itself, of OS.File_Manager and of
+OS.Interpret (OS.Exceptions has no body anyway) and it is
+also visible to both body and specification of
+OS.Internals_Debug.  But it is not visible outside OS and a
+client package certainly cannot access OS.Internals at all.
+</p>
+<p>
+   The other extra rule is that the visible part of the
+private child can access the private part of its parent.
+This is quite safe because it cannot export information
+about a private type to a client because it is not itself
+visible.  Nor can it export information indirectly via its
+public siblings because, as mentioned above, it is not
+visible to the visible parts of their specifications but
+only to their private parts and bodies.
+</p>
+<p>
+   We can now safely implement our system in the package
+OS.Internals and we can create a subtree for the convenience
+of development and extensibility.  We would then have a
+third level in the hierarchy containing packages such as
+OS.Internals.Devices, OS.Internals.Access_Rights and so on.
+</p>
+<p>
+   It might be helpful just to summarize the various
+visibility rules which are actually quite simple and mostly
+follow from the model of the child being located after the
+end of the specification of its parent but inside the
+parent's declarative region.  (We use "to with" for
+brevity.)
+</p>
+<ul>
+<li>
+    A specification never needs to with its parent;  it may
+     with a  sibling except that a public child
+     specification may not with a private sibling; it may
+     not with its own child (it has not been compiled yet!).
+<li>
+    A body never needs to with its parent; it may with a
+     sibling (private or not); it may with its own child
+     (and grandchild...).
+<li>
+    The entities of the parent are accessible by simple
+     name within a child; a use clause is not required.
+<li>
+    The context clause of the parent also applies to a
+     child.
+<li>
+    A private child is never visible outside the tree
+     rooted at its parent.  And within that tree it is not
+     visible to the specifications of public siblings.
+<li>
+    The private part and body of any child can access the
+     private part of its parent (and grandparent...).
+<li>
+    In addition the visible part of a private child can
+     also access the private part of its parent (and
+     grandparent...).
+<li>
+    A with clause for a child automatically implies with
+     clauses for all its ancestors.
+<li>
+    A use clause for a library unit makes the child units
+     accessible by simple name (this only applies to child
+     units for which there is also a with clause).
+</ul>
+<p>
+   These rules may seem a bit complex but actually stem from
+just a few considerations of consistency.  Questions
+regarding access to children of sibling units and other
+remote relatives follow by analogy with an external client
+viewing the appropriate subtree.
+</p>
+<p>
+   We conclude our discussion of hierarchical libraries by
+considering their interaction with generics.  Genericity is
+also an important tool in the construction of subsystems and
+it is essential that it be usable with the child concept.
+</p>
+<p>
+   Any parent unit may have generic children but a generic
+parent can only have generic children.  If the parent unit
+is not generic then a generic child may be instantiated in
+the usual way at any point where it is visible.
+</p>
+<p>
+   On the other hand, if the parent unit is itself generic,
+then a generic child can be instantiated outside the parent
+hierarchy provided the parent is first instantiated and the
+child is mentioned in a with clause; the instantiation of
+the child then refers to the instantiation of the parent.
+Note that although the original generic hierarchy consists
+of library units, the instantiations need not be library
+units.
+</p>
+<p>
+   As a simple example, we might wish to make the package
+Complex_Numbers of the previous section generic with respect
+to the underlying floating point type.  We would write
+<pre>
+   generic
+      type Float_Type is digits <>;
+   package Complex_Numbers is
+   ...
+   end Complex_Numbers;
+
+   generic
+   package Complex_Numbers.Polar is
+   ...
+   end Complex_Numbers.Polar;
+</pre>
+and then the instantiations might be
+<pre>
+   with Complex_Numbers;
+   package Real_Complex_Numbers is new
+   Complex_Numbers(Real);
+
+   with Complex_Numbers.Polar;
+   package Real_Complex_Numbers.Real_Polar is
+                                   new
+   Real_Complex_Numbers.Polar;
+</pre>
+</p>
+<p>
+   We thus have to instantiate the generic hierarchy (or as
+much of it as we want) unit by unit.  This avoids a number
+of problems that would arise with a more liberal approach
+but enables complete subsystems to be built in a generic
+manner.  In the above example we chose to make the
+instantiated packages into a corresponding hierarchy but as
+mentioned they could equally have been instantiated as local
+packages with unrelated names.  But an important point is
+that the instantiation of the child refers to the
+instantiation of the parent and not to the generic parent.
+This ensures that the instantiation of the child has
+visibility of the correct instantiation of the parent.
+ </p>
+<p>
+  The reader will now appreciate that the hierarchical
+library system of Ada 95 provides a very powerful and
+convenient tool for the development of large systems from
+component subsystems.  This is of particular value in
+developing bindings to systems such as POSIX in a very
+elegantly organized manner.
+</p>
+
+<a name=9>
+<h2>
+II.9  Protected Types
+</h2>
+</a>
+
+<p>
+The rendezvous model of Ada 83 provided an advanced high
+level approach to task synchronization which avoided the
+methodological difficulties encountered by the use of low-
+level primitives such as semaphores and signals.  As is
+well-known, such low-level primitives suffer from similar
+problems as gotos; it is obvious what they do and they are
+trivial to implement but in practice easy to misuse and can
+lead to programs which are difficult to maintain.
+</p>
+<p>
+   Unfortunately the rendezvous has not proved entirely
+satisfactory.  It required additional tasks to manage shared
+data and this often led to poor performance.  Moreover, in
+some situations, awkward race conditions arose essentially
+because of abstraction inversion.  And from a methodological
+viewpoint the rendezvous is clearly control oriented and
+thus out-of-line with a modern object oriented approach.
+</p>
+<p>
+   In Ada 95 we introduce the concept of a protected type
+which encapsulates and provides synchronized access to the
+private data of objects of the type without the introduction
+of an additional task.  Protected types are very similar in
+spirit to the shared objects of the Orca language developed
+by Bal, Kaashoek and Tanenbaum of Amsterdam [Bal 92].
+</p>
+<p>
+   A protected type has a distinct specification and body in
+a similar style to a package or task.  The specification
+provides the access protocol and the body provides the
+implementation details.  We can also have a single protected
+object by analogy with a single task.
+</p>
+<p>
+   As a simple example consider the following
+<pre>
+   protected Variable is
+      function Read return Item;
+      procedure Write(New_Value: Item);
+   private
+      Data: Item;
+   end Variable;
+
+   protected body Variable is
+
+      function Read return Item is
+      begin
+         return Data;
+      end Read;
+
+      procedure Write(New_Value: Item) is
+      begin
+         Data := New_Value;
+      end Write;
+
+   end Variable;
+</pre>
+</p>
+<p>
+  The protected object Variable provides controlled access
+to the private variable Data of some type Item.  The
+function Read enables us to read the current value whereas
+the procedure Write enables us to update the value.  Calls
+use the familiar dotted notation.
+<pre>
+   X := Variable.Read;
+   ...
+   Variable.Write(New_Value => Y);
+</pre>
+</p>
+<p>
+   Within a protected body we can have a number of
+subprograms and the implementation is such that (like a
+monitor) calls of the subprograms are mutually exclusive and
+thus cannot interfere with each other.  A procedure in the
+protected body can access the private data in an arbitrary
+manner whereas a function is only allowed read access to the
+private data.  The implementation is consequently permitted
+to perform the useful optimization of allowing multiple
+calls of functions at the same time.
+</p>
+<p>
+   By analogy with entries in tasks, a protected type may
+also have entries.  The action of an entry call is provided
+by an entry body which has a barrier condition which must be
+true before the entry body can be executed.  There is a
+strong parallel between an accept statement with a guard in
+a task body and an entry body with a barrier in a protected
+body, although, as we shall see in a moment, the timing of
+the evaluation of barriers is quite different to that of
+guards.
+</p>
+<p>
+   A good illustration of the use of barriers is given by a
+protected type implementing the classic bounded buffer.
+Consider
+<pre>
+   protected type Bounded_Buffer is
+      entry Put(X: in Item);
+      entry Get(X: out Item);
+   private
+      A: Item_Array(1 .. Max);
+      I, J: Integer range 1 .. Max := 1;
+      Count: Integer range 0 .. Max := 0;
+   end Bounded_Buffer;
+
+   protected body Bounded_Buffer is
+
+      entry Put(X: in Item) when Count < Max is
+      begin
+         A(I) := X;
+         I := I mod Max + 1; Count := Count + 1;
+      end Put;
+
+      entry Get(X: out Item) when Count > 0 is
+      begin
+         X := A(J);
+         J := J mod Max + 1; Count := Count - 1;
+      end Get;
+
+   end Bounded_Buffer;
+</pre>
+</p>
+<p>
+   This provides a cyclic bounded buffer holding up to Max
+values of the type Item with access through the entries Put
+and Get.  We can declare an object of the protected type and
+access it as expected
+<pre>
+   My_Buffer: Bounded_Buffer;
+   ...
+   My_Buffer.Put(X);
+</pre>
+</p>
+<p>
+   The behavior of the protected type is controlled by the
+barriers.  When an entry is called its barrier is evaluated;
+if the barrier is false then the call is queued in much the
+same way that calls on entries in tasks are queued.  When
+My_Buffer is declared, the buffer is empty and so the
+barrier for Put is true whereas the barrier for Get is
+false.  So initially only a call of Put can be executed and
+a task issuing a call of Get will be queued.
+</p>
+<p>
+   At the end of the execution of an entry body (or a
+procedure body) of the protected object all barriers which
+have queued tasks are reevaluated thus possibly permitting
+the processing of an entry call which had been queued on a
+false barrier.  So at the end of the first call of Put, if a
+call of Get had been queued, then the barrier is reevaluated
+thus permitting a waiting call of Get to be serviced at
+once.
+</p>
+<p>
+   It is important to realize that there is no task
+associated with the buffer itself; the evaluation of
+barriers is effectively performed by the runtime system.
+Barriers are evaluated when an entry is first called and
+when something happens which could sensibly change the state
+of a barrier with a waiting task.
+</p>
+<p>
+   Thus barriers are only reevaluated at the end of an entry
+or procedure body and not at the end of a protected function
+call because a function call cannot change the state of the
+protected object and so is not expected to change the values
+of barriers.  These rules ensure that a protected object can
+be implemented efficiently.
+</p>
+<p>
+   Note that a barrier could refer to a global variable;
+such a variable might get changed other than through a call
+of a protected procedure or entry - it could be changed by
+another task or even by a call of a protected function; such
+changes will thus not be acted upon promptly.  The
+programmer needs to be aware of this and should not use
+global variables in barriers without due consideration.
+</p>
+<p>
+   It must be understood that the barrier protection
+mechanism is superimposed upon the natural mutual exclusion
+of the protected construct thus giving two distinct levels
+of protection.  At the end of a protected call, already
+queued entries (whose barriers are now true) take precedence
+over other calls contending for the protected object.  On
+the other hand, a new entry call cannot even evaluate its
+barrier if the protected object is busy with another call
+until that call (and any processible queued calls) have
+finished.
+</p>
+<p>
+   This has the following important consequence: if the
+state of a protected resource changes and there is a task
+waiting for the new state, then this task will gain access
+to the resource and be guaranteed that the state of the
+resource when it gets it is the same as when the decision to
+release the task was made.  Unsatisfactory polling and race
+conditions are completely avoided.
+</p>
+<p>
+   Protected objects are very similar to monitors in general
+concept; they are passive constructions with synchronization
+provided by the language runtime system.  However, they have
+a great advantage over monitors in that the protocols are
+described by barrier conditions (which are fairly easy to
+prove correct) rather than the low-level and unstructured
+signals internal to monitors as found in Modula.
+ </p>
+<p>
+  In other words protected objects have the essential
+advantages of the high level guards of the rendezvous model
+but without the overhead of an active task.
+</p>
+<p>
+   Protected types enable very efficient implementations of
+various semaphore and similar paradigms.  For example a
+counting semaphore might be implemented as follows
+<pre>
+   protected type Counting_Semaphore(Start_Count: Integer := 1) is
+      entry Secure;
+      procedure Release;
+      function Count return Integer;
+   private
+      Current_Count: Integer := Start_Count;
+   end Counting_Semaphore;
+
+   protected body Counting_Semaphore is
+
+      entry Secure when Current_Count > 0 is
+      begin
+         Current_Count := Current_Count - 1;
+      end Secure;
+
+      procedure Release is
+      begin
+         Current_Count := Current_Count + 1;
+      end Release;
+
+      function Count return Integer is
+      begin
+         return Current_Count;
+      end Count;
+
+   end Counting_Semaphore;
+</pre>
+</p>
+<p>
+   This implements the general form of Dijkstra's semaphore.
+It illustrates the use of all three forms of protected
+operations: a function, a procedure and an entry.  The entry
+Secure and the procedure Release correspond to the P and V
+operations (from the Dutch Passeren and Vrijmaken) and the
+function Count gives the current value of the semaphore.
+This example also illustrates that a protected type can have
+a discriminant which is here used to provide the initial
+value of the semaphore or in other words the number of items
+of the resource being guarded by the semaphore.
+</p>
+<p>
+   It is important to note that a task type may also have a
+discriminant in Ada 95 and this can similarly be used to
+initialize a task.  This can for example be used to tell a
+task who it is (perhaps from among an array of tasks)
+without introducing a special entry just for that purpose.
+</p>
+<p>
+   Our final example introduces the ability to requeue a
+call on another entry.  It sometimes happens that a service
+needs to be provided in two parts and that the calling task
+has to be suspended after the first part until conditions
+are such that the second part can be done.  Two entry calls
+are then necessary but attempts to program this in Ada 83
+usually run into difficulties; race conditions can arise in
+the interval between the calls and there is often
+unnecessary visibility of the internal protocol.
+</p>
+<p>
+   The example is of a broadcast signal.  Tasks wait for
+some event and then when it occurs all the waiting tasks are
+released and the event reset.  The difficulty is to prevent
+tasks that call the wait operation after the event has
+occurred, but before the signal can be reset, from getting
+through.  In other words, we must reset the signal in
+preference to letting new tasks through.  The requeue
+statement allows us to program such preference control.  An
+implementation is
+<pre>
+   protected Event is
+      entry Wait;
+      entry Signal;
+   private
+      entry Reset;
+      Occurred: Boolean := False;
+   end Event;
+
+   protected body Event is
+
+      entry Wait when Occurred is
+      begin
+         null;                   -- note null body
+      end Wait;
+
+      entry Signal when True is  -- barrier is always true
+      begin
+         if Wait'Count > 0 then
+            Occurred := True;
+            requeue Reset;
+         end if;
+      end Signal;
+
+      entry Reset when Wait'Count = 0 is
+      begin
+         Occurred := False;
+      end Reset;
+
+   end Event;
+</pre>
+Tasks indicate that they wish to wait for the event by the
+call
+<pre>
+   Event.Wait;
+</pre>
+and the happening of the event is notified by some task
+calling
+<pre>
+   Event.Signal;
+</pre>
+whereupon all the waiting tasks are allowed to proceed and
+the event is reset so that future calls of Wait work
+properly.
+</p>
+<p>
+   The Boolean variable Occurred is normally false and is
+only true while tasks are being released.  The entry Wait
+has no body but just exists so that calling tasks can
+suspend themselves on its queue while waiting for Occurred
+to become true.
+</p>
+<p>
+   The entry Signal is interesting.  It has a permanently
+true barrier and so is always processed.  If there are no
+tasks on the queue of Wait (that is no tasks are waiting),
+then there is nothing to do and so it exits.  On the other
+hand if there are tasks waiting then it must release them in
+such a way that no further tasks can get on the queue but
+then regain control so that it can reset the flag.  It does
+this by requeuing itself on the entry Reset after setting
+Occurred to true to indicate that the event has occurred.
+</p>
+<p>
+  The semantics of requeue are such that this completes the
+action of Signal.  However, remember that at the end of the
+body of a protected entry or procedure the barriers are
+reevaluated for those entries which have tasks queued.  In
+this case there are indeed tasks on the queue for Wait and
+there is also a task on the queue for Reset (the task that
+called Signal in the first place); the barrier for Wait is
+now true but of course the barrier for Reset is false since
+there are still tasks on the queue for Wait.  A waiting task
+is thus allowed to execute the body of Wait (being null this
+does nothing) and the task thus proceeds and then the
+barrier evaluation repeats.  The same process continues
+until all the waiting tasks have gone when finally the
+barrier of Reset also becomes true.  The original task which
+called signal now executes the body of Reset thus resetting
+Occurred to false so that the system is once more in its
+initial state.  The protected object as a whole is now
+finally left since there are no waiting tasks on any of the
+barriers.
+</p>
+<p>
+   Note carefully that if any tasks had tried to call Wait
+or Signal while the whole process was in progress then they
+would not have been able to do so because the protected
+object as a whole was busy.  This illustrates the two levels
+of protection and is the underlying reason why a race
+condition does not arise.
+</p>
+<p>
+   Another consequence of the two levels is that it still
+all works properly even in the face of such difficulties as
+timed and conditional calls and aborts.  The reader may
+recall, for example, that by contrast, the Count attribute
+for entries in tasks cannot be relied upon in the face of
+timed entry calls.
+</p>
+<p>
+   A minor point to note is that the entry Reset is declared
+in the private part of the protected type and thus cannot be
+called from outside.  Ada 95 also allows a task to have a
+private part containing private entries.
+</p>
+<p>
+   The above example has been used for illustration only.
+The astute reader will have observed that the condition is
+not strictly needed inside Signal; without it the caller
+will simply always requeue and then immediately be processed
+if there are no waiting tasks.  But the condition clarifies
+the description.  Indeed, the very astute reader might care
+to note that we can actually program this example in Ada 95
+without using requeue at all.  A more realistic classic
+example is the disk scheduler where a caller is requeued if
+the head is currently over the wrong track.
+</p>
+<p>
+   In this section we have outlined the main features of
+protected types.  There are a number of detailed aspects
+that we have not covered.  The general intent, however,
+should be clear.  Protected types provide a data-oriented
+approach to synchronization which couples the high-level
+conditions (the barriers) with the efficiency of monitors.
+Furthermore the requeue statement provides a means of
+programming preference control and thus enables race
+conditions to be avoided.
+</p>
+<p>
+   It must be remembered, of course, that the existing task
+model remains; the rendezvous will continue to be a
+necessary approach in many circumstances of a general nature
+(such as for directly passing messages).  But the protected
+object provides a better paradigm for most data-oriented
+situations.
+</p>
+
+<a name=10>
+<h2>
+II.10  Task Scheduling and Timing
+</h2>
+</a>
+
+<p>
+A criticism of Ada 83 has been that its scheduling rules are
+unsatisfactory especially with regard to the rendezvous.
+First-in-first-out queuing on entries and the arbitrary
+selection from several open alternatives in a select
+statement lead to conflict with the normal preemptive
+priority rules.  For example, priority inversion occurs when
+a high priority task is on an entry queue behind a lower
+priority task.
+</p>
+<p>
+   Furthermore, mode changes may require the ability to
+dynamically change priorities and this conflicts with the
+simple static model of Ada 83.  In addition, advances in the
+design of scheduling techniques based on Rate Monotonic
+Scheduling prescribe a variety of techniques to be used in
+different circumstances according to the arrival pattern of
+events; see [Sha 90a] and [Klein 93].
+</p>
+<p>
+   Ada 95 allows much more freedom in the choice of priority
+and scheduling rules.  However, because this is a
+specialized area (and may not be appropriate on some host
+architectures), the details are contained in the Real-Time
+Systems annex to which the reader is referred for more
+details.
+</p>
+<p>
+   Timing is another important aspect of scheduling and the
+delay statement of Ada 83 has not proved adequate in all
+circumstances.
+</p>
+<p>
+   For example, an attempt to wait until a specific time by
+a sequence such as
+<pre>
+   Next_Time: Time;
+   ...
+   Next_Time := time_to_be_woken_up;
+   delay Next_Time - Clock;
+</pre>
+which is intended to stop the task until the time given by
+the variable Next_Time, is not foolproof.  The problem is
+that there is a race condition.  Between calling the
+function Clock and issuing the delay statement, it is
+possible for the task to be preempted by a higher priority
+task.  The result is that when the delay is finally issued,
+the Duration value will be inappropriate and the task will
+be delayed for too long.
+</p>
+<p>
+   This difficulty is overcome in Ada 95 by the introduction
+of a complementary delay until statement which takes a Time
+(rather than a Duration) as its argument.  We can then
+simply write
+<pre>
+   delay until Next_Time;
+</pre>
+and all will be well.
+</p>
+<p>
+   The final new tasking facility to be introduced in this
+section is the ability to perform an asynchronous transfer
+of control.  This enables an activity to be abandoned if
+some condition arises (such as running out of time) and an
+alternative sequence of statements to be executed instead.
+This gives the capability of performing mode changes.
+</p>
+<p>
+   This could of course be programmed in Ada 83 by the
+introduction of an agent task and the use of the abort
+statement but this was a heavy solution not at all
+appropriate for most applications needing a mode change.
+</p>
+<p>
+  Asynchronous transfer of control is achieved by a new
+form of select statement which comprises two parts: an
+abortable part and a triggering alternative.  As a simple
+example consider
+<pre>
+   select
+      delay 5.0;                -- triggering alternative
+      Put_Line("Calculation did not complete");
+   then abort
+      Invert_Giant_Matrix(M);   -- abortable part
+   end select;
+</pre>
+</p>
+<p>
+   The general idea is that if the statements between then
+abort and end select do not complete before the expiry of
+the delay then they are abandoned and the statements
+following the delay executed instead.  Thus if we cannot
+invert our large matrix in five seconds we give up and print
+a message.
+</p>
+<p>
+   The statement that triggers the abandonment can
+alternatively be an entry call instead of a delay statement.
+If the call returns before the computation is complete then
+again the computation is abandoned and any statements
+following the entry call are executed instead.  On the other
+hand if the computation completes before the entry call,
+then the entry call is itself abandoned.
+</p>
+<p>
+  The entry call can, of course, be to a task or to a
+protected object as described in the previous section.
+Indeed, Ada 95 allows an entry call to be to a protected
+object or to a task in all contexts.
+</p>
+<p>
+   Other refinements to the Ada tasking model include a
+better description of the behavior of the abort statement
+and a more useful approach to shared variables by the
+introduction of a number of pragmas.
+</p>
+
+<a name=11>
+<h2>
+II.11  Generic Parameters
+</h2>
+</a>
+
+<p>
+The generic facility in Ada 83 has proved very useful for
+developing reusable software particularly with regard to its
+type parameterization capability.  However, there were a few
+anomalies which have been rectified in Ada 95.  In addition
+a number of further parameter models have been added to
+match the object oriented facilities.
+</p>
+<p>
+   In Ada 83 the so-called contract model was broken because
+of the lack of distinction between constrained and
+unconstrained formal parameters.  Thus if we had
+<pre>
+   generic
+      type T is private;
+   package P is ...
+
+   package body P is
+
+      X: T;
+   ...
+</pre>
+then in Ada 83 we could instantiate this with a type such as
+Integer which was fine.  However we could also supply an
+unconstrained type such as String and this failed because
+when we came to declare the object T we found that there
+were no constraints and we could not declare an object as an
+unconstrained array.  The problem was that the error was not
+detected through a mismatch in the instantiation mechanism
+but as an error in the body itself.  But the whole essence
+of the contract model is that if the actual parameter
+satisfies the requirements of the formal then any body which
+matches the formal specification will work.  The poor user
+might not have had access to the source of the body but
+nevertheless found errors reported in it despite the
+instantiation apparently working.
+</p>
+<p>
+   This serious violation of the contract model is repaired
+in Ada 95.  The parameter matching rules for the example
+above no longer accept an unconstrained type such as String
+but require a type such as Integer or a constrained type or
+a record type with default discriminants (these are
+collectively known as definite types in Ada 95).
+</p>
+<p>
+   If we wish to write a generic package that will indeed
+accept an unconstrained type then we have to use a new form
+of notation as follows
+<pre>
+   generic
+      type T(<>) is private;
+   package P ...
+</pre>
+</p>
+<p>
+   In this case we are not allowed to declare an
+(uninitialized) object of type T in the body; we can only
+use T in ways which do not require a constrained type.  The
+actual parameter can now be any unconstrained type such as
+String; it could, of course, also be a constrained type.
+</p>
+<p>
+   Other new parameter models are useful for combining
+genericity with type extension and for writing class-wide
+generic packages.  The formal declaration
+<pre>
+   type T is tagged private;
+</pre>
+requires that the actual type be tagged.
+</p>
+<p>
+   We can also write
+<pre>
+   type T is new S;
+</pre>
+or
+<pre>
+   type T is new S with private;
+</pre>
+</p>
+<p>
+   In both cases the actual type must be S or derived
+directly or indirectly from S.  If we add with private then
+both S and the actual type must be tagged.  (Remember the
+rule that all tagged types have tagged or with in their
+declaration.)
+</p>
+<p>
+   In all these cases we can also follow the formal type
+name with (<>) to indicate that the actual may be
+unconstrained (strictly, indefinite to use the terminology
+introduced above).  Furthermore if we follow is by abstract
+then the actual type can also be abstract (but it need not
+be).
+</p>
+<p>
+   The last new kind of formal generic parameter is the
+formal generic package.  This greatly simplifies the
+composition of generic packages.  It allows one package to
+be used as a parameter to another so that a hierarchy of
+facilities can be created.
+</p>
+<p>
+   Examples are inevitably a bit long but consider first the
+following two packages in Ada 83.  The first defines a
+private type for complex numbers and the basic operations
+upon them.  The second builds on the first and provides
+various vector operations on complex numbers.  The whole
+system is generic with respect to the underlying floating
+point type used for the complex numbers.
+<pre>
+   generic
+      type Float_Type is digits <>;
+   package Generic_Complex_Numbers is
+
+      type Complex is private;
+
+      function "+" (Left, Right: Complex) return Complex;
+      function "-" (Left, Right: Complex) return Complex;
+
+      -- etc
+
+   end Generic_Complex_Numbers;
+
+   generic
+      type Float_Type is digits <>;
+      type Complex is private;
+
+      with function "+" (Left, Right: Complex) return
+   Complex is <>;
+      with function "-" (Left, Right: Complex) return
+   Complex is <>;
+
+      -- and so on
+
+   package Generic_Complex_Vectors is
+
+      -- types and operations on vectors
+
+   end Generic_Complex_Vectors;
+
+and we can then instantiate these two packages by for
+example
+
+   package Long_Complex is
+      new Generic_Complex_Numbers(Long_Float);
+
+   use Long_Complex;
+
+   package Long_Complex_Vectors is
+      new Generic_Complex_Vectors(Long_Float, Complex);
+</pre>
+</p>
+<p>
+   In this Ada 83 formulation we had to pass the type
+Complex and all its operations exported from Complex_Numbers
+back into the vector package as distinct formal parameters
+so that we could use them in that package.  The burden was
+somewhat reduced by using the default mechanism for the
+operations but this incurred the slight risk that the user
+might have redefined one of them with incorrect properties
+(it also forced us to write a use clause or lots of
+renamings).
+</p>
+<p>
+   This burden is completely alleviated in Ada 95 by the
+ability to declare generic formal packages.  In the generic
+formal part we can write
+<pre>
+   with package P is new Q(<>);
+</pre>
+and then the actual parameter corresponding to P must be any
+package which has been obtained by instantiating Q which
+must itself be a generic package.
+</p>
+<p>
+   Returning to our example, in Ada 95, having written
+Generic_Complex_Numbers as before, we can now write
+<pre>
+   with Generic_Complex_Numbers;
+   generic
+      with package Complex_Numbers is
+         new Generic_Complex_Numbers (<>);
+   package Generic_Complex_Vectors is
+
+      -- as before
+
+   end Generic_Complex_Vectors;
+</pre>
+where the actual package must be any instantiation of
+Generic_Complex_Numbers.  Hence our previous instantiations
+can now be simplified and we can write
+<pre>
+   package Long_Complex is
+      new Generic_Complex_Numbers(Long_Float);
+
+   package Long_Complex_Vectors is
+      new Generic_Complex_Vectors(Long_Complex);
+</pre>
+</p>
+<p>
+   The key point is that we no longer have to import
+(explicitly or implicitly) the type and operators exported
+by the instantiation of Generic_Complex_Numbers.  Hence the
+parameter list of Generic_Complex_Vectors is reduced to
+merely the one parameter which is the package Long_Complex
+obtained by the instantiation of Generic_Complex_Numbers.
+We no longer even have to pass the underlying type
+Long_Float.
+</p>
+<p>
+   Although this example has been couched in terms of a
+numerical application, the general approach is applicable to
+many examples of building a hierarchy of generic packages.
+</p>
+
+<a name=12>
+<h2>
+II.12  Other Improvements
+</h2>
+</a>
+
+<p>
+We have now covered most of the major improvements which
+give Ada 95 so much extra power over Ada 83.  But the
+discussion has not been complete; we have omitted important
+facilities such as the introduction of controlled types
+giving initialization, finalization and user defined
+assignment and the use of access discriminants to give the
+functionality of multiple inheritance.
+</p>
+<p>
+   There are also a number of minor changes which remove
+various irritations and which together make Ada 95 a major
+improvement within existing paradigms.  We will now briefly
+mention the more notable of these improvements.
+</p>
+<p>
+   The attribute T'Base can now be used as a type mark.  So
+if Float_Type is a generic formal parameter we can then
+declare
+<pre>
+   Local: Float_Type'Base;
+</pre>
+and any constraints imposed by the actual parameter will not
+then apply to the working variable Local.  This is important
+for certain numeric algorithms where we wish to be
+unconstrained in intermediate computations.
+</p>
+<p>
+   The underlying model for the numeric types is slightly
+changed by the introduction of fictitious types root_integer
+and root_real.  This brings a number of simplifications and
+improvements regarding implicit type conversions and one is
+the removal of the notorious irritation that
+<pre>
+   for I in -1 .. 100 loop
+</pre>
+was not allowed in Ada 83.  It is allowed in Ada 95.
+</p>
+<p>
+   The rule distinguishing basic declarative items from
+later declarative items has been removed (this essentially
+said that little declarations cannot follow big declarations
+and was intended to prevent little ones getting lost
+visually but it backfired).  As a consequence declarations
+can now be in any order.  This often helps with the placing
+of representation clauses.
+</p>
+<p>
+  Another irritation in Ada 83 was the problem of use
+clauses and operators.  There was a dilemma between, on the
+one hand, disallowing a use clause and then having to use
+prefix notation for operators or introduce a lot of renaming
+or, on the other hand, allowing a use clause so that infixed
+operators could be used but then allowing visibility of
+everything and running the risk that package name prefixes
+might be omitted with a consequent serious loss of
+readability.  Many organizations have imposed a complete ban
+on use clauses and burdened themselves with lots of
+renaming.  This is solved in Ada 95 by the introduction of a
+use type clause.  If we have a package Complex_Numbers which
+declares a type Complex and various operators "+", "-" and
+so on, we can write
+<pre>
+   with Complex_Numbers; use type Complex_Numbers.Complex;
+</pre>
+and then within our package we can use the operators
+belonging to the type Complex in infix notation.  Other
+identifiers in Complex_Numbers will still have to use the
+full dotted notation so we can see from which package they
+come.  Predefined operators such as "=" are also made
+directly visible by an appropriate use type clause.
+</p>
+<p>
+   Concerning "=" the rules regarding its redefinition are
+now completely relaxed.  It may be redefined for any type at
+all and need not necessarily return a result of type
+Boolean.  The only remaining rule in this area is that if
+the redefined "=" does return a result of type Boolean then
+a corresponding "/=" is also implicitly declared.  On the
+other hand, "/=" may itself be redefined only if its result
+is not type Boolean.
+</p>
+<p>
+   The rules regarding static expressions are improved and
+allow further sensible expressions to be treated as static.
+A static expression may now contain membership tests,
+attributes, conversions and so on.  Moreover, an expression
+which looks static but occurs in a context not demanding a
+static expression will be evaluated statically; this was
+surprisingly not the case in Ada 83 - an expression such as
+2 + 3 was only required to be evaluated at compile time if
+it occurred in a context demanding a static expression.
+Note also that rounding of odd halves is now defined as away
+from zero so Integer(1.5) is now 2.
+</p>
+<p>
+   A small change which will be welcomed is that a
+subprogram body may now be provided by renaming.  This
+avoids tediously writing code which merely calls another
+subprogram.  Renaming is now also allowed for generic units
+and a library unit may now be renamed as a library unit;
+these facilities will be found to be particularly useful
+with child units.
+</p>
+<p>
+   Another change which will bring a sigh of relief is that
+out parameters can now be read.  They are treated just like
+a variable that happens not to be explicitly initialized;
+this change will save the introduction of many local
+variables and much frustration.  A related change is that
+the restriction that it was not possible to declare a
+subprogram with out parameters of a limited type is also
+lifted.
+</p>
+<p>
+   Some restrictions regarding arrays are also relaxed.  It
+is now possible to deduce the bounds of a variable (as well
+as a constant) from an appropriate initial value, such as in
+<pre>
+   S: String := Get_Message;  -- a function call
+</pre>
+which avoids having to write the tedious
+<pre>
+   Message: constant String := Get_Message;
+   S: String(Message'Range) := Message;
+</pre>
+</p>
+<p>
+   It is also possible to use a named aggregate with an
+"others" component as an initial value or in an assignment.
+Sliding is now permitted for subprogram parameters and
+function results in return statements which are treated like
+assignment with regard to array bound matching.
+</p>
+<p>
+   There are also improvements in the treatment of
+discriminants.  A private type can now have a discriminated
+type with defaults as its full type thus
+<pre>
+   package P is
+      type T is private;
+   private
+      type T(N: Natural := 1) is
+      ...
+   end P;
+</pre>
+</p>
+<p>
+  Infuriatingly this was not allowed in Ada 83 although the
+corresponding problem with matching generic parameters was
+eliminated many years ago.
+</p>
+<p>
+   An important improvement in exception handlers is the
+ability to access information regarding the occurrence of an
+exception.  This is done by declaring a "choice parameter"
+in the handler and we can then use that to get hold of, for
+example, the exception name for debugging purposes.  We can
+write
+<pre>
+   when Event: others =>
+      Put_Line("Unexpected exception: " &
+   Exception_Name(Event));
+</pre>
+where the function Exception_Name returns the name of the
+exception as a string (such as "Constraint_Error").  Other
+functions provide further useful diagnostic information
+regarding the cause of the exception.
+</p>
+<p>
+   An important improvement which will be a great relief to
+systems programmers is that the language now includes
+support for unsigned integer types (modular types).  This
+provides shift and logical operations as well as modular
+arithmetic operations and thus enables unsigned integer
+values to be manipulated as sequences of bits.
+</p>
+<p>
+   Another improvement worth mentioning in this brief
+summary concerns library package bodies.  In Ada 83 a
+package body was optional if it was not required by the
+language (for providing subprogram bodies for example).
+However, this rule, which was meant to be a helpful
+convenience, seriously misfired sometimes when a library
+package was recompiled and bodies which just did
+initialization could get inadvertently lost without any
+warning.  In Ada 95, a library package is only allowed to
+have a body if it is required by language rules; the pragma
+Elaborate_Body is one way of indicating that a body is
+required.
+</p>
+<p>
+   Finally, in order to meet the needs of the international
+community, the type Character has been changed to the full
+8-bit ISO set (Latin-1) and the type Wide_Character
+representing the 16-bit ISO Basic Multilingual Plane has
+been added.  The type Wide_String is also defined by
+analogy.
+</p>
+
+<a name=13>
+<h2>
+II.13  The Predefined Library
+</h2>
+</a>
+
+<p>
+There are many additional predefined packages in the
+standard library which has been restructured in order to
+take advantage of the facilities offered by the hierarchical
+library.  As mentioned above, root library packages behave
+as children of Standard.  There are just three such
+predefined child packages of Standard, namely System,
+Interfaces and Ada and these in turn have a number of child
+packages.  Those of System are concerned with intrinsic
+language capability such as the control of storage.  Those
+of Interfaces concern the interfaces to other languages.
+The remaining more general predefined packages are children
+of the package Ada.
+</p>
+<p>
+   An important reason for the new structure is that it
+avoids potential name conflicts with packages written by the
+user; thus only the names Ada and Interfaces could conflict
+with existing Ada 83 code.  Without this structure the risk
+of conflict would have been high especially given the many
+new predefined packages in Ada 95.
+</p>
+<p>
+   The existing packages such as Calendar,
+Unchecked_Conversion and Text_IO are now child packages of
+Ada.  Compatibility with Ada 83 is achieved by the use of
+library unit renaming (itself a new feature in Ada 95) thus
+<pre>
+   with Ada.Text_IO;
+   package Text_IO renames Ada.Text_IO;
+</pre>
+</p>
+<p>
+   We will now briefly summarize the more notable packages
+in the predefined library in order to give the reader an
+appreciation of the breadth of standard facilities provided.
+</p>
+<p>
+   The package Ada itself is simply
+<pre>
+   package Ada is
+      pragma Pure(Ada);  -- as white as driven snow!
+   end Ada;
+</pre>
+where the pragma indicates that Ada has no variable state;
+(this concept is important for sharing in distributed
+systems).
+</p>
+<p>
+   Input-output is provided by the existing packages
+Ada.Text_IO, Ada.Sequential_IO, Ada.Direct_IO and
+Ada.IO_Exceptions plus a number of new packages.  The
+package Ada.Wide_Text_IO is identical to Text_IO except that
+it handles the types Wide_Character and Wide_String.
+General stream input-output is provided by Ada.Streams and
+Ada.Streams.Stream_IO; these enable heterogeneous files of
+arbitrary types to be manipulated (remember that Direct_IO
+and Sequential_IO manipulate files whose items are all of
+the same type).  The package Ada.Text_IO.Text_Streams gives
+access to the stream associated with Text_IO; this allows
+mixed binary and text input-output and the use of the
+standard files with streams.
+</p>
+<p>
+   There are also nongeneric versions of the packages
+Text_IO.Integer_IO and Text_IO.Float_IO for the predefined
+types such as Integer and Float.  Their names are
+Ada.Integer_Text_IO and Ada.Float_Text_IO and so on for
+other predefined types; there are also corresponding wide
+versions.  These nongeneric packages will be found useful
+for training and overcome the need to teach genericity on
+day one of every Ada course.
+</p>
+<p>
+   The package Ada.Characters.Handling provides
+classification and conversion functions for characters.
+Examples are Is_Letter which returns an appropriate Boolean
+value and To_Wide_Character which converts a character to
+the corresponding wide character.  The package
+Ada.Characters.Latin_1 contains named constants in a similar
+style to Standard.ASCII which is now obsolescent.
+</p>
+<p>
+   General string handling is provided by the package
+Ada.Strings.  Three different forms of string are handled by
+packages Strings.Fixed, Strings.Bounded and
+Strings.Unbounded.  In addition, packages such as
+Strings.Wide_Fixed perform similar operations on wide
+strings.
+</p>
+<p>
+   Extensive mathematical facilities are provided by the
+package Ada.Numerics.  This parent package is just
+<pre>
+   package Ada.Numerics is
+      pragma Pure(Numerics);
+      Argument_Error: exception;
+      Pi: constant := 3.14159_26535_ ... ;
+      e: constant := 2.71828_18284_ ... ;
+   end Ada.Numerics;
+</pre>
+and includes the generic child package
+Ada.Numerics.Generic_Elementary_Functions which is similar
+to the corresponding standard ISO/IEC 11430:1994 for Ada 83
+[ISO 94a].  There are also nongeneric versions such as
+Ada.Numerics.Elementary_Functions for the predefined types
+Float and so on.  Facilities for manipulating complex types
+and complex elementary functions are provided by other child
+packages defined in the Numerics annex.
+</p>
+<p>
+   The package Ada.Numerics.Float_Random enables the user to
+produce streams of pseudo-random floating point numbers with
+ease.  There is also a generic package
+Ada.Numerics.Discrete_Random which provides for streams of
+discrete values (both integer and enumeration types).
+</p>
+<p>
+   The package Ada.Exceptions defines facilities for
+manipulating exception occurrences such as the function
+Exception_Name mentioned above.
+</p>
+<p>
+   The package System has child packages
+System.Storage_Elements and System.Storage_Pools which are
+concerned with storage allocation.
+</p>
+<p>
+   The package Interfaces has child packages Interfaces.C,
+Interfaces.COBOL and Interfaces.Fortran which provide
+facilities for interfacing to programs in those languages.
+It also contains declarations of hardware supported numeric
+types.  Implementations are encouraged to add further child
+packages for interfacing to other languages.
+</p>
+
+<a name=14>
+<h2>
+II.14  The Specialized Needs Annexes
+</h2>
+</a>
+
+<p>
+There are six Specialized Needs annexes.  In this summary we
+cannot go into detail but their content covers the following
+topics:
+</p>
+
+<dl>
+<dt>
+Systems Programming
+<dd>
+     This covers a number of low-level features such as in-
+     line machine instructions, interrupt handling, shared
+     variable access and task identification.  This annex is
+     a prior requirement for the Real-Time Systems annex.
+<dt>
+Real-Time Systems
+<dd>
+     As mentioned above this annex addresses various
+     scheduling and priority issues including setting
+     priorities dynamically, scheduling algorithms and entry
+     queue protocols.  It also includes detailed
+     requirements on the abort statement for single and
+     multiple processor systems and a monotonic time package
+     (as distinct from Calendar which might go backwards
+     because of time-zone or daylight-saving changes).
+<dt>
+Distributed Systems
+<dd>
+     The core language introduces the idea of a partition
+     whereby one coherent "program" is distributed over a
+     number of partitions each with its own environment
+     task.  This annex defines two forms of partitions and
+     inter-partition communication using statically and
+     dynamically bound remote subprogram calls.
+<dt>
+Information Systems
+<dd>
+     The core language extends fixed point types to include
+     basic support for decimal types.  This annex defines a
+     number of packages providing detailed facilities for
+     manipulating decimal values and conversion to external
+     format using picture strings.
+<dt>
+Numerics
+<dd>
+     This annex addresses the special needs of the numeric
+     community.  One significant change is the basis for
+     model numbers.  These are no longer described in the
+     core language but in this annex.  Moreover, model
+     numbers in 95 are essentially what were called safe
+     numbers in Ada 83 and the old model numbers and the
+     term safe numbers have been abandoned.  Having both
+     safe and model numbers did not bring benefit
+     commensurate with the complexity and confusion thereby
+     introduced.  This annex also includes packages for
+     manipulating complex numbers.
+<dt>
+Safety and Security
+<dd>
+     This annex addresses restrictions on the use of the
+     language and requirements of compilation systems for
+     programs to be used in safety-critical and related
+     applications where program security is vital.
+</dl>
+
+<a name=15>
+<h2>
+II.15  Conclusion
+</h2>
+</a>
+
+<p>
+The discussion in this chapter has been designed to give the
+reader a general feel for the scope of Ada 95 and some of
+the detail.  Although we have not addressed all the many
+improvements that Ada 95 provides, nevertheless, it will be
+clear that Ada 95 is an outstanding language.
+</p>
+
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p1-1.html> Previous </a> |
+<a href=rat95-p1-3.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

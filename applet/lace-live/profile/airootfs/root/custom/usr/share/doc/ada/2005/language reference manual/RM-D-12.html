@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Other Optimizations and Determinism Rules</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-11.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-13.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>D.12 Other Optimizations and Determinism Rules</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal">This clause describes various requirements for improving 
+the response and determinism in a real-time system.&nbsp;</DIV>
+
+<H4 Class="centered">Implementation Requirements</H4>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal">If the implementation blocks interrupts (see <A HREF="RM-C-3.html">C.3</A>) 
+not as a result of direct user action (e.g. an execution of a protected 
+action) there shall be an upper bound on the duration of this blocking. 
+</DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Normal">The implementation shall recognize entry-less protected 
+types. The overhead of acquiring the execution resource of an object 
+of such a type (see <A HREF="RM-9-5-1.html">9.5.1</A>) shall be minimized. 
+In particular, there should not be any overhead due to evaluating <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0205">entry_barrier</A></SPAN> 
+<SPAN Class="swiss"><A HREF="RM-5-3.html#S0139">condition</A></SPAN>s. 
+</DIV>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Normal">Unchecked_Deallocation shall be supported for terminated 
+tasks that are designated by access types, and shall have the effect 
+of releasing all the storage associated with the task. This includes 
+any run-time system or heap storage that has been implicitly allocated 
+for the task by the implementation.</DIV>
+
+<H4 Class="centered">Documentation Requirements</H4>
+<DIV Class="paranum">5</DIV>
+<DIV Class="Normal">The implementation shall document the upper bound 
+on the duration of interrupt blocking caused by the implementation. If 
+this is different for different interrupts or interrupt priority levels, 
+it should be documented for each case.&nbsp;</DIV>
+
+<H4 Class="centered">Metrics</H4>
+<DIV Class="paranum">6</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The implementation 
+shall document the following metric:&nbsp;</DIV>
+<DIV Class="paranum">7</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The overhead associated with obtaining 
+a mutual-exclusive access to an entry-less protected object. This shall 
+be measured in the following way:</LI></UL>
+<DIV Class="paranum">8</DIV>
+<UL Class="Bulleted" Style="margin-bottom: 0.3em">For a protected object 
+of the form:&nbsp;</UL>
+<DIV Class="paranum">9</DIV>
+<DIV Class="Examples"><B>protected</B>&nbsp;Lock&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Read&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;Flag&nbsp;:&nbsp;Boolean&nbsp;:=&nbsp;False;<BR>
+<B>end</B>&nbsp;Lock;</DIV>
+<DIV Class="paranum">10</DIV>
+<DIV Class="Examples"><B>protected&nbsp;body</B>&nbsp;Lock&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Flag&nbsp;:=&nbsp;True;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Read&nbsp;<B>return</B>&nbsp;Boolean<BR>
+&nbsp;&nbsp;&nbsp;<B>Begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Flag;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Read;<BR>
+<B>end</B>&nbsp;Lock;</DIV>
+<DIV Class="paranum">11</DIV>
+<UL Class="Bulleted">The execution time, in processor clock cycles, of 
+a call to Set. This shall be measured between the point just before issuing 
+the call, and the point just after the call completes. The function Read 
+shall be called later to verify that Set was indeed called (and not optimized 
+away). The calling task shall have sufficiently high priority as to not 
+be preempted during the measurement period. The protected object shall 
+have sufficiently high ceiling priority to allow the task to call Set.</UL>
+<DIV Class="paranum">12</DIV>
+<UL Class="Bulleted">For a multiprocessor, if supported, the metric shall 
+be reported for the case where no contention (on the execution resource) 
+exists from tasks executing on other processors.&nbsp;</UL>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-11.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-13.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

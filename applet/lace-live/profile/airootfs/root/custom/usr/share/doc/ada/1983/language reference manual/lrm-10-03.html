@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 10.3: Order of Compilation</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="10.3">10.3</A>.  Order of Compilation  </H2>
+<A HREF="lrm-10-02.html#10.2"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-10.html#10"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-10-04.html#10.4"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The  rules  defining  the  order  in which units can be compiled are direct 
+consequences of the visibility rules and, in particular, of the  fact  that
+any  library  unit that is mentioned by the context clause of a compilation
+unit is visible in the compilation unit. 
+<P>
+A compilation unit must be compiled after all library units  named  by  its
+context clause.  A secondary unit that is a subprogram or package body must
+be  compiled after the corresponding library unit.  Any subunit of a parent
+compilation unit must be compiled after the parent compilation unit. 
+<P>
+If any error is detected while attempting to compile  a  compilation  unit,
+then  the attempted compilation is rejected and it has no effect whatsoever
+on the program library;  the same holds for recompilations (no  compilation
+unit can become obsolete because of such a recompilation). 
+<P>
+The  order in which the compilation units of a program are compiled must be
+consistent with the partial ordering defined by the above rules. 
+<P>
+Similar rules apply for recompilations.  A compilation unit is  potentially
+affected  by  a  change in any library unit named by its context clause.  A
+secondary unit is potentially affected by a  change  in  the  corresponding
+library  unit.   The  subunits of a parent compilation unit are potentially  
+affected by a change of the parent compilation unit.  If a compilation unit
+is successfully recompiled, the compilation units potentially  affected  by
+this  change  are obsolete and must be recompiled unless they are no longer
+needed.  An implementation may be able to reduce the compilation  costs  if
+it  can deduce that some of the potentially affected units are not actually
+affected by the change.                                                   
+<P>
+The subunits of a unit can be recompiled without affecting the unit itself.
+Similarly, changes in a subprogram or package  body  do  not  affect  other
+compilation  units  (apart  from  the  subunits  of  the  body) since these
+compilation  units  only  have  access  to  the   subprogram   or   package
+specification.  An implementation is only allowed to deviate from this rule
+for  inline inclusions, for certain compiler optimizations, and for certain
+implementations of generic program units, as described below. 
+<ul>
+<li>If a pragma INLINE is applied to a subprogram declaration given  in  a
+package  specification,  inline inclusion will only be achieved if the
+package body is compiled before units calling the subprogram.  In such
+a case, inline inclusion creates a dependence of the calling  unit  on
+the  package  body,  and  the compiler  must recognize this dependence
+when deciding on the need for recompilation.  If  a  calling  unit  is
+compiled  before  the  package  body, the pragma may be ignored by the
+compiler for such calls (a  warning  that  inline  inclusion  was  not
+achieved may be issued).  Similar considerations apply to a separately
+compiled subprogram for which an INLINE pragma is specified.<br><br> 
+<li>For optimization purposes, an implementation may compile several units
+of a given compilation in a way that creates further dependences among
+these   compilation   units.    The  compiler  must  then  take  these
+dependences into account when deciding on the need for recompilations.<br><br> 
+<li>An implementation may require  that  a  generic  declaration  and  the
+corresponding proper body be part of the same compilation, whether the
+generic  unit  is  itself  separately  compiled or is local to another
+compilation unit.  An implementation may also require that subunits of 
+a generic unit be part of the same compilation. 
+</ul>
+<P>
+Examples of Compilation Order: 
+<ol>
+<li>In example 1 (see <a href="lrm-10-01.html#10.1.1">10.1.1</a>):  The procedure QUADRATIC_EQUATION  must  be
+compiled after the library packages TEXT_IO  and REAL_OPERATIONS since
+they appear in its with clause.<br><br>
+<li>In example 2 (see <a href="lrm-10-01.html#10.1.2">10.1.2</a>):  The package body STOCK  must  be  compiled
+after the corresponding package specification.<br><br> 
+<li>In example 2 (see <a href="lrm-10-01.html#10.1.2">10.1.2</a>):  The specification  of  the  package  STOCK
+must  be  compiled before the procedure PROCESSOR.  On the other hand,
+the procedure PROCESSOR can be compiled either  before  or  after  the
+package body STOCK.<br><br> 
+<li>In example 3 (see <a href="lrm-10-02.html#10.2.1">10.2.1</a>):  The procedure G must be compiled after the
+package  TEXT_IO  since this package is named by the with clause of G.
+On the other hand, TEXT_IO can be compiled either before or after TOP. 
+<br><br>
+<li>In example 3 (see <a href="lrm-10-02.html#10.2.1">10.2.1</a>):  The subunits TRANSFORM and  FACILITY  must
+be compiled after the main program TOP.  Similarly, the subunit G must
+be compiled after its parent unit FACILITY. 
+</ol>
+Notes:    
+<P>
+For  library  packages,  it  follows  from  the  recompilation rules that a
+package body is made obsolete by the  recompilation  of  the  corresponding
+specification.   If  the  new  package specification is such that a package
+body is not required (that  is,  if  the  package  specification  does  not
+contain  the  declaration  of  a program unit), then the recompilation of a
+body for this package is not required.  In any case, the  obsolete  package
+body  must  not  be  used  and  can  therefore  be deleted from the program
+library.                                                                           
+<P>
+<b>References:</b>   <A HREF="lrm-10-01.html#10.1">compilation</A>,
+<A HREF="lrm-10-01.html#10.1">compilation  unit</A>,
+<A HREF="lrm-10-01.html#10.1.1">context  clause</A>,
+<A HREF="lrm-03-09.html#3.9">elaboration</A>,
+<A HREF="lrm-12-02.html#12.2">generic  body</A>,
+<A HREF="lrm-12-01.html#12.1">generic declaration</A>,
+<A HREF="lrm-12.html#12">generic unit</A>,
+<A HREF="lrm-10-01.html#10.1">library  unit</A>,
+<A HREF="lrm-08-01.html#8.1">local  declaration</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-07.html#7">package</A>,
+<A HREF="lrm-07-01.html#7.1">package body</A>,
+<A HREF="lrm-07-01.html#7.1">package specification</A>,
+<A HREF="lrm-10-02.html#10.2">parent unit</A>,
+<A HREF="lrm-06-03.html#6.3.2">pragma inline</A>,
+<A HREF="lrm-06-01.html#6.1">procedure</A>,
+<A HREF="lrm-06-03.html#6.3">procedure body</A>,
+<A HREF="lrm-03-09.html#3.9">proper  body</A>,
+<A HREF="lrm-10-01.html#10.1">secondary  unit</A>,
+<A HREF="lrm-06-03.html#6.3">subprogram  body</A>,
+<A HREF="lrm-06-01.html#6.1">subprogram declaration</A>,
+<A HREF="lrm-06-01.html#6.1">subprogram specification</A>,
+<A HREF="lrm-10-02.html#10.2">subunit</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-03-02.html#3.2.1">variable</A>,
+<A HREF="lrm-08-03.html#8.3">visibility</A>,
+<A HREF="lrm-10-01.html#10.1.1">with clause</A>.
+<P>
+
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

@@ -1,0 +1,368 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Null exclusion and constant</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>3.2 Null exclusion and constant</H1>
+<div class="Normal">In Ada 95, anonymous access types and named access 
+types have unnecessarily different properties. Furthermore anonymous 
+access types only occur as access parameters and access discriminants.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Anonymous access types 
+in Ada 95 never have null as a value whereas named access types always 
+have null as a value. Suppose we have the following declarations&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Component:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Ref_T&nbsp;<B>is&nbsp;access</B>&nbsp;T;<BR>
+T_Ptr:&nbsp;Ref_T;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that <SPAN Class="swiss">T_Ptr</SPAN> 
+by default will have the value <B>null</B>. Now suppose we have a procedure 
+with an access parameter thus&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(A:&nbsp;<B>access</B>&nbsp;T)&nbsp;is<BR>
+&nbsp;&nbsp;&nbsp;X:&nbsp;Integer;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;X&nbsp;:=&nbsp;A.Component;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>read&nbsp;a&nbsp;component&nbsp;of&nbsp;A</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>no&nbsp;check&nbsp;for&nbsp;null&nbsp;in&nbsp;Ada&nbsp;95</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal">In Ada 95 an access parameter such as <SPAN Class="swiss">A</SPAN> 
+can never have the value null and so there is no need to check for null 
+when doing a dereference such as reading the component <SPAN Class="swiss">A.Component</SPAN>. 
+This is assured by always performing a check when <SPAN Class="swiss">P</SPAN> 
+is called. So calling <SPAN Class="swiss">P</SPAN> with an actual parameter 
+whose value is null such as <SPAN Class="swiss">P(T_Ptr)</SPAN> causes 
+<SPAN Class="swiss">Constraint_Error</SPAN> to be raised at the point 
+of call. The idea was that within <SPAN Class="swiss">P</SPAN> we would 
+have more efficient code for dereferencing and dispatching at the cost 
+of just one check when the procedure is called. Such an access parameter 
+we now refer to as being of a subtype that excludes null.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 2005 extends this 
+idea of access types that exclude null to named access types as well. 
+Thus we can write<A NAME="I1100"></A><A NAME="I1101"></A>&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Ref_NNT&nbsp;<B>is&nbsp;not&nbsp;null&nbsp;access</B>&nbsp;T;</div>
+<div class="Normal">In this case an object of the type <SPAN Class="swiss">Ref_NNT</SPAN> 
+cannot have the value null. An immediate consequence is that all such 
+objects should be explicitly initialized &ndash; they will otherwise 
+be initialized to null by default and this will raise <SPAN Class="swiss">Constraint_Error</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Since the property 
+of excluding null can now be given explicitly for named types, it was 
+decided that for uniformity, anonymous access types should follow the 
+same rule whenever possible. So, if we want an access parameter such 
+as <SPAN Class="swiss">A</SPAN> to exclude null in Ada 2005 then we have 
+to indicate this in the same way&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;PNN(A:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;T)&nbsp;is<BR>
+&nbsp;&nbsp;&nbsp;X:&nbsp;Integer;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;X&nbsp;:=&nbsp;A.Component;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>read&nbsp;a&nbsp;component&nbsp;of&nbsp;A</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>no&nbsp;check&nbsp;for&nbsp;null&nbsp;in&nbsp;Ada&nbsp;2005</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;PNN;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This means of course 
+that the original procedure&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(A:&nbsp;<B>access</B>&nbsp;T)&nbsp;is<BR>
+&nbsp;&nbsp;&nbsp;X:&nbsp;Integer;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;X&nbsp;:=&nbsp;A.Component;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>read&nbsp;a&nbsp;component&nbsp;of&nbsp;A</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>check&nbsp;for&nbsp;null&nbsp;in&nbsp;Ada&nbsp;2005</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal">behaves slightly differently in Ada 2005 since <SPAN Class="swiss">A</SPAN> 
+is no longer of a type that excludes null. There now has to be a check 
+when accessing the component of the record because null is now an allowed 
+value of <SPAN Class="swiss">A</SPAN>. So in Ada 2005, calling <SPAN Class="swiss">P</SPAN> 
+with a null parameter results in <SPAN Class="swiss">Constraint_Error</SPAN> 
+being raised within <SPAN Class="swiss">P</SPAN> only when we attempt 
+to do the dereference, whereas in Ada 95 it is always raised at the point 
+of call.</div>
+<div class="Normal">This is of course technically an incompatibility 
+of an unfortunate kind. Here we have a program that is legal in both 
+Ada 95 and Ada 2005 but it behaves differently at execution time in that 
+<SPAN Class="swiss">Constraint_Error</SPAN> is raised at a different 
+place. But of course, in practice if such a program does raise <SPAN Class="swiss">Constraint_Error</SPAN> 
+in this way then it clearly has a bug and so the difference does not 
+really matter.</div>
+<div class="Normal">Various alternative approaches were considered in 
+order to eliminate this incompatibility but they all seemed to be ugly 
+and it was felt that it was best to do the proper thing rather than have 
+a permanent wart.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However the situation 
+regarding controlling access parameters is somewhat different. Remember 
+that a controlling parameter is a parameter of a tagged type where the 
+operation is primitive &ndash; that is declared alongside the tagged 
+type in a package specification (or inherited of course). Thus consider 
+</div>
+<div class="SwissExamples"><B>package</B>&nbsp;PTT&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;TT&nbsp;<B>is&nbsp;tagged</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Component:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(X:&nbsp;<B>access</B>&nbsp;TT);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>primitive&nbsp;operation</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;PTT;</div>
+<div class="Normal">The type <SPAN Class="swiss">TT</SPAN> is tagged 
+and the procedure <SPAN Class="swiss">Op</SPAN> is a primitive operation 
+and so the access parameter <SPAN Class="swiss">X</SPAN> is a controlling 
+parameter.</div>
+<div class="Normal">In this case the anonymous access (sub)type still 
+excludes null as in Ada 95 and so null is not permitted as a parameter. 
+The reason is that controlling parameters provide the tag for dispatching 
+and null has no tag value. Remember that all controlling parameters have 
+to have the same tag. We can add <B>not null</B> to the parameter specification 
+if we wish but to require it explicitly for all controlling parameters 
+was considered to be too much of an incompatibility. But in newly written 
+programs, we should be encouraged to write <B>not null</B> explicitly 
+in order to avoid confusion during maintenance.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another rule regarding 
+null exclusion is that a type derived from a type that excludes null 
+also excludes null. Thus given&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Ref_NNT&nbsp;<B>is&nbsp;not&nbsp;null&nbsp;access</B>&nbsp;T;<BR>
+<B>type</B>&nbsp;Another_Ref_NNT&nbsp;<B>is&nbsp;new</B>&nbsp;Ref_NNT;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then<SPAN Class="swiss">&nbsp;Another_Ref_NNT</SPAN> also excludes null. On the other hand if we start 
+with an access type that does not exclude null then a derived type can 
+exclude null or not thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Ref_T&nbsp;<B>is&nbsp;access</B>&nbsp;T;<BR>
+<B>type</B>&nbsp;Another_Ref_T&nbsp;<B>is&nbsp;new</B>&nbsp;Ref_T;<BR>
+<B>type</B>&nbsp;ANN_Ref_T&nbsp;<B>is&nbsp;new&nbsp;not&nbsp;null</B>&nbsp;Ref_T;</div>
+<div class="Normal">then<SPAN Class="swiss">&nbsp;Another_Ref_T</SPAN> does 
+not exclude null but <SPAN Class="swiss">ANN_Ref_T</SPAN> does exclude 
+null.</div>
+<div class="Normal">A technical point is that all access types including 
+anonymous access types in Ada 2005 have null as a value whereas in Ada 
+95 the anonymous access types did not. It is only subtypes in Ada 2005 
+that do not always have null as a value. Remember that <SPAN Class="swiss">Ref_NNT</SPAN> 
+is actually a first-named subtype.</div>
+<div class="Normal">An important advantage of all access types having 
+null as a value is that it makes interfacing to C much easier. If a parameter 
+in C has type <SPAN Class="swiss">*t</SPAN> then the corresponding parameter 
+in Ada can have type <B>access</B> <SPAN Class="swiss">T</SPAN> and if 
+the C routine needs null passed sometimes then all is well &ndash; this 
+was a real pain in Ada 95.</div>
+<div class="Normal" style="margin-bottom: 0.4em">An explicit null exclusion 
+can also be used in object declarations much like a constraint. Thus 
+we can have&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Ref_Int&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Integer;<BR>
+X:&nbsp;<B>not&nbsp;null</B>&nbsp;Ref_Int&nbsp;:=&nbsp;Some_Integer'Access;</div>
+<div class="Normal">Note that we must initialize <SPAN Class="swiss">X</SPAN> 
+otherwise the default initialization with <B>null</B> will raise <SPAN Class="swiss">Constraint_Error</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In some ways null exclusions 
+have much in common with constraints. We should compare the above with 
+</div>
+<div class="SwissExamples">Y:&nbsp;Integer&nbsp;<B>range</B>&nbsp;1&nbsp;..&nbsp;10;<BR>
+...<BR>
+Y&nbsp;:=&nbsp;0;</div>
+<div class="Normal">Again <SPAN Class="swiss">Constraint_Error</SPAN> 
+is raised because the value is not permitted for the subtype of <SPAN Class="swiss">Y</SPAN>. 
+A difference however is that in the case of <SPAN Class="swiss">X</SPAN> 
+the check is <SPAN Class="swiss">Access_Check</SPAN> whereas in the case 
+of <SPAN Class="swiss">Y</SPAN> it is <SPAN Class="swiss">Range_Check</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The fact that a null 
+exclusion is not actually classified as a constraint is seen by the syntax 
+for subtype_indication which in Ada 2005 is&nbsp;</div>
+<div class="SwissExamples">subtype_indication&nbsp;::=&nbsp;[null_exclusion]&nbsp;subtype_mark&nbsp;[constraint]</div>
+<div class="Normal" style="margin-bottom: 0.4em">An explicit null exclusion 
+can also be used in subprogram declarations thus&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;F(X:<B>&nbsp;not&nbsp;null</B>&nbsp;Ref_Int)&nbsp;<B>return&nbsp;not&nbsp;null</B>&nbsp;Ref_Int;<BR>
+<B>procedure</B>&nbsp;P(X:&nbsp;<B>in&nbsp;not&nbsp;null</B>&nbsp;Ref_Int);<BR>
+<B>procedure</B>&nbsp;Q(X:&nbsp;<B>in&nbsp;out&nbsp;not&nbsp;null</B>&nbsp;Ref_Int);</div>
+<div class="Normal" style="margin-bottom: 0.4em">But a difference between 
+null exclusions and constraints is that although we can use a null exclusion 
+in a parameter specification we cannot use a constraint in a parameter 
+specification. Thus&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(X:<B>&nbsp;in&nbsp;not&nbsp;null&nbsp;</B>Ref_Int);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal</I></SPAN><BR>
+<B>procedure</B>&nbsp;Q(X:&nbsp;<B>in</B>&nbsp;Integer&nbsp;<B>range</B>&nbsp;1&nbsp;..&nbsp;N);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal">But null exclusions are like constraints in that 
+they are both used in defining subtype conformance and static matching.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can also use a null 
+exclusion with access-to-subprogram types including protected subprograms. 
+</div>
+<div class="SwissExamples"><B>type</B>&nbsp;F&nbsp;<B>is&nbsp;access&nbsp;function</B>&nbsp;(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float;<BR>
+Fn:&nbsp;<B>not&nbsp;null</B>&nbsp;F&nbsp;:=&nbsp;Sqrt'Access;</div>
+<div class="Normal">and so on.</div>
+<div class="Normal">A null exclusion can also be used in object and subprogram 
+renamings. We will consider subprogram renamings here and object renamings 
+in the next section when we discuss anonymous access types. This is an 
+area where there is a significant difference between null exclusions 
+and constraints.<A NAME="I1102"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Remember that if an 
+entity is renamed then any constraints are unchanged. We might have&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(X:&nbsp;Positive);<BR>
+...<BR>
+<B>procedure</B>&nbsp;Q(Y:&nbsp;Natural)&nbsp;<B>renames</B>&nbsp;P;<BR>
+...<BR>
+Q(0);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>raises&nbsp;Constraint_Error</I></SPAN></div>
+<div class="Normal">The call of <SPAN Class="swiss">Q</SPAN> raises <SPAN Class="swiss">Constraint_Error</SPAN> 
+because zero is not an allowed value of <SPAN Class="swiss">Positive</SPAN>. 
+The constraint <SPAN Class="swiss">Natural</SPAN> on the renaming is 
+completely ignored (Ada has been like that since time immemorial).</div>
+<div class="Normal">We would have preferred that this sort of peculiar 
+behaviour did not extend to null exclusions. However, we already have 
+the problem that a controlling parameter always excludes null even if 
+it does not say so. So the rule adopted generally with null exclusions 
+is that &quot;null exclusions never lie&quot;. In other words, if we 
+give a null exclusion then the entity must exclude null; however, if 
+no null exclusion is given then the entity might nevertheless exclude 
+null for other reasons (as in the case of a controlling parameter).</div>
+<div class="Normal" style="margin-bottom: 0.4em">So consider&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(X:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;T);<BR>
+...<BR>
+<B>procedure</B>&nbsp;Q(Y:&nbsp;<B>access</B>&nbsp;T)&nbsp;<B>renames</B>&nbsp;P;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>OK</I></SPAN><BR>
+...<BR>
+Q(<B>null</B>);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>raises&nbsp;Constraint_Error</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">The call of <SPAN Class="swiss">Q</SPAN> 
+raises <SPAN Class="swiss">Constraint_Error</SPAN> because the parameter 
+excludes null even though there is no explicit null exclusion in the 
+renaming. On the other hand (we assume that <SPAN Class="swiss">X</SPAN> 
+is not a controlling parameter)&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(X:&nbsp;<B>access</B>&nbsp;T);<BR>
+...<BR>
+<B>procedure</B>&nbsp;Q(Y:&nbsp;<B>not&nbsp;null</B>&nbsp;<B>access</B>&nbsp;T)&nbsp;<B>renames</B>&nbsp;P;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>NO</I></SPAN></div>
+<div class="Normal">is illegal because the null exclusion in the renaming 
+is a lie.</div>
+<div class="Normal">However, if <SPAN Class="swiss">P</SPAN> had been 
+a primitive operation of <SPAN Class="swiss">T</SPAN> so that <SPAN Class="swiss">X</SPAN> 
+was a controlling parameter then the renaming with the null exclusion 
+would be permitted.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Care needs to be taken 
+when a renaming itself is used as a primitive operation. Consider&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;tagged</B>&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;One(X:&nbsp;<B>access</B>&nbsp;T);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>excludes&nbsp;null</I></SPAN></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;Inner&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Deux(X:&nbsp;<B>access</B>&nbsp;T);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>includes&nbsp;null</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Trois(X:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;T);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>excludes&nbsp;null</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Inner;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>use</B>&nbsp;Inner;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Two(X:&nbsp;<B>access</B>&nbsp;T)&nbsp;<B>renames</B>&nbsp;Deux;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>NO</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Three(X:&nbsp;<B>access</B>&nbsp;T)&nbsp;<B>renames</B>&nbsp;Trois;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>OK</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...</div>
+<div class="Normal">The procedure <SPAN Class="swiss">One</SPAN> is a 
+primitive operation of <SPAN Class="swiss">T</SPAN> and its parameter 
+<SPAN Class="swiss">X</SPAN> is therefore a controlling parameter and 
+so excludes null even though this is not explicitly stated. However, 
+the declaration of <SPAN Class="swiss">Two</SPAN> is illegal. It is trying 
+to be a dispatching operation of <SPAN Class="swiss">T</SPAN> and therefore 
+its controlling parameter <SPAN Class="swiss">X</SPAN> has to exclude 
+null. But <SPAN Class="swiss">Two</SPAN> is a renaming of <SPAN Class="swiss">Deux</SPAN> 
+whose corresponding parameter does not exclude null and so the renaming 
+is illegal. On the other hand the declaration of <SPAN Class="swiss">Three</SPAN> 
+is permitted because the parameter of <SPAN Class="swiss">Trois</SPAN> 
+does exclude null.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The other area that 
+needed unification concerned <B>constant</B>. In Ada 95 a named access 
+type can be an access to constant type rather than an access to variable 
+type thus<A NAME="I1103"></A><A NAME="I1104"></A>&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Ref_CT&nbsp;<B>is&nbsp;access&nbsp;constant</B>&nbsp;T;</div>
+<div class="Normal">Remember that this means that we cannot change the 
+value of an object of type <SPAN Class="swiss">T</SPAN> via the access 
+type.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Remember also that 
+Ada 95 introduced more general access types whereas in Ada 83 all access 
+types were pool specific and could only access values created by an allocator. 
+An access type in Ada 95 can also refer to any object marked <B>aliased</B> 
+provided that the access type is declared with <B>all</B> thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Ref_VT&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;T;<BR>
+X:&nbsp;<B>aliased</B>&nbsp;T;<BR>
+R:&nbsp;Ref_VT&nbsp;:=&nbsp;X'Access;</div>
+<div class="Normal" style="margin-bottom: 0.4em">So in summary, Ada 
+95 has three kinds of named access types&nbsp;</div>
+<div class="SwissExamples"><B>access</B>&nbsp;T;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>pool&nbsp;specific&nbsp;only,&nbsp;read&nbsp;&amp;&nbsp;write</I></SPAN><BR>
+<B>access&nbsp;all</B>&nbsp;T&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>general,&nbsp;read&nbsp;&amp;&nbsp;write</I></SPAN><BR>
+<B>access&nbsp;constant</B>&nbsp;T&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>general,&nbsp;read&nbsp;only</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">But in Ada 95, the 
+distinction between variable and constant access parameters is not permitted. 
+Ada 2005 rectifies this by permitting <B>constant</B> with access parameters. 
+So we can write&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(X:&nbsp;<B>access&nbsp;constant</B>&nbsp;T);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal&nbsp;Ada&nbsp;2005</I></SPAN><BR>
+<B>procedure</B>&nbsp;P(X:&nbsp;<B>access&nbsp;</B>T);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Observe however, that 
+<B>all</B> is not permitted with access parameters. Ordinary objects 
+can be constant or variable thus&nbsp;</div>
+<div class="SwissExamples">C:&nbsp;<B>constant</B>&nbsp;Integer&nbsp;:=&nbsp;99;<BR>
+V:&nbsp;Integer;</div>
+<div class="Normal">and access parameters follow this pattern. It is 
+named access types that are anomalous because of the need to distinguish 
+pool specific types for compatibility with Ada 83 and the subsequent 
+need to introduce <B>all</B>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In summary, Ada 2005 
+access parameters can take the following four forms&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P1(X:&nbsp;<B>access</B>&nbsp;T);<BR>
+<B>procedure</B>&nbsp;P2(X:&nbsp;<B>access</B>&nbsp;<B>constant</B>&nbsp;T);<BR>
+<B>procedure</B>&nbsp;P3(X:&nbsp;<B>not&nbsp;null</B>&nbsp;<B>access</B>&nbsp;T);<BR>
+<B>procedure</B>&nbsp;P4(X:&nbsp;<B>not&nbsp;null</B>&nbsp;<B>access</B>&nbsp;<B>constant</B>&nbsp;T);</div>
+<div class="Normal">Moreover, as mentioned above, controlling parameters 
+always exclude null even if this is not stated and so in that case <SPAN Class="swiss">P1</SPAN> 
+and <SPAN Class="swiss">P3</SPAN> are equivalent. Controlling parameters 
+can also be constant in which case <SPAN Class="swiss">P2</SPAN> and 
+<SPAN Class="swiss">P4</SPAN> are equivalent.</div>
+<div class="Normal">Similar rules apply to access discriminants; thus 
+they can exclude null and/or be access to constant.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-3-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

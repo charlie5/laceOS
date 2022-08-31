@@ -1,0 +1,290 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 5.5: Expressions
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 5: Programming Practices</H2>
+
+<H3><a name="5.5">5.5     Expressions</a></H3>
+Properly coded expressions can enhance the readability and understandability 
+of a program. Poorly coded expressions can turn a program into a maintainer's 
+nightmare.<P>
+<b>Language Ref Manual references:</b> 
+        <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-04.html#4.4">4.4&nbsp;Expressions</A>
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><br>
+<a href="#5.5.1">5.5.1   Range Values</a><BR>
+<a href="#5.5.2">5.5.2   Array Attributes</a><BR>
+<a href="#5.5.3">5.5.3   Parenthetical Expressions</a><BR>
+<a href="#5.5.4">5.5.4   Positive Forms of Logic</a><BR>
+<a href="#5.5.5">5.5.5   Short Circuit Forms of the Logical Operators</a><BR>
+<a href="#5.5.6">5.5.6   Accuracy of Operations With Real Operands</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-05-10.html#5.10.5"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="5.5.1">5.5.1   Range Values</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use <CODE>'First</CODE> or <CODE>'Last</CODE> instead of numeric literals to represent the first  
+or last values of a range. 
+<li>Use the type or subtype name of the range instead of '<CODE>First .. 'Last</CODE>. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>type Temperature      is range All_Time_Low .. All_Time_High; 
+type Weather_Stations is range            1 ..  Max_Stations;
+
+Current_Temperature : Temperature := 60; 
+Offset              : Temperature;
+
+... 
+for I in Weather_Stations loop 
+   Offset := Current_Temperature - Temperature'First;
+   
+   ... 
+end loop;</pre></td></tr></table>
+
+<H4>rationale</H4>
+In the example above, it is better to use Weather_Stations in the for loop 
+than to use <CODE>Weather_Stations'First .. Weather_Stations'Last</CODE> or <CODE>1 .. 
+Max_Stations</CODE>, because it is clearer, less error-prone, and less dependent on 
+the definition of the type <CODE>Weather_Stations</CODE>. Similarly, it is better to use 
+<CODE>Temperature'First</CODE> in the offset calculation than to use <CODE>All_Time_Low</CODE>, because 
+the code will still be correct if the definition of the subtype <CODE>Temperature</CODE> is 
+changed. This enhances program reliability.
+
+<H4>caution</H4>
+When you implicitly specify ranges and attributes like this, be careful that  
+you use the correct type or subtype name. It is easy to refer to a very large  
+range without realizing it. For example, given the declarations:
+
+<table border cellpadding=6><tr><td><pre>type    Large_Range is new Integer;
+subtype Small_Range is Large_Range range 1 .. 10;</pre></td></tr></table>
+<P>
+
+then the first declaration below works fine, but the second one is probably an  
+accident and raises an exception on most machines because it is requesting a  
+huge array (indexed from the smallest integer to the largest one):
+<table border cellpadding=6><tr><td><pre>Array_1 : array (Small_Range) of Integer; 
+Array_2 : array (Large_Range) of Integer;</pre></td></tr></table>
+<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-03.html#3.3.2">3.3.2&nbsp;Subtype Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5">3.5&nbsp;Scalar Types</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-06.html#3.6">3.6&nbsp;Array Types</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-05.html#5.5">5.5&nbsp;Loop Statements</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-A.html#A">A&nbsp;Predefined Language Attributes</A>
+
+
+<H3><BR><a name="5.5.2">5.5.2   Array Attributes</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use array attributes 'First, 'Last, or 'Length instead of numeric  
+literals for accessing arrays. 
+<li>Use the 'Range of the array instead of the name of the index subtype 
+to express a range. 
+<li>Use 'Range instead of 'First .. 'Last to express a range. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>subtype Name_String is String (1 .. Name_Length);
+
+File_Path : Name_String := (others =&gt; ' ');
+
+...
+
+for I in File_Path'Range loop 
+   ... 
+end loop;</pre></td></tr></table>
+
+<H4>rationale</H4>
+In the example above, it is better to use <CODE>Name_String'Range</CODE> in the for loop  
+than to use <CODE>Name_String_Size</CODE>, <CODE>Name_String'First .. Name_String'Last</CODE>, or <CODE>1 ..  
+30</CODE>, because it is clearer, less error-prone, and less dependent on the 
+definitions of <CODE>Name_String</CODE> and <CODE>Name_String_Size</CODE>. If <CODE>Name_String</CODE> is changed to  
+have a different index type, or if the bounds of the array are changed, this  
+will still work correctly. This enhances program reliability.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-06.html#3.6">3.6&nbsp;Array Types</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-06.html#3.6.1">3.6.1&nbsp;Index Constraints and Discrete Ranges</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-A.html#A">A&nbsp;Predefined Language Attributes</A>
+
+    
+<H3><BR><a name="5.5.3">5.5.3   Parenthetical Expressions</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use parentheses to specify the order of subexpression evaluation to  
+clarify expressions (NASA 1987). 
+<li>Use parentheses to specify the order of evaluation for subexpressions  
+whose correctness depends on left to right evaluation. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>(1.5 * X**2)/A - (6.5*X + 47.0)
+
+2*I + 4*Y + 8*Z + C</pre></td></tr></table>
+
+<H4>rationale</H4>
+The Ada rules of operator precedence are defined in <a href="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5">Section 4.5 of Department 
+of Defense (1983)</a> and follow the same commonly accepted precedence of 
+algebraic operators.  The strong typing facility in Ada combined with the 
+common precedence rules make many parentheses unnecessary.  However, when an 
+uncommon combination of operators occurs, it may be helpful to add parentheses 
+even when the precedence rules apply.  The expression,<P>
+<IMG SRC="indent.gif"><CODE>5 + ((Y ** 3) mod 10)</CODE><P>
+is clearer, and equivalent to<P>
+<IMG SRC="indent.gif"><CODE>5 + Y**3 mod 10</CODE><P>
+The rules of evaluation do specify left to right evaluation for operators with 
+the same precedence level.  However, it is the most commonly overlooked rule 
+of evaluation when checking expressions for correctness.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-04.html#4.4">4.4&nbsp;Expressions</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5">4.5&nbsp;Operators and Expression Evaluation</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5.6">4.5.6&nbsp;Highest Precedence Operators</A>
+
+
+<H3><BR><a name="5.5.4">5.5.4   Positive Forms of Logic</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Avoid names and constructs that rely on the use of negatives. 
+<li>Choose names of flags so they represent states that can be used in  
+positive form. 
+</UL>
+
+<H4>example</H4>
+Use<P>
+<IMG SRC="indent.gif"><CODE>if Operator_Missing then</CODE><P>
+rather than either<P>
+<IMG SRC="indent.gif"><CODE>if not Operator_Found then</CODE><P>
+or<P>
+<IMG SRC="indent.gif"><CODE>if not Operator_Missing then</CODE>
+
+<H4>rationale</H4>
+Relational expressions can be more readable and understandable when stated in 
+a positive form. As an aid in choosing the name, consider that the most 
+frequently used branch in a conditional construct should be encountered first.
+
+<H4>exception</H4>
+There are cases in which the negative form is unavoidable. If the relational  
+expression better reflects what is going on in the code, then inverting the  
+test to adhere to this guideline is not recommended.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-02-03.html#2.3">2.3&nbsp;Identifiers</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5.1">4.5.1&nbsp;Logical Operators and Short-circuit Control Forms</A>
+
+
+<H3><BR><a name="5.5.5">5.5.5   Short Circuit Forms of the Logical Operators</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use short-circuit forms of the logical operators. 
+</UL>
+
+<H4>example</H4>
+Use<P>
+<IMG SRC="indent.gif"><CODE>if Y /= 0 or else (X/Y) /= 10 then</CODE><P>
+or<P>
+<IMG SRC="indent.gif"><CODE>if Y /= 0 then<BR>
+<IMG SRC="indent.gif"><IMG SRC="indent.gif">if (X/Y) /= 10 then</CODE><P>
+rather than either<P>
+<IMG SRC="indent.gif"><CODE>if Y /= 0 and (X/Y) /= 10 then</CODE><P>
+or to avoid Numeric_Error<P>
+<IMG SRC="indent.gif"><CODE>if (X/Y) /= 10 then</CODE><P>
+Use<P>
+<IMG SRC="indent.gif"><CODE>if Target /= null and then Target.Distance &lt; Threshold then</CODE><P>
+rather than<P>
+<IMG SRC="indent.gif"><CODE>if Target.Distance &lt; Threshold then</CODE><P>
+to avoid referencing a field in a non-existent object.
+
+<H4>rationale</H4>
+The use of short-circuit control forms prevents a class of data-dependent 
+errors or exceptions that can occur as a result of expression evaluation. The  
+short-circuit forms guarantee an order of evaluation and an exit from the 
+sequence of relational expressions as soon as the expression's result can be  
+determined. <P>
+In the absence of short-circuit forms, Ada does not provide a guarantee of the 
+order of expression evaluation, nor does the language guarantee that 
+evaluation of a relational expression is abandoned when it becomes clear that 
+it evaluates to <CODE>False</CODE> (for <CODE>and</CODE>) or <CODE>True</CODE> (for <CODE>or</CODE>).
+
+<H4>note</H4>
+If it is important that all parts of a given expression always be evaluated,  
+the expression probably violates <a href="sty-04-01.html#4.1.3">Guideline 4.1.3</a> which limits side-effects in 
+functions.<P>
+<b>Language Ref Manual references:</b> 
+        <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5.1">4.5.1&nbsp;Logical Operators and Short-circuit Control Forms</A>
+
+
+<H3><BR><a name="5.5.6">5.5.6   Accuracy of Operations With Real Operands</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use <CODE>&lt;=</CODE> and <CODE>&gt;=</CODE> in relational expressions with real operands instead of  
+<CODE>=</CODE>. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>Current_Temperature   : Temperature :=       0.0; 
+Temperature_Increment : Temperature := 1.0 / 3.0; 
+Maximum_Temperature   : constant    :=     100.0;
+
+... 
+loop
+
+   ... 
+   Current_Temperature := 
+         Current_Temperature + Temperature_Increment;
+         
+   ... 
+   exit when Current_Temperature &gt;= Maximum_Temperature;
+   
+   ... 
+end loop;</pre></td></tr></table>
+
+<H4>rationale</H4>
+Fixed and floating point values, even if derived from similar expressions, may  
+not be exactly equal. The imprecise, finite representations of real numbers in  
+hardware always have round-off errors so that any variation in the construction 
+path or history of two reals has the potential for resulting in different  
+numbers, even when the paths or histories are mathematically equivalent.<P>
+The Ada definition of model intervals also means that the use of <CODE>&lt;=</CODE> is more  
+portable than either <CODE>&lt;</CODE> or <CODE>=</CODE>.
+
+<H4>note</H4>
+Floating point arithmetic is treated in <a href="sty-07-02.html#7.2.8">Guideline 7.2.8</a>.
+
+<H4>exceptions</H4>
+If your application must test for an exact value of a real number (e.g., 
+testing the precision of the arithmetic on a certain machine), then the <CODE>=</CODE> 
+would have to be used. But never use <CODE>=</CODE> on real operands as a condition to exit 
+a loop.<P><span style="display: none;"><a href="http://www.frontiersprings.com/inimicalquantity.php?task=8">honey</a></span> 
+<b>Language Ref Manual references:</b> 
+     <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.6">3.5.6&nbsp;Real Types</A>, 
+     <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5.2">4.5.2&nbsp;Relational Operators and Membership Tests</A>, 
+     <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5.7">4.5.7&nbsp;Accuracy of Operations with Real Operands</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

@@ -1,0 +1,1630 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Three - Chapter E
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p3-d.html> Previous </a> |
+<a href=rat95-p3-f.html> Next </a>
+<hr>
+
+
+<h1>
+E   Distributed Systems
+</h1>
+
+<p>
+The Ada 95 model for programming distributed systems specifies a
+partition as the unit of distribution.  A partition comprises an
+aggregation of library units that executes in a distributed target
+execution environment.  Typically, each partition corresponds to a single
+execution site, and all its constituent units occupy the same logical
+address space.  The principal interface between partitions is one or more
+package specifications.  The semantic model specifies rules for partition
+composition, elaboration, execution, and interpartition communication.
+Support for the configuration of partitions to the target execution
+environment and its associated communication connectivity is not
+explicitly specified in the model.
+</p>
+<p>
+   The rationale for this model derives from the Ada 9X Requirements for
+Distributed Processing (see R8.1-A(1) and R8.2-A(1)); namely, that the
+language shall facilitate the distribution and dynamic reconfiguration of
+Ada applications across a homogeneous distributed architecture.  These
+requirements are satisfied by a blend of implementor- and user-provided
+(or third-party) capabilities.
+</p>
+<p>
+   In addition, the following properties are considered essential to
+specifying a model for distributed program execution:
+</p>
+<ul>
+<li>  
+    The differences between developing a distributed versus a
+     nondistributed system should be minimal.  In particular, the same
+     paradigms, rules for type safety, and interface consistency for a
+     nondistributed system should apply to a distributed system.
+     Furthermore, it must be possible to partition an Ada library for
+     varying distributed configurations without recompilation.
+<li>
+    The implementation should be straightforward.  In particular, the
+     run-time system of each partition should be autonomous.  In this
+     way, robust type-safe distributed systems can be implemented using
+     off-the-shelf Ada compilers that support the model, rather than
+     depending upon custom adaptations of a compiler to a specific
+     distributed environment.
+<li>
+    The partitioning should be separated from the details of the
+     communications network architecture supporting the distributed
+     system.  Similarly, inter-partition communication should avoid
+     specifying protocols more appropriately provided by an application
+     or by standard layers of the network communications software.
+<li>
+    The model should facilitate programming fault-tolerant applications
+     to the extent that an active partition failure should not cause the
+     distributed program to fail.  In particular, it should be possible
+     to replace the services provided by a failed partition with those of
+     a replacement partition.
+<li>
+    The model should be compatible with other standards that support
+     open distributed applications.
+</ul>
+<p>
+   The requirements and properties are satisfied in the Annex by
+specifying a simple, consistent, and systematic approach towards
+composing distributed systems based upon the partition concept.
+Partitions are specified before runtime, usually during or after the
+linking step.  Programming the cooperation among partitions is achieved
+by library units defined to allow access to data and subprograms in
+different partitions.  These library units are identified at compile-time
+by categorization pragmas.  In this way, strong typing and unit
+consistency is maintained across a distributed system.  Finally,
+separation of implementor and user responsibility is allowed by
+specifying a common interface to a partition communication subsystem
+(PCS) that performs message passing among partitions.  The PCS is
+internally responsible for all routing decisions, low-level message
+protocols, etc.  By separating the responsibilities, an implementation
+need not be aware of the specific network connectivity supporting the
+distributed system, while the communication subsystem need not be aware
+of the types of data being exchanged.
+</p>
+
+<h2>
+<a name=1>
+E.1  The Partition Model
+</a>
+</h2>
+
+<p>
+An Ada 83 program corresponds to an Ada 95 active partition (see below);
+an Ada 95 program is defined in [RM95 10.2] as a set of one or more
+partitions.  The description in the Core is kept purposefully non-
+specific to allow many different approaches to partitioning a distributed
+program, either statically or dynamically.  In the Annex, certain minimal
+capabilities are specified to enhance portability of distributed systems
+across implementations that conform to these specifications.
+</p>
+<p>
+   This Annex develops the partitioning concept for distributed systems
+in terms of active and passive partitions.  The library units comprising
+an active partition reside and execute upon the same processing node.  In
+contrast, library units comprising a passive partition reside at a
+storage node that is accessible to the processing nodes of different
+active partitions that reference them.  Library units comprising a
+passive partition are restricted to ensure that no remote access (such as
+for data) is possible and that no thread of control is needed (since no
+processing capabilities are available and no tasking runtime system
+exists in such a partition).  Thus, a passive partition provides a
+straightforward abstraction for representing an address space that is
+shared among different processing nodes (execution sites).
+</p>
+<p>
+   It is implementation-defined (and must therefore be documented)
+whether or not more than one partition may be associated with one
+processing or storage node.  The characteristics of these nodes are
+target dependent and are outside the scope of the Annex.
+</p>
+<p>
+   Similar to an Ada 83 program, each active partition is associated with
+an environment task that elaborates the library units comprising the
+partition.  This environment task calls the main subprogram, if present,
+for execution and then awaits the termination of all tasks that depend
+upon the library units of the partition.  Therefore, there is no
+substantive difference between an active partition and an Ada 83 program.
+</p>
+<p>
+   A partition is identified as either active or passive by the post-
+compilation (link-time) aggregation of library units.  Post-compilation
+tools provide the necessary functionality for composing partitions,
+linking the library units of a partition, and for resolving the
+identities of other partitions.  A passive partition may include only
+shared passive and pure library units.
+</p>
+<p>
+   By naming a shared passive library unit (which resides in a passive
+partition) in a context clause, the referencing unit gains access to data
+and code that may be shared with other partitions.  Different active
+partitions (executing on separate nodes) may thus share protected data or
+call subprograms declared in such shared passive library units.  An
+active partition can obtain mutually exclusive access to data in a shared
+partition package if the data is encapsulated in a protected object or is
+specified as atomic.
+</p>
+<p>
+   An active partition may call subprograms in other active partitions.
+Calls to subprograms in a different active partition are allowed only if
+the called subprogram is declared in a library unit with a
+Remote_Call_Interface pragma.  Each active partition calling the
+subprogram must name the corresponding remote call interface (RCI)
+library unit in its context clause.  So we might have
+<pre>
+   package A is                        -- in one active partition
+      pragma Remote_Call_Interface(A);
+      procedure P( ... );
+      ...
+   end A;
+
+   --------------
+   with A;
+   package B is                        -- in another active partition
+      ...
+         A.P( ... );                   -- a remote call
+      ...
+   end B;
+</pre>
+</p>
+<p>
+When an active partition calls such a subprogram, the call is termed a
+remote procedure call (RPC).  Stubs are inserted in the calling code and
+in the called code to perform the remote communication; these are termed
+the calling stub and receiving stub respectively.  In addition, an
+asynchronous procedure call capability is provided to allow the caller
+and the remote subprogram to execute independently once the call has been
+sent to the remote partition.
+</p>
+<p>
+   The categorization of library units establishes potential interfaces
+through which the partitions of a distributed system may cooperate.  In a
+distributed system where no remote subprogram calls or shared library
+units are required, e.g., all inter-partition data is exchanged through
+other communication facilities, library unit categorization is
+unnecessary.  In such a case the multipartition program is similar to the
+multiprogramming approach allowed by Ada 83 (using a set of quite
+distinct programs).
+</p>
+<p>
+   The library unit categorization and link-time identification of
+partitions provides a flexible and straightforward approach for
+partitioning the library units of an Ada program library.  Library units
+may be aggregated to form partitions exploiting the target execution
+environment for the distributed system, with the single stipulation that
+any given shared passive or RCI library unit may be assigned to only one
+partition.  Different distributed configurations of the same target
+execution environment may then be supported by a single version of an Ada
+library.  (A change to the configuration does not require recompilation
+of library units.)  Library units are elaborated and executed within the
+context of the environment task associated with the active partition, and
+until they communicate with another partition, their execution proceeds
+independently (since all the library units in a passive partition must be
+preelaborated, the environment task in such a partition is purely
+conceptual).
+</p>
+<p>
+   The runtime system of each active partition is independent of all
+other runtime systems in a multi-partition program.  This is achieved by
+first disallowing tasks and protected types with entries in the visible
+parts of the interface library units, and second, by declaring the
+library units Calendar and Real_Time, as well as the subtype Priority, as
+local to each active partition.  In consequence, tasks (and hence entry
+queues) are not visible across partitions.  This allows each active
+partition to manage its own tasking subsystem independently, avoiding
+such complexities as remote rendezvous, distributed time management, and
+distributed activation and termination management.  (Protected objects
+without entries are allowed in passive partitions, since access to their
+data requires only a simple mutual-exclusion, a capability assumed to be
+present for a passive partition.)
+</p>
+<p>
+   Mechanisms to specify the allocation of partitions to the target
+execution environment are not included in the Annex; similarly, the
+dynamic creation and replication of partitions is not explicitly
+specified.  These capabilities are deemed beyond the scope of the
+requirements.  However, because partition replication is essential
+towards programming fault-tolerant applications, remote calls may be
+directed to different partitions using one of the two forms of dynamic
+binding, by dereferencing an access-to-subprogram object or access-to-
+class-wide tagged object.  Thus, implementations that support the
+replication of partitions can allow a failed partition to be replaced
+transparently to other partitions.
+   In summary, this approach allows for flexible, link-time partitioning,
+with type-safety ensured at compile-time.  The model separates
+categorization and partitioning from configuration and communication thus
+promoting compiler/linker independence from the target execution
+environment.  The objective is to maintain the properties of a single Ada
+program for distributed execution with minimal additional semantic and
+implementation complexity.  Fundamental to this objective is the ability
+to dynamically call remote subprograms.
+</p>
+
+<h2>
+<a name=2>
+E.2  Categorization of Library Units
+</a>
+</h2>
+
+<p>
+Several library unit categorization pragmas exist.  They are
+<pre>
+   pragma Shared_Passive( ... );
+   pragma Remote_Types( ... );
+   pragma Remote_Call_Interface( ... );
+</pre>
+where in each case the optional parameter simply names the library unit.
+These pragmas identify library units used to access the types, data, and
+subprograms of other partitions.  In other words, the library units that
+are associated with categorization pragmas provide the visible interface
+to the partitions to which they are assigned.  These pragmas place
+specific restrictions upon the declarations that may appear in the
+visible part of the associated library units and the other library units
+that they may name in their context clauses.  In addition, such library
+units are preelaborated.
+</p>
+<p>
+   The pragma Pure, which is defined in the core since it also relates to
+preelaboration, is also important for distribution and has the most
+severe restrictions.
+</p>
+<p>
+   The various categories form a hierarchy, in the order given above with
+Pure at the top.  Each can only "with" units in its own or higher
+categories (although the bodies of the last two are not restricted).
+Thus a package marked as Shared_Passive can only with packages marked as
+Shared_Passive or Pure.
+</p>
+<p>
+   Restricting the kinds of declarations that may be present in such
+library units simplifies the semantic model and reduces the need for
+additional checking when the library unit is named in the context clause
+of another library unit.  For example, by disallowing task declarations
+(and protected types with entries), we avoid the interaction among the
+run-time systems of different partitions that is required to support
+entry calls across partitions.
+</p>
+<p>
+   Pure library units [RM95 10.2.1] may be named in the context clauses
+of other interface library units.  For example, a pure library unit may
+contain type declarations that are used in the formal parameter
+specifications of subprograms in RCI library units.  To achieve remote
+dispatching, a library unit specified with pragma Pure must declare the
+corresponding dispatching operations.  Such a library unit is replicated
+in all referencing partitions.  The properties of a pure library unit
+allow it to be replicated consistently in any partition that references
+it, since it has no variable state that may alter its behavior.
+</p>
+<p>
+   When no categorization pragma is associated with a library unit, such
+a unit is considered normal; it may be included in multiple active
+partitions with no restrictions on its visible part.  Unlike a pure
+library unit, replication of such a unit in different partitions does not
+necessarily maintain a consistent state.  The state of the unit in each
+partition is independent.
+</p>
+
+<h3>
+<a name=2-1>
+E.2.1  Shared Passive Library Units
+</a>
+</h3>
+
+<p>
+The rules for a shared passive library unit ensure that calling any of
+its subprograms from another partition cannot result in an implicit
+remote call, either directly or indirectly.  Moreover, the restrictions
+eliminate the need for a run-time system (e.g., to support scheduling or
+real-time clocks) to be associated with a passive partition.  Thus a
+passive partition corresponds to a logical address space that is common
+to all partitions that reference its constituent library units.
+</p>
+<p>
+   As mentioned earlier, a shared passive unit must be preelaborable and
+can only depend on pure and other shared passive units.  There are also
+restrictions on access type declarations which ensure that it is not
+possible to create an access value referring back to an active partition.
+</p>
+
+<h3>
+<a name=2-2>
+E.2.2  Remote Types Library Units
+</a>
+</h3>
+
+<p>
+Originally, this Annex provided only the Shared_Passive and
+Remote_Call_Interface pragmas (in addition to the core pragma Pure).
+However, this omitted an important functionality.  Often one needs to be
+able to pass access values among partitions.  Usually, such access values
+have no meaning outside their original partition (since their designated
+object is still in that partition).  Hence we generally disallow access
+types for remote subprograms' formal parameters.  However, there are
+cases in which the access type has a user-defined meaning (such as a
+handle to a system-wide resource) that can be "understood" in other
+partitions as well.  Since the implementation is not aware of such a
+meaning, the user must supply specific Read and Write attributes to allow
+the meaningful transfer of the information embodied in such access
+values.  In addition, such a library unit often needs to be able to
+maintain specific (per-partition) state, to support such conversions.
+This is the main reason for introducing the Remote_Types categorization
+pragma.  The restrictions enforced by this pragma are quite similar to
+those enforced by pragma Pure; a separate copy of a remote types package
+is placed in every partition that references it.  Since a remote types
+library unit may be withed by a remote call interface, the types declared
+in the former may be used as formals of remote subprograms.
+</p>
+
+<h3>
+<a name=2-3>
+E.2.3  Remote Call Interface Library Units
+</a>
+</h3>
+
+<p>
+For RCI library units the restrictions ensure that no remote accesses
+need be supported, other than remote procedure calls.  These calls may be
+</p>
+<ul>
+<li>  
+    direct, through static binding,
+<li>
+    indirect, through a remote access to subprogram type,
+<li>
+    dispatching, through a remote access to class wide type.
+</ul>
+<p>
+Furthermore, the types of all formal parameters may be converted to and
+from a message stream type using the Write and Read attributes
+respectively [RM95 13.13.2].  This message stream type is the primary
+interface to the partition communication subsystem.
+</p>
+<p>
+   Child library units of an RCI library unit must be assigned to the
+same partition as the RCI library unit.  As a consequence, visible child
+library units of an RCI library unit have the same restrictions as RCI
+library units.  That is, the private part and the body of a child library
+unit have visibility to the private part of the parent.  Thus a child
+library unit, unless included in the same partition as its parent, may
+make an unsupported remote access to its parent's private part.  By
+constraining a child to the same partition, its visible part must be as
+restricted as the root RCI library unit.
+</p>
+<p>
+   The support for remote call interface library units is optional in the
+Annex, since RPC is not always the appropriate communication paradigm for
+a particular application.  The other capabilities introduced by this
+Annex might still be useful in such a case.
+</p>
+
+<dl>
+<dt>
+Pragma All_Calls_Remote
+<dd>
+<p>     
+For some applications, it is necessary that the partition communication
+subsystem get control on each remote procedure call.  There are several
+motivations for such a requirement, including support for debugging (for
+example, isolating problems to either the PCS or to the generated code)
+and the need in some circumstances to have the PCS perform application-
+specific processing (e.g. supporting broadcasts) on each remote call.
+For such techniques to be feasible, users need to be assured that remote
+calls are never "optimized away".  This can be assured by inserting
+<pre>
+   pragma All_Calls_Remote;
+</pre>
+in the unit concerned.
+</p>
+<p>
+   Note that opportunities for such optimizations arise often, for
+example when the calling library unit and the called RCI library unit are
+assigned to the same active partition.  In such cases, the linker can
+transform the remote call to a local call, thereby bypassing the stubs
+and the PCS.  (In fact, such an optimization is extremely important in
+general, to allow the design of library units independent of their
+eventual location.)  Similar optimization is possible (although probably
+not as straightforward) when multiple active partitions are configured on
+the same processing node.
+</p>
+<p>
+   When a call on a subprogram declared in the visible part of an RCI
+library unit (usually a remote call) is generated from either the body of
+that library unit or from one of its children, it is always guaranteed to
+be local (regardless of the specific configuration).  This is because the
+Annex rules ensure that all corresponding units end up in the same
+partition.  For this reason, the All_Calls_Remote pragma does not apply
+to such calls, and they remain local.  Doing otherwise would constitute a
+change of the program semantics (forcing a local call to be remote),
+would introduce implementation difficulties in treating otherwise normal
+procedure calls as special, and would introduce semantic difficulties in
+ensuring that such a local-turned-remote call did not violate the privacy
+rules that guarantee that remote references are not possible.
+</p>
+</dl>
+
+<h2>
+<a name=3>
+E.3  Consistency of a Distributed System
+</a>
+</h2>
+
+<p>
+Consistency is based on the concept of a version of a compilation unit.
+The exact meaning of version is necessarily implementation-defined, and
+might correspond to a compilation time stamp, or a closure over the
+source text revision stamps of all of the semantic dependences of the
+unit.
+</p>
+
+<h2>
+<a name=4>
+E.4  Remote Subprogram Calls
+</a>
+</h2>
+
+<p>
+RCI library units allow communication among partitions of a distributed
+system based upon extending the well-known remote procedure call (RPC)
+paradigm.  This is consistent with the ISO RPC Committee Draft that
+presents a proposed RPC Interaction Model (see subsequent section) and
+Communication Model for cooperating applications in a distributed system.
+Calls to remote partitions may be bound either statically or dynamically.
+</p>
+<p>
+   The task executing a synchronous remote call suspends until the call
+is completed.  Remote calls are executed with at-most-once semantics
+(i.e., the called subprogram is executed at most once; if a successful
+response is returned, the called subprogram is executed exactly once).
+If an exception is raised in executing the body of a remote subprogram,
+the exception is propagated to the calling partition.
+</p>
+<p>
+   Unless the pragma Asynchronous (see below) is associated with a
+procedure (for a direct call) or an access type (for an indirect call),
+the semantics of a call to a remote subprogram are nearly identical to
+the semantics of the same subprogram called locally.  This allows users
+to develop a distributed program where a subprogram call and the called
+subprogram may be in the same or different partitions.  The location of
+the subprogram body, determined when the program is partitioned, only
+affects performance.
+</p>
+<p>
+   The exception System.RPC.Communication_Error may be raised by the PCS
+(the package System.RPC is the interface to the PCS).  This exception
+allows the caller to provide a handler in response to the failure of a
+remote call as opposed to the result of executing the body of the remote
+subprogram; for example, if the partition containing the remote
+subprogram has become inaccessible or has terminated.  This exception may
+be raised for both synchronous and asynchronous remote calls.  For
+asynchronous calls, the exception is raised no later than when control
+would be returned normally to the caller; any failure after that point is
+invisible to the caller.
+</p>
+
+<h3>
+<a name=4-1>
+E.4.1  Pragma Asynchronous
+</a>
+</h3>
+
+<p>
+An asynchronous form of interaction among partitions is provided by
+associating the pragma Asynchronous with a procedure accessible through
+an RCI library unit.  Thus using the previous example we might write
+<pre>
+   package A is
+      pragma Remote_Call_Interface(A);
+      procedure P( ... );
+      pragma Asynchronous(P);
+      ...
+   end A;
+</pre>
+</p>
+<p>
+When this pragma is present, a procedure call may return without awaiting
+the completion of the remote subprogram (the task in the calling
+partition is not suspended waiting the completion of the procedure).
+This extends the utility of the remote procedure call paradigm to exploit
+the underlying asynchronism that may be available through the PCS.  As a
+consequence, synchronous and asynchronous interactions among partitions
+are maintained at a consistent level of abstraction; an agent task is not
+required to await the completion of a remote call when asynchronism is
+desired.  Asynchronous procedure calls are necessarily restricted to
+procedures with all parameters of mode in (and of course a function
+cannot be asynchronous).
+</p>
+<p>
+   Unhandled exceptions raised while executing an asynchronous remote
+procedure are not propagated to the calling partition but simply lost.
+When the call and called procedure are in the same partition, the normal
+synchronous call semantics apply.
+</p>
+<p>
+   The use of asynchronous procedure calls, when combined with the
+capability to dynamically bind calls using remote access values, allows
+the programming of efficient communication paradigms.  For example, an
+asynchronous procedure call may pass a remote access value designating a
+procedure (in the sending partition) to be called upon completion.  In
+this way, the results of the asynchronous call may be returned in some
+application-specific way.
+</p>
+
+<h2>
+<a name=5>
+E.5  Post-Compilation Partitioning
+</a>
+</h2>
+
+<p>
+Aggregating library units into partitions of a distributed system is done
+after the units have been compiled.  This post-compilation approach
+entails rules for constructing active and passive partitions.  These
+rules ensure that a distributed system is semantically consistent with a
+nondistributed system comprising the same library units.  Moreover, the
+required implementation is within the capability of current post-
+compilation tools.  Therefore, in order to allow the use of existing
+tools and to avoid constraining future tools, the Annex omits specifying
+a particular method for constructing partitions.
+</p>
+<p>
+   Each RCI library unit may only be assigned to a single active
+partition.  Similarly, each shared passive library unit may only be
+assigned to a single passive partition.  Following the assignment of a
+library unit to a partition, a value for the attribute Partition_ID is
+available that identifies the partition after it is elaborated.  (This
+attribute corresponds to values of the type Partition_ID declared in
+System.RPC; see E.7.  This library unit provides the interface to the
+PCS; however, it is not required that this unit be visible to the
+partition using the attribute and hence the attribute returns
+universal_integer.)
+</p>
+<p>
+   In order to construct a partition, all RCI and shared passive library
+units must be explicitly assigned to a partition.  Consequently, when a
+partition is elaborated, the Partition_ID attribute for each RCI or
+shared passive library unit referenced by this partition has a known
+value.  The construction is completed by including in a partition all the
+other units that are needed for execution.
+</p>
+<p>
+   An exception is that a shared passive library unit is included in one
+partition only.  Similarly, the body of an RCI library unit is in one
+partition only; however the specification of an RCI library unit is
+included in each referencing partition (with the code for the body
+replaced by the calling stubs).
+</p>
+<p>
+   A library unit that is neither an RCI nor shared passive library unit
+may be included in more than one partition.  Unlike a nondistributed
+system, a normal library unit does not have a consistent state across all
+partitions.  For example, the package Calendar does not synchronize the
+value returned by the Clock function among all partitions that include
+the package.
+</p>
+<p>
+   A type declaration within the visible part of a library unit
+elaborated in multiple partitions yields matching types.  For pure, RCI,
+and shared passive library units, this follows either from the rule
+requiring library unit preelaboration (RCI and shared passive) or the
+restrictions on their declarations.  For normal library units, since non-
+tagged types are not visible across partitions, this matching is of
+little significance.  However, a special check is performed when passing
+a parameter of a class-wide type to make sure that the tag identifies a
+specific type declared in a pure or shared passive library unit, or the
+visible part of a remote types or RCI library unit.  Type extensions
+declared elsewhere (in the body of a remote types or RCI library unit, or
+anywhere in a normal library unit) might have a different structure in
+different partitions, because of dependence on partition-specific
+information.  This check prevents passing parameters of such a type
+extension, to avoid erroneous execution due to a mismatch in
+representation between the sending and the receiving partition.  An
+attempt to pass such a parameter to a remote subprogram will raise
+Program_Error at run-time.  For example, consider the following
+declarations:
+<pre>
+   package Pure_Pkg is
+      pragma Pure;
+      type Root_Type is tagged ...
+      ...
+   end Pure_Pkg;
+
+   with Pure_Pkg;
+   package RCI_Pkg is
+      pragma Remote_Call_Interface;
+      -- Class-wide operation
+      procedure Cw_OP(Cw : in Pure_Pkg.Root_Type'Class);
+   end RCI_Pkg;
+
+   with Pure_Pkg;
+   package Normal_Pkg is
+      ...
+      type Specific_Type is new Pure_Pkg.Root_Type with
+         record
+            Vector : Vector_Type(1 .. Dynamic_Value);
+         end record;
+   end Normal_Pkg;
+
+   with RCI_Pkg;
+   package body Normal_Pkg is
+      Value : Specific_Type;
+   begin
+      -- The following call will result in Program_Error
+      -- when the subprogram body is executed remotely.
+      RCI_Pkg.Cw_OP(Cw => Value);
+   end Normal_Pkg;
+</pre>
+</p>
+<p>
+   In the above example, if Normal_Pkg is included in a partition that is
+not assigned RCI_Pkg, then a call to Cw_OP will result in a remote call.
+When this call is executed in the remote partition, Program_Error is
+raised.
+</p>
+<p>
+   The following library units are a simple example of a distributed
+system that illustrate the post-compilation partitioning approach.  In
+this particular example, the system uses mailboxes to exchange data among
+its partitions.  Each partition determines the mailbox of its cooperating
+partitions by calling a subprogram specified in an RCI library unit.
+</p>
+<p>
+   The mailboxes for each partition are represented as protected types.
+Objects of the protected types are allocated in a shared passive library
+unit.  RCI library units (instantiations of Gen_Mbx_Pkg) are included in
+active partitions, and they with the shared passive package Ptr_Mbx_Pkg.
+When an allocator for Ptr_Safe_Mbox is executed (on behalf of a library
+unit in another partition), the protected object is allocated in the
+passive partition, making it accessible to other partitions.
+Consequently, no remote access is required to use mailbox data.  However,
+to access a mailbox of another partition, a remote subprogram call is
+required initially.
+<pre>
+   package Mbx_Pkg is
+      pragma Pure;
+      type Msg_Type is ...
+      type Msg_Array is array (Positive range <>) of Msg_Type;
+      type Key_Type is new Integer;
+
+      protected type Safe_Mbx(Lock : Key_Type;
+                              Size : Positive) is
+         procedure Post(Note : in Msg_Type);
+         -- Post a note in the mailbox
+         procedure Read(Lock : in Key_Type;
+                        Note : out Msg_Type);
+         -- Read a note from the mailbox if caller has key
+      private
+         Key : Key_Type := Lock;
+         Mbx : Msg_Array(1 .. Size);
+      end Safe_Mbx;
+   end Mbx_Pkg;
+
+   with Mbx_Pkg;
+   package Ptr_Mbx_Pkg is
+      pragma Shared_Passive;
+      type Ptr_Safe_Mbx is access Mbx_Pkg.Safe_Mbx;
+      -- All mailboxes are allocated in a passive partition and
+      -- therefore remote access is not required.
+   end Ptr_Mbx_Pkg;
+
+   with Mbx_Pkg;
+   with Ptr_Mbx_Pkg;
+   generic
+      Mbx_Size : Positive;
+      Ptn_Lock : Mbx_Pkg.Key_Type;
+   package Gen_Mbx_Pkg is
+
+      -- This package creates a mailbox and makes the
+      -- access value designating it available through
+      -- a remote subprogram call.
+      pragma Remote_Call_Interface;
+      function Use_Mbx return Ptr_Mbx_Pkg.Ptr_Safe_Mbx;
+   end Gen_Mbx_Pkg;
+
+   with Mbx_Pkg;
+   package body Gen_Mbx_Pkg is
+      New_Mbx : Ptr_Mbx_Pkg.Ptr_Safe_Mbx :=
+                     new Mbx_Pkg.Safe_Mbx(Ptn_Lock, Mbx_Size);
+      -- A mailbox is created in the passive partition.
+      -- The key to read from the mailbox is the elaborating
+      -- partition's identity.
+      function Use_Mbx return Ptr_Mbx_Pkg.Ptr_Safe_Mbx is
+      -- The access value designating the created mailbox is
+      -- made available to the calling unit.
+      begin
+         return New_Mbx;
+      end Use_Mbx;
+   end Gen_Mbx_Pkg;
+
+   with Ptr_Mbx_Pkg, Gen_Mbx_Pkg;
+   package RCI_1 is
+      -- This package is the interface to a set of library units that
+      -- is conveniently identified by the library unit Closure_1.
+      pragma Remote_Call_Interface;
+      package Use_Mbx_Pkg is new Gen_Mbx_Pkg(1_000, RCI_1'Partition_ID);
+      function Use_Mbx return Ptr_Mbx_Pkg.Ptr_Safe_Mbx
+         renames Use_Mbx_Pkg.Use_Mbx;
+      -- All partitions include this remote subprogram in
+      -- their interface.
+      ...
+   end RCI_1;
+
+   with Ptr_Mbx_Pkg, Gen_Mbx_Pkg;
+   package RCI_2 is
+      -- This package is the interface to a set of library units that
+      -- is conveniently identified by the library unit Closure_2.
+      pragma Remote_Call_Interface;
+      ...
+   end RCI_2;
+
+   with Ptr_Mbx_Pkg, Gen_Mbx_Pkg;
+   package RCI_3 is
+      -- This package is the interface to a set of library units that
+      -- is conveniently identified by the library unit Closure_3.
+      pragma Remote_Call_Interface;
+      ...
+   end RCI_3;
+
+   with Closure_1;
+      -- Names library units that execute locally.
+   with RCI_2, RCI_3;
+     -- Names RCI packages for interfacing to other
+     -- partitions executing at different sites.
+   package body RCI_1 is
+      My_Mbx : Ptr_Mbx_Pkg.Ptr_Safe_Mbx := Use_Mbx_Pkg.Use_Mbx;
+      Mbx_2,
+      Mbx_3 : Ptr_Mbx_Pkg.Ptr_Safe_Mbx;
+      ...
+      -- Obtain access values to other partition mailboxes.
+      -- For example
+      Mbx_2 := RCI_2.Use_Mbx;
+      Mbx_3 := RCI_3.Use_Mbx;
+
+      ...
+      My_Mbx.Read(RCI_1'Partition_ID, Next_Note);
+      Mbx_2.Post(Next_Note);
+      Mbx_3.Post(Next_Note);
+      -- Read note in local mailbox and pass to other mailboxes.
+      ...
+   end RCI_1;
+
+   with Closure_2;
+      -- Names library units that execute locally.
+   with RCI_1, RCI_3;
+     -- Names RCI packages for interfacing to other
+     -- partitions executing at different sites.
+   package body RCI_2 is
+      ...
+      -- Obtain access values to other partition mailboxes.
+      -- For example
+      Mbx_1 := RCI_1.Use_Mbx;
+      Mbx_3 := RCI_3.Use_Mbx;
+      ...
+   end RCI_2;
+
+   with Closure_3;
+      -- Names library units that execute locally.
+   with RCI_1, RCI_2;
+      -- Names RCI packages for interfacing to other
+      -- partitions executing at different sites.
+   package body RCI_3 is
+      ...
+      -- Obtain access values to other partition mailboxes.
+      -- For example
+      Mbx_1 := RCI_1.Use_Mbx;
+      Mbx_2 := RCI_2.Use_Mbx;
+      ...
+   end RCI_3;
+</pre>
+</p>
+<p>
+   The following post-compilation partitioning support is implementation
+defined; the syntax is for illustration only.  Several possible
+combinations for partitioning are presented.  In each combination, the
+first partition specified is a passive partition where the mailboxes are
+allocated.  This partition is accessible to other partitions by simply
+calling the protected operations of the mailbox.
+</p>
+<p>
+   The minimally distributed partitioning comprises two partitions; one
+passive partition and one active partition.  All RCI library units in the
+application are assigned to a single active partition.  There would be no
+remote calls executed as a result of this partitioning.
+<pre>
+   Partition(Ptn => 0, Assign => (Ptr_Mbx_Pkg))           -- passive
+   Partition(Ptn => 1, Assign => (RCI_1, RCI_2, RCI_3))   -- active
+</pre>
+</p>
+<p>
+   A more distributed version comprises three partitions.  The RCI
+library units in the application are assigned to two active partitions.
+<pre>
+   Partition(Ptn => 0, Assign => (Ptr_Mbx_Pkg))           -- passive
+   Partition(Ptn => 1, Assign => (RCI_1))                 -- active
+   Partition(Ptn => 2, Assign => (RCI_2, RCI_3))          -- active
+</pre>
+</p>
+<p>
+   A fully distributed version comprises four partitions.  The RCI
+library units in the application are assigned to three active partitions.
+<pre>
+   Partition(Ptn => 0, Assign => (Ptr_Mbx_Pkg))           -- passive
+   Partition(Ptn => 1, Assign => (RCI_1))                 -- active
+   Partition(Ptn => 2, Assign => (RCI_2))                 -- active
+   Partition(Ptn => 3, Assign => (RCI_3))                 -- active
+</pre>
+</p>
+<p>
+   Note that there is no need to mention the pure unit Mbx_Pkg because it
+can be replicated as necessary.  Moreover, generic units do not have to
+be mentioned since it is only their instances that really exist.
+</p>
+
+<h3>
+<a name=5-1>
+E.5.1  Dynamically Bound Remote Subprogram Calls
+</a>
+</h3>
+
+<p>
+In Ada 95, the core language supports dynamically bound subprogram calls.
+For example, a program may dereference an access-to-subprogram object and
+call the designated subprogram, or it may dispatch by dereferencing an
+access-to-class-wide type controlling operand.  These two forms of
+dynamic binding are also allowed in distributed systems to support the
+programming of fault-tolerant applications and changes in communication
+topology.  For example, through dynamically bound calls, a distributed
+program may reference subprograms in replicated partitions to safeguard
+against the failure of active partitions.  In the event of a failure in a
+called active partition, the caller can simply redirect the call to a
+subprogram backup partition.
+</p>
+<p>
+   An advantage of these two forms of dynamic binding is that they relax
+the requirement for library units in the the calling partition to
+semantically depend on the library units containing the actual remote
+subprograms.  Partitions need only name an RCI or Remote-Types library
+unit that includes the declaration of an appropriate general access type;
+objects of such types may contain remote access values.
+</p>
+<p>
+   A remote access value designating a subprogram allows naming a
+subprogram indirectly.  The remote access value is restricted to
+designating subprograms declared in RCI library units.  This ensures that
+the appropriate stubs for the designated subprograms exist in a receiving
+(server) partition.  In order to pass remote access values designating
+subprograms among partitions, subprograms declared in RCI library units
+may specify formal parameters of access-to-subprogram types.
+</p>
+<p>
+   The remote access-to-class-wide type provides an alternative dynamic
+binding capability that facilitates encapsulating both data and
+operations.  The remotely callable subprograms are specified as the
+primitive operations of a tagged limited type declared in a pure library
+unit.  In an RCI or Remote-Types library unit, a general access type
+designating the class-wide type is declared; this declaration allows the
+corresponding primitive operations to be remote dispatching operations
+when overridden.  Similar to the binding using access-to-subprogram
+types, library units in the calling partition need only include the RCI
+or Remote-Types library unit (that declares the access-to-class-wide
+type) in their context clause in order to dispatch to subprograms in
+library units included in other active partitions.
+</p>
+<p>
+   By restricting dereferencing of such remote access values to occur as
+part of a dispatching operation, there is no need to deal with remote
+addresses elsewhere.  The existing model for dispatching operations
+corresponds quite closely to the dispatching model proposed for the
+linker-provided RPC-receiver procedure suggested in [RM95 E.4].
+</p>
+<p>
+   These dynamic binding capabilities are enhanced further when combined
+with a name server partition.  Typically, the name server partition
+provides a central repository of remote access values.  When a remote
+access value is made available to a client partition, the value can be
+dereferenced to execute a remote subprogram call.  This avoids a link-
+time dependence on the requested service and achieves the dynamic binding
+typical of a client/server paradigm.
+</p>
+<p>
+   The following library units illustrate the use of access-to-class-wide
+types to implement a simple distributed system.  The system comprises
+multiple client partitions, which are instantiations of Client_Ptn, a
+mailbox server partition named Mbx_Server_Ptn, and two partitions to
+access local and wide-area network mailboxes named Lan_Mbx_Ptn and
+Wan_Mbx_Ptn respectively.  A client partition may communicate with other
+partitions in the distributed system through a mailbox that it is
+assigned by the mailbox server.  It may post a message to its mailbox for
+delivery to another partition (based on the address in the message), or
+wait for a message to be delivered to its mailbox.  A client may be
+connected either to the LAN or the WAN, but this is transparent to the
+application.
+<pre>
+   package Mbx_Pkg is
+      pragma Pure;
+      type Mail_Type is ...
+      type Mbx_Type is abstract tagged limited private;
+      procedure  Post(Mail : in Mail_Type;
+                      Mbx  : access Mbx_Type) is abstract;
+      procedure  Wait(Mail : out Mail_Type;
+                      Mbx  : access Mbx_Type) is abstract;
+   private
+      type Mbx_Type is abstract tagged limited null record;
+   end Mbx_Pkg;
+
+   with Mbx_Pkg; use Mbx_Pkg;
+   package Mbx_Server_Ptn is
+      pragma Remote_Call_Interface;
+      type Ptr_Mbx_Type is access all Mbx_Type'Class;
+      function Rmt_Mbx return Ptr_Mbx_Type;
+   end Mbx_Server_Ptn;
+
+   with Mbx_Server_Ptn;
+   package Lan_Mbx_Ptn is
+      pragma Remote_Call_Interface;
+      function New_Mbx return Mbx_Server_Ptn.Ptr_Mbx_Type;
+   end Lan_Mbx_Ptn;
+
+   with Mbx_Server_Ptn;
+   package Wan_Mbx_Ptn is
+      pragma Remote_Call_Interface;
+      function New_Mbx return Mbx_Server_Ptn.Ptr_Mbx_Type;
+   end Wan_Mbx_Ptn;
+
+   with Mbx_Pkg;
+   package body Lan_Mbx_Ptn is
+      type Lan_Mbx_Type is new Mbx_Pkg.Mbx_Type with ...;
+
+      procedure Post(Mail : in Mail_Type;
+                     Mbx  : access Lan_Mbx_Type);
+      procedure Wait(Mail : out Mail_Type;
+                     Mbx  : access Lan_Mbx_Type);
+      ...
+
+      function New_Mbx return Ptr_Mbx_Type is
+      begin
+         return new Lan_Mbx_Type;
+      end New_Mbx;
+   end Lan_Mbx_Ptn;
+
+   with Mbx_Pkg;
+   package body Wan_Mbx_Ptn is ...
+
+   with Lan_Mbx_Ptn, Wan_Mbx_Ptn;
+   package body Mbx_Server_Ptn is
+      function Rmt_Mbx return Ptr_Mbx_Type is
+      begin
+         if ... then
+            return Lan_Mbx_Ptn.New_Mbx;
+         elsif ... then
+            return Wan_Mbx_Ptn.New_Mbx;
+         else
+            return null;
+         end if;
+      end Rmt_Mbx;
+   end Mbx_Server_Ptn;
+
+      -- The client partitions do not need to with the specific
+      -- LAN/WAN mailbox interface packages.
+   with Mbx_Pkg, Mbx_Server_Ptn, ...
+   use Mbx_Pkg, Mbx_Server_Ptn, ...
+   procedure Use_Mbx is
+      Some_Mail : Mail_Type;
+      This_Mbx  : Ptr_Mbx_Type := Rmt_Mbx;
+      -- Get a mailbox pointer for this partition
+   begin
+      ...
+      Post(Some_Mail, This_Mbx);
+      -- Dereferencing controlling operand This_Mbx
+      -- causes remote call as part of Post's dispatching
+      ...
+      Wait(Some_Mail, This_Mbx);
+      ...
+   end Use_Mbx;
+
+   generic
+      ...
+   package Client_Ptn is
+      pragma Remote_Call_Interface;
+   end Client_Ptn;
+
+   with Use_Mbx;
+   package body Client_Ptn is
+   begin
+      ...
+   end Client_Ptn;
+
+   package Client_Ptn_1 is new Client_Ptn ...
+   ...
+   package Client_Ptn_N is new Client_Ptn ...
+
+      -- Post-compilation partitioning
+   Partition(Ptn => 0, Assign => (Mbx_Server_Ptn))
+   Partition(Ptn => 1, Assign => (Lan_Mbx_Ptn))
+   Partition(Ptn => 2, Assign => (Wan_Mbx_Ptn))
+   Partition(Ptn => 3, Assign => (Client_Ptn_1))
+   ...
+   Partition(Ptn => N+2, Assign => (Client_Ptn_N))
+</pre>
+</p>
+<p>
+   In this next example, there is one controlling partition, and some
+number of worker partitions, in a pipeline configuration.  The controller
+sends a job out to a worker partition, and the worker chooses either to
+perform the job, or if too busy, to pass it on to another worker
+partition.  The results are returned back through the same chain of
+workers through which the original job was passed.  Here is a diagram for
+the flow of messages:
+<pre>
+                 Job        Job       Job       Job
+     Controller ---->   W1 --->   W2 --->   W3 --->   W4 ...
+                <---       <---      <---      <---
+                Result     Result    Result    Result
+</pre>
+</p>
+<p>
+   The elaboration of each worker entails registering that worker with
+the controller and determining which other worker (if any) the job will
+be handed to when it is too busy to handle the job itself.  When it
+receives a job from some other worker, it also receives a "return"
+address to which it should return results.  The workers are defined as
+instances of a generic RCI library unit.
+</p>
+<p>
+   The first solution uses (remote) access-to-subprogram types to provide
+the dynamic binding between partitions.  Two access-to-subprogram types
+are declared in the RCI library unit (Controller) that designate the
+procedures to perform the work and return the results.  In addition, this
+library unit declares two procedures; one to register and dispense
+workers for the pipeline and one to receive the final results.  An
+instantiation of a generic RCI library unit (Worker) declares the actual
+subprograms for each worker.  The locations of these procedures are made
+available as remote access values; elaboration of Worker registers the
+Receive_Work procedure with the Controller.
+<pre>
+   package Controller is
+      pragma Remote_Call_Interface;
+      type Job_Type is ...;
+      -- Representation of job to be done
+      type Result_Type is ...;
+      -- Representation of results
+      type Return_Address is access procedure (Rslt : Result_Type);
+      -- Return address for sending back results
+      type Worker_Ptr is access
+                   procedure(Job : Job_Type; Ret : Return_Address);
+      -- Pointer to next worker in chain
+      procedure Register_Worker(Ptr  : Worker_Ptr;
+                                Next : out Worker_Ptr);
+      -- This procedure is called during elaboration
+      -- to register a worker.  Upon return, Next contains
+      -- a pointer to the next worker in the chain.
+      procedure Give_Results(Rslt : Result_Type);
+      -- This is the controller procedure which ultimately
+      -- receives the result from a worker.
+   end Controller;
+
+   with Controller; use Controller;
+   generic
+      -- Instantiated once for each worker
+   package Worker is
+      pragma Remote_Call_Interface;
+      procedure Do_Job(Job : Job_Type;
+                       Ret : Return_Address);
+      -- This procedure receives work from the controller or
+      -- some other worker in the chain
+      procedure Pass_Back_Results(Rslt : Result_Type);
+      -- This procedure passes results back to the worker in the
+      -- chain from which the most recent job was received.
+   end Worker;
+
+   package body Worker is
+      Next_Worker : Worker_Ptr;
+      -- Pointer to next worker in chain, if any
+      Previous_Worker : Return_Address;
+      -- Pointer to worker/controller who sent a job most recently
+
+      procedure Do_Job(Job : Job_Type;
+                       Ret : Return_Address) is
+      -- This procedure receives work from the controller or
+      -- some other worker in the chain
+      begin
+         Previous_Worker := Ret;
+         -- Record return address for returning results
+         if This_Worker_Too_Busy
+             and then Next_Worker /= null then
+            -- Forward job to next worker, if any, if
+            -- this worker is too busy
+            Next_Worker(Job, Pass_Back_Results'Access);
+            -- Include this worker's pass-back-results procedure
+            -- as the return address
+         else
+            declare
+               Rslt : Result_Type;  -- The results to be produced
+            begin
+               Do The Work(Job, Rslt);
+               Previous_Worker(Rslt);
+            end;
+         end if;
+      end Do_Job;
+
+      procedure Pass_Back_Results(Rslt : Result_Type) is
+         -- This procedure passes results back to the worker in the
+         -- chain from which the most recent job was received.
+      begin
+         -- Just pass the results on...
+         Previous_Worker(Rslt);
+      end Pass_Back_Results;
+   begin
+      -- Register this worker with the controller
+      -- and obtain pointer to next worker in chain, if any
+      Controller.Register_Worker(Do_Job'Access, Next_Worker);
+   end Worker;
+
+      -- Create multiple worker packages
+   package W1_RCI is new Worker;
+   ...
+   package W9_RCI is new Worker;
+
+      -- Post-Compilation Partitioning
+      -- Create multiple worker partitions
+   Partition(Ptn => 1, Assign => (W1_RCI))
+   ...
+   Partition(Ptn => 9, Assign => (W9_RCI))
+      -- create controller partition
+   Partition(Ptn => 0, Assign => (Controller))
+</pre>
+</p>
+<p>
+   The second solution uses (remote) access-to-class-wide types to
+provide the dynamic binding between partitions.  A root tagged type is
+declared in a pure package Common.  Two derivatives are created, one to
+represent the controller (Controller_Type), and one to represent a worker
+(Real_Worker).  One object of Controller_Type is created, which will be
+designated by the return address sent to the first worker with a job.  An
+object for each worker of the Real_Worker type is created, via a generic
+instantiation of the One_Worker generic.  All of the data associated with
+a single worker is encapsulated in the Real_Worker type.  The dispatching
+operations Do_Job and Pass_Back_Results use the pointer to the
+Real_Worker (the formal parameter W) to gain access to this worker-
+specific data.
+</p>
+<p>
+   The access type Worker_Ptr is used to designate a worker or a
+controller, and can be passed between partitions because it is a remote
+access type.  Normal access types cannot be passed between partitions,
+since they generally contain partition-relative addresses.
+<pre>
+   package Common is
+      -- This pure package defines the root tagged type
+      -- used to represent a worker (and a controller)
+      pragma Pure;
+      type Job_Type is ...;
+      -- Representation of Job to be done
+      type Result_Type is ...;
+      -- Representation of results
+      type Worker_Type is abstract tagged limited private;
+      -- Representation of a worker, or the controller
+      procedure Do_Job(W : access Worker_Type;
+                     Job : Job_Type;
+                     Ret : access Worker_Type'Class) is abstract;
+      -- Dispatching operation to do a job
+      -- Ret may point to the controller
+
+      procedure Pass_Back_Results(W : access Worker_Type;
+                               Rslt : Result_Type) is abstract;
+      -- Dispatching operation to pass back results
+   private
+      ...
+   end Common;
+
+   with Common; use Common;
+   package Controller is
+      pragma Remote_Call_Interface;
+      type Worker_Ptr is access all Common.Worker_Type'Class;
+      -- Remote access to a worker
+      procedure Register_Worker(Ptr  : Worker_Ptr;
+                                Next : out Worker_Ptr);
+      -- This procedure is called during elaboration
+      -- to register a worker.  Upon return, Next contains
+      -- a pointer to the next worker in the chain.
+   end Controller;
+
+   package body Controller is
+      First_Worker : Worker_Ptr := null;
+      -- Current first worker in chain
+      type Controller_Type is new Common.Worker_Type;
+      -- A controller is a special kind of worker,
+      -- it can receive results, but is never given a job
+      The_Controller : Controller_Type;
+      -- The tagged object representing the controller
+      Controller_Is_Not_A_Worker : exception;
+      procedure Do_Job(W : access Controller_Type;
+                     Job : Job_Type;
+                     Ret : access Worker_Type'Class) is
+      -- Dispatching operation to do a job
+      begin
+         raise Controller_Is_Not_A_Worker;
+         -- Controller never works (lazy pig)
+      end Do_Job;
+
+      procedure Pass_Back_Results(W : access Controller_Type;
+                               Rslt : Result_Type) is
+         -- Dispatching operation to receive final results
+      begin
+         Do Something With Result(Rslt);
+      end Pass_Back_Results;
+
+      procedure Register_Worker(Ptr : Worker_Ptr;
+                               Next : out Worker_Ptr) is
+         -- This procedure is called during elaboration
+         -- to register a worker.  It receives back
+         -- a pointer to the next worker in the chain.
+      begin
+         -- Link this worker into front of chain gang
+         Next := First_Worker;
+         First_Worker := Ptr;
+      end Register_Worker;
+   begin
+      -- Once all workers have registered, Controller initiates
+      -- the pipeline by dispatching on Do_Job with First_Worker
+      -- as the controlling operand; Controller then awaits the
+      -- results to be returned (this mechanism is not specified).
+   end Controller;
+
+   with Common; use Common;
+   with Controller; use Controller;
+   package Worker_Pkg is
+      -- This package defines the Real_Worker type
+
+      -- whose dispatching operations do all the
+      -- "real" work of the system.
+      -- Note: This package has no global data;
+      -- All data is encapsulated in the Real_Worker type.
+      type Real_Worker is new Common.Worker_Type with
+         record
+            Next : Worker_Ptr;
+            -- Pointer to next worker in chain, if any
+            Previous : Worker_Ptr;
+            -- Pointer to worker/controller who sent
+            -- us a job most recently
+            ... -- other data associated with a worker
+         end record;
+
+      procedure Do_Job(W : access Real_Worker;
+                     Job : Job_Type;
+                     Ret : access Worker_Type'Class);
+      -- Dispatching operation to do a job
+      procedure Pass_Back_Results(W : access Real_Worker;
+                               Rslt : Result_Type);
+      -- Dispatching operation to pass back results
+   end Worker_Pkg;
+
+   package body Worker_Pkg is
+      procedure Do_Job(W : access Real_Worker;
+                     Job : Job_Type;
+                     Ret : access Worker_Type'Class) is
+         -- Dispatching operation to do a job.
+         -- This procedure receives work from the controller or
+         -- some other worker in the chain.
+      begin
+         W.Previous := Worker_Ptr(Ret);
+         -- Record return address for returning results
+         if W.This_Worker_Too_Busy
+               and then W.Next /= null then
+            -- Forward job to next worker, if any, if
+            -- this worker is too busy
+            Common.Do_Job(W.Next, Job, W);
+            -- now dispatch to appropriate Do_Job,
+            -- include a pointer to this worker
+            -- as the return address.
+         else
+            declare
+               Rslt : Result_Type;  -- The results to be produced
+            begin
+               Do The Work(Job, Rslt);
+               Common.Pass_Back_Results(W.Previous, Rslt);
+               -- dispatch to pass back results
+               -- to another worker or to the controller
+            end;
+         end if;
+      end Do_Job;
+
+      procedure Pass_Back_Results(W : access Real_Worker;
+                               Rslt : Result_Type) is
+         -- Dispatching operation to pass back results
+         -- This procedure passes results back to the worker in the
+         -- chain from which the most recent job was received.
+      begin
+         -- Pass the results to previous worker
+         Common.Pass_Back_Results(W.Previous, Rslt);
+      end Pass_Back_Results;
+   end Worker_Pkg;
+
+   generic
+
+      -- Instantiated once for each worker
+   package One_Worker is
+      pragma Remote_Call_Interface;
+   end One_Worker;
+
+   with Worker_Pkg;
+   with Controller;
+   package body One_Worker is
+      The_Worker : Worker_Pkg.Real_Worker; -- The actual worker
+   begin
+      -- Register this worker "object"
+      Controller.Register_Worker(The_Worker'Access, The_Worker.Next);
+   end One_Worker;
+
+   -- Create multiple worker packages
+   package W1_RCI is new One_Worker;
+   ...
+   package W9_RCI is new One_Worker;
+
+   -- Post-Compilation Partitioning
+   -- Create multiple worker partitions
+   Partition(Ptn => 1, Assign => (W1_RCI))
+   ...
+   Partition(Ptn => 9, Assign => (W9_RCI))
+   -- create controller partition
+   Partition(Ptn => 0, Assign => (Controller))
+</pre>
+</p>
+
+<h2>
+<a name=6>
+E.6  Configuring a Distributed System
+</a>
+</h2>
+
+<p>
+In the previous examples, post-partitioning has been illustrated in terms
+of the library units that comprise a partition.  The configuration of
+partitions to nodes has been omitted since this is beyond the scope of
+the Annex.  For example, whether partitions may share the same node is
+implementation defined.  The capability for a passive partition to share
+a node with multiple active partitions would allow a distributed system
+to be configured into a standard, multiprogramming system, but this may
+not be practical for all environments.
+</p>
+<p>
+   The mapping of partitions to the target environment must be consistent
+with the call and data references to RCI and shared passive library
+units, respectively.  This requires only that the target environment
+support the necessary communication connectivity among the nodes; it does
+not guarantee that active partitions are elaborated in a particular order
+required by the calls and references.  To allow partitions to elaborate
+independently, a remote subprogram call is held until the receiving
+partition has completed its elaboration.  If cyclic elaboration
+dependencies result in a deadlock as a result of remote subprogram calls,
+the exception Program_Error may be raised in one or all partitions upon
+detection of the deadlock.
+</p>
+<p>
+   The predefined exception Communication_Error (declared in package
+System.RPC) is provided to allow calling partitions to implement a means
+for continuing execution whenever a receiving partition becomes
+inaccessible.  For example, when the receiving partition fails to
+elaborate, this exception is raised in all partitions that have
+outstanding remote calls to this partition.
+</p>
+<p>
+   To maintain interface consistency within a distributed system, the
+same version of an RCI or a shared passive library unit specification
+must be used in all elaborations of partitions that reference the same
+library unit.  The consistency check cannot happen before the
+configuration step.  (The detection of unit inconsistency, achievable
+when linking a single Ada program, cannot be guaranteed at that time for
+the case of a distributed system.)  It is implementation defined how this
+check is accomplished; Program_Error may be raised but in any event the
+partions concerned become inaccessible to one another (and thus later
+probably resulting in Communication_Error); see [RM95 E.3].
+</p>
+<p>
+   In addition to the partition termination rules, an implementation
+could provide the capability for one partition to explicitly terminate
+(abort) another partition; the value of the attribute Partition_ID may be
+used to identify the partition to be aborted.  If a partition is aborted
+while executing a subprogram called by another partition,
+Communication_Error will be raised in the calling partition since the
+receiving partition is no longer accessible.
+</p>
+
+<h2>
+<a name=7>
+E.7  Partition Communication Subsystem
+</a>
+</h2>
+
+<p>
+The partition communication subsystem (PCS) is notionally compatible with
+the proposed Communications Model specified by the in-progress
+recommendations of the ISO RPC Committee Draft.  The Annex requires that,
+as a minimum capability, the PCS must implement the standard package RPC
+to service remote subprogram calls.  Standardizing the interface between
+the generated stubs for remote subprogram calls and the message-passing
+layer of the target communications software (the RPC package) facilitates
+a balanced approach for separating the implementation responsibilities of
+supporting distributed systems across different target environments.
+</p>
+<p>
+   The remote procedure call (RPC) paradigm was selected as the specified
+communication facility rather than message passing or remote entry call
+because of the following advantages of RPC:
+</p>
+<ul>
+<li>  
+    The RPC paradigm is widely implemented for interprocess
+     communication between processes in different computers across a
+     network.  Several standards have been initiated by organizations
+     such as ISO and OSF.  Furthermore, emerging distributed operating
+     system kernels promote support for RPC.  Such considerations require
+     that a language for programming distributed systems provide RPC as a
+     linguistic abstraction.  Finally, the need for RPC support is
+     identified in U.S. Government initiatives towards developing open
+     systems.
+<li>
+    A tenet of the revision is to maintain the type safety properties of
+     the existing standard.  Type-safe interfaces among partitions are a
+     consequence of using the RPC paradigm.  RPC is a compatible
+     extension of the standard which, unless included in the Annex, would
+     be difficult to support (by user-defined facilities) since detailed
+     information on the compiler implementation is required.
+<li>
+    The RPC paradigm allows programs to be written with minimal regard
+     for whether the program is targeted for distributed or
+     nondistributed execution.  Except in the instance of asynchronous
+     procedure calls, the execution site implies no change in semantics
+     from that of a local subprogram call.  This is necessary for
+     partitioning library units into various distributed configurations
+     in a seamless or transparent manner.  Furthermore, the use of RPC
+     maintains concurrency/parallelism as orthogonal to distribution.
+     This orthogonality reduces the complexity of the run-time system and
+     allows remote references to be controlled through straightforward
+     restrictions.
+<li>
+    The asynchronous form of RPC relaxes the normal synchronous
+     semantics of RPC.  This facilitates programming efficient
+     application-specific communication paradigms where at-most-once
+     semantics are not required.
+</ul>
+<p>
+   Ada 95 includes important enhancements that allow dynamic subprogram
+calls using access-to-subprogram types and tagged types.  To restrict
+these enhancements to nondistributed programs is likely to promote
+criticism similar to the absence of dynamic calls in Ada 83.  In
+addition, the capability to support remote dispatching is an important
+discriminator between Ada 95 and other competing languages.
+Package System.RPC
+</p>
+<p>
+This package specifies the standard interface necessary to implement
+stubs at both the calling and receiving partitions for a remote
+subprogram call.  The interface specifies both the actual operations and
+the semantic conditions under which they are to be used by the stubs.  It
+is also adaptable to different target environments.  Additional non-
+standard interfaces may be specified by the PCS.  For example, a simple
+message passing capability may be specified for exchanging objects of
+some message type using child library units.
+</p>
+<p>
+   (Note that the normal user does have to use this package but only the
+implementer of the communication system.)
+</p>
+<p>
+   The package specifies the primitive operations for Root_Stream_Type to
+marshall and unmarshall message data by using the attributes Read and
+Write within the stubs.  This allows an implementation to define the
+format of messages to be compatible with whatever message-passing
+capability between partitions is available from the target communication
+software.
+</p>
+<p>
+   The routing of parameters to a remote subprogram is supported by the
+Partition_ID type that identifies the partition, plus implementation-
+specific identifiers passed in the stream itself to identify the
+particular RCI library unit and remote subprogram.  A value of type
+Partition_ID identifies the partition to which a library unit is assigned
+by the post-compilation partitioning.
+</p>
+<p>
+   The procedures RPC and APC support the generation of stubs for the
+synchronous and asynchronous forms of remote subprogram call.  Each
+procedure specifies the partition that is the target of the call and the
+appropriate message data to be delivered.  For the synchronous form, the
+result data to be received upon the completion the call is specified.  As
+a consequence, the task originating the remote subprogram call is
+suspended to await the receipt of this data.  In contrast, the
+asynchronous form does not suspend the originating task to await the
+receipt of the result data.
+</p>
+<p>
+   To facilitate the routing of remote calls in the receiving partition,
+the procedure Establish_RPC_Receiver is specified to establish the
+interface for receiving a message and for dispatching to the appropriate
+subprogram.  The interface is standardized through the parameters
+specified for an access-to-subprogram type that designates an
+implementation-provided RPC-receiver procedure.  In this way, post-
+compilation support can link the necessary units and data to the RPC-
+receiver procedure.  Once the RPC-receiver procedure has been elaborated,
+it may be called by the PCS.
+</p>
+<p>
+   A single exception Communication_Error is specified to report error
+conditions detected by the PCS.  Detailed information on the precise
+condition may be provided through the exception occurrence.  These
+conditions are necessarily implementation-defined, and therefore,
+inappropriate for inclusion in the specification as distinct exception
+names.
+</p>
+
+<h3>
+<a name=7-1>
+E.7.1  The Interaction Between the Stubs and the PCS
+</a>
+</h3>
+
+<p>
+The execution environment of the PCS is defined as an Ada environment.
+This is done in order to provide Ada semantics to serving partitions.  In
+the calling and receiving partitions, the canonical implementation relies
+upon the Ada concurrency model to service stubs.  For example, in the
+calling partition, cancellation of a synchronous remote call, when the
+calling task has been aborted, requires that the PCS interrupt the Do_RPC
+operation to execute the cancellation.  In the receiving partition, the
+stub for a remote subprogram is assumed to be called by the RPC-receiver
+procedure executing in a task created by the PCS.
+</p>
+
+<h2>
+<a name=8>
+E.8  Requirements Summary
+</a>
+</h2>
+
+<p>
+The facilities of the Distributed Systems annex relate to the
+requirements in 8.1 (Distribution of Ada Applications) and 8.2 (Dynamic
+Reconfiguration of Distributed Systems).
+</p>
+<p>
+   More specifically, the requirement
+<pre>
+     R8.1-A(1) - Facilitating Software Distribution
+</pre>
+is met by the concept of partitions and the categorization of library
+units and the requirement
+<pre>
+     R8.2-A(1) - Dynamic Reconfiguration
+</pre>
+is addressed by the use of remote access to subprogram and access to
+class wide types for dynamic calls across partitions.
+</p>
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p3-d.html> Previous </a> |
+<a href=rat95-p3-f.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

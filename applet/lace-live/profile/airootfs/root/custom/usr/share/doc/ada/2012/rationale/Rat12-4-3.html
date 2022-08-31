@@ -1,0 +1,238 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Incomplete types</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-4-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-4-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>4.3 Incomplete types</H1>
+<div class="Normal" style="margin-bottom: 0.4em">Incomplete types in 
+Ada 83 were very incomplete. <A NAME="I1345"></A>They were mostly used 
+for the traditional linked list such as</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Cell;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>incomplete</I></SPAN><BR>
+<B>type</B>&nbsp;Cell_Ptr&nbsp;<B>is</B>&nbsp;<B>access</B>&nbsp;Cell;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Cell&nbsp;<B>is</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>the&nbsp;completion</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next:&nbsp;Cell_Ptr;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element:&nbsp;Pointer;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal">The incomplete type could only be used in the declaration 
+of an access type. Moreover, the incomplete declaration and its completion 
+had to be in the same list of declarations. However, if the incomplete 
+declaration is in a private part then the completion can be deferred 
+to the body; this is the so-called Taft Amendment added to Ada 83 at 
+the last minute.<A NAME="I1346"></A></div>
+<div class="Normal">Ada 95 introduced tagged types and generalized access 
+types and so made the language much more flexible but made no changes 
+to incomplete types as such. However, it soon became clear that the restrictive 
+nature of incomplete types was a burden regarding mutually dependent 
+types and was a key issue in the requirements for Ada 2005.</div>
+<div class="Normal">The big step forward in Ada 2005 was the introduction 
+of the limited with clause. This enables a package to have an incomplete 
+view of a type in another package and solves many problems of mutually 
+recursive types.</div>
+<div class="Normal">However, the overall rule remained that an incomplete 
+type could only be completed by a full type declaration and, moreover, 
+a parameter could not (generally) be of an incomplete type. This latter 
+restriction encouraged the use of access parameters.</div>
+<div class="Normal" style="margin-bottom: 0.4em">As mentioned in the 
+Introduction, the first rule prevented the following</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T1;<BR>
+<B>type</B>&nbsp;T2&nbsp;(X:&nbsp;<B>access</B>&nbsp;T1)&nbsp;<B>is&nbsp;private</B>;<BR>
+<B>type</B>&nbsp;T1&nbsp;(X:&nbsp;<B>access</B>&nbsp;T2)&nbsp;<B>is&nbsp;private</B>;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal&nbsp;in&nbsp;Ada&nbsp;2005</I></SPAN></div>
+<div class="Normal">since the completion of <SPAN Class="swiss">T1</SPAN> 
+could not be by a private type.</div>
+<div class="Normal">This is changed in Ada 2012 so that an incomplete 
+type can be completed by any type (other than another incomplete type). 
+Note especially that an incomplete type can be completed by a private 
+extension as well as by a private type. <A NAME="I1347"></A></div>
+<div class="Normal">The other major problem in Ada 2005 was that with 
+mutually dependent types in different packages we could not use incomplete 
+types as parameters because it was not known whether they were by-copy 
+or by-reference. Of course, if they were tagged then we did know they 
+were by reference but that was a severe restriction.</div>
+<div class="Normal">The need to know whether parameters are by reference 
+or by copy was really a red herring. The model used for parameter passing 
+in versions of Ada up to and including Ada 2005 was basically that at 
+the point of the declaration of a subprogram we need to have all the 
+information required to call the subprogram. Thus we needed to know how 
+to pass parameters and so whether they were by reference or by copy.</div>
+<div class="Normal">But this is quite unnecessary; we don't need to know 
+the mechanisms involved until a point where the subprogram is actually 
+called or the body itself is encountered since it is only at those points 
+that the parameter mechanism is really required. It is only at those 
+points that the compiler has to grind out the code for the call or for 
+the body.</div>
+<div class="Normal">So the rules in Ada 2012 are changed to use this 
+&quot;when we need to know&quot; model. This is discussed in <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0019-1.TXT">AI-19</A> 
+which is actually a binding interpretation and thus retrospectively applies 
+to Ada 2005 as well. This is formally expressed by the difference between 
+freezing a subprogram and freezing its profile. This was motivated by 
+a problem with tagged types whose details need not concern us. <A NAME="I1348"></A><A NAME="I1349"></A></div>
+<div class="Normal">As a highly benevolent consequence, we are allowed 
+to use incomplete types as both parameters and function results provided 
+that they are fully defined at the point of call and at the point where 
+the body is defined. <A NAME="I1350"></A><A NAME="I1351"></A><A NAME="I1352"></A></div>
+<div class="Normal">But another consequence of this approach is that 
+we cannot defer the completion of an incomplete type declared in a private 
+part to the corresponding body. In other words, parameters of an incomplete 
+type are allowed provided the Taft Amendment is not used for completing 
+the type.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The other exciting 
+change regarding incomplete types is that in Ada 2012 they are allowed 
+as generic parameters. In Ada 2005 the syntax is</div>
+<div class="SwissExamples">formal_type_declaration&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;defining_identifier&nbsp;[discriminant_part]&nbsp;<B>is</B>&nbsp;formal_type_definition;</div>
+<div class="Normal" style="margin-bottom: 0.4em">whereas in Ada 2012 
+we have</div>
+<div class="SwissExamples">formal_type_declaration&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;formal_complete_type_declaration<BR>
+&nbsp;|&nbsp;formal_incomplete_type_declaration</div>
+<div class="SwissExamples">formal_complete_type_declaration&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;defining_identifier&nbsp;[discriminant_part]&nbsp;<B>is</B>&nbsp;formal_type_definition;</div>
+<div class="SwissExamples">formal_incomplete_type_declaration&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;defining_identifier&nbsp;[discriminant_part]&nbsp;[<B>is</B>&nbsp;<B>tagged</B>];</div>
+<div class="Normal">So the new kind of formal generic parameter has exactly 
+the same form as the declaration of an incomplete type. It can be simply 
+<B>type</B> <SPAN Class="swiss">T;</SPAN> or can require that the actual 
+be tagged by writing <B>type</B> <SPAN Class="swiss">T</SPAN> <B>is tagged</B><SPAN Class="swiss">;</SPAN> 
+&mdash; and in both cases a discriminant can be given.<A NAME="I1353"></A>given.<A NAME="I1354"></A><A NAME="I1355"></A></div>
+<div class="Normal">A formal incomplete type can then be matched by any 
+appropriate incomplete type. If the formal specifies <B>tagged</B>, then 
+so must the actual. If the formal does not specify <B>tagged</B> then 
+the actual might or might not be tagged. Of course, a formal incomplete 
+type can also be matched by an appropriate complete type. And also, in 
+all cases, any discriminants must match as well.</div>
+<div class="Normal" style="margin-bottom: 0.4em">An example of the use 
+of a formal incomplete type occurs in the package <SPAN Class="swiss">Ada.Iterator_Interfaces</SPAN> 
+whose generic formal part is</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;<B>function</B>&nbsp;Has_Element(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>package</B>&nbsp;Ada.Iterator_Interfaces&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal">The formal type <SPAN Class="swiss">Cursor</SPAN> 
+is incomplete and can be matched by an actual incomplete type. The details 
+of this package will be described in Section <A HREF="Rat12-6-3.html">6.3</A> 
+on iteration.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another example is 
+provided by a signature package as mentioned in the Introduction. We 
+can write</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;<B>function</B>&nbsp;Empty&nbsp;<B>return</B>&nbsp;Set&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Unit(E:&nbsp;Element)&nbsp;<B>return</B>&nbsp;Set&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Union(S,&nbsp;T:&nbsp;Set)&nbsp;<B>return</B>&nbsp;Set&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Intersection(S,&nbsp;T:&nbsp;Set)&nbsp;<B>return</B>&nbsp;Set&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>package</B>&nbsp;Set_Signature&nbsp;<B>is&nbsp;end</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Such a signature generic 
+can be instantiated with an actual set type and then the instance can 
+be passed into other generics that have a formal package such as</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;VN&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;VN_Set&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;Sets&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Set_Signature(Element&nbsp;=&gt;&nbsp;VN,&nbsp;Set&nbsp;=&gt;&nbsp;VN_Set,&nbsp;<B>others</B>&nbsp;=&gt;&nbsp;&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>package</B>&nbsp;Analyse&nbsp;<B>is</B><BR>
+&nbsp;...</div>
+<div class="Normal">This allows the construction of a generic that needs 
+a <SPAN Class="swiss">Set</SPAN> abstraction such as a flow analysis 
+package. Remember that the purpose of a signature is to group several 
+entities together and to check that various relationships hold between 
+the entities. In this case the relationships are that the types <SPAN Class="swiss">Set</SPAN> 
+and <SPAN Class="swiss">Element</SPAN> do have the various operations 
+<SPAN Class="swiss">Empty</SPAN>, <SPAN Class="swiss">Unit</SPAN> and 
+so on.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The set generic could 
+be included in a set container package thus</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element&nbsp;<B>is&nbsp;private</B>;<BR>
+<B>package</B>&nbsp;My_Sets&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Set&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Empty&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Unit(E:&nbsp;Element)&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Union(S,&nbsp;T:&nbsp;Set)&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Intersection(S,&nbsp;T:&nbsp;Set)&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;My_Set&nbsp;<B>is&nbsp;new</B>&nbsp;Set_Signature(Element,&nbsp;Set);<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;My_Sets;</div>
+<div class="Normal">The key point is that normally an instantiation freezes 
+a type passed as a generic parameter. But in the case of a formal incomplete 
+untagged type, this does not happen. Hence the actual in the instantiation 
+of <SPAN Class="swiss">Set_Signature</SPAN> in the generic package <SPAN Class="swiss">My_Sets</SPAN> 
+can be a private type such as <SPAN Class="swiss">Set</SPAN>. <A NAME="I1356"></A></div>
+<div class="Normal">This echoes back to the earlier discussion of changing 
+the freezing rules. We cannot call a subprogram with untagged incomplete 
+parameters (whether formal or not) because we do not know whether they 
+are to be passed by copy or by reference. But we can call a subprogram 
+with tagged incomplete parameters because we do know that they are passed 
+by reference (and this has to remain true for compatibility with Ada 
+2005). So just in case the actual subprogram in the tagged case is called 
+within the generic, the instantiation freezes the profile. But in the 
+untagged case, we know that the subprogram cannot be called and so there 
+is no need to freeze the profile. <A NAME="I1357"></A></div>
+<div class="Normal">This means that the type <SPAN Class="swiss">Set</SPAN> 
+should not be given as tagged incomplete in the package <SPAN Class="swiss">Set_Signature</SPAN> 
+since we could not then use the signature in the package <SPAN Class="swiss">My_Sets</SPAN>.</div>
+<div class="Normal">If a subprogram has both tagged and untagged formal 
+incomplete parameters then the untagged incomplete parameters win and 
+the subprogram cannot be called.</div>
+<div class="Normal">(If this is all too confusing, do not worry, the 
+compiler will moan at you if you make a mistake.)</div>
+<div class="Normal">Another rule regarding incomplete formal types is 
+that the controlling type of a formal abstract subprogram cannot be incomplete.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-4-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-4-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

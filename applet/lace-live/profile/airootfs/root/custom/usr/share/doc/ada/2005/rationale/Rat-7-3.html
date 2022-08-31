@@ -1,0 +1,490 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Times and dates</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>7.3 Times and dates</H1>
+<div class="Normal" style="margin-bottom: 0.4em">The first change to 
+note is that the subtype <SPAN Class="swiss">Year_Number</SPAN> in the 
+package <SPAN Class="swiss">Ada.Calendar</SPAN> in Ada 2005 is<A NAME="I1271"></A> 
+</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Year_Number&nbsp;<B>is</B>&nbsp;Integer&nbsp;<B>range</B>&nbsp;1901&nbsp;..&nbsp;2399;</div>
+<div class="Normal">In Ada 95 (and in Ada 83) the range is 1901 .. 2099. 
+This avoids the leap year complexity caused by the 400 year rule at the 
+expense of the use of dates in the far future. But, the end of the 21st 
+century is perhaps not so far into the future, so it was decided that 
+the 2.1k problem should be solved now rather than later. However, it 
+was decided not to change the lower bound because some systems are known 
+to have used that as a time datum. The upper bound was chosen in order 
+to avoid difficulties for implementations. For example, with one nanosecond 
+for <SPAN Class="swiss">Duration'Small</SPAN>, the type <SPAN Class="swiss">Time</SPAN> 
+can just be squeezed into 64 bits.</div>
+<div class="Normal">Having grasped the nettle of doing leap years properly 
+Ada 2005 dives in and deals with leap seconds, time zones and other such 
+matters in pitiless detail.</div>
+<div class="Normal">There are three new child packages <SPAN Class="swiss">Calendar.Time_Zones</SPAN>, 
+<SPAN Class="swiss">Calendar.Arithmetic</SPAN> and <SPAN Class="swiss">Calendar.Formatting</SPAN>. 
+We will look at these in turn.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The specification of 
+the first is<A NAME="I1272"></A><A NAME="I1273"></A><A NAME="I1274"></A><A NAME="I1275"></A></div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Calendar.Time_Zones&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Time&nbsp;zone&nbsp;manipulation:</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Time_Offset<B>&nbsp;is&nbsp;range</B>&nbsp;&ndash;28*60&nbsp;..&nbsp;28*60;<BR>
+&nbsp;&nbsp;&nbsp;Unknown_Zone_Error:&nbsp;<B>exception</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;UTC_Time_Offset(Date:&nbsp;Time&nbsp;:=&nbsp;Clock)&nbsp;<B>return</B>&nbsp;Time_Offset;<BR>
+<B>end</B>&nbsp;Ada.Calendar.Time_Zones;</div>
+<div class="Normal">Time zones are described in terms of the number of 
+minutes different from UTC (which curiously is short for Coordinated 
+Universal Time);<A NAME="I1276"></A><A NAME="I1277"></A> this is close 
+to but not quite the same as Greenwich Mean Time (GMT) and similarly 
+does not suffer from leaping about in spring and falling about in the 
+autumn. It might have seemed more natural to use hours but some places 
+(for example India) have time zones which are not an integral number 
+of hours different from UTC.<A NAME="I1278"></A></div>
+<div class="Normal">Time is an extraordinarily complex subject. The difference 
+between GMT and UTC is never more than one second but at the moment of 
+writing there is a difference of about 0.577 seconds. The BBC broadcast 
+timesignals based on UTC but call them GMT and with digital broadcasting 
+they turn up late anyway. The chronophile might find the website <A HREF="http://www.merlyn.demon.co.uk/misctime.htm#GMT">http://www.merlyn.demon.co.uk/misctime.htm#GMT</A> 
+of interest.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So the function <SPAN Class="swiss">UTC_Time_Offset</SPAN> 
+applied in an Ada program in Paris to a value of type <SPAN Class="swiss">Time</SPAN> 
+in summer should return a time offset of 120 (one hour for European Central 
+Time plus one hour for daylight saving or heure d&rsquo; &eacute;t&eacute;). 
+Remember that the type <SPAN Class="swiss">Calendar.Time</SPAN> incorporates 
+the date. To find the offset now (that is, at the time of the function 
+call) we simply write&nbsp;</div>
+<div class="SwissExamples">Offset&nbsp;:=&nbsp;UTC_Time_Offset;</div>
+<div class="Normal">and then <SPAN Class="swiss">Clock</SPAN> is called 
+by default.</div>
+<div class="Normal" style="margin-bottom: 0.4em">To find what the offset 
+was on Christmas Day 2000 we write&nbsp;</div>
+<div class="SwissExamples">Offset&nbsp;:=&nbsp;UTC_Time_Offset(Time_Of(2000,&nbsp;12,&nbsp;25));</div>
+<div class="Normal">and this should return 60 in Paris. So the poor function 
+has to remember the whole history of local time changes since 1901 and 
+predict them forward to 2399 &ndash; these Ada systems are pretty smart! 
+In reality the intent is to use whatever the underlying operating system 
+provides. If the information is not known then it can raise <SPAN Class="swiss">Unknown_Zone_Error</SPAN>.</div>
+<div class="Normal">Note that we are assuming that the package <SPAN Class="swiss">Calendar</SPAN> 
+is set to the local civil (or wall clock) time. It doesn't have to be 
+but one expects that to be the normal situation. Of course it is possible 
+for an Ada system running in California to have <SPAN Class="swiss">Calendar</SPAN> 
+set to the local time in New Zealand but that would be unusual. Equally, 
+<SPAN Class="swiss">Calendar</SPAN> doesn't have to adjust with daylight 
+saving but we expect that it will. (No wonder that <SPAN Class="swiss">Ada.Real_Time</SPAN> 
+was introduced for vital missions such as boiling an egg.)</div>
+<div class="Normal" style="margin-bottom: 0.4em">A useful fact is that 
+</div>
+<div class="SwissExamples">Clock&nbsp;&ndash;&nbsp;Duration(UTC_Time_Offset*60)</div>
+<div class="Normal">gives UTC time &ndash; provided we don't do this 
+just as daylight saving comes into effect in which case the call of <SPAN Class="swiss">Clock</SPAN> 
+and that of <SPAN Class="swiss">UTC_Time_Offset</SPAN> might not be compatible.</div>
+<div class="Normal" style="margin-bottom: 0.4em">More generally the 
+type <SPAN Class="swiss">Time_Offset</SPAN> can be used to represent 
+the difference between two time zones. If we want to work with the difference 
+between New York and Paris then we could say&nbsp;</div>
+<div class="SwissExamples">NY_Paris:&nbsp;Time_Offset&nbsp;:=&nbsp;&ndash;360;</div>
+<div class="Normal">The time offset between two different places can 
+be greater than 24 hours for two reasons. One is that the International 
+Date Line weaves about somewhat and the other is that daylight saving 
+time can extend the difference as well. Differences of 26 hours can easily 
+occur and 27 hours is possible. Accordingly the range of the type <SPAN Class="swiss">Time_Offset</SPAN> 
+allows for a generous 28 hours.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The package <SPAN Class="swiss">Calendar.Arithmetic</SPAN> 
+provides some awkward arithmetic operations and also covers leap seconds. 
+Its specification is<A NAME="I1279"></A><A NAME="I1280"></A><A NAME="I1281"></A> 
+</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Calendar.Arithmetic&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Arithmetic&nbsp;on&nbsp;days:</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Day_Count&nbsp;<B>is&nbsp;range</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&ndash;366*(1+Year_Number'Last&nbsp;&ndash;&nbsp;Year_Number'First)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;..<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+366*(1+Year_Number'Last&nbsp;&ndash;&nbsp;Year_Number'First);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;Leap_Seconds_Count&nbsp;<B>is</B>&nbsp;Integer&nbsp;<B>range</B>&nbsp;&ndash;2047&nbsp;..&nbsp;2047;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Difference(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Left,&nbsp;Right:&nbsp;<B>in</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Days:&nbsp;<B>out</B>&nbsp;Day_Count;&nbsp;Seconds:&nbsp;<B>out</B>&nbsp;Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leap_Seconds:&nbsp;<B>out</B>&nbsp;Leap_Seconds_Count);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;+&quot;&nbsp;(Left:&nbsp;Time;&nbsp;Right:&nbsp;Day_Count)&nbsp;<B>return</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;+&quot;&nbsp;(Left:&nbsp;Day_Count;&nbsp;Right:&nbsp;Time)&nbsp;<B>return</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&ndash;&quot;&nbsp;(Left:&nbsp;Time;&nbsp;Right:&nbsp;Day_Count)&nbsp;<B>return</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&ndash;&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Time)&nbsp;<B>return</B>&nbsp;Day_Count;</div>
+<div class="SwissExamples"><B>end</B>&nbsp;Ada.Calendar.Arithmetic;</div>
+<div class="Normal">The range for <SPAN Class="swiss">Leap_Seconds_Count</SPAN> 
+is generous. It allows for a leap second at least four times a year for 
+the foreseeable future &ndash; the somewhat arbitrary range chosen allows 
+the value to be accommodated in 12 bits. And the 366 in <SPAN Class="swiss">Day_Count</SPAN> 
+is also a bit generous &ndash; but the true expression would be very 
+unpleasant.</div>
+<div class="Normal">One of the problems with the old planet is that it 
+is slowing down and a day as measured by the Earth's rotation is now 
+a bit longer than 86,400 seconds. Naturally enough we have to keep the 
+seconds uniform and so in order to keep worldly clocks synchronized with 
+the natural day, an odd leap second has to be added from time to time. 
+This is always added at midnight UTC (which means it can pop up in the 
+middle of the day in other time zones). The existence of leap seconds 
+makes calculations with times somewhat tricky.<A NAME="I1282"></A></div>
+<div class="Normal">The basic trouble is that we want to have our cake 
+and eat it. We want to have the invariant that a day has 86,400 seconds 
+but unfortunately this is not always the case.</div>
+<div class="Normal">The procedure <SPAN Class="swiss">Difference</SPAN> 
+operates on two values of type <SPAN Class="swiss">Time</SPAN> and gives 
+the result in three parts, the number of days (an integer), the number 
+of seconds as a <SPAN Class="swiss">Duration</SPAN> and the number of 
+leap seconds (an integer). If <SPAN Class="swiss">Left</SPAN> is later 
+then <SPAN Class="swiss">Right</SPAN> then all three numbers will be 
+nonnegative; if earlier, then nonpositive.</div>
+<div class="Normal">Remember that <SPAN Class="swiss">Difference</SPAN> 
+like all these other operations always works on local time as defined 
+by the clock in <SPAN Class="swiss">Calendar</SPAN> (unless stated otherwise).</div>
+<div class="Normal" style="margin-bottom: 0.4em">Suppose we wanted to 
+find the difference between noon on June 1st 1982 and 2pm on July 1st 
+1985 according to a system set to UTC. We might write&nbsp;</div>
+<div class="SwissExamples">Days:&nbsp;Day_Count;<BR>
+Secs:&nbsp;Duration;<BR>
+Leaps:&nbsp;Leap_Seconds_Count;<BR>
+...<BR>
+Difference(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Of(1985,&nbsp;7,&nbsp;1,&nbsp;14*3600.0),<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Of(1982,&nbsp;6,&nbsp;1,&nbsp;12*3600.0),&nbsp;Days,&nbsp;Secs,&nbsp;Leaps);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The results should 
+be&nbsp;</div>
+<div class="SwissExamples">Days&nbsp;=&nbsp;365+366+365+30&nbsp;=&nbsp;1126,<BR>
+Secs&nbsp;=&nbsp;7200.0,<BR>
+Leaps&nbsp;=&nbsp;2.</div>
+<div class="Normal">There were leap seconds on 30 June 1983 and 30 June 
+1985.</div>
+<div class="Normal">The functions <SPAN Class="swiss">&quot;+&quot;</SPAN> 
+and <SPAN Class="swiss">&quot;&ndash;&quot;</SPAN> apply to values of 
+type <SPAN Class="swiss">Time</SPAN> and <SPAN Class="swiss">Day_Count</SPAN> 
+(whereas those in the parent <SPAN Class="swiss">Calendar</SPAN> apply 
+only to <SPAN Class="swiss">Time</SPAN> and <SPAN Class="swiss">Duration</SPAN> 
+and thus only work for intervals of a day or so). Note that the function 
+<SPAN Class="swiss">&quot;&ndash;&quot;</SPAN> between two values of 
+type <SPAN Class="swiss">Time</SPAN> in this child package produces the 
+same value for the number of days as the corresponding call of the function 
+<SPAN Class="swiss">Difference</SPAN> &ndash; leap seconds are completely 
+ignored. Leap seconds are in fact ignored in all the operations <SPAN Class="swiss">&quot;+&quot;</SPAN> 
+and <SPAN Class="swiss">&quot;&ndash;&quot;</SPAN> in the child package.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, it should 
+be noted that <SPAN Class="swiss">Calendar.&quot;&ndash;&quot;</SPAN> 
+counts the true seconds and so the expression&nbsp;</div>
+<div class="SwissExamples">Calendar.&quot;&ndash;&quot;&nbsp;(Time_Of(1985,&nbsp;7,&nbsp;1,&nbsp;1*3600.0),&nbsp;Time_Of(1985,&nbsp;6,&nbsp;30,&nbsp;23*3600.0))</div>
+<div class="Normal">has the <SPAN Class="swiss">Duration</SPAN> value 
+<SPAN Class="swiss">7201.0</SPAN> and not <SPAN Class="swiss">7200.0</SPAN> 
+because of the leap second at midnight that night. (We are assuming that 
+our Ada system is running at UTC.) The same calculation in New York will 
+produce <SPAN Class="swiss">7200.0</SPAN> because the leap second doesn't 
+occur until 4 am in EST (with daylight saving).</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note also that&nbsp;</div>
+<div class="SwissExamples">Calendar.&quot;&ndash;&quot;&nbsp;(Time_Of(1985,&nbsp;7,&nbsp;1,&nbsp;0.0),&nbsp;Time_Of(1985,&nbsp;6,&nbsp;30,&nbsp;0.0))</div>
+<div class="Normal">in Paris where the leap second occurs at 10pm returns 
+<SPAN Class="swiss">86401.0</SPAN> whereas the same calculation in New 
+York will return <SPAN Class="swiss">86400.0</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The third child package 
+<SPAN Class="swiss">Calendar.Formatting</SPAN> has a variety of functions. 
+Its specification is<A NAME="I1283"></A><A NAME="I1284"></A><A NAME="I1285"></A> 
+</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Calendar.Time_Zones;<BR>
+<B>use</B>&nbsp;Ada.Calendar.Time_Zones;<BR>
+<B>package</B>&nbsp;Ada.Calendar.Formatting&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Day&nbsp;of&nbsp;the&nbsp;week:</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Day_Name&nbsp;<B>is</B>&nbsp;(Monday,&nbsp;Tuesday,&nbsp;Wednesday,&nbsp;Thursday,&nbsp;Friday,&nbsp;Saturday,&nbsp;Sunday);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Day_Of_Week(Date:&nbsp;Time)&nbsp;<B>return</B>&nbsp;Day_Name;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Hours:Minutes:Seconds&nbsp;access:</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;Hour_Number&nbsp;<B>is</B>&nbsp;Natural&nbsp;<B>range</B>&nbsp;0&nbsp;..&nbsp;23;<BR>
+&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;Minute_Number&nbsp;<B>is</B>&nbsp;Natural&nbsp;<B>range</B>&nbsp;0&nbsp;..&nbsp;59;<BR>
+&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;Second_Number&nbsp;<B>is</B>&nbsp;Natural&nbsp;<B>range</B>&nbsp;0&nbsp;..&nbsp;59;<BR>
+&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;Second_Duration&nbsp;<B>is</B>&nbsp;Day_Duration&nbsp;<B>range</B>&nbsp;0.0&nbsp;..&nbsp;1.0;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Year(Date:&nbsp;Time;&nbsp;Time_Zone:&nbsp;Time_Offset&nbsp;:=&nbsp;0)&nbsp;<B>return</B>&nbsp;Year_Number;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>similarly&nbsp;functions&nbsp;Month,&nbsp;Day,&nbsp;Hour,&nbsp;Minute</I></SPAN></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Second(Date:&nbsp;Time)&nbsp;<B>return</B>&nbsp;Second_Number;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Sub_Second(Date:&nbsp;Time)&nbsp;<B>return</B>&nbsp;Second_Duration;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Seconds_Of(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hour:&nbsp;Hour_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minute:&nbsp;Minute_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second:&nbsp;Second_Number&nbsp;:=&nbsp;0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sub_Second:&nbsp;Second_Duration&nbsp;:=&nbsp;0.0)&nbsp;<B>return</B>&nbsp;Day_Duration;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Split(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Seconds:&nbsp;<B>in</B>&nbsp;Day_Duration;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>(1)</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hour:&nbsp;<B>out</B>&nbsp;Hour_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minute:&nbsp;<B>out</B>&nbsp;Minute_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second:&nbsp;<B>out</B>&nbsp;Second_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sub_Second:&nbsp;<B>out</B>&nbsp;Second_Duration);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Split(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Date:&nbsp;<B>in</B>&nbsp;Time;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>(2)</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Year:&nbsp;<B>out</B>&nbsp;Year_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Month:&nbsp;<B>out</B>&nbsp;Month_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Day:&nbsp;<B>out</B>&nbsp;Day_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hour:&nbsp;<B>out</B>&nbsp;Hour_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minute:&nbsp;<B>out</B>&nbsp;Minute_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second:&nbsp;<B>out</B>&nbsp;Second_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sub_Second:&nbsp;<B>out</B>&nbsp;Second_Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone:&nbsp;<B>in</B>&nbsp;Time_Offset&nbsp;:=&nbsp;0);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Time_Of(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Year:&nbsp;Year_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Month:&nbsp;Month_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Day:&nbsp;Day_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hour:&nbsp;Hour_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minute:&nbsp;Minute_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second:&nbsp;Second_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sub_Second:&nbsp;Second_Duration&nbsp;:=&nbsp;0.0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leap_Second:&nbsp;Boolean&nbsp;:=&nbsp;False;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone:&nbsp;Time_Offset&nbsp;:=&nbsp;0)&nbsp;<B>return</B>&nbsp;Time;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Time_Of(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Year:&nbsp;Year_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Month:&nbsp;Month_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Day:&nbsp;Day_Number;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Seconds:&nbsp;Day_Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leap_Second:&nbsp;Boolean&nbsp;:=&nbsp;False;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone:&nbsp;Time_Offset&nbsp;:=&nbsp;0)&nbsp;<B>return</B>&nbsp;Time;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Split(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Date:&nbsp;<B>in</B>&nbsp;Time;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>(3)</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>as&nbsp;(2)&nbsp;but&nbsp;with&nbsp;additional&nbsp;parameter</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leap_Second:&nbsp;<B>out</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone:&nbsp;<B>in</B>&nbsp;Time_Offset&nbsp;:=&nbsp;0);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Split(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Date:&nbsp;<B>in</B>&nbsp;Time;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>(4)</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>as&nbsp;Calendar.Split</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>but&nbsp;with&nbsp;additional&nbsp;parameters</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leap_Second:&nbsp;<B>out</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone:&nbsp;<B>in</B>&nbsp;Time_Offset&nbsp;:=&nbsp;0);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Simple&nbsp;image&nbsp;and&nbsp;value:</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Image(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Date:&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Include_Time_Fraction:&nbsp;Boolean&nbsp;:=&nbsp;False;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time_Zone:&nbsp;Time_Offset&nbsp;:=&nbsp;0)&nbsp;<B>return</B>&nbsp;String;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Value(Date:&nbsp;String;&nbsp;Time_Zone:&nbsp;Time_Offset&nbsp;:=&nbsp;0)&nbsp;<B>return</B>&nbsp;Time;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Image&nbsp;(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Elapsed_Time:&nbsp;Duration;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Include_Time_Fraction:&nbsp;Boolean&nbsp;:=&nbsp;False)&nbsp;<B>return</B>&nbsp;String;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Value(Elapsed_Time:&nbsp;String)&nbsp;<B>return</B>&nbsp;Duration;</div>
+<div class="SwissExamples"><B>end</B>&nbsp;Ada.Calendar.Formatting;</div>
+<div class="Normal">The function <SPAN Class="swiss">Day_Of_Week</SPAN> 
+will be much appreciated. It is a nasty calculation.</div>
+<div class="Normal">Then there are functions <SPAN Class="swiss">Year</SPAN>, 
+<SPAN Class="swiss">Month</SPAN>, <SPAN Class="swiss">Day</SPAN>, <SPAN Class="swiss">Hour</SPAN>, 
+<SPAN Class="swiss">Minute</SPAN>, <SPAN Class="swiss">Second</SPAN> 
+and <SPAN Class="swiss">Sub_Second</SPAN> which return the corresponding 
+parts of a <SPAN Class="swiss">Time</SPAN> taking account of the time 
+zone given as necessary. It is unfortunate that functions returning the 
+parts of a time (as opposed to the parts of a date) were not provided 
+in <SPAN Class="swiss">Calendar</SPAN> originally. All that <SPAN Class="swiss">Calendar</SPAN> 
+provides is <SPAN Class="swiss">Seconds</SPAN> which gives the number 
+of seconds from midnight and leaves users to chop it up for themselves. 
+Note that <SPAN Class="swiss">Calendar.Second</SPAN> returns a <SPAN Class="swiss">Duration</SPAN> 
+whereas the function in this child package is <SPAN Class="swiss">Seconds</SPAN> 
+which returns an <SPAN Class="swiss">Integer</SPAN>. The fraction of 
+a second is returned by <SPAN Class="swiss">Sub_Second</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Most of these functions 
+have an optional parameter which is a time zone offset. Wherever in the 
+world we are running, if we want to know the hour according to UTC then 
+we write&nbsp;</div>
+<div class="SwissExamples">Hour(Clock,&nbsp;UTC_Time_Offset)</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we are in New York 
+and want to know the hour in Paris then we write&nbsp;</div>
+<div class="SwissExamples">Hour(Clock,&nbsp;&ndash;360)</div>
+<div class="Normal">since New York is 6 hours (360 minutes) behind Paris.</div>
+<div class="Normal">Note that <SPAN Class="swiss">Second</SPAN> and <SPAN Class="swiss">Sub_Second</SPAN> 
+do not have the optional <SPAN Class="swiss">Time_Offset</SPAN> parameter 
+because offsets are an integral number of minutes and so the number of 
+seconds does not depend upon the time zone.</div>
+<div class="Normal">The package also generously provides four procedures 
+<SPAN Class="swiss">Split</SPAN> and two procedures <SPAN Class="swiss">Time_Of</SPAN>. 
+These have the same general purpose as those in <SPAN Class="swiss">Calendar</SPAN>. 
+There is also a function <SPAN Class="swiss">Seconds_Of</SPAN>. We will 
+consider them in the order of declaration in the package specification 
+above.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The function <SPAN Class="swiss">Seconds_Of</SPAN> 
+creates a value of type <SPAN Class="swiss">Duration</SPAN> from components 
+<SPAN Class="swiss">Hour</SPAN>, <SPAN Class="swiss">Minute</SPAN>, <SPAN Class="swiss">Second</SPAN> 
+and <SPAN Class="swiss">Sub_Second</SPAN>. Note that we can use this 
+together with <SPAN Class="swiss">Calendar.Time_Of</SPAN> to create a 
+value of type <SPAN Class="swiss">Time</SPAN>. For example&nbsp;</div>
+<div class="SwissExamples">T&nbsp;:=&nbsp;Time_Of(2005,&nbsp;4,&nbsp;2,&nbsp;Seconds_Of(22,&nbsp;4,&nbsp;10,&nbsp;0.5));</div>
+<div class="Normal">makes the time of the instant when I (originally) 
+typed that last semicolon.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The first procedure 
+<SPAN Class="swiss">Split</SPAN> is the reverse of <SPAN Class="swiss">Seconds_Of</SPAN>. 
+It decomposes a value of type <SPAN Class="swiss">Duration</SPAN> into 
+<SPAN Class="swiss">Hour</SPAN>, <SPAN Class="swiss">Minute</SPAN>, <SPAN Class="swiss">Second</SPAN> 
+and <SPAN Class="swiss">Sub_Second</SPAN>. It is useful with the function 
+<SPAN Class="swiss">Calendar.Split</SPAN> thus&nbsp;</div>
+<div class="SwissExamples">Split(Some_Time,&nbsp;Y,&nbsp;M,&nbsp;D,&nbsp;Secs);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>split&nbsp;time</I></SPAN><BR>
+Split(Secs,&nbsp;H,&nbsp;M,&nbsp;S,&nbsp;SS);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>split&nbsp;secs</I></SPAN></div>
+<div class="Normal">The next procedure <SPAN Class="swiss">Split</SPAN> 
+(no 2) takes a <SPAN Class="swiss">Time</SPAN> and a <SPAN Class="swiss">Time_Offset</SPAN> 
+(optional) and decomposes the time into its seven components. Note that 
+the optional parameter is last for convenience. The normal rule for parameters 
+of predefined procedures is that parameters of mode in are first and 
+parameters of mode out are last. But this is a nuisance if parameters 
+of mode in have defaults since this forces named notation if the default 
+is used.</div>
+<div class="Normal">There are then two functions <SPAN Class="swiss">Time_Of</SPAN> 
+which compose a <SPAN Class="swiss">Time</SPAN> from its various constituents 
+and the <SPAN Class="swiss">Time_Offset</SPAN> (optional). One takes 
+seven components (with individual <SPAN Class="swiss">Hour</SPAN>, <SPAN Class="swiss">Minute</SPAN> 
+etc) whereas the other takes just four components (with <SPAN Class="swiss">Seconds</SPAN> 
+in the whole day). An interesting feature of these two functions is that 
+they also have a Boolean parameter <SPAN Class="swiss">Leap_Second</SPAN> 
+which by default is <SPAN Class="swiss">False</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The purpose of this 
+parameter needs to be understood carefully. Making up a typical time 
+will have this parameter as <SPAN Class="swiss">False</SPAN>. But suppose 
+we need to compose the time midway through the leap second that occurred 
+on 30 June 1985 and assign it to a variable <SPAN Class="swiss">Magic_Moment</SPAN>. 
+We will assume that our <SPAN Class="swiss">Calendar</SPAN> is in New 
+York and set to EST with daylight saving (and so midnight UTC is 8pm 
+in New York). We would write&nbsp;</div>
+<div class="SwissExamples">Magic_Moment:&nbsp;Time&nbsp;:=&nbsp;Time_Of(1985,&nbsp;6,&nbsp;30,&nbsp;19,&nbsp;59,&nbsp;59,&nbsp;0.5,&nbsp;True);</div>
+<div class="Normal" style="margin-bottom: 0.4em">In a sense there were 
+two 19:59:59 that day in New York. The proper one and then the leap one; 
+the parameter distinguishes them. So the moment one second earlier is 
+given by&nbsp;</div>
+<div class="SwissExamples">Normal_Moment:&nbsp;Time&nbsp;:=&nbsp;Time_Of(1985,&nbsp;6,&nbsp;30,&nbsp;19,&nbsp;59,&nbsp;59,&nbsp;0.5,&nbsp;False);</div>
+<div class="Normal">We could have followed ISO and used 23:59:60 UTC 
+and so have subtype <SPAN Class="swiss">Second_Number</SPAN> <B>is</B> 
+<SPAN Class="swiss">Natural</SPAN> <B>range</B> <SPAN Class="swiss">0 
+.. 60;</SPAN> but this would have produced an incompatibility with Ada 
+95.</div>
+<div class="Normal">Note that if the parameter <SPAN Class="swiss">Leap_Second</SPAN> 
+is <SPAN Class="swiss">True</SPAN> and the other parameters do not identify 
+a time of a leap second then <SPAN Class="swiss">Time_Error</SPAN> is 
+raised.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There are then two 
+corresponding procedures <SPAN Class="swiss">Split</SPAN> (nos 3 and 
+4) with an out parameter <SPAN Class="swiss">Leap_Second</SPAN>. One 
+produces seven components and the other just four. The difference between 
+this seven-component procedure <SPAN Class="swiss">Split</SPAN> (no 3) 
+and the earlier <SPAN Class="swiss">Split</SPAN> (no 2) is that this 
+one has the out parameter <SPAN Class="swiss">Leap_Second</SPAN> whereas 
+the other does not. Writing&nbsp;</div>
+<div class="SwissExamples">Split(Magic_Moment,&nbsp;0,&nbsp;Y,&nbsp;M,&nbsp;D,&nbsp;H,&nbsp;M,&nbsp;S,&nbsp;SS,&nbsp;Leap);</div>
+<div class="Normal" style="margin-bottom: 0.4em">results in <SPAN Class="swiss">Leap</SPAN> 
+being <SPAN Class="swiss">True</SPAN> whereas&nbsp;</div>
+<div class="SwissExamples">Split(Normal_Moment,&nbsp;0,&nbsp;Y,&nbsp;M,&nbsp;D,&nbsp;H,&nbsp;M,&nbsp;S,&nbsp;SS,&nbsp;Leap);</div>
+<div class="Normal">results in <SPAN Class="swiss">Leap</SPAN> being 
+<SPAN Class="swiss">False</SPAN> but gives all the other out parameters 
+(<SPAN Class="swiss">Y</SPAN>, ... , <SPAN Class="swiss">SS</SPAN>) exactly 
+the same values.</div>
+<div class="Normal" style="margin-bottom: 0.4em">On the other hand calling 
+the version of <SPAN Class="swiss">Split</SPAN> (no 2) without the parameter 
+<SPAN Class="swiss">Leap_Second</SPAN> thus&nbsp;</div>
+<div class="SwissExamples">Split(Magic_Moment,&nbsp;0,&nbsp;Y,&nbsp;M,&nbsp;D,&nbsp;H,&nbsp;M,&nbsp;S,&nbsp;SS);<BR>
+Split(Normal_Moment,&nbsp;0,&nbsp;Y,&nbsp;M,&nbsp;D,&nbsp;H,&nbsp;M,&nbsp;S,&nbsp;SS);</div>
+<div class="Normal">produces exactly the same results for both calls.</div>
+<div class="Normal">The reader might wonder why there are two <SPAN Class="swiss">Splits</SPAN> 
+on <SPAN Class="swiss">Time</SPAN> with <SPAN Class="swiss">Leap_Second</SPAN> 
+but only one without. This is because the parent package <SPAN Class="swiss">Calendar</SPAN> 
+already has the other one (although without the time zone parameter). 
+Another point is that in the case of <SPAN Class="swiss">Time_Of</SPAN>, 
+we can default the <SPAN Class="swiss">Leap</SPAN> parameter being of 
+mode in but in the case of <SPAN Class="swiss">Split</SPAN> the parameter 
+has mode out and cannot be omitted. It would be bad practice to encourage 
+the use of a dummy parameter which is ignored and hence there have to 
+be additional versions of <SPAN Class="swiss">Split</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Finally, there are 
+two pairs of functions <SPAN Class="swiss">Image</SPAN> and <SPAN Class="swiss">Value</SPAN>. 
+The first pair works with values of type <SPAN Class="swiss">Time</SPAN>. 
+A call of <SPAN Class="swiss">Image</SPAN> returns a date and time value 
+in the standard ISO 8601 format. Thus taking the <SPAN Class="swiss">Normal_Moment</SPAN> 
+above<A NAME="I1286"></A>&nbsp;</div>
+<div class="SwissExamples">Image(Normal_Moment)</div>
+<div class="Normal" style="margin-bottom: 0.4em">returns the following 
+string&nbsp;</div>
+<div class="SwissExamples">&quot;1985-06-30&nbsp;19:59:59&quot;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>in&nbsp;New&nbsp;York</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">If we set the optional 
+parameter <SPAN Class="swiss">Include_Time_Fraction</SPAN> to <SPAN Class="swiss">True</SPAN> 
+thus&nbsp;</div>
+<div class="SwissExamples">Image(Normal_Moment,&nbsp;True)</div>
+<div class="Normal" style="margin-bottom: 0.4em">then we get&nbsp;</div>
+<div class="SwissExamples">&quot;1985-06-30&nbsp;19:59:59.50&quot;</div>
+<div class="Normal" style="margin-bottom: 0.4em">There is also the usual 
+optional <SPAN Class="swiss">Time_Zone</SPAN> parameter so we could produce 
+the time in Paris (from the program in New York) thus&nbsp;</div>
+<div class="SwissExamples">Image(Normal_Moment,&nbsp;True,&nbsp;&ndash;360)</div>
+<div class="Normal" style="margin-bottom: 0.4em">giving&nbsp;</div>
+<div class="SwissExamples">&quot;1985-07-01&nbsp;02:59:59.50&quot;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>in&nbsp;Paris</I></SPAN></div>
+<div class="Normal">The matching <SPAN Class="swiss">Value</SPAN> function 
+works in reverse as expected.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We would expect to 
+get exactly the same results with <SPAN Class="swiss">Magic_Moment</SPAN>. 
+However, since some implementations might have an ISO function available 
+in their operating system it is also allowed to produce&nbsp;</div>
+<div class="SwissExamples">&quot;1985-06-30&nbsp;19:59:60&quot;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>in&nbsp;New&nbsp;York</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">The other <SPAN Class="swiss">Image</SPAN> 
+and <SPAN Class="swiss">Value</SPAN> pair work on values of type <SPAN Class="swiss">Duration</SPAN> 
+thus&nbsp;</div>
+<div class="SwissExamples">Image(10_000.0)&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>&quot;02:46:40&quot;</I></SPAN></div>
+<div class="Normal">with the optional parameter <SPAN Class="swiss">Include_Time_Fraction</SPAN> 
+as before. Again the corresponding function <SPAN Class="swiss">Value</SPAN> 
+works in reverse.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

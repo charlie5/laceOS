@@ -1,0 +1,152 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 16.4: Indexed and Sequential Files</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 16: Input-Output</H2>
+
+<H3><a name="16.4">16.4 Indexed and Sequential Files</a></H3>
+
+Files  are  conceived  essentially  as  one-dimensional  arrays.  Each
+element in  the file  has an index value associated with it, the first
+element having  the index  value 1.  In the case of SEQUENTIAL_IO this
+index value  is hidden from the user, whereas in the case of DIRECT_IO
+the index value can be directly manipulated.
+<p>
+Considering SEQUENTIAL_IO in more detail, its specification commences:
+<p>
+<table border cellpadding=6><tr><td><pre>
+with IO_EXCEPTIONS;
+generic
+  type ELEMENT_TYPE is private;
+package SEQUENTIAL_IO is
+  type FILE_TYPE is limited private;
+  type FILE_MODE is (IN_FILE, OUT_FILE);
+  ...
+end SEQUENTIAL_IO;
+</pre></td></tr></table>
+<p>
+(The package IO_EXCEPTIONS is explained in <a href="ratl-16-06.html#16.6">section 16.6</a> below.)
+<p>
+The one generic parameter gives the type of elements in the file. Note
+that this  is private  but not  limited; this  reflects the  fact that
+input-output cannot  be performed  on limited  types, since  to do  so
+would indirectly permit assignment; it also forbids attempts to output
+task values.
+<p>
+The declarations  of FILE_TYPE  and FILE_MODE  then follow.  Note that
+FILE_MODE has  only two  values - read-write access is not defined for
+sequential files.
+<p>
+The  specification   then  contains   the  various   file   management
+procedures,  CREATE,  OPEN,  CLOSE,  DELETE,  and  RESET,  which  were
+discussed above.
+<p>
+Next come  a group of functions which give access to the properties of
+a file; they are
+<p>
+<table border cellpadding=6><tr><td><pre>
+function MODE (FILE :  in FILE_TYPE) return FILE_MODE;
+function NAME (FILE :  in FILE_TYPE) return STRING;
+function FORM (FILE :  in FILE_TYPE) return STRING;
+function IS_OPEN (FILE :  in FILE_TYPE) return BOOLEAN;
+</pre></td></tr></table>
+<p>
+These functions  will be  found useful  when  writing  general-purpose
+procedures that manipulate files passed as parameters. They enable the
+general state  of a  file to be checked before it is used, and thereby
+avoid raising exceptions.
+<p>
+Actual input  and output  is performed  by procedures  READ and WRITE,
+which have the specifications:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure READ              (FILE :  in FILE_TYPE; ITEM :  out  ELEMENT_TYPE);
+procedure WRITE             (FILE :  in FILE_TYPE; ITEM :  in   ELEMENT_TYPE);
+</pre></td></tr></table>
+<p>
+Calls of  READ and  WRITE access  the  file  element  at  the  current
+position and  then move on, ready to access the next element. In other
+words they increment the hidden index value.
+<p>
+The function
+<p>
+<PRE>    function END_OF_FILE(FILE :  in FILE_TYPE) return BOOLEAN;</PRE>
+<p>
+which only applies to files of mode IN_FILE, returns TRUE if there are
+no more elements to be read.
+<p>
+The package  specification concludes with the renaming declarations of
+various exceptions, as explained in <a href="ratl-16-06.html#16.6">section 16.6</a> below.
+<p>
+The package  DIRECT_IO is  very similar.  The differences are that the
+mode now has three values
+<p>
+<PRE>    type FILE_MODE is (IN_FILE, INOUT_FILE, OUT_FILE);</PRE>
+<p>
+and there  are additional  subprograms for  direct manipulation of the
+index. These are
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure SET_INDEX   (FILE     :  in FILE_TYPE;
+                   TO :  in POSITIVE_COUNT);
+function INDEX   (FILE :  in FILE_TYPE) return POSITIVE_COUNT;
+function SIZE    (FILE :  in FILE_TYPE) return COUNT;
+</pre></td></tr></table>
+<p>
+where
+<p>
+<table border cellpadding=6><tr><td><pre>
+type COUNT is range 0 .. implementation_defined;
+subtype POSITIVE_COUNT is COUNT range 1 .. COUNT'LAST;
+</pre></td></tr></table>
+<p>
+are declared  within DIRECT_IO  and specify  the  type  of  the  index
+values.
+<p>
+The function  INDEX returns  the current  index  value  and  SET_INDEX
+enables it  to be  set. The function SIZE gives the number of items in
+the file (defined or undefined).
+<p>
+Finally there  are overloadings  of READ  and  WRITE  with  a  further
+parameter giving the index value:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure READ     (FILE   :  in     FILE_TYPE;
+              ITEM :  out  ELEMENT_TYPE;
+              FROM :  in   POSITIVE_COUNT);
+
+procedure WRITE    (FILE   :  in     FILE_TYPE;
+               ITEM     :  in   ELEMENT_TYPE;
+               TO  :  in   POSITIVE_COUNT);
+</pre></td></tr></table>
+<p>
+Thus a call of READ or WRITE can specify a specific index value or, on
+the other hand, it can be omitted, in which case the normal sequential
+behavior will occur. This is an illustration of the use of overloading
+to achieve an effect similar to that of default parameters.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-16-05.html#16.5"><b>NEXT</b></a>
+&#128; <a href="ratl-16-03.html#16.3"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-16.html#16"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>

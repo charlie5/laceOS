@@ -1,0 +1,170 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Task Dependence - Termination of Tasks</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesBulleted {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 6.2em; margin-right: 2.5em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>9.3 Task Dependence - Termination of Tasks</H1>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><A NAME="I3551"></A><A NAME="I3552"></A><A NAME="I3553"></A><A NAME="I3554"></A>Each 
+task (other than an environment task &mdash; see <A HREF="RM-10-2.html">10.2</A>) 
+<I>depends</I> on one or more masters (see <A HREF="RM-7-6-1.html">7.6.1</A>), 
+as follows:&nbsp;</DIV>
+<DIV Class="paranum">2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If the task is created by the evaluation 
+of an <SPAN Class="swiss"><A HREF="RM-4-8.html#S0129">allocator</A></SPAN> 
+for a given access type, it depends on each master that includes the 
+elaboration of the declaration of the ultimate ancestor of the given 
+access type.</LI></UL>
+<DIV Class="paranum">3</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If the task is created by the elaboration 
+of an <SPAN Class="swiss"><A HREF="RM-3-3-1.html#S0032">object_declaration</A></SPAN>, 
+it depends on each master that includes this elaboration.</LI></UL>
+<DIV Class="paranum">3.1/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>Otherwise, the task depends on the 
+master of the outermost object of which it is a part (as determined by 
+the accessibility level of that object &mdash; see <A HREF="RM-3-10-2.html">3.10.2</A> 
+and <A HREF="RM-7-6-1.html">7.6.1</A>), as well as on any master whose 
+execution includes that of the master of the outermost object.&nbsp;</LI></UL>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Normal"><A NAME="I3555"></A>Furthermore, if a task depends 
+on a given master, it is defined to depend on the task that executes 
+the master, and (recursively) on any master of that task.&nbsp;</DIV>
+<DIV Class="paranum">5</DIV>
+<DIV Class="Normal">A task is said to be <I>completed</I> when the execution 
+of its corresponding <SPAN Class="swiss"><A HREF="RM-9-1.html#S0192">task_body</A></SPAN> 
+is completed. A task is said to be <I>terminated</I> when any finalization 
+of the <SPAN Class="swiss"><A HREF="RM-9-1.html#S0192">task_body</A></SPAN> 
+has been performed (see <A HREF="RM-7-6-1.html">7.6.1</A>). The first 
+step of finalizing a master (including a <SPAN Class="swiss"><A HREF="RM-9-1.html#S0192">task_body</A></SPAN>) 
+is to wait for the termination of any tasks dependent on the master. 
+<A NAME="I3556"></A>The task executing the master is blocked until all 
+the dependents have terminated. Any remaining finalization is then performed 
+and the master is left.</DIV>
+<DIV Class="paranum">6/1</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">Completion of a task 
+(and the corresponding <SPAN Class="swiss"><A HREF="RM-9-1.html#S0192">task_body</A></SPAN>) 
+can occur when the task is blocked at a <SPAN Class="swiss"><A HREF="RM-9-7.html#S0212">select_statement</A></SPAN> 
+with an open <SPAN Class="swiss"><A HREF="RM-9-7-1.html#S0218">terminate_alternative</A></SPAN> 
+(see <A HREF="RM-9-7-1.html">9.7.1</A>); the open <SPAN Class="swiss"><A HREF="RM-9-7-1.html#S0218">terminate_alternative</A></SPAN> 
+is selected if and only if the following conditions are satisfied:&nbsp;</DIV>
+<DIV Class="paranum">7/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The task depends on some completed 
+master; and</LI></UL>
+<DIV Class="paranum">8</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>Each task that depends on the master 
+considered is either already terminated or similarly blocked at a <SPAN Class="swiss"><A HREF="RM-9-7.html#S0212">select_statement</A></SPAN> 
+with an open <SPAN Class="swiss"><A HREF="RM-9-7-1.html#S0218">terminate_alternative</A></SPAN>. 
+</LI></UL>
+<DIV Class="paranum">9</DIV>
+<DIV Class="Normal">When both conditions are satisfied, the task considered 
+becomes completed, together with all tasks that depend on the master 
+considered that are not yet completed.&nbsp;</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">10</DIV>
+<DIV Class="Notes">8&nbsp;&nbsp;The full view of a limited private type 
+can be a task type, or can have subcomponents of a task type. Creation 
+of an object of such a type creates dependences according to the full 
+type.</DIV>
+<DIV Class="paranum">11</DIV>
+<DIV Class="Notes">9&nbsp;&nbsp;An <SPAN Class="swiss"><A HREF="RM-8-5-1.html#S0183">object_renaming_declaration</A></SPAN> 
+defines a new view of an existing entity and hence creates no further 
+dependence.</DIV>
+<DIV Class="paranum">12</DIV>
+<DIV Class="Notes">10&nbsp;&nbsp;The rules given for the collective completion 
+of a group of tasks all blocked on <SPAN Class="swiss"><A HREF="RM-9-7.html#S0212">select_statement</A></SPAN>s 
+with open <SPAN Class="swiss"><A HREF="RM-9-7-1.html#S0218">terminate_alternative</A></SPAN>s 
+ensure that the collective completion can occur only when there are no 
+remaining active tasks that could call one of the tasks being collectively 
+completed.</DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Notes">11&nbsp;&nbsp;If two or more tasks are blocked on 
+<SPAN Class="swiss"><A HREF="RM-9-7.html#S0212">select_statement</A></SPAN>s 
+with open <SPAN Class="swiss"><A HREF="RM-9-7-1.html#S0218">terminate_alternative</A></SPAN>s, 
+and become completed collectively, their finalization actions proceed 
+concurrently.</DIV>
+<DIV Class="paranum">14</DIV>
+<DIV Class="Notes" Style="margin-bottom: 0.4em">12&nbsp;&nbsp;The completion 
+of a task can occur due to any of the following:&nbsp;</DIV>
+<DIV Class="paranum">15</DIV>
+<UL Class="NotesBulleted"><LI TYPE=DISC>the raising of an exception during 
+the elaboration of the <SPAN Class="swiss"><A HREF="RM-3-11.html#S0086">declarative_part</A></SPAN> 
+of the corresponding <SPAN Class="swiss"><A HREF="RM-9-1.html#S0192">task_body</A></SPAN>;</LI></UL>
+<DIV Class="paranum">16</DIV>
+<UL Class="NotesBulleted"><LI TYPE=DISC>the completion of the <SPAN Class="swiss"><A HREF="RM-11-2.html#S0247">handled_sequence_of_statements</A></SPAN> 
+of the corresponding <SPAN Class="swiss"><A HREF="RM-9-1.html#S0192">task_body</A></SPAN>;</LI></UL>
+<DIV Class="paranum">17</DIV>
+<UL Class="NotesBulleted"><LI TYPE=DISC>the selection of an open <SPAN Class="swiss"><A HREF="RM-9-7-1.html#S0218">terminate_alternative</A></SPAN> 
+of a <SPAN Class="swiss"><A HREF="RM-9-7.html#S0212">select_statement</A></SPAN> 
+in the corresponding <SPAN Class="swiss"><A HREF="RM-9-1.html#S0192">task_body</A></SPAN>;</LI></UL>
+<DIV Class="paranum">18</DIV>
+<UL Class="NotesBulleted"><LI TYPE=DISC>the abort of the task.&nbsp;</LI></UL>
+
+<H4 Class="centered">Examples</H4>
+<DIV Class="paranum">19</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><I>Example of task 
+dependence:</I>&nbsp;</DIV>
+<DIV Class="paranum">20</DIV>
+<DIV Class="Examples"><B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Global&nbsp;<B>is</B>&nbsp;<B>access</B>&nbsp;Server;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;see&nbsp;<A HREF="RM-9-1.html">9.1</A></I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;A,&nbsp;B&nbsp;:&nbsp;Server;<BR>
+&nbsp;&nbsp;&nbsp;G&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Global;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;activation&nbsp;of&nbsp;A&nbsp;and&nbsp;B</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Local&nbsp;<B>is</B>&nbsp;<B>access</B>&nbsp;Server;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X&nbsp;:&nbsp;Global&nbsp;:=&nbsp;<B>new</B>&nbsp;Server;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;activation&nbsp;of&nbsp;X.<B>all</B></I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;L&nbsp;:&nbsp;Local&nbsp;&nbsp;:=&nbsp;<B>new</B>&nbsp;Server;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;activation&nbsp;of&nbsp;L.<B>all</B></I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C&nbsp;:&nbsp;Server;<BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;activation&nbsp;of&nbsp;C</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G&nbsp;:=&nbsp;X;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;both&nbsp;G&nbsp;and&nbsp;X&nbsp;designate&nbsp;the&nbsp;same&nbsp;task&nbsp;object</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end;</B>&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;await&nbsp;termination&nbsp;of&nbsp;C&nbsp;and&nbsp;L.<B>all</B>&nbsp;(but&nbsp;not&nbsp;X.<B>all</B>)</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end;</B>&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;await&nbsp;termination&nbsp;of&nbsp;A,&nbsp;B,&nbsp;and&nbsp;G.<B>all</B></I></SPAN></DIV>
+<P><BR><BR></P>
+<HR>
+<P><BR></P>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

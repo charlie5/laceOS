@@ -1,0 +1,321 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>If expressions</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.Indented1 {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-3-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-3-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>3.2 If expressions</H1>
+<div class="Normal">It is perhaps very surprising that Ada does not have 
+if expressions as well as if statements. In order to provide some background 
+context we briefly look at two historic languages that are perhaps the 
+main precursors to modern languages; these are Algol 60 <A HREF="Rat12-0-3.html#R8">[8]</A> 
+and CPL <A HREF="Rat12-0-3.html#R9">[9]</A>. <A NAME="I1313"></A><A NAME="I1314"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Algol 60 had conditional 
+expressions of the form</div>
+<div class="SwissExamples">Z&nbsp;:=&nbsp;<B>if</B>&nbsp;X&nbsp;=&nbsp;Y&nbsp;<B>then</B>&nbsp;P&nbsp;<B>else</B>&nbsp;Q</div>
+<div class="Normal" style="margin-bottom: 0.4em">which can be contrasted 
+with the conditional statement</div>
+<div class="SwissExamples"><B>if</B>&nbsp;X&nbsp;=&nbsp;Y&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;Z&nbsp;:=&nbsp;P<BR>
+<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;Z&nbsp;:=&nbsp;Q</div>
+<div class="Normal" style="margin-bottom: 0.4em">Conditional statements 
+in Algol 60 allowed only a single statement in each branch, so if several 
+were required then they had to be grouped into a compound statement thus</div>
+<div class="SwissExamples"><B>if</B>&nbsp;X&nbsp;=&nbsp;Y&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z&nbsp;:=&nbsp;P;&nbsp;&nbsp;A&nbsp;:=&nbsp;B<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B><BR>
+<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z&nbsp;:=&nbsp;Q;&nbsp;&nbsp;A&nbsp;:=&nbsp;C<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B></div>
+<div class="Normal" style="margin-bottom: 0.4em">It may be recalled 
+that statements were not terminated by semicolons in Algol 60 but separated 
+by them. However, a null statement was simply nothing so the effect of 
+adding an extra semicolon in some cases was harmless. However, accidentally 
+writing</div>
+<div class="SwissExamples"><B>if</B>&nbsp;X&nbsp;=&nbsp;Y&nbsp;<B>then</B>&nbsp;;<BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z&nbsp;:=&nbsp;P;&nbsp;&nbsp;A&nbsp;:=&nbsp;B<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>;</div>
+<div class="Normal">results in a disaster because the test then just 
+covers a null statement and the assignments to <SPAN Class="swiss">Z</SPAN> 
+and <SPAN Class="swiss">A</SPAN> always take place. The complexity of 
+compound statements did not arise with conditional expressions.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The designers of Algol 
+68 <A HREF="Rat12-0-3.html#R10">[10]</A> sensibly recognized the problem 
+and introduced closing brackets thus <A NAME="I1315"></A></div>
+<div class="SwissExamples"><B>if</B>&nbsp;X&nbsp;=&nbsp;Y&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;Z&nbsp;:=&nbsp;P;&nbsp;A&nbsp;:=&nbsp;B;<BR>
+<B>fi</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">where <B>fi</B> matches 
+the <B>if</B>. Conditional expressions in Algol 68 were similar</div>
+<div class="SwissExamples">Z&nbsp;:=&nbsp;<B>if</B>&nbsp;X&nbsp;=&nbsp;Y&nbsp;<B>then</B>&nbsp;P&nbsp;<B>else</B>&nbsp;Q&nbsp;<B>fi</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">An alternative shorthand 
+notation was</div>
+<div class="SwissExamples">Z&nbsp;:=&nbsp;(X&nbsp;=&nbsp;Y&nbsp;|&nbsp;P&nbsp;|&nbsp;Q);</div>
+<div class="Normal">which was perhaps a bit too short.</div>
+<div class="Normal">The next major language in this series was Pascal 
+<A HREF="Rat12-0-3.html#R11">[11]</A>. The designers of Pascal rejected 
+everything that had been learnt from Algol 68 and foolishly continued 
+the Algol 60 style for compound statements and also dropped conditional 
+expressions. Only with Modula did they realise the need for bracketing 
+rather than compounding.<A NAME="I1316"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">The other foundation 
+language was CPL <A HREF="Rat12-0-3.html#R9">[9]</A>. Conditional statements 
+in CPL took the following form<A NAME="I1317"></A></div>
+<div class="SwissExamples"><B>if</B>&nbsp;X&nbsp;=&nbsp;Y&nbsp;<B>then&nbsp;do</B>&nbsp;Z&nbsp;:=&nbsp;P</div>
+<div class="SwissExamples"><B>if</B>&nbsp;X&nbsp;=&nbsp;Y&nbsp;<B>then&nbsp;do</B>&nbsp;&sect;&nbsp;Z&nbsp;:=&nbsp;P;&nbsp;A&nbsp;:=&nbsp;B&nbsp;&sect;|</div>
+<div class="Normal">where compound statements were delimited by section 
+symbols (note that the closing symbol has a vertical line through it).</div>
+<div class="Normal">From CPL came BCPL, B and C. Along the way, the expressive 
+<SPAN Class="swiss">:=</SPAN> for assignment got lost in favour of <SPAN Class="swiss">=</SPAN> 
+which then meant that <SPAN Class="swiss">=</SPAN> had to be replaced 
+by <SPAN Class="swiss">==</SPAN> for equality. And the section brackets 
+became <SPAN Class="swiss">{</SPAN> and <SPAN Class="swiss">}</SPAN> 
+so in C the above conditional statements become<A NAME="I1318"></A></div>
+<div class="SwissExamples">if&nbsp;(X&nbsp;==&nbsp;Y)&nbsp;Z&nbsp;=&nbsp;P;</div>
+<div class="SwissExamples">if&nbsp;(X&nbsp;==&nbsp;Y)&nbsp;{Z&nbsp;=&nbsp;P;&nbsp;&nbsp;A&nbsp;=&nbsp;B;}</div>
+<div class="Normal">This suffers from the same stray semicolon problem 
+mentioned above with reference to Algol 60.</div>
+<div class="Normal">Steelman <A HREF="Rat12-0-3.html#R12">[12]</A> did 
+not require Ada to have conditional expressions and since they were not 
+required they were not provided (the requirements were treated with considerable 
+reverence). A further influence might have been that the new language 
+had to be based on one of Pascal, Algol 68 and PL/I and Ada is based 
+on Pascal which did not have conditional expressions as mentioned above.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Moreover, the Ada designers 
+felt that the Algol 68 style with reversed keywords such as <B>fi</B> 
+(or worse <B>esac</B>) for conditional statements would not be acceptable 
+to the USDoD or the public at large and so we have <B>end if</B> as the 
+closing bracket thus</div>
+<div class="SwissExamples"><B>if</B>&nbsp;X&nbsp;=&nbsp;Y&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;Z&nbsp;:=&nbsp;P;<BR>
+&nbsp;&nbsp;&nbsp;A&nbsp;:=&nbsp;B;<BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal">Remember that semicolons terminate statements in 
+Ada and so those above are all required. Moreover, since null statements 
+in Ada have to be given explicitly, placing a stray semicolon after <B>then</B> 
+gives a compiler error.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The absence of conditional 
+expressions is a pain. It leads to unnecessary duplication such as having 
+to write</div>
+<div class="SwissExamples"><B>if</B>&nbsp;X&nbsp;&gt;&nbsp;0&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;P(A,&nbsp;B,&nbsp;D,&nbsp;E);<BR>
+<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;P(A,&nbsp;C,&nbsp;D,&nbsp;E);<BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">where all parameters 
+but one are the same. This can even lead to disgusting coding using the 
+fact that <SPAN Class="swiss">Boolean'Pos(True)</SPAN> is 1 whereas <SPAN Class="swiss">Boolean'Pos(False)</SPAN> 
+is 0. Thus (assuming that <SPAN Class="swiss">B</SPAN> and <SPAN Class="swiss">C</SPAN> 
+are of type <SPAN Class="swiss">Integer</SPAN>) the above could be written 
+as a single procedure call thus</div>
+<div class="SwissExamples">P(A,&nbsp;Boolean'Pos(X&gt;0)*B+Boolean'Pos(X&lt;=0)*C,&nbsp;D,&nbsp;E);</div>
+<div class="Normal" style="margin-bottom: 0.4em">So it is a great relief 
+in Ada 2012 to be able to write</div>
+<div class="SwissExamples">P(A,&nbsp;(<B>if</B>&nbsp;X&gt;0&nbsp;<B>then</B>&nbsp;B&nbsp;<B>else</B>&nbsp;C),&nbsp;D,&nbsp;E);</div>
+<div class="Normal" style="margin-bottom: 0.4em">A worse problem was 
+when a static expression was required such as the initial value for a 
+named number as in the following gruesome code</div>
+<div class="SwissExamples">Febdays:&nbsp;<B>constant</B>&nbsp;:=&nbsp;Boolean'Pos(Leap)*29&nbsp;+&nbsp;Boolean'Pos(<B>not</B>&nbsp;Leap)*28;</div>
+<div class="Normal" style="margin-bottom: 0.4em">which we can now thankfully 
+write as</div>
+<div class="SwissExamples">Febdays:&nbsp;<B>constant</B>&nbsp;:=&nbsp;(<B>if</B>&nbsp;Leap&nbsp;<B>then</B>&nbsp;29&nbsp;<B>else</B>&nbsp;28);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note carefully that 
+there is no <B>end if</B>. One reason is simply that it is logically 
+unnecessary since there can be only a single expression after <B>else</B> 
+and also <B>end if</B> would have been obtrusively heavy (compared say 
+with <B>fi</B> of Algol 68). However, it was felt that some demarcation 
+was required to aid clarity and so a conditional expression is always 
+enclosed in parentheses. If the context already has parentheses then 
+additional ones are not required. Thus in the case of a positional call 
+with a single parameter we just write</div>
+<div class="SwissExamples">P(<B>if</B>&nbsp;X&nbsp;&gt;&nbsp;0&nbsp;<B>then</B>&nbsp;B&nbsp;<B>else</B>&nbsp;C);</div>
+<div class="Normal" style="margin-bottom: 0.4em">but if we use named 
+notation then extra parentheses are required</div>
+<div class="SwissExamples">P(Para&nbsp;=&gt;&nbsp;(<B>if</B>&nbsp;X&nbsp;&gt;&nbsp;0&nbsp;<B>then</B>&nbsp;B&nbsp;<B>else</B>&nbsp;C));</div>
+<div class="Normal">Note carefully that the term conditional expression 
+in Ada 2012 embraces both if expressions and case expressions (which 
+are discussed in the next section). <A NAME="I1319"></A><A NAME="I1320"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">As expected, a series 
+of tests can be done using <B>elsif</B> thus</div>
+<div class="SwissExamples">P(<B>if</B>&nbsp;X&nbsp;&gt;&nbsp;0&nbsp;<B>then</B>&nbsp;B&nbsp;<B>elsif</B>&nbsp;X&nbsp;&lt;&nbsp;0&nbsp;<B>then</B>&nbsp;C&nbsp;<B>else</B>&nbsp;D);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and expressions can 
+be nested</div>
+<div class="SwissExamples">P(<B>if</B>&nbsp;X&nbsp;&gt;&nbsp;0&nbsp;<B>then</B>&nbsp;(<B>if</B>&nbsp;Y&nbsp;&gt;&nbsp;0&nbsp;<B>then</B>&nbsp;B&nbsp;<B>else</B>&nbsp;C)&nbsp;<B>else</B>&nbsp;D);</div>
+<div class="Normal" style="margin-bottom: 0.4em">ithout the rule requiring 
+enclosing parentheses this could be written as</div>
+<div class="SwissExamples">P(<B>if</B>&nbsp;X&nbsp;&gt;&nbsp;0&nbsp;<B>then</B>&nbsp;<B>if</B>&nbsp;Y&nbsp;&gt;&nbsp;0&nbsp;<B>then</B>&nbsp;B&nbsp;<B>else</B>&nbsp;C&nbsp;<B>else</B>&nbsp;D);&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal">which seems more than a little confusing.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There is a special 
+rule if the type of the expression is Boolean (that is of the predefined 
+type <SPAN Class="swiss">Boolean</SPAN> or derived from it). In that 
+case a final else part can be omitted and is taken to be true by default. 
+Thus the following are equivalent</div>
+<div class="SwissExamples">P(<B>if</B>&nbsp;C1&nbsp;<B>then</B>&nbsp;C2&nbsp;<B>else</B>&nbsp;True);</div>
+<div class="SwissExamples">P(<B>if</B>&nbsp;C1&nbsp;<B>then</B>&nbsp;C2);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Such abbreviations 
+appear frequently in preconditions as was illustrated in the Introduction 
+where we had</div>
+<div class="SwissExamples">Pre&nbsp;=&gt;&nbsp;(<B>if</B>&nbsp;P1&nbsp;&gt;&nbsp;0&nbsp;<B>then</B>&nbsp;P2&nbsp;&gt;&nbsp;0);</div>
+<div class="Normal">which has the obvious meaning that the precondition 
+requires that if <SPAN Class="swiss">P1</SPAN> is positive then <SPAN Class="swiss">P2</SPAN> 
+must be positive as well but if <SPAN Class="swiss">P1</SPAN> is not 
+positive then all is well and we don't care about <SPAN Class="swiss">P2</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This abbreviated form 
+has the same effect as an implies operation.</div>
+<div class="SwissExamples">R&nbsp;:=&nbsp;C1&nbsp;<B>implies</B>&nbsp;C2;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;Ada!</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">with the following 
+truth table</div>
+<div class="Indented1"><TABLE frame="border" rules="all" border="2" cellpadding="4"><TR><TD align="left"><TD align="left">C1 = False<TD align="left">C1 
+= True
+<TR><TD align="left">C2 = False<TD align="left">R = True<TD align="left">R 
+= False
+<TR><TD align="left">C2 = True<TD align="left">R = True<TD align="left">R 
+= True
+</table></div>
+<div class="Normal" style="margin-bottom: 0.4em">Some consideration 
+was given to including such an operation in Ada 2012 (it existed in Algol 
+60). However, this is exactly the same as</div>
+<div class="SwissExamples">R&nbsp;:=&nbsp;<B>not</B>&nbsp;C1&nbsp;<B>or</B>&nbsp;C2;</div>
+<div class="Normal">and so somewhat unnecessary. Moreover, although <B>implies</B> 
+might appeal to some programmers it could lead to maintenance problems 
+since it might be considered incomprehensible by many others.</div>
+<div class="Normal">There are important rules regarding the types of 
+the various dependent expressions in the branches of an if expression. 
+Basically they have to all be of the same type or convertible to the 
+same expected type. But there are some interesting situations.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If the conditional 
+expression is the argument of a type conversion then effectively the 
+conversion is considered pushed down to the dependent expressions. Thus</div>
+<div class="SwissExamples">X&nbsp;:=&nbsp;Float(<B>if</B>&nbsp;P&nbsp;<B>then</B>&nbsp;A&nbsp;<B>else</B>&nbsp;B);</div>
+<div class="Normal" style="margin-bottom: 0.4em">is equivalent to</div>
+<div class="SwissExamples">X&nbsp;:=&nbsp;(<B>if</B>&nbsp;P&nbsp;<B>then</B>&nbsp;Float(A)&nbsp;<B>else</B>&nbsp;Float(B));</div>
+<div class="Normal" style="margin-bottom: 0.4em">As a consequence we 
+can write</div>
+<div class="SwissExamples">X&nbsp;:=&nbsp;Float(<B>if</B>&nbsp;P&nbsp;<B>then</B>&nbsp;27&nbsp;<B>else</B>&nbsp;0.3);</div>
+<div class="Normal">and it doesn't matter that <SPAN Class="swiss">27</SPAN> 
+and <SPAN Class="swiss">0.3</SPAN> are not of the same type.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If the expected type 
+is class wide, perhaps giving the initial value for a class wide variable 
+<SPAN Class="swiss">V</SPAN>, then the individual dependent expressions 
+have that same expected class wide type but they need not all be of the 
+same specific type within the class. Thus we might write</div>
+<div class="SwissExamples">V:&nbsp;Object'Class&nbsp;:=&nbsp;(<B>if</B>&nbsp;B&nbsp;<B>then</B>&nbsp;A_Circle&nbsp;<B>else</B>&nbsp;A_Triangle);</div>
+<div class="Normal">where <SPAN Class="swiss">A_Circle</SPAN> and <SPAN Class="swiss">A_Triangle</SPAN> 
+are objects of specific types <SPAN Class="swiss">Circle</SPAN> and <SPAN Class="swiss">Triangle</SPAN> 
+which are themselves descended from the type <SPAN Class="swiss">Object</SPAN>.</div>
+<div class="Normal">If the expected type is a specific tagged type then 
+various situations can arise regarding the various branches which are 
+similar to the rules for calling a subprogram with several controlling 
+operands. Either they all have to be dynamically tagged (that is class 
+wide) or all have to be statically tagged. They might all be tag indeterminate 
+in which case the conditional expression as a whole is also tag indeterminate.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Some obscure curiosities 
+arise. Remember that the controlling condition for an if statement can 
+be any Boolean type. Consider</div>
+<div class="SwissExamples"><B>type</B>&nbsp;My_Boolean&nbsp;<B>is&nbsp;new</B>&nbsp;Boolean;</div>
+<div class="SwissExamples">My_Cond:&nbsp;My_Boolean&nbsp;:=&nbsp;...&nbsp;;</div>
+<div class="SwissExamples"><B>if</B>&nbsp;(<B>if</B>&nbsp;K&nbsp;&gt;&nbsp;10&nbsp;<B>then</B>&nbsp;X&nbsp;=&nbsp;Y&nbsp;<B>else</B>&nbsp;My_Cond)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal">The problem here is that <SPAN Class="swiss">X = 
+Y</SPAN> is of type <SPAN Class="swiss">Boolean</SPAN> but <SPAN Class="swiss">My_Cond</SPAN> 
+is of type <SPAN Class="swiss">My_Boolean</SPAN>. Moreover, the expected 
+type for the condition in the if statement is any Boolean type so it 
+cannot make up its mind. We could overcome this foolishness by putting 
+a type conversion around the if expression.</div>
+<div class="Normal">There are also rules regarding staticness. If all 
+branches are static then a conditional expression as a whole is static 
+as in the example of <SPAN Class="swiss">Febdays</SPAN> above. Thus the 
+definition of a static expression has been extended to permit the inclusion 
+of static conditional expressions. <A NAME="I1321"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">The avid reader of 
+the Reference Manual will find that the term <I>statically unevaluated</I> 
+has been introduced. This relates to situations where expressions are 
+not evaluated because a prior expression is static. Consider</div>
+<div class="SwissExamples">X&nbsp;:=&nbsp;(<B>if</B>&nbsp;B&nbsp;<B>then</B>&nbsp;P&nbsp;<B>else</B>&nbsp;Q);</div>
+<div class="Normal" style="margin-bottom: 0.4em">If <SPAN Class="swiss">B</SPAN>, 
+<SPAN Class="swiss">P</SPAN> and <SPAN Class="swiss">Q</SPAN> are all 
+static then the conditional expression as a whole is static. If <SPAN Class="swiss">B</SPAN> 
+is true then the answer is <SPAN Class="swiss">P</SPAN> and there is 
+not any need to even look at <SPAN Class="swiss">Q</SPAN>. We say that 
+<SPAN Class="swiss">Q</SPAN> is statically unevaluated and indeed it 
+does not matter that if <SPAN Class="swiss">Q</SPAN> had been evaluated 
+it would have raised an exception. Thus we might write</div>
+<div class="SwissExamples">Average&nbsp;:=&nbsp;(<B>if</B>&nbsp;Count&nbsp;=&nbsp;0&nbsp;<B>then</B>&nbsp;0.0&nbsp;<B>else</B>&nbsp;Total/Count);</div>
+<div class="Normal">and there is no risk of dividing by zero.</div>
+<div class="Normal">Similar rules regarding being statically unevaluated 
+apply to short circuit conditions, case expressions, and membership tests.</div>
+<div class="Normal">As might be expected there are rules regarding access 
+types and accessibility. The accessibility level of a conditional expression 
+is simply that of the chosen dependent expression and thus (generally) 
+determined dynamically.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Readers might feel 
+that Ada has embarked on a slippery slope by introducing more flexibility 
+thereby possibly damaging Ada's reputation for reliability. Certainly 
+a number of additional rules have been required but from the users' point 
+of view these are almost intuitive. It should be remembered that the 
+difficulties in C stem from a combination of things</div>
+<div class="Bulleted">that assignment is permitted as an expression,</div>
+<div class="Bulleted">that integer values are used as Booleans,</div>
+<div class="Bulleted">that null statements are invisible.&nbsp;</div>
+<div class="Normal">None of these applies to Ada so all is well.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-3-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-3-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

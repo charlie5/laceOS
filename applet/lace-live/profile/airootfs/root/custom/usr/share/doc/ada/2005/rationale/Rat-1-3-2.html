@@ -1,0 +1,295 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Overview: Access types</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>1.3.2 Overview: Access types</H1>
+<div class="Normal">It has been said that playing with pointers is like 
+playing with fire &ndash; properly used all is well but carelessness 
+can lead to disaster. In order to avoid disasters, Ada 95 takes a stern 
+view regarding the naming of access types and their conversion. However, 
+experience has shown that the Ada 95 view is perhaps unnecessarily stern 
+and leads to tedious programming.<A NAME="I1011"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">We will first consider 
+the question of giving names to access types. In Ada 95 all access types 
+are named except for access parameters and access discriminants. Thus 
+we might have&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Animal&nbsp;<B>is&nbsp;tagged</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B>&nbsp;Legs:&nbsp;Integer;&nbsp;...&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Acc_Animal&nbsp;<B>is&nbsp;access</B>&nbsp;Animal;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>named</I></SPAN></div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(Beast:&nbsp;<B>access</B>&nbsp;Animal;&nbsp;...&nbsp;);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>anonymous</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">Moreover, there is 
+a complete lack of symmetry between named access types and access parameters. 
+In the case of named access types, they all have a null value (and this 
+is the default on declaration if no initial value be given). But in the 
+case of access parameters, a null value is not permitted as an actual 
+parameter. Furthermore, named access types can be restricted to be access 
+to constant types such as&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Rigid_Animal&nbsp;<B>is&nbsp;access&nbsp;constant</B>&nbsp;Animal;</div>
+<div class="Normal" style="margin-bottom: 0.4em">which means that we 
+cannot change the value of the <SPAN Class="swiss">Animal</SPAN> referred 
+to. But in the case of access parameters, we cannot say&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(Beast:&nbsp;<B>access&nbsp;constant</B>&nbsp;Animal);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;Ada&nbsp;95</I></SPAN></div>
+<div class="Normal">In Ada 2005 almost all these various restrictions 
+are swept away in the interests of flexibility and uniformity.</div>
+<div class="Normal" style="margin-bottom: 0.4em">First of all we can 
+explicitly specify whether an access type (strictly subtype) has a null 
+value. We can write&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Acc_Animal&nbsp;<B>is&nbsp;not&nbsp;null&nbsp;access&nbsp;all</B>&nbsp;Animal'Class;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This means that we 
+are guaranteed that an object of type <SPAN Class="swiss">Acc_Animal</SPAN> 
+cannot refer to a null animal. Therefore, on declaration such an object 
+should be initialized as in the following sequence&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Pig&nbsp;<B>is&nbsp;new</B>&nbsp;Animal&nbsp;<B>with</B>&nbsp;...&nbsp;;<BR>
+Empress_Of_Blandings:&nbsp;<B>aliased</B>&nbsp;Pig&nbsp;:=&nbsp;...&nbsp;;</div>
+<div class="SwissExamples">My_Animal:&nbsp;Acc_Animal&nbsp;:=&nbsp;Empress_Of_Blandings'Access;&nbsp;--&nbsp;<SPAN Class="roman"><I>must&nbsp;initialize</I></SPAN></div>
+<div class="Normal">(The Empress of Blandings is a famous pig in the 
+novels concerning Lord Emsworth by the late P G Wodehouse.) If we forget 
+to initialize <SPAN Class="swiss">My_Animal</SPAN> then <SPAN Class="swiss">Constraint_Error</SPAN> 
+is raised; technically the underlying type still has a null value but 
+<SPAN Class="swiss">Acc_Animal</SPAN> does not. We can also write <B>not 
+null access constant</B> of course.<A NAME="I1012"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">The advantage of using 
+a null exclusion is that when we come to do a dereference&nbsp;</div>
+<div class="SwissExamples">Number_of_Legs:&nbsp;Integer&nbsp;:=&nbsp;My_Animal.Legs;</div>
+<div class="Normal">then no check is required to ensure that we do not 
+dereference a null pointer. This makes the code faster.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The same freedom to 
+add <B>constant</B> and <B>not null</B> also applies to access parameters. 
+Thus we can write all of the following in Ada 2005&nbsp;</div>
+<div class="SwissExamples">procedure&nbsp;P(Beast:&nbsp;<B>access</B>&nbsp;Animal);<BR>
+procedure&nbsp;P(Beast:&nbsp;<B>access&nbsp;constant</B>&nbsp;Animal);<BR>
+procedure&nbsp;P(Beast:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;Animal);<BR>
+procedure&nbsp;P(Beast:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;constant</B>&nbsp;Animal);</div>
+<div class="Normal">Note that <B>all</B> is not permitted in this context 
+since access parameters always are general (that is, they can refer to 
+declared objects as well as to allocated ones).</div>
+<div class="Normal">Note what is in practice a minor incompatibility, 
+the first of the above now permits a null value as actual parameter in 
+Ada 2005 whereas it was forbidden in Ada 95. This is actually a variation 
+at runtime which is normally considered abhorrent. But in this case it 
+just means that any check that will still raise <SPAN Class="swiss">Constraint_Error</SPAN> 
+will be in a different place &ndash; and in any event the program was 
+presumably incorrect.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another change in Ada 
+2005 is that we can use anonymous access types other than just as parameters 
+(and discriminants).<A NAME="I1013"></A> We can in fact also use anonymous 
+access types in&nbsp;</div>
+<div class="Bulleted">the declaration of stand-alone objects and components 
+of arrays and records,</div>
+<div class="Bulleted">a renaming declaration,</div>
+<div class="Bulleted">a function return type.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Thus we can extend 
+our farmyard example&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Horse&nbsp;<B>is&nbsp;new</B>&nbsp;Animal&nbsp;<B>with</B>&nbsp;...&nbsp;;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Acc_Horse&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Horse;<BR>
+<B>type</B>&nbsp;Acc_Pig&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Pig;</div>
+<div class="SwissExamples">Napoleon,&nbsp;Snowball:&nbsp;Acc_Pig&nbsp;:=&nbsp;...&nbsp;;</div>
+<div class="SwissExamples">Boxer,&nbsp;Clover:&nbsp;Acc_Horse&nbsp;:=&nbsp;...&nbsp;;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and now we can declare 
+an array of animals&nbsp;</div>
+<div class="SwissExamples">Animal_Farm:&nbsp;<B>constant&nbsp;array</B>&nbsp;(Positive&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;<B>of&nbsp;access</B>&nbsp;Animal'Class&nbsp;:=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Napoleon,&nbsp;Snowball,&nbsp;Boxer,&nbsp;Clover);</div>
+<div class="Normal" style="margin-bottom: 0.4em">(With acknowledgments 
+to George Orwell.) Note that the components of the array are of an anonymous 
+access type. We can also have record components of an anonymous type 
+</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Ark&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Stallion,&nbsp;Mare:&nbsp;<B>access</B>&nbsp;Horse;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Boar,&nbsp;Sow:&nbsp;<B>access</B>&nbsp;Pig;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cockerel,&nbsp;Hen:&nbsp;<B>access</B>&nbsp;Chicken;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ram,&nbsp;Ewe:&nbsp;<B>access</B>&nbsp;Sheep;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">Noahs_Ark:&nbsp;Ark&nbsp;:=&nbsp;(Boxer,&nbsp;Clover,&nbsp;...&nbsp;);</div>
+<div class="Normal">This is not a very good example since I am sure that 
+Noah took care to take actual animals into the Ark and not merely their 
+addresses.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A more useful example 
+is given by the classic linked list. In Ada 95 (and Ada 83) we have&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Cell;<BR>
+<B>type</B>&nbsp;Cell_Ptr&nbsp;<B>is&nbsp;access</B>&nbsp;Cell;<BR>
+<B>type</B>&nbsp;Cell&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next:&nbsp;Cell_Ptr;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Value:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 2005, we do 
+not have to declare the type <SPAN Class="swiss">Cell_Ptr</SPAN> in order 
+to declare the type <SPAN Class="swiss">Cell</SPAN> and so we do not 
+need to use the incomplete declaration to break the circularity. We can 
+simply write&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Cell&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next:&nbsp;<B>access</B>&nbsp;Cell;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Value:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal">Here we have an example of the use of the type name 
+<B>Cell</B> within its own declaration. In some cases this is interpreted 
+as referring to the current instance of the type (for example, in a task 
+body) but the rule has been changed to permit its usage as here.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can also use an 
+anonymous access type for a single variable such as&nbsp;</div>
+<div class="SwissExamples">List:&nbsp;<B>access</B>&nbsp;Cell&nbsp;:=&nbsp;...&nbsp;;</div>
+<div class="Normal" style="margin-bottom: 0.4em">An example of the use 
+of an anonymous access type for a function result might be in another 
+animal function such as&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Mate_Of(A:&nbsp;<B>access</B>&nbsp;Animal'Class)&nbsp;<B>return&nbsp;access</B>&nbsp;Animal'Class;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We could then perhaps 
+write&nbsp;</div>
+<div class="SwissExamples"><B>if</B>&nbsp;Mate_Of(Noahs_Ark.Ram)&nbsp;/=&nbsp;Noahs_Ark.Ewe&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>better&nbsp;get&nbsp;Noah&nbsp;to&nbsp;sort&nbsp;things&nbsp;out</I></SPAN><BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal">Anonymous access types can also be used in a renaming 
+declaration. This and other detailed points on matters such as accessibility 
+are discussed in Section <A HREF="Rat-3-3.html">3.3</A>.</div>
+<div class="Normal">The final important change in access types concerns 
+access to subprogram types. Access to subprogram types were introduced 
+into Ada 95 largely for the implementation of callback. But important 
+applications of such types in other languages (going back to Pascal and 
+even Algol 60) are for mathematical applications such as integration 
+where a function to be manipulated is passed as a parameter. The Ada 
+83 and Ada 95 approach has always been to say &quot;use generics&quot;. 
+But this can be clumsy and so a direct alternative is now provided.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Recall that in Ada 
+95 we can write&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Integrand&nbsp;<B>is&nbsp;access&nbsp;function</B>(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float;<BR>
+<B>function</B>&nbsp;Integrate(Fn:&nbsp;Integrand;&nbsp;Lo,&nbsp;Hi:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The idea is that the 
+function <SPAN Class="swiss">Integrate</SPAN> finds the value of the 
+integral of the function passed as parameter <SPAN Class="swiss">Fn</SPAN> 
+between the limits <SPAN Class="swiss">Lo</SPAN> and <SPAN Class="swiss">Hi</SPAN>. 
+This works fine in Ada 95 for simple cases such as where the function 
+is declared at library level. Thus to evaluate</div>
+<DIV Style="text-align: left; margin-bottom: 0.4em"><IMG src="form-1.png" height="65" width="95" alt="Integrate Sqrt(x)" border="0"></DIV>
+<div class="Normal" style="margin-bottom: 0.4em">we can write&nbsp;</div>
+<div class="SwissExamples">Result&nbsp;:=&nbsp;Integrate(Sqrt'Access,&nbsp;0.0,&nbsp;1.0);</div>
+<div class="Normal">where the function <SPAN Class="swiss">Sqrt</SPAN> 
+is from the library package <SPAN Class="swiss">Ada.Numerics.Elementary_Functions</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, if the function 
+to be integrated is more elaborate then we run into difficulties in Ada 
+95 if we attempt to use access to subprogram types. Consider the following 
+example which aims to compute the integral of the expression <I>xy</I> 
+over the square region 0 &#8804; x, y &#8804; 1.&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Integrate;<BR>
+<B>procedure</B>&nbsp;Main&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;G(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;F(Y:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;X*Y;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;F;<BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Integrate(F'Access,&nbsp;0.0,&nbsp;1.0);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal&nbsp;in&nbsp;Ada&nbsp;95</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;G;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;Result:&nbsp;Float;</div>
+<div class="SwissExamples"><B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Result:=&nbsp;Integrate(G'Access,&nbsp;0.0,&nbsp;1.0);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal&nbsp;in&nbsp;Ada&nbsp;95</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Main;</div>
+<div class="Normal">But this is illegal in Ada 95 because of the accessibility 
+rules necessary with named access types in order to prevent dangling 
+references. Thus we need to prevent the possibility of storing a pointer 
+to a local subprogram in a global structure. This means that both <SPAN Class="swiss">F'Access</SPAN> 
+and <SPAN Class="swiss">G'Access</SPAN> are illegal in the above.</div>
+<div class="Normal">Note that although we could make the outer function 
+<SPAN Class="swiss">G</SPAN> global so that <SPAN Class="swiss">G'Access</SPAN> 
+would be allowed nevertheless the function <SPAN Class="swiss">F</SPAN> 
+has to be nested inside <SPAN Class="swiss">G</SPAN> in order to gain 
+access to the parameter <SPAN Class="swiss">X</SPAN> of <SPAN Class="swiss">G</SPAN>. 
+It is typical of functions being integrated that they have to have information 
+passed globally &ndash; the number of parameters of course is fixed by 
+the profile used by the function Integrate.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The solution in Ada 
+2005 is to introduce anonymous access to subprogram types by analogy 
+with anonymous access to object types.<A NAME="I1014"></A> Thus the function 
+<SPAN Class="swiss">Integrate</SPAN> becomes&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Integrate(Fn:&nbsp;<B>access&nbsp;function</B>(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lo,&nbsp;Hi:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float;</div>
+<div class="Normal">Note that the parameter <SPAN Class="swiss">Fn</SPAN> 
+has an anonymous type defined by the profile so that we get a nesting 
+of profiles. This may seem a bit convoluted but is much the same as in 
+Pascal.</div>
+<div class="Normal">The nested example above is now valid and no accessibility 
+problems arise. (The reader will recall that accessibility problems with 
+anonymous access to object types are prevented by a runtime check; in 
+the case of anonymous access to subprogram types the corresponding problems 
+are prevented by decreeing that the accessibility level is infinite &ndash; 
+actually the RM says larger than that of any master which comes to the 
+same thing.)</div>
+<div class="Normal">Anonymous access to subprogram types are also useful 
+in many other applications such as iterators as will be illustrated later.</div>
+<div class="Normal">Note that we can also prefix all access to subprogram 
+types, both named and anonymous, by constant and not null in the same 
+way as for access to object types.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

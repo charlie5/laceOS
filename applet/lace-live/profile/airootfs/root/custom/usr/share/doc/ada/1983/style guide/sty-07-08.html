@@ -1,0 +1,173 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 7.8: Chapter 7 Summary
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 7: Portability</H2>
+
+<H3><a name="7.8">Chapter 7 Summary</a></H3>
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><BR>
+<a href="#7.8.1">7.1 fundamentals</a><BR>
+<a href="#7.8.2">7.2 numeric types and expressions</a><BR>
+<a href="#7.8.3">7.3 storage control</a><BR>
+<a href="#7.8.4">7.4 tasking</a><BR>
+<a href="#7.8.5">7.5 exceptions</a><BR>
+<a href="#7.8.6">7.6 representation clauses and implementation-dependent features</a><BR>
+<a href="#7.8.7">7.7 input/output</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H4><a name="7.8.1">7.1 fundamentals</a></H4>
+<UL>
+<li>Make considered assumptions about the support provided for the  
+following on potential target platforms: 
+<UL TYPE=square>
+<li>Number of bits available for type <CODE>Integer</CODE> (range constraints). 
+<li>Number of decimal digits of precision available for floating point  
+types. 
+<li>Number of bits available for fixed-point types (delta and range 
+constraints). 
+<li>Number of characters per line of source text. 
+<li>Number of bits for <CODE>Universal_Integer</CODE> expressions. 
+<li>Number of seconds for the range of <CODE>Duration</CODE>. 
+<li>Number of milliseconds for <CODE>Duration'Small</CODE>.  
+</UL>
+<li>Don't implicitly use an implementation limit. 
+<li>Use highlighting comments for each package, subprogram and task where  
+any nonportable features are present.  
+<li>For each nonportable feature employed, describe the expectations for  
+that feature. 
+<li>Use only a parameterless procedure as the main program. 
+<li>Create packages specifically designed to isolate hardware and  
+implementation dependencies and designed so that their specification will not  
+change. 
+<li>Clearly indicate the objectives if machine or solution efficiency is  
+the reason for hardware or implementation dependent code. 
+<li>For the packages that hide implementation dependencies, maintain  
+different package bodies for different target environments. 
+<li>Isolate interrupt receiving tasks into implementation dependent  
+packages. 
+<li>Avoid the use of vendor supplied packages. 
+<li> Avoid the use of features added to the predefined packages that are 
+not specified in the language definition. 
+</UL>
+
+<H4><a name="7.8.2">7.2 numeric types and expressions</a></H4>
+<UL>
+<li> Do not use the predefined numeric types in package <CODE>Standard</CODE>. Use 
+range and digits declarations and let the implementation do the derivation 
+implicitly from the predefined types. 
+<li>For programs that require greater accuracy than that provided by the  
+global assumptions, define a package that declares a private type and  
+operations as needed; see Pappas (1985) for a full explanation and examples. 
+<li>Know the Ada model for floating point types and arithmetic. 
+<li>Carefully analyze what accuracy and precision you really need. 
+<li>Do not press the accuracy limits of the machine(s). 
+<li>Comment the analysis and derivation of the numerical aspects of a  
+program. 
+<li>Use named numbers or universal real expressions rather than constants  
+of any particular type. 
+<li>Anticipate values of subexpressions to avoid exceeding the range of  
+their type. Use derived types, subtypes, factoring, and range constraints on  
+numeric types as described in Guidelines <a href="sty-03-04.html#3.4.1">3.4.1</a>,
+<a href="sty-05-03.html#5.3.1">5.3.1</a>, and
+<a href="sty-05-05.html#5.5.3">5.5.3</a>. 
+<li> Use <CODE>&lt;=</CODE> and <CODE>&gt;=</CODE> to do relational tests on real valued arguments, 
+avoiding the <CODE>&lt;</CODE>, <CODE>&gt;</CODE>, <CODE>=</CODE>, and <CODE>/=</CODE> operations. 
+<li>Use values of type attributes in comparisons and checking for small  
+values. 
+</UL>
+
+<H4><a name="7.8.3">7.3 storage control</a></H4>
+<UL>
+<li> Do not use a representation clause to specify number of storage units. 
+</UL>
+
+<H4><a name="7.8.4">7.4 tasking</a></H4>
+<UL>
+<li>Do not depend on the order in which task objects are activated when  
+declared in the same declarative list. 
+<li> Do not depend on a particular delay being achievable (Nissen and 
+Wallis 1984). 
+<li>Never use a busy waiting loop instead of a delay. 
+<li>Design to limit polling to those cases where it is absolutely  
+necessary. 
+<li> Never use knowledge of the execution pattern of tasks to achieve 
+timing requirements. 
+<li> Do not assume a correlation between <CODE>System.Tick</CODE> and package <CODE>Calendar</CODE> 
+or type <CODE>Duration</CODE> (see <a href="sty-06-01.html#6.1.5">Guideline 6.1.5</a>). 
+<li>Do not depend on the order in which guard conditions are evaluated or  
+on the algorithm for choosing among several open select alternatives. 
+<li>Do not assume that tasks execute uninterrupted until they reach a  
+synchronization point. 
+<li>Use pragma <CODE>Priority</CODE> to distinguish general levels of importance only  
+(see <a href="sty-06-01.html#6.1.4">Guideline 6.1.4</a>). 
+<li>Avoid using the abort statement. 
+<li>Do not share variables.  
+<li>Have tasks communicate through the rendezvous mechanism. 
+<li>Do not use shared variables as a task synchronization device. 
+<li>Use pragma <CODE>Shared</CODE> only when you are forced to by run time system  
+deficiencies. 
+</UL>
+
+<H4><a name="7.8.5">7.5 exceptions</a></H4>
+<UL>
+<li>  Do not depend on the exact locations at which predefined exceptions 
+are raised. 
+<li>Catch <CODE>Numeric_Error</CODE> exceptions with a <CODE>Numeric_Error | Constraint_Error</CODE>  
+exception handler. 
+<li>Do not use a separate exception handler for <CODE>Numeric_Error</CODE> and  
+<CODE>Constraint_Error</CODE>. 
+<li>Do not raise implementation-defined exceptions. 
+<li>Convert implementation defined exceptions within interface packages to  
+visible user-defined exceptions. 
+</UL>
+
+<H4><a name="7.8.6">7.6 representation clauses and implementation-dependent features</a></H4>
+<UL>
+<li> Use algorithms that do not depend on the representation of the data 
+and therefore do not need representation clauses. 
+<li>Use representation clauses when accessing interface data or when a  
+specific representation is needed to implement a design. 
+<li> Avoid using package <CODE>System</CODE> constants except in attempting to 
+generalize other machine dependent constructs. 
+<li>Avoid machine code inserts. 
+<li>Avoid interfacing Ada with other languages.  
+<li>Isolate all subprograms employing pragma <CODE>Interface</CODE> to  
+implementation-dependent (interface) package bodies. 
+<li>Avoid pragmas and attributes added by the compiler implementor. 
+<li>Avoid dependence on <CODE>Unchecked_Deallocation</CODE>
+(see <a href="sty-05-09.html#5.9.2">Guideline 5.9.2</a>). 
+<li>Avoid using <CODE>Unchecked_Conversion</CODE> (see <a href="sty-05-09.html#5.9.1">Guideline 5.9.1</a>). 
+<li>Avoid the direct invocation of or implicit dependence upon an  
+underlying host operating system or Ada run time support system. 
+</UL>
+
+<H4><a name="7.8.7">7.7 input/output</a></H4>
+<UL>
+<li>Use constants and variables as symbolic actuals for the <CODE>Name</CODE> and <CODE>Form</CODE>  
+parameters on the predefined I/O packages. Declare and initialize them in an  
+implementation dependency package.  
+<li>Close all files explicitly. 
+<li>Avoid performing I/O on access types. 
+<li>Minimize and isolate using the predefined package <CODE>Low_Level_IO</CODE>. 
+</UL>
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>
+

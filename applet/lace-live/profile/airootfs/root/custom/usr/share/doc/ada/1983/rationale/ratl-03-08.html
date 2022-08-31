@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Rationale, Sec 3.8: Assignment Statements - The Ada Model of Time</TITLE>
+</HEAD>
+
+<BODY>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 3: Classical Programming</H2>
+
+<H3><a name="3.8">3.8 Assignment Statements - The Ada Model of Time</a></H3>
+
+The assignment  statement is  usually regarded  as the simplest of all
+statements, and we will use this statement to discuss the Ada model of
+time flow.
+<p>
+One issue  that must  be addressed  in  any  language  design  is  the
+definition of  the sequencing  of elementary  operations. One  extreme
+corresponds to  operational definitions  in which  this sequencing  is
+defined exhaustively,  for all  features of  the language, and for all
+possible elementary operations.
+<p>
+The view  adopted in Ada, following the <a href="ratl-BIB.html#languages">Algol 68</a> concept of collateral
+evaluation, uses  a somewhat  simpler mental  model of  sequencing. We
+consider that  time differences only matter at certain specific points
+of the  program -  mainly at  the semicolons that terminate statements
+and declarations.  This means  that the  sequencing of certain actions
+that occur  between two  consecutive  semicolons  is  not  necessarily
+defined  by   the  language.   Consider  for  example,  the  following
+assignment statements:
+<table border cellpadding=6><tr><td><pre>
+OUT_ROW(FLOOR(X))  :=  IN_ROW(CEIL(Y));
+X :=  SIN(Y)&#42;COS(Y) - TAN(Z);
+</pre></td></tr></table>
+<p>
+where we  assume OUT_ROW  and IN_ROW  to be  arrays, FLOOR, CEIL to be
+functions, and  X, Y,  Z to  be variables. For assignments statements,
+the <a href="http://archive.adaic.com/standards/83lrm/html/">Ada reference manual</a> specifies that the evaluation of the left and
+right hand  sides is  done in  some order  that is  not defined by the
+language. This  means that the language does not define which of FLOOR
+and CEIL  is called  first. Similarly,  whereas the  precedence  rules
+require the right hand side of the second assignment to mean
+<PRE>    (SIN(Y)&#42;COS(Y)) - TAN(Z)
+</PRE><p>
+the rules  of expression  evaluation leave  the order of evaluation of
+the function  calls undefined.  Thus it  would  be  possible  for  the
+functions to be called in any of the following orders:
+<table border cellpadding=6><tr><td><pre>
+(1) TAN (2) SIN (3) COS
+(1) TAN (2) COS (3) SIN
+(1) SIN (2) COS (3) TAN
+(1) COS (2) SIN (3) TAN
+</pre></td></tr></table>
+<p>
+The only  (and partial)  order imposed  comes  from  the  ordering  of
+statements and  from the logic of operations. Thus the ordering of the
+two statements  requires that  a function  call (such as FLOOR) of the
+first assignment  statement occur before a function call (such as SIN)
+of the  second. Similarly,  the logic  of operations requires that the
+multiplication be  performed after  the evaluation of its two operands
+(SIN(Y) and COS(Y)).
+<p>
+The <a href="http://archive.adaic.com/standards/83lrm/html/">Ada  reference manual </a>further specifies (<a href="http://archive.adaic.com/standards/83lrm/html/lrm-01-06.html#1.6">RM 1.6</a>) that if different
+parts of  a given  construct are  to be executed in some order that is
+not defined  by the  language, then  the  construct  is  incorrect  if
+execution of  these parts  in a different order would have a different
+effect: this kind of error is called an incorrect order dependence.
+<p>
+In terms  of programming methodology, this means that we must consider
+the flow  of time  to be  given by  the sequencing of statements, each
+simple statement  being considered  as an  indivisible action.  In the
+above example,  the first  assignment would be incorrect if its effect
+depended on  the order  of evaluation  of FLOOR  and CEIL. Should this
+order actually  matter, then the proper way to write the program would
+be to  give a  sequence of assignments that defines the intended order
+explicitly. For example:
+<table border cellpadding=6><tr><td><pre>
+U  :=  FLOOR(X); -- guarantees that FLOOR
+V  :=  CEIL(Y); -- is called before CEIL
+OUT_ROW(U)  :=  IN_ROW(V);
+</pre></td></tr></table>
+<p>
+Similar   considerations   apply   to   expression   evaluation.   All
+constituents of an expression (aside from short-circuit control forms)
+must be  evaluated, although  the evaluation  order is not defined for
+all terms.  Hence if  an exception is raised by the evaluation of some
+term, then  this  exception  cannot  be  avoided.  In  this  sense  an
+expression such as
+<PRE>    A = 0  or  X/A &gt; 10
+</PRE><p>
+although syntactically  correct, is  not proper  since the validity of
+the right  operand of  or depends  on the  value of  the left operand.
+Whenever there  is such  a dependence,  it should  be made explicit by
+means of  conditional statements,  or by  short-circuit control  forms
+(see <a href="ratl-03-10.html#3.10">3.10</a>),  in order  to  emphasize  the  possibility  of  incomplete
+evaluation. For example:
+<PRE>    A = 0  or else  X/A &gt; 10
+</PRE><p>
+Note finally  that whenever order is not defined, the reference manual
+uses the  phrase in  some order  that is  not defined, rather than the
+phrase in  any order. The intent of the chosen wording is to leave the
+order undefined  but nevertheless  require that  it be  done  in  some
+order, and thus exclude parallel evaluation.
+<p>
+To illustrate  this point, consider again the calls of FLOOR and CEIL,
+and assume  that the values obtained do not depend on whether FLOOR or
+CEIL is  called first.  It  is  nevertheless  possible  that  parallel
+evaluation of FLOOR and CEIL will yield a different effect. Thus FLOOR
+and CEIL  could be  memo-functions, which  remember past  intermediate
+results (for efficiency). Should some of these intermediate results be
+used by both FLOOR and CEIL, then it would be possible for interleaved
+executions of  these functions  to deliver  different -  and  probably
+incoherent - results.
+
+<center>
+<hr width=60%>
+&#164; <a href="ratl-03-09.html#3.9"><b>NEXT</b></a>
+&#164; <a href="ratl-03-07.html#3.7"><b>PREVIOUS</b></a>
+&#164; <a href="ratl-03.html#3"><b>UP</b></a>
+&#164; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#164; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#164;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+</BODY></HTML>
+

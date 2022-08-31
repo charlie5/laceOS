@@ -1,0 +1,150 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 5.2: The Integer Types</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 5: Numeric Types</H2>
+
+<H3><a name="5.2">5.2 The Integer Types</a></H3>
+
+The operations predefined for the integer types are:
+<p>
+<center><table border cellpadding=6><tr><th align=left>Operator</th><th align=left>Meaning</th><th align=left>Result Type</th></tr>
+<tr><td>
+<table><tr><td><pre>
++  -
++  -
+&#42;
+/
+mod
+rem
+&#42;&#42;
+abs
+=  /=
+&lt;  &lt;=  &gt;  &gt;=</pre></td></tr></table>
+</td><td>
+<table><tr><td>
+<pre>identity and negation
+addition and subtraction
+multiplication
+integer division
+integer modulus
+remainder on integer division
+exponentiation
+absolute value
+equality and inequality
+ordering</pre></td></tr></table>
+</td><td>
+<table><tr><td>
+<pre>operand type
+operand type
+operand type
+operand type
+operand type
+operand type
+operand type
+operand type
+BOOLEAN
+BOOLEAN</pre></td></tr></table></tr></table></center>
+<p>
+New integer  subtypes declared  by  imposing  constraints  on  INTEGER
+inherit these  operations: relational  operators deliver  a result  of
+type BOOLEAN;  all others  deliver a  result of  the same  type as the
+operands. Both  operands of  the binary  operators must  have the same
+type, excepting  exponentiation, for  which the  right operand type is
+always INTEGER.  If system-defined  integer types such as LONG_INTEGER
+are implemented,  then overloadings  of the  arithmetic and relational
+operators are  defined for  these types  in an  analogous manner;  and
+similarly for SHORT_INTEGER, if implemented.
+<p>
+The user  can define  an integer  type by  specifying the  range to be
+covered, for example
+<p>
+<table border cellpadding=6><tr><td><pre>
+type PAGE_NUM   is range 1 .. 2000;
+type MY_INTEGER is range -100_000 .. 100_000;
+</pre></td></tr></table>
+<p>
+in which  case the  implementation will  use whichever predefined type
+just encompasses  this range.  Thus MY_INTEGER would be implemented as
+(a subtype  of a  type derived  from) LONG_INTEGER on a typical 16-bit
+minicomputer, but  as INTEGER  on a  machine with  larger word length.
+Portability of the program is thus assured, in this respect.
+<p>
+Furthermore, a  range constraint  can be  applied to  a type to give a
+subtype. The  subtype has all the operations of the base type, but the
+value of  any variable  of the subtype must always be within the range
+of the subtype; in general this is checked before assigning a value to
+the variable.  One would expect compilers to represent subtypes in the
+same way  as types,  but in  special cases the compiler may be able to
+optimize the  representation by  utilizing the  range constraint. Thus
+the subtype
+<p>
+<PRE>    subtype SIGN is INTEGER range  -1 .. 1;</PRE>
+<p>
+contains only  three values,  so that each value could be stored using
+one byte, or even two bits.
+<p>
+The operations  /, mod,  and rem  require  explanation.  There  is  no
+universal agreement  on the semantics of these operations for negative
+operand values.  Because different  machines perform  these operations
+differently, it  is tempting  not to  define them for negative values.
+This is  the approach  taken in the axiomatic definition of Pascal <a href="ratl-BIB.html">[HW
+73]</a>. The  semantics chosen in the Ada language corresponds to division
+with truncation  toward zero  (so (-3)/2 = -1). This has the advantage
+that it preserves the identity:
+<p>
+<PRE>    -(A/B) = (-A)/B = A/(-B)</PRE>
+<p>
+The operations / and rem are related by
+<p>
+<PRE>    A = (A/B)&#42;B + (A rem B)</PRE>
+<p>
+so that  rem provides  the remainder on division. As a consequence the
+sign of  the result  of the rem operation is therefore the same as the
+sign of A (hence A rem 10 can be negative). Also the absolute value of
+the result of the rem operation is less than the absolute value of B.
+<p>
+The operation  mod on  the other  hand is  defined so  that (A  mod B)
+always has  the same sign as B and its absolute value is less than the
+absolute value of B; subject to these conditions it must differ from A
+by an  integer multiple  of B,  that is,  for some  integer value N it
+satisfies the relation
+<p>
+<PRE>    A = B&#42;N + (A mod B)</PRE>
+<p>
+Integer exponentiation  is defined  only  for  nonnegative  exponents.
+Hence, I&#42;&#42;(-1)  will raise  CONSTRAINT_ERROR as  the exponent  is  not
+positive. The  operation is  defined as repeated multiplication of the
+left hand  operand. The number of multiplications is one less than the
+exponent value, so I&#42;&#42;2 = I&#42;I and I&#42;&#42;4 = I&#42;I&#42;I&#42;I.
+<p>
+The predefined  operator abs yields the absolute value of its operand,
+and is defined for all numeric types.
+
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-05-03.html#5.3"><b>NEXT</b></a>
+&#128; <a href="ratl-05-01.html#5.1"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-05.html#5"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

@@ -1,0 +1,802 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Iteration</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.Indented1 {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Indented2Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 4.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Indented2Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 4.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-6-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-6-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>6.3 Iteration</H1>
+<div class="Normal" style="margin-bottom: 0.4em">Iteration and subprogram 
+calls are in some sense the twin cornerstones of programming. We are 
+all familiar with the ubiquitous nature of statements such as</div>
+<div class="SwissExamples"><B>for</B>&nbsp;I&nbsp;<B>in</B>&nbsp;A'Range&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;A(I)&nbsp;:=&nbsp;0;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">which in one form or another exist in all (normal) 
+programming languages.</div>
+<div class="Normal">The detail of giving the precise description of the 
+iteration and the indexing is really a violation of abstraction by revealing 
+unnecessary detail. All we want to say is &quot;assign zero to each element 
+of the set <SPAN Class="swiss">A</SPAN>&quot;.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, although it's 
+not too much of a hassle with arrays, the introduction of containers 
+revealed that detailed iteration could be very heavy-handed. Thus, as 
+mentioned in the Introduction (see <A HREF="Rat12-1-3-5.html">1.3.5</A>), 
+suppose we are dealing with a list, perhaps a list of the type <SPAN Class="swiss">Twin</SPAN> 
+declared as</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Twin&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;P,&nbsp;Q:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">To manipulate every 
+element of the list in Ada 2005, we have to write something like</div>
+<div class="SwissExamples">C&nbsp;:=&nbsp;The_List.First;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>C&nbsp;declared&nbsp;as&nbsp;of&nbsp;type&nbsp;Cursor</I></SPAN><BR>
+<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>exit&nbsp;when</B>&nbsp;C&nbsp;=&nbsp;No_Element;<BR>
+&nbsp;&nbsp;&nbsp;E&nbsp;:=&nbsp;Element(C);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>E&nbsp;is&nbsp;of&nbsp;type&nbsp;Twin</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Is_Prime(E.P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Replace_Element(The_List,&nbsp;C,&nbsp;(E.P,&nbsp;E.Q&nbsp;+&nbsp;X));<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;C&nbsp;:=&nbsp;Next(C);<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">This reveals the gory details of the iterative process 
+whereas all we want to say is &quot;add <SPAN Class="swiss">X</SPAN> 
+to the component <SPAN Class="swiss">Q</SPAN> for all members of the 
+list whose component <SPAN Class="swiss">P</SPAN> is prime&quot;.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There is another way 
+in Ada 2005 and that is to use the procedure <SPAN Class="swiss">Iterate</SPAN>. 
+In that case the details of what we are doing have to be placed in a 
+distinct subprogram called perhaps <SPAN Class="swiss">Do_It</SPAN>. 
+Thus we can write <A NAME="I1436"></A></div>
+<div class="SwissExamples"><B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Do_It(C:&nbsp;<B>in</B>&nbsp;Cursor)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E&nbsp;:=&nbsp;Element(C);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>E&nbsp;is&nbsp;of&nbsp;type&nbsp;Twin</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Is_Prime(E.P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Replace_Element(The_List,&nbsp;C,&nbsp;(E.P,&nbsp;E.Q&nbsp;+&nbsp;X));<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Do_It;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;The_List.Iterate(Do_It'Access);<BR>
+<B>end</B>;</div>
+<div class="Normal">This avoids the fine detail of calling <SPAN Class="swiss">First</SPAN> 
+and <SPAN Class="swiss">Next</SPAN> but uses what some consider to be 
+a heavy infrastructure.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, in Ada 2012 
+we can simply say</div>
+<div class="SwissExamples"><B>for</B>&nbsp;E&nbsp;<B>of</B>&nbsp;The_List&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Is_Prime(E.P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E.Q&nbsp;:=&nbsp;E.Q&nbsp;+&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">Not only is this just five lines of text rather than 
+nine or eleven, the key point is that the possibility of making various 
+errors of detail is completely removed.</div>
+<div class="Normal">The mechanisms by which this magic abstraction is 
+achieved are somewhat laborious and it is anticipated that users will 
+take a cookbook approach (show us how to do it, but please don't explain 
+why &ndash; after all, this is the approach taken with boiling an egg, 
+we can do it without deep knowledge of the theory of coagulation of protein 
+material).</div>
+<div class="Normal" style="margin-bottom: 0.4em">We will start by looking 
+at the process using arrays. Rather than<A NAME="I1437"></A><A NAME="I1438"></A></div>
+<div class="SwissExamples"><B>for</B>&nbsp;I&nbsp;<B>in</B>&nbsp;A'Range&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;A(I)&nbsp;/=&nbsp;0&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A(I)&nbsp;:=&nbsp;A(I)&nbsp;+&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">we can write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;E&nbsp;<B>of</B>&nbsp;A&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;E&nbsp;/=&nbsp;0&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E&nbsp;:=&nbsp;E&nbsp;+&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the case of a two-dimensional 
+array, instead of</div>
+<div class="SwissExamples"><B>for</B>&nbsp;I&nbsp;<B>in</B>&nbsp;AA'Range(1)&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>for</B>&nbsp;J&nbsp;<B>in</B>&nbsp;AA'Range(2)&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A(I,&nbsp;J)&nbsp;:=&nbsp;0.0;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;loop</B>;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">we can write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;EE&nbsp;<B>of</B>&nbsp;AA&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;EE&nbsp;:=&nbsp;0.0;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 2005 (and indeed 
+in Ada 95 and Ada 83), the syntax for a loop is given by</div>
+<div class="Indented1">loop_statement&nbsp;::=&nbsp;[<I>loop</I>_statement_identifier&nbsp;<SPAN Class="swiss">:</SPAN>]<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[iteration_scheme]&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sequence_of_statements<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;loop</B>&nbsp;[<I>loop</I>_identifier]&nbsp;<SPAN Class="swiss">;</SPAN></div>
+<div class="Indented1">iteration_scheme&nbsp;::=&nbsp;<B>while</B>&nbsp;condition<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<B>for</B>&nbsp;loop_parameter_specification</div>
+<div class="Indented1">loop_parameter_specification&nbsp;::=&nbsp;defining_identifier&nbsp;<B>in</B>&nbsp;[<B>reverse</B>]&nbsp;discrete_subtype_definition</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is all quite familiar. 
+In Ada 2012, the syntax for loop_statement remains the same but iteration_scheme 
+is extended to give</div>
+<div class="Indented1">iteration_scheme&nbsp;::=&nbsp;<B>while</B>&nbsp;condition<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<B>for</B>&nbsp;loop_parameter_specification<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<B>for</B>&nbsp;iterator_specification</div>
+<div class="Normal" style="margin-bottom: 0.4em">Thus the new form iterator_specification 
+is introduced which is</div>
+<div class="Indented1">iterator_specification&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;defining_identifier&nbsp;<B>in</B>&nbsp;[<B>reverse</B>]&nbsp;<I>iterator</I>_name<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;defining_identifier&nbsp;[<SPAN Class="swiss">:</SPAN>&nbsp;subtype_indication]&nbsp;<B>of</B>&nbsp;[<B>reverse</B>]&nbsp;<I>iterable</I>_name</div>
+<div class="Normal">The first production defines a <I>generalized iterator</I> 
+whereas the second defines an <I>array component iterator</I> or a <I>container 
+element iterator</I>. For the moment we will just consider the second 
+production which has <B>of</B> rather than <B>in</B>. The <I>iterable</I>_name 
+can refer to an array or a container. Suppose it is an array such as 
+<SPAN Class="swiss">A</SPAN> or <SPAN Class="swiss">AA</SPAN> in the 
+examples above. <A NAME="I1439"></A><A NAME="I1440"></A><A NAME="I1441"></A><A NAME="I1442"></A><A NAME="I1443"></A><A NAME="I1444"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">We note that we can 
+optionally give the subtype of the loop parameter. Suppose that the type 
+<SPAN Class="swiss">A</SPAN> is given as</div>
+<div class="SwissExamples"><B>type</B>&nbsp;A&nbsp;<B>is&nbsp;array</B>&nbsp;(index)&nbsp;<B>of</B>&nbsp;Integer;</div>
+<div class="Normal">then the subtype of the loop parameter (<SPAN Class="swiss">E</SPAN> 
+in the example) if not given will just be that of the component which 
+in this case is simply <SPAN Class="swiss">Integer</SPAN>. If we do give 
+the subtype of the loop parameter then it must cover that of the component. 
+This could be useful with tagged types.</div>
+<div class="Normal">Note carefully that the loop parameter does not have 
+the type of the index of the array as in the traditional loop but has 
+the type of the component of the array. So on each iteration it denotes 
+a component of the array. It iterates over all the components of the 
+array as expected. If <B>reverse</B> is not specified then the components 
+are traversed in ascending index order whereas if <B>reverse</B> is specified 
+then the order is descending. In the case of a multidimensional array 
+then the index of the last dimension varies fastest matching the behaviour 
+of <SPAN Class="swiss">AA</SPAN> in the expanded traditional version 
+as shown (and which incidentally is the order used in streaming). However, 
+if the array has convention Fortran then it is the index of the first 
+dimension that varies fastest both in the case of the loop and in streaming.</div>
+<div class="Normal">There are other obvious rules. If the array <SPAN Class="swiss">A</SPAN> 
+or <SPAN Class="swiss">AA</SPAN> is constant then the loop parameter 
+<SPAN Class="swiss">E</SPAN> or <SPAN Class="swiss">EE</SPAN> is also 
+constant. So it all works much as expected. But do note carefully the 
+use of the reserved word <B>of</B> (rather than <B>in</B>) which distinguishes 
+this kind of iteration from the traditional form using an index.</div>
+<div class="Normal" style="margin-bottom: 0.4em">As another array example 
+suppose we have the following</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Artwin&nbsp;<B>is&nbsp;array</B>&nbsp;(1&nbsp;..&nbsp;N)&nbsp;<B>of</B>&nbsp;Twin;</div>
+<div class="SwissExamples">The_Array:&nbsp;Artwin;</div>
+<div class="Normal" style="margin-bottom: 0.4em">which is similar to 
+the list example above. In the traditional way we might write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;K&nbsp;<B>in</B>&nbsp;Artwin'Range&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Is_Prime(The_Array(K).P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The_Array(K).Q&nbsp;:=&nbsp;The_Array(K).Q&nbsp;+&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Using the new notation 
+this can be simplified to</div>
+<div class="SwissExamples"><B>for</B>&nbsp;E:&nbsp;Twin&nbsp;<B>of</B>&nbsp;The_Array&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Is_Prime(E.P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E.Q&nbsp;:=&nbsp;E.Q&nbsp;+&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">where we have added 
+the subtype <SPAN Class="swiss">Twin</SPAN> to clarify the situation. 
+Similarly, in the simple list example we could write&nbsp;</div>
+<div class="SwissExamples"><B>for</B>&nbsp;E:&nbsp;Twin&nbsp;<B>of</B>&nbsp;The_List&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Is_Prime(E.P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E.Q&nbsp;:=&nbsp;E.Q&nbsp;+&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">Note the beautiful similarity between these two examples. 
+The only lexical difference is that <SPAN Class="swiss">The_Array</SPAN> 
+is replaced by <SPAN Class="swiss">The_List</SPAN> showing that arrays 
+and containers can be treated equivalently.</div>
+<div class="Normal">We now have to consider how the above can be considered 
+as behaving like the original text which involves <SPAN Class="swiss">C</SPAN> 
+of type <SPAN Class="swiss">Cursor</SPAN>, and subprograms <SPAN Class="swiss">First</SPAN>, 
+<SPAN Class="swiss">No_Element</SPAN>, <SPAN Class="swiss">Element</SPAN>, 
+<SPAN Class="swiss">Replace_Element</SPAN> and <SPAN Class="swiss">Next</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This magic is performed 
+by several new features. One is a generic package whose specification 
+is <A NAME="I1445"></A><A NAME="I1446"></A><A NAME="I1447"></A><A NAME="I1448"></A></div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Has_Element(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>package</B>&nbsp;Ada.Iterator_Interfaces&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Pure(Iterator_Interfaces);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Forward_Iterator&nbsp;<B>is&nbsp;limited&nbsp;interface</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;First(Object:&nbsp;Forward_Iterator)&nbsp;<B>return</B>&nbsp;Cursor&nbsp;<B>is</B>&nbsp;<B>abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Next(Object:&nbsp;Forward_Iterator;&nbsp;Position:&nbsp;Cursor)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Cursor&nbsp;<B>is</B>&nbsp;<B>abstract</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Reversible_Iterator&nbsp;<B>is&nbsp;limited&nbsp;interface&nbsp;and</B>&nbsp;Forward_Iterator;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Last(Object:&nbsp;Reversible_Iterator)&nbsp;<B>return</B>&nbsp;Cursor&nbsp;<B>is</B>&nbsp;<B>abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Previous(Object:&nbsp;Reversible_Iterator;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor&nbsp;<B>is</B>&nbsp;<B>abstract</B>;</div>
+<div class="SwissExamples"><B>end</B>&nbsp;Ada.Iterator_Interfaces;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This generic package 
+is used by the container packages such as <SPAN Class="swiss">Ada.Containers.Doubly_Linked_Lists</SPAN>. 
+Its actual parameters corresponding to the formal parameters <SPAN Class="swiss">Cursor</SPAN> 
+and <SPAN Class="swiss">Has_Element</SPAN> come from the container which 
+includes an instantiation of <SPAN Class="swiss">Ada.Iterator_Interfaces</SPAN>. 
+The instantiation then exports the various required types and functions. 
+Thus in outline the relevant part of the list container now looks like</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Iterator_Interfaces;<BR>
+<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Ada.Containers.Doubly_Linked_Lists&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;List&nbsp;<B>is&nbsp;tagged&nbsp;private</B>&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Cursor&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Has_Element(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;List_Iterator_Interfaces&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Ada.Iterator_Interfaces(Cursor,&nbsp;Has_Element);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Ada.Containers.Doubly_Linked_Lists;</div>
+<div class="Normal">The entities exported from the generic package <SPAN Class="swiss">Ada.Iterator_Interfaces</SPAN> 
+are the two interfaces <SPAN Class="swiss">Forward_Iterator</SPAN> and 
+<SPAN Class="swiss">Reversible_Iterator</SPAN>. The interface <SPAN Class="swiss">Forward_Iterator</SPAN> 
+has functions <SPAN Class="swiss">First</SPAN> and <SPAN Class="swiss">Next</SPAN> 
+whereas the <SPAN Class="swiss">Reversible_Iterator</SPAN> (which is 
+itself descended from <SPAN Class="swiss">Forward_Iterator</SPAN>) has 
+functions <SPAN Class="swiss">First</SPAN> and <SPAN Class="swiss">Next</SPAN> 
+inherited from <SPAN Class="swiss">Forward_Iterator</SPAN> plus additional 
+functions <SPAN Class="swiss">Last</SPAN> and <SPAN Class="swiss">Previous</SPAN>.<A NAME="I1449"></A><A NAME="I1450"></A> 
+<A NAME="I1451"></A><A NAME="I1452"></A></div>
+<div class="Normal">Note carefully that a <SPAN Class="swiss">Forward_Iterator</SPAN> 
+can only go forward but a <SPAN Class="swiss">Reversible_Iterator</SPAN> 
+can go both forward and backward. Hence it is reversible and not <SPAN Class="swiss">Reverse_Iterator</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The container packages 
+also contain some new functions which return objects of the type <SPAN Class="swiss">Reversible_Iterator'Class</SPAN> 
+or <SPAN Class="swiss">Forward_Iterator'Class</SPAN>. In the case of 
+the list container they are</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Iterate(Container:&nbsp;<B>in</B>&nbsp;List)&nbsp;<B>return</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;List_Iterator_Interfaces.Reversible_Iterator'Class;<BR>
+<B>function</B>&nbsp;Iterate(Container:&nbsp;<B>in</B>&nbsp;List;&nbsp;Start:&nbsp;<B>in</B>&nbsp;Cursor)&nbsp;<B>return</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;List_Iterator_Interfaces.Reversible_Iterator'Class;</div>
+<div class="Normal">These are new functions and are not to be confused 
+with the existing procedures <SPAN Class="swiss">Iterate</SPAN> and <SPAN Class="swiss">Reverse_Iterate</SPAN> 
+which enable a subprogram to be applied to every element of the list 
+but are somewhat cumbersome to use as shown earlier. The function <SPAN Class="swiss">Iterate</SPAN> 
+with only one parameter is used for iterating over the whole list whereas 
+that with two parameters iterates starting with the cursor value equal 
+to <SPAN Class="swiss">Start</SPAN>.<A NAME="I1453"></A><A NAME="I1454"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose that the 
+list container is instantiated with the type <SPAN Class="swiss">Twin</SPAN> 
+followed by the declaration of a list</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Twin_Lists&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Ada.Containers.Doubly_Linked_Lists(Element_Type&nbsp;=&gt;&nbsp;Twin);</div>
+<div class="SwissExamples">The_List:&nbsp;Twin_Lists.List;</div>
+<div class="Normal" style="margin-bottom: 0.4em">So we have now declared 
+<SPAN Class="swiss">The_List</SPAN> which is a list of elements of the 
+type <SPAN Class="swiss">Twin</SPAN>. Suppose we want to do something 
+to every element of the list. As we have seen we might write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;E:&nbsp;Twin&nbsp;<B>of</B>&nbsp;The_List&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;to&nbsp;E</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, it might be 
+wise at this point to introduce the other from of iterator_specification 
+which is</div>
+<div class="Indented1">defining_identifier&nbsp;<B>in</B>&nbsp;[<B>reverse</B>]&nbsp;<I>iterator</I>_name</div>
+<div class="Normal" style="margin-bottom: 0.4em">This defines a generalized 
+iterator and uses the traditional <B>in</B> rather than <B>of</B> used 
+in the new array component and container element iterators. Using this 
+generalized form we can write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;The_List.Iterate&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;via&nbsp;cursor&nbsp;C</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the body of the 
+loop we manipulate the elements using cursors in a familiar way. The 
+reader might wonder why there are these two styles, one using <B>in</B> 
+and the other using <B>of</B>. The answer is that the generalized iterator 
+is more flexible; for example it does not need to iterate over the whole 
+structure. If we write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;The_List.Iterate(S)&nbsp;<B>loop</B></div>
+<div class="Normal" style="margin-bottom: 0.4em">then the loop starts 
+with the cursor value equal to <SPAN Class="swiss">S</SPAN>; this is 
+using the version of the function <SPAN Class="swiss">Iterate</SPAN> 
+with two parameters. On the other hand, the new array component and container 
+element iterators using <B>of</B> are more succinct where applicable.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The generalized iterators 
+for the list container use reversible iterators because the functions 
+<SPAN Class="swiss">Iterate</SPAN> return a value of the type <SPAN Class="swiss">Reversible_Iterator'Class</SPAN>. 
+The equivalent code generated uses the functions <SPAN Class="swiss">First</SPAN> 
+and <SPAN Class="swiss">Next</SPAN> exported from <SPAN Class="swiss">List_Iterator_Interfaces</SPAN> 
+created by the instantiation of <SPAN Class="swiss">Ada.Iterator_Interfaces</SPAN> 
+with the actual parameters <SPAN Class="swiss">The_List.Cursor</SPAN> 
+and <SPAN Class="swiss">The_List.Has_Element</SPAN>. The code then behaves 
+much as if it were (see paragraph 13/3 of subclause <A HREF="http://www.ada-auth.org/standards/12rm/html/RM-5-5-2.html">5.5.2 
+of the RM</A>)</div>
+<div class="SwissExamples">C:&nbsp;The_List.Cursor;<BR>
+E:&nbsp;Twin;<BR>
+F:&nbsp;Forward_Iterator'Class&nbsp;:=&nbsp;The_List.Iterate;<BR>
+...<BR>
+C&nbsp;:=&nbsp;F.First;<BR>
+<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>exit&nbsp;when&nbsp;not</B>&nbsp;The_List.Has_Element(C);<BR>
+&nbsp;&nbsp;&nbsp;E&nbsp;:=&nbsp;The_List.Element(C);<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;to&nbsp;E</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;C&nbsp;:=&nbsp;F.Next(C);<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">Of course, the user does not need to know all this 
+in order to use the construction. Note that the functions <SPAN Class="swiss">First</SPAN> 
+and <SPAN Class="swiss">Next</SPAN> used here (which operate on the class 
+<SPAN Class="swiss">Forward_Iterator&nbsp;</SPAN>and are inherited by the 
+class <SPAN Class="swiss">Reversible_Iterator</SPAN>) are not to be confused 
+with the existing functions <SPAN Class="swiss">First</SPAN> and <SPAN Class="swiss">Next</SPAN> 
+which act on the <SPAN Class="swiss">List</SPAN> and <SPAN Class="swiss">Cursor</SPAN> 
+respectively. The existing functions are retained for compatibility and 
+for use in complex situations.</div>
+<div class="Normal">It should also be noted that the initialization of 
+<SPAN Class="swiss">F</SPAN> is legal since the result returned by <SPAN Class="swiss">Iterate</SPAN> 
+is a value of <SPAN Class="swiss">Reversible_Iterator'Class</SPAN> and 
+this is a subclass of <SPAN Class="swiss">Forward_Iterator'Class</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we had written</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;<B>reverse</B>&nbsp;The_List.Iterate<BR>
+<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;via&nbsp;cursor&nbsp;C</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">then the notional code would have been similar but 
+have used the functions <SPAN Class="swiss">Last</SPAN> and <SPAN Class="swiss">Previous</SPAN> 
+rather than <SPAN Class="swiss">First</SPAN> and <SPAN Class="swiss">Next</SPAN>.</div>
+<div class="Normal">Another point is that the function call <SPAN Class="swiss">F.First</SPAN> 
+will deliver the very first cursor value if we had written <SPAN Class="swiss">The_List.Iterate</SPAN> 
+but the value <SPAN Class="swiss">S</SPAN> if we had written <SPAN Class="swiss">The_List.Iterate(S)</SPAN>. 
+Remember that we are dealing with interfaces so there is nothing weird 
+here; the two functions <SPAN Class="swiss">Iterate</SPAN> return different 
+types in the class and these have different functions <SPAN Class="swiss">First</SPAN> 
+so the notional generated code calls different functions.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we use the form</div>
+<div class="SwissExamples"><B>for</B>&nbsp;E:&nbsp;Twin&nbsp;<B>of</B>&nbsp;The_List&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;to&nbsp;E</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then the generated 
+code is essentially the same. However, since we have not explicitly mentioned 
+an iterator, a default one has to be used. This is given by one of several 
+new aspects of the type <SPAN Class="swiss">List</SPAN> which actually 
+now is</div>
+<div class="SwissExamples"><B>type</B>&nbsp;List&nbsp;<B>is&nbsp;tagged&nbsp;private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Constant_Indexing&nbsp;=&gt;&nbsp;Constant_Reference,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Variable_Indexing&nbsp;=&gt;&nbsp;Reference,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default_Iterator&nbsp;=&gt;&nbsp;Iterate,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Iterator_Element&nbsp;=&gt;&nbsp;Element_Type;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The aspect we need 
+at the moment is the one called <SPAN Class="swiss">Default_Iterator</SPAN> 
+which as we see has the value <SPAN Class="swiss">Iterate</SPAN> (this 
+is the one without the extra parameter). So the iterator <SPAN Class="swiss">F</SPAN> 
+is initialized with this default value and once more we get<A NAME="I1455"></A><A NAME="I1456"></A></div>
+<div class="SwissExamples">C:&nbsp;The_List.Cursor;<BR>
+E:&nbsp;Twin;<BR>
+F:&nbsp;Forward_Iterator'Class&nbsp;:=&nbsp;The_List.Iterate;<BR>
+...</div>
+<div class="Normal">The use of the other aspects will be explained in 
+a moment.</div>
+<div class="Normal">Lists, vectors and ordered maps and sets can be iterated 
+in both directions. They all have procedures <SPAN Class="swiss">Reverse_Iterate 
+</SPAN>as well as <SPAN Class="swiss">Iterate</SPAN> and the two new 
+functions <SPAN Class="swiss">Iterate</SPAN> return a value of <SPAN Class="swiss">Reversible_Iterator'Class</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, it might be 
+recalled that the notion of iterating in either direction makes no sense 
+in the case of hashed maps and hashed sets. Consequently, there is no 
+procedure <SPAN Class="swiss">Reverse_Iterate</SPAN> for hashed maps 
+and hashed sets and there is only one new function <SPAN Class="swiss">Iterate</SPAN> 
+which (in the case of hashed maps) is</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Iterate(Container:&nbsp;<B>in</B>&nbsp;Map)&nbsp;<B>return</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Map_Iterator_Interfaces.Forward_Iterator'Class;</div>
+<div class="Normal">and we note that this function returns a value of 
+<SPAN Class="swiss">Forward_Iterator'Class</SPAN> rather than <SPAN Class="swiss">Reversible_Iterator'Class 
+</SPAN>in the case of lists, vectors, ordered maps, and ordered sets.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Naturally, we cannot 
+put <B>reverse</B> in an iterator over hashed maps and hashed sets nor 
+can we give a starting value. So the following are both illegal</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;The_Hash_Map.Iterate(S)&nbsp;<B>loop</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="SwissExamples"><B>for</B>&nbsp;E&nbsp;<B>of&nbsp;reverse</B>&nbsp;The_Hash_Map&nbsp;<B>loop</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal">The above should have given the reader a fair understanding 
+of the mechanisms involved in setting up the loops using the new iterator 
+forms. We now turn to considering the bodies of the loops, that is the 
+code marked &quot;<SPAN Class="roman"><I>do something via cursor C</I></SPAN>&quot; 
+or &quot;<SPAN Class="roman"><I>do something to E</I></SPAN>&quot;.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the Ada 2005 example 
+we wrote</div>
+<div class="SwissExamples"><B>if</B>&nbsp;Is_Prime(E.P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;Replace_Element(The_List,&nbsp;C,&nbsp;(E.P,&nbsp;E.Q&nbsp;+&nbsp;X));<BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">It is somewhat tedious 
+having to write <SPAN Class="swiss">Replace_Element</SPAN> when using 
+a container whereas in the case of an array we might directly write</div>
+<div class="SwissExamples"><B>if</B>&nbsp;Is_Prime(A(I).P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;A(I).Q&nbsp;:=&nbsp;A(I).Q&nbsp;+&nbsp;X;<BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The trouble is that 
+<SPAN Class="swiss">Replace_Element</SPAN> copies the whole new element 
+whereas in the array example we just update the one component. This doesn't 
+matter too much in a case where the components are small such as <SPAN Class="swiss">Twin</SPAN> 
+but if they were giant records it would clearly be a problem. To overcome 
+this Ada 2005 includes a procedure <SPAN Class="swiss">Update_Element</SPAN> 
+thus</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Update_Element(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Element:<B>&nbsp;in&nbsp;out</B>&nbsp;Element_Type));</div>
+<div class="Normal" style="margin-bottom: 0.4em">To use this we have 
+to write a procedure <SPAN Class="swiss">Do_It</SPAN> say thus</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Do_It(E:&nbsp;<B>in&nbsp;out</B>&nbsp;Twin)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;E.Q&nbsp;:=&nbsp;E.Q&nbsp;+&nbsp;X;<BR>
+<B>end</B>&nbsp;Do_It;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then</div>
+<div class="SwissExamples"><B>if</B>&nbsp;Is_Prime(E.P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;Update_Element(The_List,&nbsp;C,&nbsp;Do_It'Access);<BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This works fine because 
+<SPAN Class="swiss">E</SPAN> is passed by reference and no giant copying 
+occurs. However, the downside is that the distinct procedure <SPAN Class="swiss">Do_It</SPAN> 
+has to be written so that the overall text is something like</div>
+<div class="SwissExamples"><B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Do_It(E:&nbsp;<B>in&nbsp;out</B>&nbsp;Twin)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E.Q&nbsp;:=&nbsp;E.Q&nbsp;+&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Do_It;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Is_Prime(E.P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Update_Element(The_List,&nbsp;C,&nbsp;Do_It'Access);<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end</B>;</div>
+<div class="Normal">which is a bit tedious.</div>
+<div class="Normal" style="margin-bottom: 0.4em">But of course, the 
+text in the body of <SPAN Class="swiss">Do_It</SPAN> is precisely what 
+we want to say. Using the historic concepts of left and right hand values, 
+the problem is that <SPAN Class="swiss">The_List(C).Element</SPAN> cannot 
+be used as a left hand value by writing for example</div>
+<div class="SwissExamples">The_List(C).Element.Q&nbsp;:=&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">The problem is overcome 
+in Ada 2012 using a little more magic by the introduction of generalized 
+reference types and various aspects. In particular we find that the containers 
+now include a type <SPAN Class="swiss">Reference_Type</SPAN> and a function 
+<SPAN Class="swiss">Reference</SPAN> which in the case of the list containers 
+are</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Reference_Type<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Element:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;Element_Type)&nbsp;<B>is</B>&nbsp;<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Implicit_Dereference&nbsp;=&gt;&nbsp;Element;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Reference(Container:&nbsp;<B>aliased&nbsp;in&nbsp;out</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Reference_Type;</div>
+<div class="Normal">Note the aspect <SPAN Class="swiss">Implicit_Dereference</SPAN> 
+applied to the type <SPAN Class="swiss">Reference_Type</SPAN> with discriminant 
+<SPAN Class="swiss">Element</SPAN>.<A NAME="I1457"></A> <A NAME="I1458"></A></div>
+<div class="Normal">There is also a type <SPAN Class="swiss">Constant_Reference_Type</SPAN> 
+and a function <SPAN Class="swiss">Constant_Reference</SPAN> for use 
+when the context demands read-only access.</div>
+<div class="Normal">The alert reader will note the inclusion of <B>aliased</B> 
+for the parameter <SPAN Class="swiss">Container</SPAN> of the function 
+<SPAN Class="swiss">Reference</SPAN>. As discussed in Section <A HREF="Rat12-4-2.html">4.2</A> 
+on subprogram parameters, this ensures that the parameter is passed by 
+reference (it always is for tagged types anyway); it also permits us 
+to apply <SPAN Class="swiss">'Access</SPAN> to the parameter <SPAN Class="swiss">Container</SPAN> 
+within the function and to return that access value.</div>
+<div class="Normal">It might be helpful to say a few words about the 
+possible implementation of <SPAN Class="swiss">Reference</SPAN> and <SPAN Class="swiss">Reference_Type</SPAN> 
+although these need not really concern the user.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The important part 
+of the type <SPAN Class="swiss">Reference_Type</SPAN> is its access discriminant. 
+The private part might contain housekeeping stuff but we can ignore that. 
+So in essence it is simply a record with just one component being the 
+access discriminant</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Reference_Type<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(E:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;Element_Type)&nbsp;<B>is</B>&nbsp;<B>null&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and the body of the 
+function might be</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Reference(Container:&nbsp;<B>aliased&nbsp;in&nbsp;out</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Reference_Type&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;(E&nbsp;=&gt;&nbsp;Container.Element(Position)'Access);<BR>
+<B>end</B>&nbsp;Reference;</div>
+<div class="Normal">The rules regarding parameters with <B>aliased</B> 
+(which we gloss over) ensure that no accessibility problems should arise. 
+Note also that it is important that the discriminant of <SPAN Class="swiss">Reference_Type</SPAN> 
+is an access discriminant since the lifetime of the discriminant is then 
+just that of the return object.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Various aspects are 
+given with the type <SPAN Class="swiss">List</SPAN> which as shown earlier 
+now is</div>
+<div class="SwissExamples"><B>type</B>&nbsp;List&nbsp;<B>is&nbsp;tagged&nbsp;private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Constant_Indexing&nbsp;=&gt;&nbsp;Constant_Reference,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Variable_Indexing&nbsp;=&gt;&nbsp;Reference,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default_Iterator&nbsp;=&gt;&nbsp;Iterate,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Iterator_Element&nbsp;=&gt;&nbsp;Element_Type;</div>
+<div class="Normal">The important aspect here is <SPAN Class="swiss">Variable_Indexing</SPAN>. 
+If this aspect is supplied then in essence an object of the type can 
+be used in a left hand context by invoking the function given as the 
+value of the aspect. In the case of <SPAN Class="swiss">The_List</SPAN> 
+this is the function <SPAN Class="swiss">Reference</SPAN> which returns 
+a value of type <SPAN Class="swiss">Reference_Type</SPAN>. Moreover, 
+this reference type has a discriminant which is of <B>access</B> <SPAN Class="swiss">Element_Type</SPAN> 
+and the aspect <SPAN Class="swiss">Implicit_Dereference</SPAN> with value 
+<SPAN Class="swiss">Element</SPAN> and so gives direct access to the 
+value of type <SPAN Class="swiss">Element</SPAN>.<A NAME="I1459"></A> 
+<A NAME="I1460"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">We can now by stages 
+transform the raw text. So using the cursor form we can start with</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;The_List.Iterator&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Is_Prime(The_List.Reference(C).Element.<B>all</B>.P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The_List.Reference(C).Element.<B>all</B>.Q&nbsp;:=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The_List.Reference(C).Element.<B>all</B>.Q&nbsp;+&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">This is the full blooded version even down to using 
+<B>all</B>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Using the dereferencing 
+with the aspect <SPAN Class="swiss">Implicit_Dereference</SPAN> we can 
+omit the mention of the discriminant <SPAN Class="swiss">Element</SPAN> 
+and the <B>all</B> to give</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;The_List.Iterator&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Is_Prime(The_List.Reference(C).P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The_List.Reference(C).Q&nbsp;:=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The_List.Reference(C).Q&nbsp;+&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Remember that <SPAN Class="swiss">Reference</SPAN> 
+is a function with two parameters. It might be clearer to write this 
+without prefix notation which gives</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;Iterator(The_List)&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Is_Prime(Reference(The_List,&nbsp;C).P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Reference(The_List,&nbsp;C).Q&nbsp;:=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Reference(The_List,&nbsp;C).Q&nbsp;+&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now because the aspect 
+<SPAN Class="swiss">Variable_Indexing</SPAN> for the type <SPAN Class="swiss">List</SPAN> 
+has value <SPAN Class="swiss">Reference</SPAN>, the explicit calls of 
+<SPAN Class="swiss">Reference</SPAN> can be omitted to give</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;The_List.Iterator&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Is_Prime(The_List(C).P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The_List(C).Q&nbsp;:=&nbsp;The_List(C).Q&nbsp;+&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">It should now be clear 
+that the cursor <SPAN Class="swiss">C</SPAN> is simply acting as an index 
+into <SPAN Class="swiss">The_List</SPAN>. We can compare this text with</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;The_Array'Range&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Is_Prime(The_Array(C).P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The_Array(C).Q&nbsp;:=&nbsp;The_Array(C).Q&nbsp;+&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">which shows that <SPAN Class="swiss">'Range</SPAN> 
+is analogous to <SPAN Class="swiss">.Iterator</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Finally, to convert 
+to the element form using <SPAN Class="swiss">E</SPAN> we just replace 
+<SPAN Class="swiss">The_List(C)</SPAN> by <SPAN Class="swiss">E</SPAN> 
+to give</div>
+<div class="SwissExamples"><B>for</B>&nbsp;E&nbsp;<B>of</B>&nbsp;The_List&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Is_Prime(E.P)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E.Q&nbsp;:=&nbsp;E.Q&nbsp;+&nbsp;X;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">The reader might like to consider the transformations 
+in the reverse direction to see how the final succinct form transforms 
+to the expanded form using the various aspects. This is indeed what the 
+compiler has to do.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This underlying technique 
+which transforms the sequence of statements of the container element 
+iterator can be used quite generally. For example, we might not want 
+to iterate over the whole container but just manipulate a particular 
+element given by a cursor <SPAN Class="swiss">C</SPAN>. Rather than calling 
+<SPAN Class="swiss">Update_Element</SPAN> with another subprogram <SPAN Class="swiss">Do_Something</SPAN>, 
+we can write</div>
+<div class="SwissExamples">The_List.Reference(C).Q&nbsp;:=&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">or simply</div>
+<div class="SwissExamples">The_List(C).Q&nbsp;:=&nbsp;...</div>
+<div class="Normal">Moreover, although the various aspects were introduced 
+into Ada 2012 primarily to simplify the use of containers they can be 
+used quite generally.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The reader may feel 
+that these new features violate the general ideas of a language with 
+simple building blocks. However, it should be remembered that even the 
+traditional form of loop such as</div>
+<div class="SwissExamples"><B>for</B>&nbsp;Index&nbsp;<B>in</B>&nbsp;T&nbsp;<B>range</B>&nbsp;L&nbsp;..&nbsp;U&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>statements</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">is really simply a 
+shorthand for</div>
+<div class="SwissExamples"><B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;Index:&nbsp;T;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;L&nbsp;&lt;=&nbsp;U&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;:=&nbsp;L;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>statements</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>exit&nbsp;when</B>&nbsp;Index&nbsp;=&nbsp;U;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Index&nbsp;:=&nbsp;T'Succ(Index);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;loop</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end</B>;</div>
+<div class="Normal">Without such shorthand, programming would be very 
+tedious and very prone to errors. The features described in this section 
+are simply a further step to make programming safer and simpler.</div>
+<div class="Normal">Further examples of the use of these new features 
+with containers will be given in Section <A HREF="Rat12-8-3.html">8.3</A>.</div>
+<div class="Normal">The mechanisms discussed above rely on a number of 
+new aspects, a summary of which follows and might be found useful. It 
+is largely based on extracts from the RM.</div>
+<div class="Indented1"><SPAN STYLE="font-size: 125%"><I><B>Dereferencing</B></I></SPAN></div>
+<div class="Indented1">The following aspect may be specified for a discriminated 
+type <SPAN Class="swiss">T</SPAN>.</div>
+<div class="Indented1"><SPAN Class="swiss">Implicit_Dereference</SPAN> 
+&ndash; This aspect is specified by a name that denotes an access discriminant 
+of the type <SPAN Class="swiss">T</SPAN>. <A NAME="I1461"></A><A NAME="I1462"></A></div>
+<div class="Indented1">A type with a specified <SPAN Class="swiss">Implicit_Dereference</SPAN> 
+aspect is a <I>reference type</I>.<A NAME="I1463"></A> The <SPAN Class="swiss">Implicit_Dereference</SPAN> 
+aspect is inherited by descendants of type <SPAN Class="swiss">T</SPAN> 
+if not overridden.</div>
+<div class="Indented1">A generalized_reference denotes the object or 
+subprogram designated by the discriminant of the reference object.</div>
+<div class="Indented1"><SPAN STYLE="font-size: 125%"><I><B>Indexing</B></I></SPAN></div>
+<div class="Indented1">The following aspects may be specified for a tagged 
+type <SPAN Class="swiss">T</SPAN>.</div>
+<div class="Indented1"><SPAN Class="swiss">Constant_Indexing</SPAN> &ndash; 
+This aspect is specified by a name that denotes one or more functions 
+declared immediately within the same declaration list in which <SPAN Class="swiss">T</SPAN> 
+is declared. All such functions shall have at least two parameters, the 
+first of which is of type <SPAN Class="swiss">T</SPAN> or <SPAN Class="swiss">T'Class</SPAN>, 
+or is an access-to-constant parameter with designated type <SPAN Class="swiss">T</SPAN> 
+or <SPAN Class="swiss">T'Class</SPAN>. <A NAME="I1464"></A><A NAME="I1465"></A></div>
+<div class="Indented1"><SPAN Class="swiss">Variable_Indexing</SPAN> &ndash; 
+This aspect is specified by a name that denotes one or more functions 
+declared immediately within the same declaration list in which <SPAN Class="swiss">T</SPAN> 
+is declared. All such functions shall have at least two parameters, the 
+first of which is of type <SPAN Class="swiss">T</SPAN> or <SPAN Class="swiss">T'Class</SPAN>, 
+or is an access parameter with designated type <SPAN Class="swiss">T</SPAN> 
+or <SPAN Class="swiss">T'Class</SPAN>. All such functions shall have 
+a return type that is a reference type, whose reference discriminant 
+is of an access-to-variable type.} <A NAME="I1466"></A><A NAME="I1467"></A></div>
+<div class="Indented1">These aspects are inherited by descendants of 
+<SPAN Class="swiss">T</SPAN> (including <SPAN Class="swiss">T'Class</SPAN>). 
+The aspects shall not be overridden, but the functions they denote may 
+be.</div>
+<div class="Indented1">An <I>indexable container type</I> is a tagged 
+type with at least one of the aspects <SPAN Class="swiss">Constant_Indexing</SPAN> 
+or <SPAN Class="swiss">Variable_Indexing</SPAN> specified.<A NAME="I1468"></A> 
+</div>
+<div class="Normal">An important difference between <SPAN Class="swiss">Constant_Indexing</SPAN> 
+and <SPAN Class="swiss">Variable_Indexing</SPAN> is that the functions 
+for variable indexing must return a reference type so that it can be 
+used in left hand contexts such as the destination of an assignment. 
+Note that, in both cases, the name can denote several overloaded functions; 
+this is useful, for example, with maps to allow indexing both with cursors 
+and with keys.</div>
+<div class="Normal">Both <SPAN Class="swiss">Constant_Indexing</SPAN> 
+and <SPAN Class="swiss">Variable_Indexing</SPAN> can be provided since 
+the constant one might be more efficient whereas the variable one is 
+necessary in left hand contexts. But we are not obliged to give both, 
+just <SPAN Class="swiss">Variable_Indexing</SPAN> might be enough for 
+some applications.</div>
+<div class="Indented1"><SPAN STYLE="font-size: 125%"><I><B>Iterating</B></I></SPAN></div>
+<div class="Indented1">An iterator type is a type descended from the 
+<SPAN Class="swiss">Forward_Iterator</SPAN> interface.</div>
+<div class="Indented1">The following aspects may be specified for an 
+indexable container type <SPAN Class="swiss">T</SPAN>.</div>
+<div class="Indented1"><SPAN Class="swiss">Default_Iterator</SPAN> &ndash; 
+This aspect is specified by a name that denotes exactly one function 
+declared immediately within the same declaration list in which <SPAN Class="swiss">T</SPAN> 
+is declared, whose first parameter is of type <SPAN Class="swiss">T</SPAN> 
+or <SPAN Class="swiss">T'Class</SPAN> or an access parameter whose designated 
+type is type <SPAN Class="swiss">T</SPAN> or <SPAN Class="swiss">T'Class</SPAN>, 
+whose other parameters, if any, have default expressions, and whose result 
+type is an iterator type. This function is the <I>default iterator function</I> 
+for <SPAN Class="swiss">T</SPAN>.<A NAME="I1469"></A> <A NAME="I1470"></A><A NAME="I1471"></A></div>
+<div class="Indented1"><SPAN Class="swiss">Iterator_Element</SPAN> &ndash; 
+This aspect is specified by a name that denotes a subtype. This is the 
+<I>default element subtype</I> for <SPAN Class="swiss">T</SPAN>.<A NAME="I1472"></A> 
+<A NAME="I1473"></A><A NAME="I1474"></A></div>
+<div class="Indented1">These aspects are inherited by descendants of 
+type <SPAN Class="swiss">T</SPAN> (including <SPAN Class="swiss">T'Class</SPAN>).</div>
+<div class="Indented1">An <I>iterable container type</I> is an indexable 
+container type with specified <SPAN Class="swiss">Default_Iterator</SPAN> 
+and <SPAN Class="swiss">Iterator_Element</SPAN> aspects. <A NAME="I1475"></A></div>
+<div class="Indented1" style="margin-bottom: 0.4em">The <SPAN Class="swiss">Constant_Indexing</SPAN> 
+and <SPAN Class="swiss">Variable_Indexing</SPAN> aspects (if any) of 
+an iterable container type <SPAN Class="swiss">T</SPAN> shall denote 
+exactly one function with the following properties:</div>
+<div class="Indented2Bulleted">the result type of the function is covered 
+by the default element type of <SPAN Class="swiss">T</SPAN> or is a reference 
+type with an access discriminant designating a type covered by the default 
+element type of <SPAN Class="swiss">T</SPAN>;</div>
+<div class="Indented2Bulleted">the type of the second parameter of the 
+function covers the default cursor type for <SPAN Class="swiss">T</SPAN>;</div>
+<div class="Indented2Bulleted">if there are more than two parameters, 
+the additional parameters all have default expressions.&nbsp;</div>
+<div class="Indented1">These functions (if any) are the <I>default indexing 
+function</I>s for <SPAN Class="swiss">T</SPAN>. <A NAME="I1476"></A></div>
+<div class="Normal">The reader might care to check that the aspects used 
+in the examples above match these definitions and are used correctly. 
+Note for example that the <SPAN Class="swiss">Default_Iterator</SPAN> 
+and <SPAN Class="swiss">Iterator_Element</SPAN> aspects are only needed 
+if we use the <B>of</B> form of iteration (and both are needed in that 
+case, giving one without the other would be foolish).</div>
+<div class="Normal">This section has largely been about the use of iterators 
+with loop statements. However, there is one other use of them and that 
+is with quantified expressions which are also new to Ada 2012. Quantified 
+expressions were discussed in some detail in Section <A HREF="Rat12-3-4.html">3.4</A> 
+of the chapter on Expressions so all we need here is to consider a few 
+examples which should clarify the use of iterators.<A NAME="I1477"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Instead of</div>
+<div class="SwissExamples">B&nbsp;:=&nbsp;(<B>for&nbsp;all</B>&nbsp;K&nbsp;<B>in</B>&nbsp;A'Range&nbsp;=&gt;&nbsp;A(K)&nbsp;=&nbsp;0);</div>
+<div class="Normal" style="margin-bottom: 0.4em">which assigns true 
+to <SPAN Class="swiss">B</SPAN> if every component of the array <SPAN Class="swiss">A</SPAN> 
+has value <SPAN Class="swiss">0</SPAN>, we can instead write</div>
+<div class="SwissExamples">B&nbsp;:=&nbsp;(<B>for&nbsp;all</B>&nbsp;E&nbsp;<B>of</B>&nbsp;A&nbsp;&nbsp;=&gt;&nbsp;E&nbsp;=&nbsp;0);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Similarly, instead 
+of</div>
+<div class="SwissExamples">B&nbsp;:=&nbsp;(<B>for&nbsp;some</B>&nbsp;K&nbsp;<B>in</B>&nbsp;A'Range&nbsp;=&gt;&nbsp;A(K)&nbsp;=&nbsp;0);</div>
+<div class="Normal" style="margin-bottom: 0.4em">which assigns true 
+to <SPAN Class="swiss">B</SPAN> if some component of the array <SPAN Class="swiss">A</SPAN> 
+has value <SPAN Class="swiss">0</SPAN>, we can instead write</div>
+<div class="SwissExamples">B&nbsp;:=&nbsp;(<B>for&nbsp;some</B>&nbsp;E&nbsp;<B>of</B>&nbsp;A&nbsp;=&gt;&nbsp;E&nbsp;=&nbsp;0);</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the case of a multidimensional 
+array, instead of</div>
+<div class="SwissExamples">B&nbsp;:=&nbsp;(<B>for&nbsp;all</B>&nbsp;I&nbsp;<B>in</B>&nbsp;AA'Range(1)&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<B>for&nbsp;all</B>&nbsp;J&nbsp;<B>in</B>&nbsp;AA'Range(2)&nbsp;=&gt;&nbsp;AA(I,&nbsp;J)&nbsp;=&nbsp;0));</div>
+<div class="Normal" style="margin-bottom: 0.4em">we can write</div>
+<div class="SwissExamples">B&nbsp;:=&nbsp;(<B>for&nbsp;all</B>&nbsp;E&nbsp;<B>of</B>&nbsp;AA&nbsp;=&gt;&nbsp;E&nbsp;=&nbsp;0);</div>
+<div class="Normal">which iterates over all elements of the array <SPAN Class="swiss">AA</SPAN> 
+however many dimensions it has.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can also use these 
+forms with the list example. Suppose we are interested in checking whether 
+some element of the list has a prime component <SPAN Class="swiss">P</SPAN>. 
+We can write</div>
+<div class="SwissExamples">B&nbsp;:=&nbsp;(<B>for&nbsp;some</B>&nbsp;E&nbsp;<B>of</B>&nbsp;The_List&nbsp;=&gt;&nbsp;Is_Prime(E.P));</div>
+<div class="Normal" style="margin-bottom: 0.4em">or perhaps</div>
+<div class="SwissExamples">B&nbsp;:=&nbsp;(<B>for&nbsp;some</B>&nbsp;C&nbsp;<B>in</B>&nbsp;The_List.Iterator&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Is_Prime(The_List(C).P));</div>
+<div class="Normal">which uses the explicit iterator form.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-6-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-6-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

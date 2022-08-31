@@ -1,0 +1,836 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Two - Chapter 12
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-11.html> Previous </a> |
+<a href=rat95-p2-13.html> Next </a>
+<hr>
+
+
+
+<h1>
+12   Generics
+</h1>
+
+<p>
+There are a number of important improvements and extensions to the
+generic model in Ada 95.  The extensions are mainly concerned with
+providing appropriate new parameter mechanisms to match the additional
+functionality provided by tagged and other new types.  In addition
+problems with flaws in the contract model are cured.
+</p>
+<p>
+   The main changes are
+</p>
+<ul>
+<li>
+    A distinct formal notation (<>) is introduced that enables definite
+     and indefinite subtypes to be treated separately.  This cures a
+     major flaw in the contract model.  The (<>) notation is also used in
+     private types to indicate that they have unknown discriminants.
+<li>
+    There are new formal notations for modular and decimal types.
+<li>
+    The rules for access type matching are extended to accommodate the
+     additional forms of access types.
+<li>
+    There is a new formal notation indicating that the actual type must
+     be derived from a given type.  Moreover, in both this case and the
+     existing private formal notation, it is possible to indicate that
+     the type must be tagged.
+<li>
+    There is a new formal notation for package parameters.  The generic
+     actual parameter must be an instantiation of a given generic
+     package.
+<li>
+    Minor changes are that static subtype matching is now required for
+     array and access types, and that the order of evaluation of generic
+     actual and default parameters is not so rigidly specified.
+</ul>
+
+<h2>
+<a name=1>
+12.1  The Contract Model
+</a>
+</h2>
+
+<p>
+As mentioned in Part One, there are a number of new forms of generic
+parameter in Ada 95.  Some of these are introduced to correspond to new
+types such as tagged types, modular types and decimal types.  In addition
+there are new forms for derived types in general and for package
+parameters; these simplify program composition.  All these new forms were
+introduced in Part One and are discussed in detail in the following
+sections.
+</p>
+<p>
+   As was discussed in II.11, Ada 83 had a serious violation of the
+contract model because of the lack of distinction between unconstrained
+and constrained formal parameters.
+</p>
+<p>
+   The exact distinction is between subtypes for which objects can be
+declared (without giving any constraints directly or from an
+initialization) and those for which they cannot.  The former category
+covers scalar subtypes such as Integer, constrained array and record
+subtypes and unconstrained record subtypes which have default
+discriminants.  The term definite is introduced for these subtypes.
+</p>
+<p>
+   Ada 95 cures this flaw in the contract model by requiring that the
+formal parameter include an unknown discriminant part (<>) if an
+indefinite subtype is to be allowed as actual parameter.  In this case
+the body cannot use the subtype in a context requiring a definite
+subtype.
+</p>
+<p>
+   On the other hand the existing notation without (<>) now indicates
+that the actual parameter must be definite.
+</p>
+<p>
+   The two notations are illustrated by the following example
+<pre>
+   generic
+      type Key(<>) is private;
+      type Item    is private;
+   package Keyed_Index is ... end;
+</pre>
+</p>
+<p>
+   The subtype String, because it is an unconstrained array subtype,
+could be associated with Key, but not with Item.  Within the generic, Key
+must not be used to declare a component or uninitialized object.
+</p>
+<p>
+   This is an incompatibility as mentioned in I-4.4 but straightforward
+to detect and fix.  If existing instantiations fail to compile under Ada
+95, then the generic unit must be modified to specify that the relevant
+generic formal allows indefinite subtypes.
+</p>
+<p>
+   This new distinction between definite and indefinite parameters
+eliminates the primary source of situations in Ada 83 where an otherwise
+legal instantiation is made illegal by a particular usage pattern of a
+formal type within the body of the generic unit.  In other words this
+distinction eliminates the major gap in the generic contract model of Ada
+83.
+</p>
+<p>
+   Having plugged the major gap in the Ada 83 generic contract model, Ada
+95 goes further and ensures that the legality of an instantiation never
+depends on the parameter usage patterns present in the generic body.
+</p>
+<p>
+   This is achieved in various ways.  We have just seen how the addition
+of further information in the formal parameter enables a satisfactory
+distinction between usage patterns to be made in the case of definite and
+indefinite subtypes.
+</p>
+<p>
+   However, it is impracticable to impose all pattern matching
+requirements through the parameter matching rules.  Another approach is
+to impose certain restrictions in the generic body which in essence
+assume the "worst" regarding the possible instantiations.  An example is
+that if the generic parameter is nonlimited then all the components in an
+extension of it also have to be nonlimited.  This rule is checked in the
+instance.  For further details of this and other ways in which the
+contract is ensured see [RM95 12.3]
+</p>
+<p>
+   The general principle is to assume the "best" in the generic
+specification and then to check the assumptions again at the
+instantiation, and to assume the "worst" in the body so that legality
+does not depend upon the instantiation.  This of course means that full
+freedom is not possible in the body but the constraints will not
+generally be found irksome.  A common workaround is to move material from
+the generic body into the private part.
+</p>
+<p>
+   In conclusion, a tight contract model has several desirable
+properties.  It allows implementations to share generics more easily, it
+leads to the early detection of programming errors, and it eliminates the
+need to recheck all existing instantiations when a new body is compiled.
+Ada 95 strengthens the contract model by requiring that the specification
+of a generic formal private type indicate whether a corresponding actual
+may be an unconstrained composite subtype.  This simplifies the checking
+required when a new generic body is compiled, since its legality will not
+depend on the nature of the existing instantiations.
+</p>
+<p>
+   As pointed out in [DoD 90] in the discussion of Study Topic S4.4-B(2),
+both tight and loose contract models are desirable, each for its own
+reasons.  This tension has been resolved in Ada 95, by specifying that
+certain checks in the generic specification are only performed at
+instantiation time.
+</p>
+<p>
+   Our general goal has been to aim towards the ideal situation whereby
+within the body of the generic, all checks are performed when the generic
+body is compiled, and these checks fail if any possible instantiation
+could fail the checks.  This goal has generally been achieved, (although
+some errors in the instance are detected at runtime; an example is the
+use of the Access attribute, see 12.3).  Ada 95 thus achieves the prime
+goals associated with a tight contract model, and yet still provides the
+flexibility required to use generics to their best advantage.
+</p>
+<p>
+   Improving the contract model eases the problems of code sharing for
+those implementations that use this technique.  However, it should be
+noted that many of the applications of generics where code sharing seemed
+important can now be done using other techniques such as access to
+subprogram parameters and tagged types.  Moreover, we have not provided
+an explicit pragma as suggested by the Requirements to control whether
+code sharing should be used or not since an implementation can use the
+pragma Optimize as suggested in [AARM 2.8(27)].
+</p>
+
+<h2>
+<a name=2>
+12.2  Numeric Types
+</a>
+</h2>
+
+<p>
+Additional formal types are provided corresponding to unsigned integer
+types (modular types) and to decimal fixed point types as already mention
+in 3.3.
+</p>
+<p>
+   The modular types form a subclass of the integer types.  They have
+additional operations such as the logical operations that do not apply to
+all integer types.  As a consequence a signed integer type cannot match a
+formal modular type.  On the other hand modular types behave differently
+to signed integer types with regard to overflow since by definition they
+wrap around.  And so a modular type cannot match a formal signed integer
+type.
+</p>
+<p>
+   Similarly the decimal types form a subclass of the fixed point types.
+Again they are a distinct subclass to the ordinary fixed point types and
+one cannot match the other.  The reason is that an implementation is
+allowed to use a significantly different representation (such as packed
+decimal) for decimal types as opposed to ordinary fixed types; it would
+impose unacceptable inefficiencies on implementations using shared
+generic bodies to accommodate both kinds of actual via one kind of
+formal.
+</p>
+
+<h2>
+<a name=3>
+12.3  Access Types
+</a>
+</h2>
+
+<p>
+Access types are considerably extended in Ada 95 as discussed in 3.7.
+They may access general objects not created by allocators; they may be
+marked as constant and there are also access to subprogram types.
+Accordingly, the matching rules for generic access parameters are adapted
+to allow for the proper matching of these other forms.
+</p>
+<p>
+   For example if the formal type is
+<pre>
+   type A is access constant T;
+</pre>
+then the actual type must also be a general access type with the modifier
+constant.  Similarly, if the formal type is
+<pre>
+   type A is access all T;
+</pre>
+then the actual type must also be a general access type (with all but not
+constant) that has the type T as its accessed type.
+</p>
+<p>
+   In the case of access to subprogram types, the profiles of the formal
+and actual types have to be mode conformant (see 6.2).  This is the same
+category of conformance as for renaming of subprograms (not renaming
+bodies) and thus naturally continues the general model that generic
+parameter matching is renaming.
+</p>
+<p>
+   Note that there are restrictions on the use of the Access attribute in
+a generic body; these are different for access to subprogram and access
+to object types.  The objective is of course to ensure that an access
+cannot be created to an entity at an inner level.
+</p>
+<p>
+   In the case of an access to subprogram type, the access attribute is
+not allowed to be applied to a subprogram in a generic body if the access
+type is external to the generic unit because of worst case
+considerations.  A possible workaround is to move the declaration of the
+subprogram P to the private part and to declare a constant in the private
+part thus
+<pre>
+   P_Access: constant Global_Access_Type := P'Access;
+</pre>
+and this will then be checked in the instance of the specification.
+</p>
+<p>
+   In the case of access to object types a different approach is taken.
+The access attribute is allowed in a generic body but the check occurs
+dynamically if the access type is external to the body.  This check is
+therefore similar to that for anonymous access parameters and
+Program_Error is raised if it fails.
+</p>
+<p>
+   The different approach relates to the fact that anonymous access types
+are not allowed for subprogram parameters as discussed in 3.7.2.  Also
+the workaround applicable to access to subprogam types of moving the use
+of Access to the specification cannot usually be applied in the case of
+access to object types.
+</p>
+
+<h2>
+<a name=4>
+12.4  Derived Types
+</a>
+</h2>
+
+<p>
+The class-wide programming features of Ada 95 reduce the need to use
+generics to deal with different types derived from the same root type.
+However, class-wide programming does not address the important
+capability, only provided by generics, of defining a new data structure
+that is parameterized by one or more component types.  It is instructive
+to note that the object oriented programming languages C++, Eiffel, and
+Modula-3 all include some sort of generic or template mechanism in their
+latest incarnations.
+</p>
+<p>
+   A new kind of generic formal parameter is provided for derived types.
+As mentioned above, we see an important role for generics in the
+definition of new data structures parameterized by one or more component
+types.  For linked data structures, it is often necessary to take
+advantage of the structure of the components to efficiently implement the
+(composite) data structure.  By using a generic formal derived type, the
+implementation of the generic can take advantage of the structure and
+operations of the ancestor type specified for the formal derived type
+definition.
+</p>
+<p>
+   In the remainder of this section we consider formal (untagged) derived
+types; tagged types are considered in the next section.
+</p>
+<p>
+   The new notation is
+<pre>
+   type T is new S;
+</pre>
+which indicates that the actual type must be derived directly or
+indirectly from S.
+</p>
+<p>
+   For a generic formal derived type, the primitive operations available
+on the type in the generic are determined by the specified ancestor type.
+Analogous to the rule for formal numeric types, the primitive operations
+available on an untagged formal derived type use the ancestor operation
+implementations, even if they have been overridden or hidden for the
+actual type.  This rule is necessary for untagged types, because there is
+no limitation on the kinds of alterations made to the subtype or mode of
+the formal parameters when overriding a subprogram inherited by
+derivation.  This contrast strongly with tagged types where the whole
+essence of the concept is to use replaced operations as described in the
+next section.
+</p>
+<p>
+   Generic formal derived types permit generic units to be parameterized
+by a user-defined class - the set of all types derived from the parent
+type specified in the generic parameter declaration.  Within the generic
+template, the operations of the specified parent type are available.
+This provides support for user-defined classes that is comparable to that
+available for language-defined classes, such as discrete, integer, fixed
+and float.
+</p>
+<p>
+   In a sense therefore the formal parameter notation
+<pre>
+   type T is range <>;
+</pre>
+is approximately equivalent to
+<pre>
+   type T is new root_integer;
+</pre>
+although we cannot actually write the latter.
+</p>
+<p>
+   One use of generic formal derived types is to parameterize a generic
+with a record type but without having to introduce a specific notation
+for formal record types which would be unwieldy.
+</p>
+<p>
+   The following example is a generic package for providing I/O for types
+in a user-defined rational class.
+<pre>
+   package Rational_Arithmetic is
+      -- this package defines a rational number type
+
+      type Rational is private;
+
+      function "+" (Left, Right: Rational) return Rational;
+      ...
+   end Rational_Arithmetic;
+
+   with Rational_Arithmetic; use Rational_Arithmetic;
+   with Text_IO;
+   generic
+      -- this package provides I/O for any type derived from Rational
+      type Num is new Rational;
+   package Rational_IO is
+      procedure Get(File: in Text_IO.File_Type;
+                    Item: out Num;
+                    Width: in Text_IO.Field := 0);
+
+      procedure Put(File: in Text_IO.File_Type;
+                    Item: in Num;
+                    Fore: in Text_IO.Field;
+                    Aft: in Text_IO.Field;
+                    Exp: in Text_IO.Field);
+   end Rational_IO;
+</pre>
+</p>
+<p>
+   The generic formal parameter Num will only match Rational and its
+derivatives.  Since Rational and its derivatives all share the primitive
+operations of the Rational type, those operations are available within
+Rational_IO for implementing the Get and Put subprograms.
+</p>
+
+<h2>
+<a name=5>
+12.5  Tagged Types
+</a>
+</h2>
+
+<p>
+Other forms of formal parameters apply to tagged types.  Thus
+<pre>
+   type T is tagged private;
+</pre>
+which simply indicates that the actual type can be any tagged type, and
+<pre>
+   type T is new S with private;
+</pre>
+which indicates that the actual type can be any extension of the type S
+(or the type S itself).
+</p>
+<p>
+   This last form is very important.  A form of multiple inheritance is
+obtained by defining a generic package that extends a formal type with
+additional components and operations (see 4.6.2).  Because type extension
+is only permitted for tagged types, allowing the reserved word tagged in
+a generic formal private type declaration makes it clear in the parameter
+specification that extension might be performed.  But note that it is
+possible to declare a type extension (of a parameter) only in the generic
+specification; it is not allowed in the generic body.  However, as
+illustrated in 4.6.2 this fits in with typical patterns of use.
+</p>
+<p>
+   The above restriction is an interesting example of the best and worst
+case contract principle.  The underlying rule that we must not violate is
+that a type extension must be accessible from the parent type declaration
+as discussed in 4.3.  It is thus necessary that an extension in any
+instantiation also satisfies this rule.  In the case of the specification
+we assume the best and allow an extension.  At the point of the
+instantiation the resulting specification is checked to ensure that the
+extension does not violate the rule.  In the case of the body the general
+contract principle is that the body must work for any instantiation and
+accordingly it is not permitted to allow an error to be discovered in the
+body for a particular instantiation.  Thus we assume the worst and forbid
+any extension since the instantiation might be at a deeper level at which
+an extension would violate the accessibility rule.  This restriction may
+seem a burden but a commonly applicable workaround is simply to move the
+type extension and its operations to the private part.  An example where
+this would be necessary is discussed in 4.4.4.
+</p>
+<p>
+   For tagged types, the primitive operations use the implementations
+defined for the actual type, though this is expressed for consistency in
+terms of the normal dispatching behavior of the operations of the parent
+type.  For a tagged type it is possible to use the overriding
+definitions, because these overriding operations must be subtype
+conformant with the inherited one.
+</p>
+<p>
+   A further refinement is that the formal type can be declared as
+abstract.  In such a case the actual type can also be abstract but it
+need not.  If the formal is abstract then no objects can be declared.
+</p>
+<p>
+   The parameter matching rules are designed to ensure that abstract
+subprograms are never called.  If a type is abstract it does not follow
+that all its primitive subprograms are abstract.  Non-dispatching calls
+are allowed in the generic unit on only those primitive operations of the
+formal type which are not abstract.  In order to ensure that any
+instantiation still correctly works it is necessary that the
+corresponding primitive operations of the actual type are also not
+abstract.  Consider again the package P in 7.4.
+<pre>
+   generic
+      type Parent is abstract new Limited_Controlled with private;
+   package P is
+      type T is new Parent with private;
+      ...
+   private
+      type T is new Parent with
+         record
+            -- additional components
+         end record;
+
+      procedure Finalize(Object: in out T);
+   end P;
+</pre>
+then although Limited_Controlled is abstract, its primitive operations
+such as Finalize are not abstract and thus calls on Finalize are allowed
+in the body.  For this to always work it is essential that the actual
+type has not replaced the inherited procedure Finalize by an abstract one
+[RM95 3.9.3].  The following is thus illegal
+<pre>
+   type Nasty is abstract new Limited_Controlled with null record;
+   procedure Finalize(Object: in out Nasty) is abstract;
+   ...
+   package Q is new P(Parent => Nasty);  -- illegal
+</pre>
+</p>
+<p>
+   Class-wide programming and type extension, in combination with generic
+units, provides many useful facilities.
+</p>
+<p>
+   Generic units may be parameterized by user-defined classes, allowing
+abstractions to be built around such classes.  In this example,
+Any_Account will be matched by any type derived from
+Account_With_Interest.  Within the template, the primitive operations of
+Account_With_Interest are available.
+<pre>
+   generic
+      type Account_Type(<>) is new Account_With_Interest with private;
+   package Set_Of_Accounts is
+       procedure Add_New_Account(A: in Account_Type);
+       procedure Remove_Account(A: in Account_Type);
+       function Balance_Of_Accounts return Money;
+       ... -- other operations (e.g. an iterator)
+   end Set_Of_Accounts;
+</pre>
+</p>
+<p>
+This generic package could be instantiated with a specific derivative of
+Account_With_Interest, in which case it would be a homogeneous set of
+such accounts.  Alternatively, the generic could be instantiated with a
+class-wide type like Account_With_Interest'Class, in which case it would
+allow a heterogeneous set of accounts.  The notation (<>) specifies that
+the actual account type may have any number of discriminants, or be a
+class-wide type (that is, it can be indefinite).
+</p>
+
+<h2>
+<a name=6>
+12.6  Package Parameters
+</a>
+</h2>
+
+<p>
+The final new kind of generic formal parameter is the formal package.  A
+formal package parameter matches any instance of a specified generic
+package.
+</p>
+<p>
+   Generic formal packages are appropriate in two different
+circumstances.  In the first circumstance, the generic is defining
+additional operations, or a new abstraction, in terms of some preexisting
+abstraction defined by some preexisting generic.  This kind of "layering"
+of functionality can be extremely cumbersome if all of the types and
+operations defined by the preexisting generic must be imported into the
+new generic.  The generic formal package provides a direct way to import
+all of the types and operations defined in an instance of the preexisting
+generic.
+</p>
+<p>
+   In other words, generic formal packages allow generics to be
+parameterized by other generics, which allows for safer and simpler
+composition of generic abstractions.  In particular it allows for one
+generic to easily extend the abstraction provided by another generic,
+without requiring the programmer to enumerate all the operations of the
+first in the formal part of the second.  A simple example of the use of
+this technique was illustrated by the package Generic_Complex_Vectors in
+II.11.
+</p>
+<p>
+   In more elaborate circumstances, there may need to be several formal
+packages.  It then proves convenient to augment the notation
+<pre>
+   with package P is new Q(<>);
+</pre>
+which indicates that the actual parameter corresponding to P can be any
+package which has been obtained by instantiating Q by the notation
+<pre>
+   with package R is new Q(P1, P2, ...);
+</pre>
+which indicates that the  actual package corresponding to R must have
+been instantiated with the given parameters.
+</p>
+<p>
+   Returning to our example of complex numbers, we can now write a
+package which exports standard mathematical functions operating on
+complex numbers and which takes two packages as parameters.  One package
+defines the complex numbers (as in II.11) and the other package is the
+standard package Generic_Elementary_Functions which provides mathematical
+functions on normal real (that is not complex) numbers.  We write
+<pre>
+   with Generic_Complex_Numbers;
+   with Generic_Elementary_Functions;
+   generic
+      with package Complex_Numbers is
+         new Generic_Complex_Numbers(<>);
+      with package Elementary_Functions is
+         new Generic_Elementary_Functions(Complex_Numbers.Float_Type);
+   package Generic_Complex_Functions is
+      use Complex_Numbers;
+
+      function Sqrt(X: Complex) return Complex;
+      function Log (X: Complex) return Complex;
+      function Exp (X: Complex) return Complex;
+      function Sin (X: Complex) return Complex;
+      function Cos (X: Complex) return Complex;
+
+   end Generic_Complex_Functions;
+</pre>
+</p>
+<p>
+   The actual packages must be instantiations of Generic_Complex_Numbers
+and Generic_Elementary_Functions respectively.  Note that both forms of
+formal package are used.  Any instantiation of Generic_Complex_Numbers is
+allowed but the instantiation of Generic_Elementary_Functions must have
+Complex_Numbers.Float_Type as its actual parameter.  This ensures that
+both packages are instantiated with the same floating type.
+</p>
+<p>
+   Note carefully that we are using the formal exported from the first
+instantiation as the required parameter for the second instantiation.
+The formal parameters are only accessible in this way when the default
+form (<>) is used.  Finally, instantiations might be
+<pre>
+   package Long_Complex_Numbers is
+      new Generic_Complex_Numbers(Long_Float);
+
+   package Long_Elementary_Functions is
+      new Generic_Elementary_Functions(Long_Float);
+
+   package Long_Complex_Functions is
+      new Generic_Complex_Functions
+         (Long_Complex_Numbers, Long_Elementary_Functions);
+</pre>
+</p>
+<p>
+A second circumstance where a generic formal package is appropriate is
+when the same abstraction is implemented in several different ways.  For
+example, the abstraction of a "mapping" from a key type to a value type
+is very general, and admits to many different implementation approaches.
+In most cases, a mapping abstraction can be characterized by a key type,
+a value type, and operations for adding to the mapping, removing from the
+mapping, and applying the mapping.  This represents a "signature" for the
+mapping abstraction, and any combination of types and operations that
+satisfy such a signature syntactically and semantically can be considered
+a mapping.
+</p>
+<p>
+   A generic package can be used to define a signature, and then a given
+implementation for the signature is established by instantiating the
+signature.  Once the signature is defined, a generic formal package for
+this signature can be used in a generic formal part as a short-hand for a
+type and a set of operations.
+</p>
+<p>
+   We can thus define a generic package Mapping that defines the
+signature of a mapping, and then other generics can be defined with a
+formal package parameter.  The mapping package might be
+<pre>
+   generic
+      -- define signature for a Mapping
+      type Mapping_Type is limited private;
+      type Key is limited private;
+      type Value is limited private;
+      with procedure Add_Pair(M: in out Mapping_Type;
+                              K: in Key;
+                              V: in Value);
+      with procedure Remove_Pair(M: in out Mapping_Type;
+                                 K: in Key;
+                                 V: in Value);
+      with procedure Apply(M: in out Mapping_Type;
+                           K: in Key;
+                           V: out Value);
+   package Mapping is end;
+</pre>
+</p>
+<p>
+We can now define a generic that takes an instance of a Mapping as a
+parameter; for example
+<pre>
+   generic
+      with package Some_Mapping is new Mapping(<>);
+      with procedure Do_Something_With_Value(V: Some_Mapping.Value)
+   procedure Do_Something_With_Key(K: Some_Mapping.Key);
+
+   procedure Do_Something_With_Key(K: Some_Mapping.Key) is
+       V: Some_Mapping.Value;
+   begin
+      -- translate key to value, and then do something with value
+      Some_Mapping.Apply(K, V);
+      Do_Something_With_Value(V);
+   end Do_Something_With_Key;
+</pre>
+</p>
+<p>
+   The reader will note the tedious repetition of Some_Mapping in the
+generic unit.  This can be avoided since a use clause is permitted in a
+generic formal part in Ada 95; the specification can thus be written as
+<pre>
+   generic
+      with package Some_Mapping is new Mapping(<>);
+      use Some_Mapping;
+      with procedure Do_Something_With_Value(V: Value)
+   procedure Do_Something_With_Key(K: Key);
+</pre>
+with similar changes to the generic body.
+</p>
+<p>
+   Another and more mathematical example is provided by the following
+which defines the signature of a group.
+<pre>
+   generic
+      type Group_Element is private;
+      Identity: in Group_Element;
+      with function Op(X, Y: Group_Element) return Group_Element
+      with function Inverse(X: Group_Element) return Group_Element;
+   package Group_Signature is end;
+</pre>
+</p>
+<p>
+The following generic function applies the group operation to the given
+group element the specified number of times.  If the right operand is
+negative, the inverse of the result is returned; if it is zero, the
+identity is returned.
+<pre>
+   generic
+      with package Group is new Group_Signature(<>);
+      use Group;
+   function Power(X: Group_Element; N: Integer) return Group_Element;
+
+   function Power(X: Group_Element; N: Integer) return Group_Element is
+      Result: Group_Element := Identity;
+   begin
+      for I in 1 .. abs N loop
+         Result := Op(Result, X);
+      end loop;
+      if N < 0 then
+         return Inverse(Result);
+      else
+         return Result;
+      end if;
+   end Power;
+</pre>
+</p>
+<p>
+   The following instantiation ensures that the long complex numbers are
+a group over addition
+<pre>
+   package Long_Complex_Addition_Group is
+      new Group_Signature(Group_Element => Long_Complex.Complex,
+                          Identity => (0.0, 0.0);
+                          Op => Long_Complex."+";
+                          Inverse => Long_Complex."-");
+</pre>
+and then finally we can instantiate the power function for the long
+complex addition group as follows
+<pre>
+   function Complex_Multiplication is
+      new Power(Long_Complex_Addition_Group);
+</pre>
+</p>
+<p>
+Note that we have assumed that the type Complex is not a private type so
+that the aggregate is available for the identity element.
+</p>
+
+<h2>
+<a name=7>
+12.7  Other Improvements
+</a>
+</h2>
+
+<p>
+A small change is that the matching of subtypes in array and access types
+now requires static matching as mentioned in 3.10.
+</p>
+<p>
+   Another minor change is that generic actual parameters are evaluated
+in an arbitrary order consistent with any dependences whereas in Ada 83
+all default parameters were evaluated after all explicit parameters.  The
+relaxation of this ordering requirement brings the rules for generic
+parameters into line with those for ordinary subprogram parameters.
+</p>
+
+<h2>
+<a name=8>
+12.8  Requirements Summary
+</a>
+</h2>
+
+<p>
+There were a number of requirements in this area.  The study topic
+<pre>
+     S4.4-A(1) - Generic Formal Parameters
+</pre>
+is satisfied by the provision of extra kinds of generic parameters (for
+derived types and especially package parameters) to enable better
+abstraction and composition.
+</p>
+<p>
+   The study topic
+<pre>
+     S4.4-B(2) - Tighten the "Contract Model"
+</pre>
+has been met by the provision of separate templates for definite and
+indefinite types and other modifications to the rules as discussed in
+12.1.
+</p>
+<p>
+   The requirement
+<pre>
+     R4.4-B(1) - Dependence of Instantiations on Bodies
+</pre>
+has also been met by the improvements to the contract model.
+</p>
+<p>
+   The requirement
+<pre>
+     R4.4-C(1) - Generic Code Sharing
+</pre>
+is discussed in 12.1 where it is noted that the pragma Optimize can be
+used to control whether sharing is required or not.
+</p>
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-11.html> Previous </a> |
+<a href=rat95-p2-13.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

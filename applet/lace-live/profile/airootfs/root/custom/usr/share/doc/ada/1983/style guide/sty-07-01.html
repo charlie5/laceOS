@@ -1,0 +1,310 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 7.1: Fundamentals
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 7: Portability</H2>
+
+<H3><a name="7.1">7.1     Fundamentals</a></H3>
+This section introduces some generally applicable principles of writing  
+portable Ada programs. It includes guidelines about the assumptions you should  
+make with respect to a number of Ada features and their implementations and  
+guidelines about the use of other Ada features to ensure maximum portability.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><BR>
+<a href="#7.1.1">7.1.1   Global Assumptions</a><BR>
+<a href="#7.1.2">7.1.2   Actual Limits</a><BR>
+<a href="#7.1.3">7.1.3   Comments</a><BR>
+<a href="#7.1.4">7.1.4   Main Subprogram</a><BR>
+<a href="#7.1.5">7.1.5   Encapsulating Implementation Dependencies</a><BR>
+<a href="#7.1.6">7.1.6   Implementation-Added Features</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-07-08.html#7.8.1"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="7.1.1">7.1.1   Global Assumptions</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Make considered assumptions about the support provided for the  
+following on potential target platforms: 
+<UL TYPE=square>
+<li>Number of bits available for type <CODE>Integer</CODE> (range constraints). 
+<li>Number of decimal digits of precision available for floating point  
+types. 
+<li>Number of bits available for fixed-point types (delta and range 
+constraints). 
+<li>Number of characters per line of source text. 
+<li>Number of bits for <CODE>Universal_Integer</CODE> expressions. 
+<li>Number of seconds for the range of <CODE>Duration</CODE>. 
+<li>Number of milliseconds for <CODE>Duration'Small</CODE>.  
+</UL>
+</UL>
+
+<H4>instantiation</H4>
+These are minimum values (or minimum precision in the case of
+<CODE>Duration'Small</CODE>)  
+that a project or application might assume that an implementation provides.  
+There is no guarantee that a given implementation provides more than the  
+minimum, so these would be treated by the project or application as maximum  
+values also.
+<UL TYPE=square>
+<li>16 bits available for type <CODE>Integer (-2**15 .. 2**15 - 1)</CODE>. 
+<li>6 decimal digits of precision available for floating point types. 
+<li>32 bits available for fixed-point types. 
+<li>72 characters per line of source text. 
+<li>16 bits for <CODE>Universal_Integer</CODE> expressions. 
+<li><CODE>-86_400 .. 86_400</CODE> seconds (1 day) for the range of
+<CODE>Duration</CODE> (as  
+specified in <a href="http://archive.adaic.com/standards/83lrm/html/lrm-09-06.html#9.6">9.6 (4) of Department of Defense 1983)</a>) 
+<li>20 milliseconds for <CODE>Duration'Small</CODE> (as specified in <a href="http://archive.adaic.com/standards/83lrm/html/lrm-09-06.html#9.6">9.6 (4) of  
+Department of Defense 1983)</a>). 
+</UL>
+
+<H4>rationale</H4>
+Some assumptions must be made with respect to certain implementation dependent  
+values. The exact values assumed should cover the majority of the target  
+equipment of interest. Choosing the lowest common denominator for values  
+improves portability.
+
+<H4>note</H4>
+Of the microcomputers currently available for incorporation within embedded 
+systems, 16-bit and 32-bit processors are prevalent. Although 4-bit and 8-bit 
+machines are still available, their limited memory addressing capabilities 
+make them unsuited to support Ada programs of any size. Using current 
+representation schemes, 6 decimal digits of floating point accuracy implies a 
+representation mantissa at least 21 bits wide, leaving 11 bits for exponent 
+and sign within a 32-bit representation. This correlates with the data widths 
+of floating point hardware currently available for the embedded systems 
+market. A 32-bit minimum on fixed-point numbers correlates with the accuracy 
+and storage requirements of floating point numbers.<P>
+The 72-column limit on source lines in the example is an unfortunate hold-over 
+from the days of Hollerith punch cards with sequence numbers. There may still  
+be machinery and software used in manipulating source code that are bound to  
+assumptions about this maximum line length. The 16-bit example for 
+<CODE>Universal_Integer</CODE> expressions matches that for <CODE>Integer</CODE> storage.<P>
+The values for the range and accuracy of values of the predefined type 
+<CODE>Duration</CODE> are the limits expressed in the
+<a href="http://archive.adaic.com/standards/83lrm/html/lrm-09-06.html#9.6">Ada Language Reference Manual 
+(Department of Defense 1983, Section 9.6)</a>. You should not expect an implementation 
+to provide a wider range or a finer granularity.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.4">3.5.4&nbsp;Integer Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.6">3.5.6&nbsp;Real Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.9">3.5.9&nbsp;Fixed Point Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-06.html#9.6">9.6&nbsp;Delay Statements, Duration, and Time</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-C.html#C">C&nbsp;Predefined Language Environment</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-F.html#F">F&nbsp;Implementation-Dependent Characteristics</A>
+
+
+<H3><BR><a name="7.1.2">7.1.2   Actual Limits</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Don't implicitly use an implementation limit. 
+</UL>
+
+<H4>rationale</H4>
+The Ada model may not match exactly with the underlying hardware, so some  
+compromises may have been made in the implementation. Check to see if they  
+could affect your program. Particular implementations may do &quot;better&quot; than the 
+Ada model requires while some others may be just minimally acceptable.  
+Arithmetic is generally implemented with a precision higher than the storage  
+capacity (this is implied by the Ada type model for floating point). Different  
+implementations may behave differently on the same underlying hardware.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.4">3.5.4&nbsp;Integer Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.6">3.5.6&nbsp;Real Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-F.html#F">F&nbsp;Implementation-Dependent Characteristics</A>
+
+
+<H3><BR><a name="7.1.3">7.1.3   Comments</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use highlighting comments for each package, subprogram and task where  
+any nonportable features are present.  
+<li>For each nonportable feature employed, describe the expectations for  
+that feature. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------ 
+package Memory_Mapped_IO is
+
+   -- WARNING - This package is implementation specific. 
+   -- It uses absolute memory addresses to interface with the I/O 
+   -- system. It assumes a particular printer's line length. 
+   -- Change memory mapping and printer details when porting.
+   
+   Printer_Line_Length : constant := 132;
+   
+   type Data is array (1 .. Printer_Line_Length) of Character;
+   
+   procedure Write_Line (Line : in     Data);
+   
+end Memory_Mapped_IO;
+
+------------------------------------------------------------------------ 
+with System; 
+package body Memory_Mapped_IO is
+
+   --------------------------------------------------------------------- 
+   procedure Write_Line (Line : in     Data) is
+   
+      Buffer : Data; 
+      for Buffer use at System.Physical_Address(16#200#);
+      
+   begin  -- Write_Line 
+       -- perform output operation through specific memory locations. 
+       ... 
+   end Write_Line; 
+   ---------------------------------------------------------------------
+   
+end Memory_Mapped_IO; 
+------------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+Explicitly commenting each breach of portability will raise its visibility and  
+aid in the porting process. A description of the non-portable feature's 
+expectations covers the common case where vendor documentation of the original  
+implementation is not available to the person performing the porting process.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-02-07.html#2.7">2.7&nbsp;Comments</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-01.html#6.1">6.1&nbsp;Subprogram Declarations</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-02.html#7.2">7.2&nbsp;Package Specifications and Declarations</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-01.html#9.1">9.1&nbsp;Abort Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-F.html#F">F&nbsp;Implementation-Dependent Characteristics</A>
+
+
+<H3><BR><a name="7.1.4">7.1.4   Main Subprogram</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use only a parameterless procedure as the main program. 
+</UL>
+
+<H4>rationale</H4>
+The <a href="http://archive.adaic.com/standards/83lrm/html/">Ada Language Reference Manual
+(Department of Defense 1983)</a> places very few  
+requirements on the main subprogram.  Assume the simplest case will increase  
+portability. That is, assume you may only use a parameterless procedure as a  
+main program.<P>
+Some operating systems are capable of acquiring and interpreting returned 
+integer values near zero from a function, but many others cannot. Further, 
+many real-time, embedded systems will not be designed to terminate, so a 
+function or a procedure having parameters with modes
+<CODE>out</CODE> or <CODE>in out</CODE> will be 
+inappropriate to such applications.<P>
+This leaves procedures with in parameters. Although some operating systems can 
+pass parameters in to a program as it starts, others cannot. Also, an 
+implementation may not be able to perform type checking on such parameters 
+even if the surrounding environment is capable of providing them.
+
+<H4>note</H4>
+Real-time, embedded applications may not have an &quot;operator&quot; initiating the 
+program to supply the parameters, in which case it would be more appropriate 
+for the program to have been compiled with a package containing the 
+appropriate constant values or for the program to read the necessary values 
+from switch settings or a downloaded auxiliary file. In any case, the 
+variation in surrounding initiating environments is far too great to depend 
+upon the kind of last-minute (program) parameterization implied by 
+(subprogram) parameters to the main subprogram.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-01.html#6.1">6.1&nbsp;Subprogram Declarations</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-10-01.html#10.1">10.1&nbsp;Compilation Units - Library Units</A>
+
+
+<H3><BR><a name="7.1.5">7.1.5   Encapsulating Implementation Dependencies</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Create packages specifically designed to isolate hardware and  
+implementation dependencies and designed so that their specification will not  
+change when porting. 
+<li>Clearly indicate the objectives if machine or solution efficiency is  
+the reason for hardware or implementation dependent code. 
+<li>For the packages that hide implementation dependencies, maintain  
+different package bodies for different target environments. 
+<li>Isolate interrupt receiving tasks into implementation dependent  
+packages. 
+</UL>
+
+<H4>example</H4>
+See <a href="#7.1.3">Guideline 7.1.3</a>.
+
+<H4>rationale</H4>
+Encapsulating hardware and implementation dependencies in a package allows the 
+remainder of the code to ignore them and thus to be fully portable. It also 
+localizes the dependencies, making it clear exactly which parts of the code 
+may need to change when porting the program.<P>
+Some implementation-dependent features may be used to achieve particular 
+performance or efficiency objectives. Commenting these objectives ensures that  
+the programmer can find an appropriate way to achieve them when porting to a  
+different implementation, or explicitly recognize that they cannot be achieved.<P>
+Interrupt entries are implementation-dependent features that may not be 
+supported (e.g., VAX Ada uses pragmas to assign system traps to &quot;normal&quot; 
+rendezvous). However, interrupt entries cannot be avoided in most embedded  
+real-time systems and it is reasonable to assume that they are supported by an 
+Ada implementation. The value for an interrupt is implementation-defined. 
+Isolate it.
+
+<H4>note</H4>
+Ada can be used to write machine-dependent programs that take advantage of an 
+implementation in a manner consistent with the Ada model, but which make  
+particular choices where Ada allows implementation freedom. These machine  
+dependencies should be treated in the same way as any other implementation  
+dependent features of the code.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-02-07.html#2.7">2.7&nbsp;Comments</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-01.html#7.1">7.1&nbsp;Package Structure</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-02.html#7.2">7.2&nbsp;Package Specifications and Declarations</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-13-08.html#13.8">13.8&nbsp;Machine Code Insertions</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-13-09.html#13.9">13.9&nbsp;Interface to Other Languages</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-F.html#F">F&nbsp;Implementation-Dependent Characteristics</A>
+
+
+<H3><BR><a name="7.1.6">7.1.6   Implementation-Added Features</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Avoid the use of vendor supplied packages. 
+<li> Avoid the use of features added to the predefined packages that are 
+not specified in the language definition. 
+</UL>
+
+<H4>rationale</H4>
+Vendor-added features are not likely to be provided by other implementations. 
+Even if a majority of vendors eventually provide similar additional features, 
+they are unlikely to have identical formulations. Indeed, different vendors 
+may use the same formulation for (semantically) entirely different features.<P>
+exceptions<P>
+There are many types of applications that require the use of these features. 
+Examples include: multilingual systems that standardize on a vendor's file 
+system, applications that are closely integrated with vendor products (i.e., 
+user interfaces), and embedded systems for performance reasons. Isolate the 
+use of these features into packages.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-C.html#C">C&nbsp;Predefined Language Environment</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-F.html#F">F&nbsp;Implementation-Dependent Characteristics</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

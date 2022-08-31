@@ -1,0 +1,607 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Storage Management</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    SPAN.insert1 {text-decoration: underline; color: rgb(0,51,51) }
+    SPAN.delete1 {text-decoration: line-through; color: rgb(0,51,51) }
+    SPAN.insert2 {text-decoration: underline; color: rgb(0,102,0) }
+    SPAN.delete2 {text-decoration: line-through; color: rgb(0,102,0) }
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Wide {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 6.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesBulleted {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 6.2em; margin-right: 2.5em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Hanging-Body {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 7.2em; margin-top: 0em; margin-bottom: 0.6em}
+    DIV.Hanging-Term {float: left; font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-top: 0em; margin-bottom: 0em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><B><SPAN Style="font-size:200%; color: rgb(0,51,153)">Annotated</SPAN><SPAN Style="font-size:200%; color: rgb(0,0,102)">&nbsp;Ada Reference Manual</SPAN></B> &mdash; <A HREF="AA-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-13-10.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-13-11-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>13.11 Storage Management</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal">[ <SPAN STYLE="font-size: 80%">{<I>user-defined storage 
+management</I>}</SPAN> <A NAME="I5178"></A><SPAN STYLE="font-size: 80%">{<I>storage 
+management (user-defined)</I>}</SPAN> <A NAME="I5179"></A><SPAN STYLE="font-size: 80%">{<I>user-defined 
+heap management</I>}</SPAN> <A NAME="I5180"></A><SPAN STYLE="font-size: 80%">{<I>heap 
+management (user-defined)</I>}</SPAN> <A NAME="I5181"></A>Each access-to-object 
+type has an associated storage pool. The storage allocated by an <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+comes from the pool; instances of Unchecked_Deallocation return storage 
+to the pool. Several access types can share the same pool.]</DIV>
+<DIV Class="paranum">2/2</DIV>
+<DIV Class="Normal">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00435.TXT">AI95-00435-01</A></I>} 
+[A storage pool is a variable of a type in the class rooted at Root_Storage_Pool, 
+which is an abstract limited controlled type. By default, the implementation 
+chooses a <I>standard storage pool</I> for each access<SPAN class="insert2">-to-object</SPAN> 
+type. The user may define new pool types, and may override the choice 
+of pool for an access<SPAN class="insert2">-to-object</SPAN> type by 
+specifying Storage_Pool for the type.]&nbsp;</DIV>
+<DIV Class="paranum">2.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>By default, the implementation 
+might choose to have a single global storage pool, which is used (by 
+default) by all access types, which might mean that storage is reclaimed 
+automatically only upon partition completion. Alternatively, it might 
+choose to create a new pool at each accessibility level, which might 
+mean that storage is reclaimed for an access type when leaving the appropriate 
+scope. Other schemes are possible.&nbsp;</DIV>
+
+<H4 Class="centered">Legality Rules</H4>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Normal">If Storage_Pool is specified for a given access type, 
+Storage_Size shall not be specified for it.&nbsp;</DIV>
+<DIV Class="paranum">3.a</DIV>
+<DIV Class="Annotations"><B>Reason:&nbsp;</B>The Storage_Pool determines the 
+Storage_Size; hence it would not make sense to specify both. Note that 
+this rule is simplified by the fact that the aspects in question cannot 
+be specified for derived types, nor for non-first subtypes, so we don't 
+have to worry about whether, say, Storage_Pool on a derived type overrides 
+Storage_Size on the parent type. For the same reason, &ldquo;specified&rdquo; 
+means the same thing as &ldquo;directly specified&rdquo; here.&nbsp;</DIV>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The following language-defined 
+library package exists:&nbsp;</DIV>
+<DIV Class="paranum">5</DIV>
+<DIV Class="Examples"><B>with</B>&nbsp;Ada.Finalization;<BR>
+<B>with</B>&nbsp;System.Storage_Elements;<BR>
+<A NAME="I5182"></A><B>package</B>&nbsp;System.Storage_Pools&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(System.Storage_Pools);</DIV>
+<DIV Class="paranum">6/2</DIV>
+<DIV Class="Examples">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00161.TXT">AI95-00161-01</A></I>} 
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I5183"></A>Root_Storage_Pool&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>abstract</B>&nbsp;<B>new</B>&nbsp;Ada.Finalization.Limited_Controlled&nbsp;<B>with</B>&nbsp;<B>private</B>;<SPAN class="insert2"><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(Root_Storage_Pool);</SPAN></DIV>
+<DIV Class="paranum">7</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5184"></A>Allocate(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pool&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Root_Storage_Pool;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Storage_Address&nbsp;:&nbsp;<B>out</B>&nbsp;Address;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Size_In_Storage_Elements&nbsp;:&nbsp;<B>in</B>&nbsp;Storage_Elements.Storage_Count;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alignment&nbsp;:&nbsp;<B>in</B>&nbsp;Storage_Elements.Storage_Count)&nbsp;<B>is</B>&nbsp;<B>abstract</B>;</DIV>
+<DIV Class="paranum">8</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I5185"></A>Deallocate(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pool&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Root_Storage_Pool;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Storage_Address&nbsp;:&nbsp;<B>in</B>&nbsp;Address;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Size_In_Storage_Elements&nbsp;:&nbsp;<B>in</B>&nbsp;Storage_Elements.Storage_Count;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alignment&nbsp;:&nbsp;<B>in</B>&nbsp;Storage_Elements.Storage_Count)&nbsp;<B>is</B>&nbsp;<B>abstract</B>;</DIV>
+<DIV Class="paranum">9</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I5186"></A>Storage_Size(Pool&nbsp;:&nbsp;Root_Storage_Pool)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Storage_Elements.Storage_Count&nbsp;<B>is</B>&nbsp;<B>abstract</B>;</DIV>
+<DIV Class="paranum">10</DIV>
+<DIV Class="Examples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;System.Storage_Pools;</DIV>
+<DIV Class="paranum">10.a</DIV>
+<DIV Class="Annotations"><B>Reason:&nbsp;</B>The Alignment parameter is provided 
+to Deallocate because some allocation strategies require it. If it is 
+not needed, it can be ignored.&nbsp;</DIV>
+<DIV Class="paranum">11</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>storage pool type</I>}</SPAN> 
+<A NAME="I5187"></A><SPAN STYLE="font-size: 80%">{<I>pool type</I>}</SPAN> 
+<A NAME="I5188"></A>A <I>storage pool type</I> (or <I>pool type</I>) 
+is a descendant of Root_Storage_Pool. <SPAN STYLE="font-size: 80%">{<I>storage 
+pool element</I>}</SPAN> <A NAME="I5189"></A><SPAN STYLE="font-size: 80%">{<I>pool 
+element</I>}</SPAN> <A NAME="I5190"></A><SPAN STYLE="font-size: 80%">{<I>element 
+(of a storage pool)</I>}</SPAN> <A NAME="I5191"></A>The <I>elements</I> 
+of a storage pool are the objects allocated in the pool by <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN>s. 
+</DIV>
+<DIV Class="paranum">11.a</DIV>
+<DIV Class="Annotations"><B>Discussion:&nbsp;</B>In most cases, an element 
+corresponds to a single memory block allocated by Allocate. However, 
+in some cases the implementation may choose to associate more than one 
+memory block with a given pool element.&nbsp;</DIV>
+<DIV Class="paranum">12/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;{<I><A HREF="defect1.html#8652/0009">8652/0009</A></I>} 
+{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00137.TXT">AI95-00137-01</A></I>} 
+{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00435.TXT">AI95-00435-01</A></I>} 
+For every access<SPAN class="insert2">-to-object</SPAN> subtype S, the 
+following <SPAN class="insert1">representation&nbsp;</SPAN>attributes are 
+defined:&nbsp;</DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Hanging-Term">S'Storage_Pool</DIV><DIV Class="Hanging-Body"><BR clear="left">
+<A NAME="I5192"></A><A NAME="I5193"></A>Denotes the storage pool of the 
+type of S. The type of this attribute is Root_Storage_Pool'Class.</DIV>
+<DIV Class="paranum">14</DIV>
+<DIV Class="Hanging-Term">S'Storage_Size</DIV><DIV Class="Hanging-Body"><BR clear="left">
+<A NAME="I5194"></A><A NAME="I5195"></A>Yields the result of calling 
+Storage_Size(S'Storage_Pool)[, which is intended to be a measure of the 
+number of storage elements reserved for the pool.] The type of this attribute 
+is <I>universal_integer</I>.&nbsp;</DIV>
+<DIV Class="paranum">14.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>Storage_Size is also defined 
+for task subtypes and objects &mdash; see <A HREF="AA-13-3.html">13.3</A>.</DIV>
+<DIV Class="paranum">14.b</DIV>
+<DIV Class="Annotations">Storage_Size is not a measure of how much un-allocated 
+space is left in the pool. That is, it includes both allocated and unallocated 
+space. Implementations and users may provide a Storage_Available function 
+for their pools, if so desired.&nbsp;</DIV>
+<DIV Class="paranum">15</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>specifiable (of 
+Storage_Size for a non-derived access-to-object type)</I> [partial]}</SPAN> 
+<A NAME="I5196"></A><SPAN STYLE="font-size: 80%">{<I>specifiable (of 
+Storage_Pool for a non-derived access-to-object type)</I> [partial]}</SPAN> 
+<A NAME="I5197"></A><SPAN STYLE="font-size: 80%">{<I>Storage_Pool clause</I>}</SPAN> 
+<A NAME="I5198"></A><SPAN STYLE="font-size: 80%">{<I>Storage_Size clause</I>}</SPAN> 
+<A NAME="I5199"></A>Storage_Size or Storage_Pool may be specified for 
+a non-derived access-to-object type via an <SPAN Class="swiss"><A HREF="AA-13-3.html#S0286">attribute_definition_clause</A></SPAN>; 
+the <SPAN Class="swiss"><A HREF="AA-4-1.html#S0091">name</A></SPAN> in 
+a Storage_Pool clause shall denote a variable.</DIV>
+<DIV Class="paranum">16</DIV>
+<DIV Class="Normal">An <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+of type T allocates storage from T's storage pool. If the storage pool 
+is a user-defined object, then the storage is allocated by calling Allocate, 
+passing T'Storage_Pool as the Pool parameter. The Size_In_Storage_Elements 
+parameter indicates the number of storage elements to be allocated, and 
+is no more than D'Max_Size_In_Storage_Elements, where D is the designated 
+subtype. The Alignment parameter is D'Alignment. <SPAN STYLE="font-size: 80%">{<I>contiguous 
+representation</I> [partial]}</SPAN> <A NAME="I5200"></A><SPAN STYLE="font-size: 80%">{<I>discontiguous 
+representation</I> [partial]}</SPAN> <A NAME="I5201"></A>The result returned 
+in the Storage_Address parameter is used by the <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+as the address of the allocated storage, which is a contiguous block 
+of memory of Size_In_Storage_Elements storage elements. [Any exception 
+propagated by Allocate is propagated by the <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN>.] 
+</DIV>
+<DIV Class="paranum">16.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>If the implementation chooses 
+to represent the designated subtype in multiple pieces, one <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+evaluation might result in more than one call upon Allocate. In any case, 
+<SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN>s 
+for the access type obtain all the required storage for an object of 
+the designated type by calling the specified Allocate procedure.</DIV>
+<DIV Class="paranum">16.b</DIV>
+<DIV Class="Annotations">Note that the implementation does not turn other 
+exceptions into Storage_Error.</DIV>
+<DIV Class="paranum">16.b.1/1</DIV>
+<DIV Class="Annotations">{<I><A HREF="defect2.html#8652/0111">8652/0111</A></I>} 
+<SPAN class="insert1"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00103.TXT">AI95-00103-01</A></I>} 
+<SPAN class="insert1">If D (the designated type of T) includes subcomponents 
+of other access types, they will be allocated from the storage pools 
+for those types, even if those <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN>s 
+are executed as part of the <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+of T (as part of the initialization of the object). For instance, an 
+access-to-task type TT may allocate the data structures used to implement 
+the task value from other storage pools. (In particular, the task stack 
+does not necessarily need to be allocated from the storage pool for TT.)</SPAN> 
+</DIV>
+<DIV Class="paranum">17</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>standard storage 
+pool</I>}</SPAN> <A NAME="I5202"></A>If Storage_Pool is not specified 
+for a type defined by an <SPAN Class="swiss"><A HREF="AA-3-10.html#S0080">access_to_object_definition</A></SPAN>, 
+then the implementation chooses a standard storage pool for it in an 
+implementation-defined manner. <SPAN STYLE="font-size: 80%">{<I>Storage_Check</I> 
+[partial]}</SPAN> <A NAME="I5203"></A><SPAN STYLE="font-size: 80%">{<I>check, 
+language-defined (Storage_Check)</I>}</SPAN> <A NAME="I5204"></A><SPAN STYLE="font-size: 80%">{<I>Storage_Error 
+(raised by failure of run-time check)</I>}</SPAN> <A NAME="I5205"></A>In 
+this case, the exception Storage_Error is raised by an <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+if there is not enough storage. It is implementation defined whether 
+or not the implementation provides user-accessible names for the standard 
+pool type(s).&nbsp;</DIV>
+<DIV Class="paranum">17.a/2</DIV>
+<DIV Class="Annotations"><SPAN STYLE="font-size: 80%"><I>This paragraph 
+was deleted.</I></SPAN><SPAN class="delete2"><B>Implementation defined: 
+</B></SPAN><SPAN class="delete2">The manner of choosing a storage pool 
+for an access type when Storage_Pool is not specified for the type.</SPAN></DIV>
+<DIV Class="paranum">17.a.1/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Discussion:&nbsp;</B>The 
+manner of choosing a storage pool is covered by a Documentation Requirement 
+below, so it is not summarized here.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">17.b</DIV>
+<DIV Class="Annotations"><B>Implementation defined:&nbsp;</B>Whether or not 
+the implementation provides user-accessible names for the standard pool 
+type(s).</DIV>
+<DIV Class="paranum">17.c/2</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00230.TXT">AI95-00230-01</A></I>} 
+<SPAN class="delete2">An anonymous access type has no pool.&nbsp;</SPAN>An 
+access-to-object type defined by a <SPAN Class="swiss"><A HREF="AA-3-4.html#S0035">derived_type_definition</A></SPAN> 
+inherits its pool from its parent type, so all access-to-object types 
+in the same derivation class share the same pool. Hence the &ldquo;defined 
+by an <SPAN Class="swiss"><A HREF="AA-3-10.html#S0080">access_to_object_definition</A></SPAN>&rdquo; 
+wording above.</DIV>
+<DIV Class="paranum">17.d</DIV>
+<DIV Class="Annotations">{<I>contiguous representation</I> [partial]} 
+<A NAME="I5206"></A>{<I>discontiguous representation</I> [partial]} <A NAME="I5207"></A>There 
+is no requirement that all storage pools be implemented using a contiguous 
+block of memory (although each allocation returns a pointer to a contiguous 
+block of memory).&nbsp;</DIV>
+<DIV Class="paranum">18</DIV>
+<DIV Class="Normal">If Storage_Size is specified for an access type, 
+then the Storage_Size of this pool is at least that requested, and the 
+storage for the pool is reclaimed when the master containing the declaration 
+of the access type is left. <SPAN STYLE="font-size: 80%">{<I>Storage_Error 
+(raised by failure of run-time check)</I>}</SPAN> <A NAME="I5208"></A>If 
+the implementation cannot satisfy the request, Storage_Error is raised 
+at the point of the <SPAN Class="swiss"><A HREF="AA-13-3.html#S0286">attribute_definition_clause</A></SPAN>. 
+If neither Storage_Pool nor Storage_Size are specified, then the meaning 
+of Storage_Size is implementation defined.&nbsp;</DIV>
+<DIV Class="paranum">18.a/2</DIV>
+<DIV Class="Annotations"><B>Implementation defined:&nbsp;</B>The meaning of 
+Storage_Size<SPAN class="insert2">&nbsp;when neither the Storage_Size nor 
+the Storage_Pool is specified for an access type</SPAN>.</DIV>
+<DIV Class="paranum">18.b</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>The Storage_Size function 
+and attribute will return the actual size, rather than the requested 
+size. Comments about rounding up, zero, and negative on task Storage_Size 
+apply here, as well. See also AI83-00557, AI83-00558, and AI83-00608.</DIV>
+<DIV Class="paranum">18.c</DIV>
+<DIV Class="Annotations">The expression in a Storage_Size clause need 
+not be static.</DIV>
+<DIV Class="paranum">18.d</DIV>
+<DIV Class="Annotations">The reclamation happens after the master is 
+finalized.&nbsp;</DIV>
+<DIV Class="paranum">18.e</DIV>
+<DIV Class="Annotations"><B>Implementation Note:&nbsp;</B>For a pool allocated 
+on the stack, normal stack cut-back can accomplish the reclamation. For 
+a library-level pool, normal partition termination actions can accomplish 
+the reclamation.&nbsp;</DIV>
+<DIV Class="paranum">19</DIV>
+<DIV Class="Normal">If Storage_Pool is specified for an access type, 
+then the specified pool is used.</DIV>
+<DIV Class="paranum">20</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>unspecified</I> 
+[partial]}</SPAN> <A NAME="I5209"></A>The effect of calling Allocate 
+and Deallocate for a standard storage pool directly (rather than implicitly 
+via an <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+or an instance of Unchecked_Deallocation) is unspecified.&nbsp;</DIV>
+<DIV Class="paranum">20.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>For example, an <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+might put the pool element on a finalization list. If the user directly 
+Deallocates it, instead of calling an instance of Unchecked_Deallocation, 
+then the implementation would probably try to finalize the object upon 
+master completion, which would be bad news. Therefore, the implementation 
+should define such situations as erroneous.&nbsp;</DIV>
+
+<H4 Class="centered">Erroneous Execution</H4>
+<DIV Class="paranum">21</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>erroneous execution 
+(cause)</I> [partial]}</SPAN> <A NAME="I5210"></A>If Storage_Pool is 
+specified for an access type, then if Allocate can satisfy the request, 
+it should allocate a contiguous block of memory, and return the address 
+of the first storage element in Storage_Address. The block should contain 
+Size_In_Storage_Elements storage elements, and should be aligned according 
+to Alignment. The allocated storage should not be used for any other 
+purpose while the pool element remains in existence. If the request cannot 
+be satisfied, then Allocate should propagate an exception [(such as Storage_Error)]. 
+If Allocate behaves in any other manner, then the program execution is 
+erroneous.&nbsp;</DIV>
+
+<H4 Class="centered">Documentation Requirements</H4>
+<DIV Class="paranum">22</DIV>
+<DIV Class="Normal">An implementation shall document the set of values 
+that a user-defined Allocate procedure needs to accept for the Alignment 
+parameter. An implementation shall document how the standard storage 
+pool is chosen, and how storage is allocated by standard storage pools. 
+</DIV>
+<DIV Class="paranum">22.a/2</DIV>
+<DIV Class="Annotations"><SPAN STYLE="font-size: 80%"><I>This paragraph 
+was deleted.</I></SPAN><SPAN class="delete2"><B>Implementation defined: 
+</B></SPAN><SPAN class="delete2">Implementation-defined aspects of storage 
+pools.</SPAN></DIV>
+<DIV Class="paranum">22.b/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Documentation Requirement: 
+</B></SPAN><SPAN class="insert2">The set of values that a user-defined 
+Allocate procedure needs to accept for the Alignment parameter. How the 
+standard storage pool is chosen, and how storage is allocated by standard 
+storage pools.</SPAN></DIV>
+
+<H4 Class="centered">Implementation Advice</H4>
+<DIV Class="paranum">23</DIV>
+<DIV Class="Normal">An implementation should document any cases in which 
+it dynamically allocates heap storage for a purpose other than the evaluation 
+of an <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN>. 
+</DIV>
+<DIV Class="paranum">23.a.1/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Implementation Advice: 
+</B></SPAN><SPAN class="insert2">Any cases in which heap storage is dynamically 
+allocated other than as part of the evaluation of an <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+should be documented.</SPAN></DIV>
+<DIV Class="paranum">23.a</DIV>
+<DIV Class="Annotations"><B>Reason:&nbsp;</B>This is &ldquo;Implementation 
+Advice&rdquo; because the term &ldquo;heap storage&rdquo; is not formally 
+definable; therefore, it is not testable whether the implementation obeys 
+this advice.&nbsp;</DIV>
+<DIV Class="paranum">24</DIV>
+<DIV Class="Normal">A default (implementation-provided) storage pool 
+for an access-to-constant type should not have overhead to support deallocation 
+of individual objects.&nbsp;</DIV>
+<DIV Class="paranum">24.a.1/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Implementation Advice: 
+</B></SPAN><SPAN class="insert2">A default storage pool for an access-to-constant 
+type should not have overhead to support deallocation of individual objects.</SPAN></DIV>
+<DIV Class="paranum">24.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>Unchecked_Deallocation 
+is not defined for such types. If the access-to-constant type is library-level, 
+then no deallocation (other than at partition completion) will ever be 
+necessary, so if the size needed by an <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+of the type is known at link-time, then the allocation should be performed 
+statically. If, in addition, the initial value of the designated object 
+is known at compile time, the object can be allocated to read-only memory. 
+</DIV>
+<DIV Class="paranum">24.b</DIV>
+<DIV Class="Annotations"><B>Implementation Note:&nbsp;</B>If the Storage_Size 
+for an access type is specified, the storage pool should consist of a 
+contiguous block of memory, possibly allocated on the stack. The pool 
+should contain approximately this number of storage elements. These storage 
+elements should be reserved at the place of the Storage_Size clause, 
+so that <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN>s 
+cannot raise Storage_Error due to running out of pool space until the 
+appropriate number of storage elements has been used up. This approximate 
+(possibly rounded-up) value should be used as a maximum; the implementation 
+should not increase the size of the pool on the fly. If the Storage_Size 
+for an access type is specified as zero, then the pool should not take 
+up any storage space, and any <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+for the type should raise Storage_Error.&nbsp;</DIV>
+<DIV Class="paranum">24.c</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>Note that most of this 
+is approximate, and so cannot be (portably) tested. That's why we make 
+it an Implementation Note. There is no particular number of allocations 
+that is guaranteed to succeed, and there is no particular number of allocations 
+that is guaranteed to fail.&nbsp;</DIV>
+<DIV Class="paranum">25/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00230.TXT">AI95-00230-01</A></I>} 
+<SPAN class="insert2"></SPAN><SPAN class="insert2">The</SPAN><SPAN class="delete2">&nbsp;A</SPAN> 
+storage pool <SPAN class="insert2">used&nbsp;</SPAN>for <SPAN class="insert2">an 
+<SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+of&nbsp;</SPAN>an anonymous access type should be <SPAN class="insert2">determined 
+as follows:</SPAN><SPAN class="delete2">&nbsp;created at the point of an allocator 
+for the type, and be reclaimed when the designated object becomes inaccessible;</SPAN></DIV>
+<DIV Class="paranum">25.1/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00230.TXT">AI95-00230-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00416.TXT">AI95-00416-01</A></I>} 
+<SPAN class="insert2">If the <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+is defining a coextension (see <A HREF="AA-3-10-2.html">3.10.2</A>) of 
+an object being created by an outer <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN>, 
+then the storage pool used for the outer <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+should also be used for the coextension;</SPAN></LI></UL>
+<DIV Class="paranum">25.2/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00230.TXT">AI95-00230-01</A></I>} 
+<SPAN class="insert2">For other access discriminants and access parameters, 
+the storage pool should be created at the point of the <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN>, 
+and be reclaimed when the allocated object becomes inaccessible;</SPAN></LI></UL>
+<DIV Class="paranum">25.3/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00230.TXT">AI95-00230-01</A></I>} 
+<SPAN class="insert2">Otherwise, a default storage pool should be created 
+at the point where the anonymous access type is elaborated; such a storage 
+pool need not support deallocation of individual objects.</SPAN>&nbsp;</LI></UL>
+<DIV Class="paranum">25.a.1/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Implementation Advice: 
+</B></SPAN><SPAN class="insert2">Usually, a storage pool for an access 
+discriminant or access parameter should be created at the point of an 
+<SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN>, 
+and be reclaimed when the designated object becomes inaccessible. For 
+other anonymous access types, the pool should be created at the point 
+where the type is elaborated and need not support deallocation of individual 
+objects.</SPAN></DIV>
+<DIV Class="paranum">25.a/2</DIV>
+<DIV Class="Annotations"><B>Implementation Note:&nbsp;</B>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00230.TXT">AI95-00230-01</A></I>} 
+<SPAN class="insert2">For access parameters and access discriminants,</SPAN><SPAN class="delete2">&nbsp;Normally</SPAN> 
+the &quot;storage pool&quot; for an anonymous access type would not <SPAN class="insert2">normally 
+</SPAN>exist as a separate entity. Instead, the designated object of 
+the allocator would be allocated, in the case of an access parameter, 
+as a local aliased variable at the call site, and in the case of an access 
+discriminant, contiguous with the object containing the discriminant. 
+This is similar to the way storage for <SPAN Class="swiss"><A HREF="AA-4-3.html#S0104">aggregate</A></SPAN>s 
+is typically managed.</DIV>
+<DIV Class="paranum">25.b/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00230.TXT">AI95-00230-01</A></I>} 
+<SPAN class="insert2">For other sorts of anonymous access types, this 
+implementation is not possible in general, as the accessibility of the 
+anonymous access type is that of its declaration, while the <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+could be more nested. In this case, a &quot;real&quot; storage pool is 
+required. Note, however, that this storage pool need not support (separate) 
+deallocation, as it is not possible to instantiate Unchecked_Deallocation 
+with an anonymous access type. (If deallocation is needed, the object 
+should be allocated for a named access type and converted.) Thus, deallocation 
+only need happen when the anonymous access type itself goes out of scope; 
+this is similar to the case of an access-to-constant type.</SPAN>&nbsp;</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">26</DIV>
+<DIV Class="Notes">25&nbsp;&nbsp;A user-defined storage pool type can 
+be obtained by extending the Root_Storage_Pool type, and overriding the 
+primitive subprograms Allocate, Deallocate, and Storage_Size. A user-defined 
+storage pool can then be obtained by declaring an object of the type 
+extension. The user can override Initialize and Finalize if there is 
+any need for non-trivial initialization and finalization for a user-defined 
+pool type. For example, Finalize might reclaim blocks of storage that 
+are allocated separately from the pool object itself.</DIV>
+<DIV Class="paranum">27</DIV>
+<DIV Class="Notes" Style="margin-bottom: 0.4em">26&nbsp;&nbsp;The writer 
+of the user-defined allocation and deallocation procedures, and users 
+of <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN>s 
+for the associated access type, are responsible for dealing with any 
+interactions with tasking. In particular:&nbsp;</DIV>
+<DIV Class="paranum">28</DIV>
+<UL Class="NotesBulleted"><LI TYPE=DISC>If the <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN>s 
+are used in different tasks, they require mutual exclusion.</LI></UL>
+<DIV Class="paranum">29</DIV>
+<UL Class="NotesBulleted"><LI TYPE=DISC>If they are used inside protected 
+objects, they cannot block.</LI></UL>
+<DIV Class="paranum">30</DIV>
+<UL Class="NotesBulleted"><LI TYPE=DISC>If they are used by interrupt 
+handlers (see <A HREF="AA-C-3.html">C.3</A>, &ldquo;<A HREF="AA-C-3.html">Interrupt 
+Support</A>&rdquo;), the mutual exclusion mechanism has to work properly 
+in that context.&nbsp;</LI></UL>
+<DIV Class="paranum">31</DIV>
+<DIV Class="Notes">27&nbsp;&nbsp;The primitives Allocate, Deallocate, 
+and Storage_Size are declared as abstract (see <A HREF="AA-3-9-3.html">3.9.3</A>), 
+and therefore they have to be overridden when a new (non-abstract) storage 
+pool type is declared.&nbsp;</DIV>
+<DIV Class="paranum">31.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>Note that the Storage_Pool 
+attribute denotes an object, rather than a value, which is somewhat unusual 
+for attributes.</DIV>
+<DIV Class="paranum">31.b</DIV>
+<DIV Class="Annotations">The calls to Allocate, Deallocate, and Storage_Size 
+are dispatching calls &mdash; this follows from the fact that the actual 
+parameter for Pool is T'Storage_Pool, which is of type Root_Storage_Pool'Class. 
+In many cases (including all cases in which Storage_Pool is not specified), 
+the compiler can determine the tag statically. However, it is possible 
+to construct cases where it cannot.</DIV>
+<DIV Class="paranum">31.c</DIV>
+<DIV Class="Annotations">All access types in the same derivation class 
+share the same pool, whether implementation defined or user defined. 
+This is necessary because we allow type conversions among them (even 
+if they are pool-specific), and we want pool-specific access values to 
+always designate an element of the right pool.&nbsp;</DIV>
+<DIV Class="paranum">31.d</DIV>
+<DIV Class="Annotations"><B>Implementation Note:&nbsp;</B>If an access type 
+has a standard storage pool, then the implementation doesn't actually 
+have to follow the pool interface described here, since this would be 
+semantically invisible. For example, the allocator could conceivably 
+be implemented with inline code.&nbsp;</DIV>
+
+<H4 Class="centered">Examples</H4>
+<DIV Class="paranum">32</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">To associate an access 
+type with a storage pool object, the user first declares a pool object 
+of some type derived from Root_Storage_Pool. Then, the user defines its 
+Storage_Pool attribute, as follows:</DIV>
+<DIV Class="paranum">33</DIV>
+<DIV Class="Examples">Pool_Object&nbsp;:&nbsp;Some_Storage_Pool_Type;</DIV>
+<DIV Class="paranum">34</DIV>
+<DIV Class="Examples"><B>type</B>&nbsp;T&nbsp;<B>is</B>&nbsp;<B>access</B>&nbsp;Designated;<BR>
+<B>for</B>&nbsp;T'Storage_Pool&nbsp;<B>use</B>&nbsp;Pool_Object;</DIV>
+<DIV Class="paranum">35</DIV>
+<DIV Class="Wide" Style="margin-bottom: 0.4em">Another access type may 
+be added to an existing storage pool, via:&nbsp;</DIV>
+<DIV Class="paranum">36</DIV>
+<DIV Class="Examples"><B>for</B>&nbsp;T2'Storage_Pool&nbsp;<B>use</B>&nbsp;T'Storage_Pool;</DIV>
+<DIV Class="paranum">37</DIV>
+<DIV Class="Normal">The semantics of this is implementation defined for 
+a standard storage pool.&nbsp;</DIV>
+<DIV Class="paranum">37.a</DIV>
+<DIV Class="Annotations"><B>Reason:&nbsp;</B>For example, the implementation 
+is allowed to choose a storage pool for T that takes advantage of the 
+fact that T is of a certain size. If T2 is not of that size, then the 
+above will probably not work.&nbsp;</DIV>
+<DIV Class="paranum">38</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">As usual, a derivative 
+of Root_Storage_Pool may define additional operations. For example, presuming 
+that Mark_Release_Pool_Type has two additional operations, Mark and Release, 
+the following is a possible use:&nbsp;</DIV>
+<DIV Class="paranum">39/1</DIV>
+<DIV Class="Examples">{<I><A HREF="defect1.html#8652/0041">8652/0041</A></I>} 
+{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00066.TXT">AI95-00066-01</A></I>} 
+<B>type</B>&nbsp;Mark_Release_Pool_Type<BR>
+&nbsp;&nbsp;&nbsp;(Pool_Size&nbsp;:&nbsp;Storage_Elements.Storage_Count;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Block_Size&nbsp;:&nbsp;Storage_Elements.Storage_Count)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;Root_Storage_Pool&nbsp;<B>with&nbsp;</B><SPAN class="delete1"><B>limited&nbsp;</B></SPAN><B>private</B>;</DIV>
+<DIV Class="paranum">40</DIV>
+<DIV Class="Examples">...</DIV>
+<DIV Class="paranum">41</DIV>
+<DIV Class="Examples">MR_Pool&nbsp;:&nbsp;Mark_Release_Pool_Type&nbsp;(Pool_Size&nbsp;=&gt;&nbsp;2000,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Block_Size&nbsp;=&gt;&nbsp;100);</DIV>
+<DIV Class="paranum">42</DIV>
+<DIV Class="Examples"><B>type</B>&nbsp;Acc&nbsp;<B>is</B>&nbsp;<B>access</B>&nbsp;...;<BR>
+<B>for</B>&nbsp;Acc'Storage_Pool&nbsp;<B>use</B>&nbsp;MR_Pool;<BR>
+...</DIV>
+<DIV Class="paranum">43</DIV>
+<DIV Class="Examples">Mark(MR_Pool);<BR>
+...&nbsp;--<SPAN Class="roman"><I>&nbsp;Allocate&nbsp;objects&nbsp;using&nbsp;&ldquo;<B>new</B>&nbsp;Designated(...)&rdquo;.</I></SPAN><BR>
+Release(MR_Pool);&nbsp;--<SPAN Class="roman"><I>&nbsp;Reclaim&nbsp;the&nbsp;storage.</I></SPAN></DIV>
+
+<H4 Class="centered">Extensions to Ada 83</H4>
+<DIV Class="paranum">43.a</DIV>
+<DIV Class="Annotations">{<I>extensions to Ada 83</I>} <A NAME="I5211"></A>User-defined 
+storage pools are new to Ada 95.&nbsp;</DIV>
+
+<H4 Class="centered">Wording Changes from Ada 83</H4>
+<DIV Class="paranum">43.b</DIV>
+<DIV Class="Annotations">Ada 83 had a concept called a &ldquo;collection,&rdquo; 
+which is similar to what we call a storage pool. All access types in 
+the same derivation class shared the same collection. In Ada 95, all 
+access types in the same derivation class share the same storage pool, 
+but other (unrelated) access types can also share the same storage pool, 
+either by default, or as specified by the user. A collection was an amorphous 
+collection of objects; a storage pool is a more concrete concept &mdash; 
+hence the different name.</DIV>
+<DIV Class="paranum">43.c</DIV>
+<DIV Class="Annotations">RM83 states the erroneousness of reading or 
+updating deallocated objects incorrectly by missing various cases.&nbsp;</DIV>
+
+<H4 Class="centered">Incompatibilities With Ada 95</H4>
+<DIV Class="paranum">43.d/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00435.TXT">AI95-00435-01</A></I>} 
+<SPAN class="insert2">{<I>incompatibilities with Ada 95</I>} <A NAME="I5212"></A><B>Amendment 
+Correction:</B> Storage pools (and Storage_Size) are not defined for 
+access-to-subprogram types. The original Ada 95 wording defined the attributes, 
+but said nothing about their values. If a program uses attributes Storage_Pool 
+or Storage_Size on an access-to-subprogram type, it will need to be corrected 
+for Ada 2005. That's a good thing, as such a use is a bug &mdash; the 
+concepts never were defined for such types.</SPAN>&nbsp;</DIV>
+
+<H4 Class="centered">Extensions to Ada 95</H4>
+<DIV Class="paranum">43.e/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00161.TXT">AI95-00161-01</A></I>} 
+<SPAN class="insert2">{<I>extensions to Ada 95</I>} <A NAME="I5213"></A><B>Amendment 
+Correction:</B> Added <SPAN Class="swiss"><A HREF="AA-2-8.html#S0019">pragma</A></SPAN> 
+Preelaborable_Initialization to type Root_Storage_Pool, so that extensions 
+of it can be used to declare default-initialized objects in preelaborated 
+units.</SPAN>&nbsp;</DIV>
+
+<H4 Class="centered">Wording Changes from Ada 95</H4>
+<DIV Class="paranum">43.f/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="defect1.html#8652/0009">8652/0009</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00137.TXT">AI95-00137-01</A></I>} 
+<SPAN class="insert2"><B>Corrigendum:</B> Added wording to specify that 
+these are representation attributes.</SPAN></DIV>
+<DIV Class="paranum">43.g/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00230.TXT">AI95-00230-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00416.TXT">AI95-00416-01</A></I>} 
+<SPAN class="insert2">Added wording to clarify that an <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+for a coextension nested inside an outer <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+shares the pool with the outer <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN>.</SPAN> 
+</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-13-10.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-13-11-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="font-size: 125%">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

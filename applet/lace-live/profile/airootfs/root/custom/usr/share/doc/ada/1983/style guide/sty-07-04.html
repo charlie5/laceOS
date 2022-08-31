@@ -1,0 +1,205 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 7.4: Tasking
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 7: Portability</H2>
+
+<H3><a name="7.4">7.4     Tasking</a></H3>
+The definition of tasking in the Ada language leaves many characteristics of  
+the tasking model up to the implementor. This allows a vendor to make  
+appropriate tradeoffs for the intended application domain, but it also  
+diminishes the portability of designs and code employing the tasking features.  
+In some respects this diminished portability is an inherent characteristic of  
+concurrency approaches (see Nissen and Wallis 1984, 37). <P>
+A discussion of Ada tasking dependencies when employed in a distributed target  
+environment is beyond the scope of this book. For example, multi-processor task 
+scheduling, interprocessor rendezvous, and the distributed sense of time  
+through package Calendar are all subject to differences between  
+implementations. For more information, Nissen and Wallis (1984) and ARTEWG  
+(1986) touch on these issues and (Volz et al. 1985) is one of many research  
+articles available.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09.html#9">9&nbsp;Tasks</A>
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><BR>
+<a href="#7.4.1">7.4.1   Task Activation Order</a><BR>
+<a href="#7.4.2">7.4.2   Delay Statements</a><BR>
+<a href="#7.4.3">7.4.3   Package <CODE>Calendar</CODE>, Type <CODE>Duration</CODE>, and <CODE>System.Tick</CODE></a><BR>
+<a href="#7.4.4">7.4.4   Select Statement Evaluation Order</a><BR>
+<a href="#7.4.5">7.4.5   Task Scheduling Algorithm</a><BR>
+<a href="#7.4.6">7.4.6   Abort</a><BR>
+<a href="#7.4.7">7.4.7   Shared Variables and Pragma <CODE>Shared</CODE></a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-07-08.html#7.8.4"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="7.4.1">7.4.1   Task Activation Order</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Do not depend on the order in which task objects are activated when  
+declared in the same declarative list. 
+</UL>
+
+<H4>rationale</H4>
+The order is left undefined in the Ada Language Reference Manual (Department 
+of Defense 1983).<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-03.html#9.3">9.3&nbsp;Task Execution - Task Activation</A>
+
+
+<H3><BR><a name="7.4.2">7.4.2   Delay Statements</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li> Do not depend on a particular delay being achievable (Nissen and 
+Wallis 1984). 
+<li>Never use a busy waiting loop instead of a delay. 
+<li>Design to limit polling to those cases where it is absolutely  
+necessary. 
+<li> Never use knowledge of the execution pattern of tasks to achieve 
+timing requirements. 
+</UL>
+
+<H4>rationale</H4>
+The rationale for this appears in
+<a href="sty-06-01.html#6.1.5">Guideline 6.1.5</a>.
+In addition, the treatment of 
+delay statements varies from implementation to implementation thereby 
+hindering portability.<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-05.html#5.5">5.5&nbsp;Loop Statements</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-03.html#9.3">9.3&nbsp;Task Execution - Task Activation</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-06.html#9.6">9.6&nbsp;Delay Statements, Duration, and Time</A>
+
+
+<H3><BR><a name="7.4.3">7.4.3   Package <CODE>Calendar</CODE>, Type <CODE>Duration</CODE>, and <CODE>System.Tick</CODE></a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li> Do not assume a correlation between <CODE>System.Tick</CODE>
+and package <CODE>Calendar</CODE> or type <CODE>Duration</CODE>
+(see <a href="sty-06-01.html#6.1.5">Guideline 6.1.5</a>). 
+</UL>
+
+<H4>rationale</H4>
+Such a correlation is not required, although it may exist in some  
+implementations.<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-06.html#9.6">9.6&nbsp;Delay Statements, Duration, and Time</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-13-07.html#13.7.1">13.7.1&nbsp;System-Dependent Named Numbers</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-F.html#F">F&nbsp;Implementation-Dependent Characteristics</A>
+
+
+<H3><BR><a name="7.4.4">7.4.4   Select Statement Evaluation Order</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Do not depend on the order in which guard conditions are evaluated or  
+on the algorithm for choosing among several open select alternatives. 
+</UL>
+
+<H4>rationale</H4>
+The language does not define the order of these conditions, so assume that 
+they are arbitrary.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-07.html#9.7.1">9.7.1&nbsp;Selective Waits</A>
+
+        
+<H3><BR><a name="7.4.5">7.4.5   Task Scheduling Algorithm</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Do not assume that tasks execute uninterrupted until they reach a  
+synchronization point. 
+<li>Use pragma <CODE>Priority</CODE> to distinguish general levels of importance only  
+(see <a href="sty-06-01.html#6.1.4">Guideline 6.1.4</a>). 
+</UL>
+
+<H4>rationale</H4>
+The Ada tasking model requires that tasks be synchronized only through the 
+explicit means provided in the language (i.e., rendezvous, task dependence, 
+pragma <CODE>Shared</CODE>). The scheduling algorithm is not defined by the language and 
+may vary from time sliced to preemptive priority. Some implementations (e.g., 
+VAX Ada) provide several choices that a user may select for the application.
+
+<H4>note</H4>
+The number of priorities may vary between implementations. In addition, the  
+manner in which tasks of the same priority are handled may vary between  
+implementations even if the implementations use the same general scheduling  
+algorithm.
+
+<H4>exceptions</H4>
+In real-time systems it is often necessary to tightly control the tasking 
+algorithm to obtain the required performance. For example, avionics systems 
+are frequently driven by cyclic events with limited asynchronous 
+interruptions. A nonpreemptive tasking model is traditionally used to obtain 
+the greatest performance in these applications. Cyclic executives can be 
+programmed in Ada, as can a progression of scheduling schemes from cyclic 
+through multiple-frame-rate to full asynchrony (MacLaren 1980) although an 
+external clock is usually required.<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-03.html#9.3">9.3&nbsp;Task Execution - Task Activation</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-05.html#9.5">9.5&nbsp;Entries, Entry Calls, and Accept Statements</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-08.html#9.8">9.8&nbsp;Priorities</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-B.html#B">B&nbsp;Predefined Language Pragmas</A>
+
+
+<H3><BR><a name="7.4.6">7.4.6   Abort</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Avoid using the abort statement. 
+</UL>
+
+<H4>rationale</H4>
+The rationale for this appears in
+<a href="sty-06-03.html#6.3.3">Guideline 6.3.3</a>. In addition, treatment of the  
+abort statement varies from implementation to implementation thereby hindering  
+portability.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-01.html#9.1">9.1&nbsp;Abort Statements</A>
+
+
+<H3><BR><a name="7.4.7">7.4.7   Shared Variables and Pragma <CODE>Shared</CODE></a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Do not share variables.  
+<li>Have tasks communicate through the rendezvous mechanism. 
+<li>Do not use shared variables as a task synchronization device. 
+<li>Use pragma Shared only when you are forced to by run time system  
+deficiencies. 
+</UL>
+
+<H4>rationale</H4>
+The rationale for this appears in <a href="sty-06-02.html#6.2.4">Guideline
+6.2.4</a>. In addition, the treatment of 
+shared variables varies from implementation to implementation thereby 
+hindering portability.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-05.html#9.5">9.5&nbsp;Entries, Entry Calls, and Accept Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-11.html#9.11">9.11&nbsp;Shared Variables</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-B.html#B">B&nbsp;Predefined Language Pragmas</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

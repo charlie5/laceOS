@@ -1,0 +1,212 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Use clauses</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-4-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-4-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>4.5 Use clauses</H1>
+<div class="Normal">Ada 2012 introduces a further form of use clause. 
+In order to understand the benefit it is perhaps worth just recalling 
+the background to this topic.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The original use clause 
+in Ada 83 made everything in a package directly visible. Consider the 
+following package <A NAME="I1360"></A><A NAME="I1361"></A></div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;I,&nbsp;J,&nbsp;K:&nbsp;Integer;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Colour&nbsp;<B>is</B>&nbsp;(Red,&nbsp;Orange,&nbsp;Yellow,&nbsp;Green,&nbsp;Blue,&nbsp;...&nbsp;);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Mix(This,&nbsp;That:&nbsp;Colour)&nbsp;<B>return</B>&nbsp;Colour;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Complex&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rl,&nbsp;Im:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;+&quot;(Left,&nbsp;Right:&nbsp;Complex)&nbsp;<B>return</B>&nbsp;Complex;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose we have 
+a package <SPAN Class="swiss">Q</SPAN> which manipulates entities declared 
+in <SPAN Class="swiss">P</SPAN>. We need a with clause for <SPAN Class="swiss">P</SPAN>, 
+thus</div>
+<div class="SwissExamples"><B>with</B>&nbsp;P;<BR>
+<B>package</B>&nbsp;Q&nbsp;<B>is</B><BR>
+&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">With just a with clause 
+for <SPAN Class="swiss">P</SPAN> we have to refer to entities in <SPAN Class="swiss">P</SPAN> 
+using the prefix <SPAN Class="swiss">P</SPAN>. So we get statements and 
+declarations in <SPAN Class="swiss">Q</SPAN> such as</div>
+<div class="SwissExamples">P.I&nbsp;:=&nbsp;P.J&nbsp;+&nbsp;P.K;</div>
+<div class="SwissExamples">Mucky:&nbsp;P.Colour&nbsp;:=&nbsp;P.Mix(P.Red,&nbsp;P.Green);</div>
+<div class="SwissExamples">W:&nbsp;P.Complex&nbsp;:=&nbsp;(1.0,&nbsp;2.0);<BR>
+Z:&nbsp;P.Complex&nbsp;:=&nbsp;(4.0,&nbsp;5.0);<BR>
+D:&nbsp;P.Complex&nbsp;:=&nbsp;P.&quot;+&quot;(W,&nbsp;Z);</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is generally considered 
+tedious especially if the package name is not <SPAN Class="swiss">P</SPAN> 
+but <SPAN Class="swiss">A_Very_Long_Name</SPAN>. However, adding a package 
+use clause to <SPAN Class="swiss">Q</SPAN> thus</div>
+<div class="SwissExamples"><B>with</B>&nbsp;P;&nbsp;<B>use</B>&nbsp;P;<BR>
+<B>package</B>&nbsp;Q...</div>
+<div class="Normal" style="margin-bottom: 0.4em">enables the <SPAN Class="swiss">P</SPAN> 
+prefix to be omitted and in particular allows infix notation for operators 
+so we can now simply write</div>
+<div class="SwissExamples">D:&nbsp;Complex&nbsp;:=&nbsp;W&nbsp;+&nbsp;Z;</div>
+<div class="Normal">But as is well known, the universal use of such use 
+clauses introduces ambiguity (if the same identifier is in two different 
+packages and we have a use clause for both), obscurity (you can't find 
+the wretched declaration of <SPAN Class="swiss">Red</SPAN>) and possibly 
+a maintenance headache (another package is added which duplicates some 
+identifiers). So there is a school of thought that use clauses are bad 
+for you.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, although the 
+prefix denoting the package is generally beneficial it is a pain to be 
+forced to always use the prefix notation for operators. So in Ada 95, 
+the use type clause was added enabling us to write <A NAME="I1362"></A></div>
+<div class="SwissExamples"><B>with</B>&nbsp;P;&nbsp;&nbsp;<B>use&nbsp;type</B>&nbsp;P.Complex;<BR>
+<B>package</B>&nbsp;Q&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">This has the effect 
+that only the primitive <I>operators</I> of the type <SPAN Class="swiss">Complex</SPAN> 
+are directly visible. So we can now write</div>
+<div class="SwissExamples">D:&nbsp;P.Complex&nbsp;:=&nbsp;W&nbsp;+&nbsp;Z;</div>
+<div class="Normal">Note that the type name <SPAN Class="swiss">Complex</SPAN> 
+is not itself directly visible so we still have to write <SPAN Class="swiss">P.Complex</SPAN> 
+in the declaration of <SPAN Class="swiss">D</SPAN>.</div>
+<div class="Normal">However, some users still grumbled. Why should only 
+those primitive operations that happen to be denoted by operators be 
+visible? Why indeed? Why cannot <SPAN Class="swiss">Mucky</SPAN> be declared 
+similarly without using the prefix <SPAN Class="swiss">P</SPAN> for <SPAN Class="swiss">Mix</SPAN>, 
+<SPAN Class="swiss">Red</SPAN> and <SPAN Class="swiss">Green</SPAN>?</div>
+<div class="Normal" style="margin-bottom: 0.4em">It might be worth briefly 
+recalling exactly which operations of a type <SPAN Class="swiss">T</SPAN> 
+are primitive operations of <SPAN Class="swiss">T</SPAN>. They are basically 
+<A NAME="I1363"></A></div>
+<div class="Bulleted">predefined operations such as <SPAN Class="swiss">&quot;=&quot;</SPAN> 
+and <SPAN Class="swiss">&quot;+&quot;</SPAN>,</div>
+<div class="Bulleted">subprograms declared in the same package as <SPAN Class="swiss">T</SPAN> 
+and which operate on <SPAN Class="swiss">T</SPAN>,</div>
+<div class="Bulleted">enumeration literals of <SPAN Class="swiss">T</SPAN>,</div>
+<div class="Bulleted">for a derived type, inherited or overridden subprograms. 
+</div>
+<div class="Normal">The irritation is solved in Ada 2012 by the <B>use 
+all type</B> clause which makes all primitive operations visible. (Note 
+another use for the reserved word <B>all</B>.) <A NAME="I1364"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">So we can write</div>
+<div class="SwissExamples"><B>with</B>&nbsp;P;&nbsp;&nbsp;<B>use&nbsp;all&nbsp;type</B>&nbsp;P.Colour;<BR>
+<B>package</B>&nbsp;Q&nbsp;<B>is</B><BR>
+&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">and now within <SPAN Class="swiss">Q</SPAN> 
+we can write</div>
+<div class="SwissExamples">Mucky:&nbsp;P.Colour&nbsp;:=&nbsp;Mix(Red,&nbsp;Green);</div>
+<div class="Normal">Thus the enumeration literals such as <SPAN Class="swiss">Red</SPAN> 
+are made directly visible as well as obvious primitive subprograms such 
+as <SPAN Class="swiss">Mix</SPAN>.</div>
+<div class="Normal">Another impact concerns tagged types and in particular 
+operations on class wide types.</div>
+<div class="Normal">Remember that subprograms with a parameter (or result) 
+of type <SPAN Class="swiss">T'Class</SPAN> are not primitive operations 
+unless they also have a parameter (or result of type <SPAN Class="swiss">T</SPAN>) 
+as well.</div>
+<div class="Normal">Actually it is usually very convenient that operations 
+on a class wide type are not primitive operations because it means that 
+they are not inherited and so cannot be overridden. Thus we are assured 
+that they do apply to all types of the class.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So, suppose we have</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op1(X:&nbsp;<B>in&nbsp;out</B>&nbsp;T);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op2(Y:&nbsp;<B>in</B>&nbsp;T;&nbsp;Z:&nbsp;<B>out</B>&nbsp;T);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Fop(W:&nbsp;T)&nbsp;<B>return</B>&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;List(TC:&nbsp;<B>in</B>&nbsp;T'Class);<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal">Then although <SPAN Class="swiss">List</SPAN> is 
+not a primitive operation of <SPAN Class="swiss">T</SPAN> it will certainly 
+look to many users that it belongs to <SPAN Class="swiss">T</SPAN> in 
+some broad sense. Accordingly, writing <B>use all type</B> <SPAN Class="swiss">P.T;</SPAN> 
+makes not only the primitive operations such as <SPAN Class="swiss">Op1</SPAN>, 
+<SPAN Class="swiss">Op2</SPAN> and <SPAN Class="swiss">Fop</SPAN>, visible 
+but it also makes <SPAN Class="swiss">List</SPAN> visible as well.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that this is the 
+same as the rule regarding the prefixed form of subprogram calls which 
+can also be used for both primitive operations and class wide operations. 
+Thus given an object <SPAN Class="swiss">A</SPAN> of type <SPAN Class="swiss">T</SPAN>, 
+as well as statements <SPAN Class="swiss">A.Op1;</SPAN> and <SPAN Class="swiss">A.Op2(B);</SPAN> 
+and a function call <SPAN Class="swiss">A.Fop</SPAN> we can equally write</div>
+<div class="SwissExamples">A.List;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>prefixed&nbsp;call&nbsp;of&nbsp;class&nbsp;wide&nbsp;procedure</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">Moreover, suppose we 
+declare a type <SPAN Class="swiss">NT</SPAN> in a package <SPAN Class="swiss">NP</SPAN> 
+thus</div>
+<div class="SwissExamples"><B>package</B>&nbsp;NP&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;NT&nbsp;<B>is&nbsp;new</B>&nbsp;T&nbsp;<B>with</B>&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;NP;</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we have an object 
+<SPAN Class="swiss">AN</SPAN> of type <SPAN Class="swiss">NT</SPAN> then 
+not only can we use prefixed calls for inherited and overridden operations 
+but we can also use prefixed calls for class wide operations in ancestor 
+packages such as <SPAN Class="swiss">P</SPAN>. So we can write</div>
+<div class="SwissExamples">AN.List;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>prefixed&nbsp;call&nbsp;of&nbsp;List&nbsp;in&nbsp;ancestor&nbsp;package</I></SPAN></div>
+<div class="Normal">Similarly, writing <B>use all type</B> <SPAN Class="swiss">NP.NT;</SPAN> 
+on <SPAN Class="swiss">Q</SPAN> makes the inherited (or overridden) operations 
+<SPAN Class="swiss">Op1</SPAN>, <SPAN Class="swiss">Op2</SPAN> and <SPAN Class="swiss">Fop</SPAN> 
+visible and also makes the class wide operation <SPAN Class="swiss">List</SPAN> 
+declared in <SPAN Class="swiss">P</SPAN> visible. We do not also have 
+to write <B>use all type</B> <SPAN Class="swiss">P.T;</SPAN> on <SPAN Class="swiss">Q</SPAN> 
+as well.</div>
+<div class="Normal">We conclude by remarking that the maintenance problem 
+of name clashes really only applies to use package clauses. In the case 
+of use type and use all type clauses, the entities made visible are overloadable 
+and a clash only occurs if two have the same profile which is very unlikely 
+and almost inevitably indicates a bug.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-4-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-4-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

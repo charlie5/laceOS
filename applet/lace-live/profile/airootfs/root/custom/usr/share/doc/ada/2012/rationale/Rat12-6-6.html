@@ -1,0 +1,288 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>General miscellanea</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.Indented1 {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-6-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>6.6 General miscellanea</H1>
+<div class="Normal">A number of improvements do not neatly fit into any 
+other section of this book and so are lumped together here.</div>
+<div class="Normal">The first four are in fact binding interpretations 
+and thus apply to Ada 2005 as well.</div>
+<div class="Normal">First, nominal subtypes are defined for enumeration 
+literals and attribute references so that all names now have a nominal 
+subtype.<A NAME="I1537"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">This is clearly a matter 
+for the language lawyer rather than the happy programmer. Consider the 
+following weird example</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;S&nbsp;<B>is</B>&nbsp;Integer&nbsp;<B>range</B>&nbsp;1&nbsp;..&nbsp;10;<BR>
+...<BR>
+<B>case</B>&nbsp;S'Last&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;0&nbsp;=&gt;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>????</I></SPAN></div>
+<div class="Normal">This is clearly nonsense. However, Ada 2005 does 
+not define a nominal subtype for attributes such as <SPAN Class="swiss">S'Last</SPAN> 
+and so we cannot determine whether <SPAN Class="swiss">0</SPAN> is allowed 
+as a discrete choice. The language definition is tidied up to cover such 
+cases.</div>
+<div class="Normal">The second gap in Ada 2005 concerns intrinsic subprograms. 
+Remember that intrinsic subprograms are functions such as <SPAN Class="swiss">&quot;+&quot;</SPAN> 
+on the type <SPAN Class="swiss">Integer</SPAN> that only exist in the 
+mind of the compiler. Clearly they have no address. The following is 
+added to the RM: <A NAME="I1538"></A><A NAME="I1539"></A></div>
+<div class="Indented1">The prefix of <SPAN Class="swiss">X'Address</SPAN> 
+shall not statically denote a subprogram that has convention <SPAN Class="swiss">Intrinsic</SPAN>. 
+<SPAN Class="swiss">X'Address</SPAN> raises <SPAN Class="swiss">Program_Error</SPAN> 
+if <SPAN Class="swiss">X</SPAN> denotes a subprogram that has convention 
+<SPAN Class="swiss">Intrinsic</SPAN>.&nbsp;</div>
+<div class="Normal">The dynamic check is needed because of the possibility 
+of passing an intrinsic operation as a generic parameter.</div>
+<div class="Normal">The third of these binding gems concerns the package 
+<SPAN Class="swiss">Ada.Calendar</SPAN>. <A NAME="I1540"></A><A NAME="I1541"></A></div>
+<div class="Normal">The problem is that <SPAN Class="swiss">Calendar.Time</SPAN> 
+is not well-defined when a time zone change occurs as for example when 
+Daylight Saving Time is introduced or removed. Thus operations involving 
+several time values (such as subtraction) might give the &quot;correct&quot; 
+answer or might be an hour adrift. The conclusion reached was simply 
+to admit that it is not defined so the wording is slightly changed.<A NAME="I1542"></A><A NAME="I1543"></A></div>
+<div class="Normal">Another problem with the wording in Ada 2005 is that 
+the sign of the difference between local time and UTC as returned by 
+<SPAN Class="swiss">UTC_Offset</SPAN> is not clearly defined. The sign 
+is clarified so that for example <SPAN Class="swiss">UTC_Offset</SPAN> 
+is negative in the American continent.<A NAME="I1544"></A></div>
+<div class="Normal">There is another problem with the package <SPAN Class="swiss">Calendar</SPAN> 
+which will need to be addressed at some time (probably long after the 
+author is dead). Much effort was exerted in Ada 2005 to cope with leap 
+seconds. These arise because the angular velocity of rotation of the 
+Earth is gradually slowing down. In earlier epochs when measurements 
+of time were not accurate this did not matter. However, we now have atomic 
+clocks and the slowdown is significant so that clocks are adjusted by 
+one second as necessary and these are known as leap seconds.</div>
+<div class="Normal">But leap seconds are under threat. There is a move 
+to suggest that tiny adjustments of one second are not worth the effort 
+and that we should wait until the time is a whole hour wrong. A simple 
+adjustment similar to that with which we are familiar with Daylight Saving 
+changes is all that is needed. In other words we will have a leap hour 
+every now and then. Indeed, if leap seconds occur about once a year as 
+they have done on average since 1972 then a leap hour will be needed 
+sometime in the 37th century. This will probably need to be addressed 
+in Ada 3620 or so.<A NAME="I1545"></A></div>
+<div class="Normal">The final binding interpretation concerns class wide 
+types and generics.</div>
+<div class="Normal" style="margin-bottom: 0.4em">An annoyance was recently 
+discovered concerning the use of the indefinite container packages such 
+as</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Index_Type&nbsp;<B>is&nbsp;range</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type(&lt;&gt;)&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Ada.Containers.Indefinite_Vectors&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can instantiate 
+this with an indefinite type such as <SPAN Class="swiss">String</SPAN> 
+by writing perhaps</div>
+<div class="SwissExamples"><B>package</B>&nbsp;String_Vectors&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Containers.Indefinite_Vectors(Positive,&nbsp;String);</div>
+<div class="Normal">The third actual parameter can be omitted because 
+the predefined operation <SPAN Class="swiss">&quot;=&quot;</SPAN> on 
+the type <SPAN Class="swiss">String</SPAN> exists and does what we want.</div>
+<div class="Normal">Class wide types are another example of indefinite 
+types. Thus we might like to create a vector container whose elements 
+are a mixture of objects of types <SPAN Class="swiss">Circle</SPAN>, 
+<SPAN Class="swiss">Square</SPAN>, <SPAN Class="swiss">Triangle</SPAN> 
+and so on. Assuming these are all descended from the abstract type <SPAN Class="swiss">Object</SPAN> 
+we want to instantiate with the class wide type <SPAN Class="swiss">Object'Class</SPAN>.</div>
+<div class="Normal">However, unlike <SPAN Class="swiss">String</SPAN>, 
+class wide types such as <SPAN Class="swiss">Object'Class</SPAN> do not 
+have a predefined equals (class wide types do not themselves have any 
+predefined primitive operations). This is annoying since the derived 
+types <SPAN Class="swiss">Circle</SPAN>, <SPAN Class="swiss">Square</SPAN>, 
+and <SPAN Class="swiss">Triangle</SPAN> (being just records) do have 
+a predefined equals.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So we have to write 
+something like</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Equal(L,&nbsp;R:&nbsp;Object'Class)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;L&nbsp;=&nbsp;R;<BR>
+<B>end</B>&nbsp;Equal;</div>
+<div class="Normal">Note that this will dispatch to the predefined equals 
+of the type of the objects passed as parameters. They both must be of 
+the same type of course; we cannot compare a <SPAN Class="swiss">Circle</SPAN> 
+to a <SPAN Class="swiss">Triangle</SPAN> (anymore than we can compare 
+Thee to a Summer's Day). <A NAME="I1546"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">So we can now instantiate 
+thus</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Object_Vectors&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;Containers.Indefinite_Vectors(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Positive,&nbsp;Object'Class,&nbsp;Equal);</div>
+<div class="Normal">Note irritatingly that we cannot write <SPAN Class="swiss">Equal</SPAN> 
+as just <SPAN Class="swiss">&quot;=&quot;</SPAN> because this causes 
+ambiguities.</div>
+<div class="Normal">This is all a bit annoying and so in Ada 2012, the 
+required <SPAN Class="swiss">&quot;=&quot;</SPAN> is automatically created, 
+we do not have to declare <SPAN Class="swiss">Equal</SPAN>, and the instantiation 
+can simply be</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Object_Vectors&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Containers.Indefinite_Vectors(Positive,&nbsp;Object'Class);</div>
+<div class="Normal">This improvement is also a binding interpretation 
+and so applies to Ada 2005 as well.</div>
+<div class="Normal">A more serious matter is the problem of the composability 
+of equality.<A NAME="I1547"></A><A NAME="I1548"></A></div>
+<div class="Normal">In Ada 2005, tagged record types compose but untagged 
+record types do not. If we define a new type (a record type, array type 
+or a derived type) then equality is defined in terms of equality for 
+its various components. However, the behaviour of components which are 
+records is different in Ada 2005 according to whether they are tagged 
+or not. If a component is tagged then the primitive operation is used 
+(which might have been redefined), whereas for an untagged type, predefined 
+equality is used even though it might have been overridden.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Consider</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Tagrec&nbsp;<B>is&nbsp;tagged</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X1:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X2:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Untagrec&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y1:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y2:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Index&nbsp;<B>is&nbsp;range</B>&nbsp;0&nbsp;..&nbsp;64;</div>
+<div class="SwissExamples">...</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;=&quot;&nbsp;(L,&nbsp;R:&nbsp;Tagrec)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;L.X1&nbsp;=&nbsp;R.X1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>compare&nbsp;only&nbsp;first&nbsp;component</I></SPAN><BR>
+<B>end</B>;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;=&quot;&nbsp;(L,&nbsp;R:&nbsp;Untagrec)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;L.Y1&nbsp;=&nbsp;R.Y1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>compare&nbsp;only&nbsp;first&nbsp;component</I></SPAN><BR>
+<B>end</B>;}</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;=&quot;&nbsp;(L,&nbsp;R:&nbsp;Index)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>raise</B>&nbsp;Havoc;<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;False;<BR>
+<B>end</B>;</div>
+<div class="SwissExamples">...</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Mixed&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T:&nbsp;Tagrec;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;U:&nbsp;Untagrec;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z:&nbsp;Index;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal">Here we have a type <SPAN Class="swiss">Mixed</SPAN> 
+whose components are of a tagged record type <SPAN Class="swiss">Tagrec</SPAN>, 
+an untagged record type <SPAN Class="swiss">Untagrec</SPAN>, and an elementary 
+type <SPAN Class="swiss">Index</SPAN>. Moreover, we have redefined equality 
+for these types.</div>
+<div class="Normal">In Ada 2005, the equality for the type <SPAN Class="swiss">Mixed</SPAN> 
+uses the redefined equality for the component <SPAN Class="swiss">T</SPAN> 
+but the predefined equality for <SPAN Class="swiss">U</SPAN> and <SPAN Class="swiss">Z</SPAN>. 
+Thus it compares <SPAN Class="swiss">T.X1</SPAN>, <SPAN Class="swiss">U.Y1</SPAN> 
+and <SPAN Class="swiss">U.Y2</SPAN> and does not raise <SPAN Class="swiss">Havoc</SPAN>.</div>
+<div class="Normal">In Ada 83, the predefined equality always emerged 
+for the components of arrays and records. One reason was to avoid confusion 
+if an inconsistency arose between <SPAN Class="swiss">&quot;=&quot;</SPAN>, 
+<SPAN Class="swiss">&quot;&lt;&quot;</SPAN> and <SPAN Class="swiss">&quot;&lt;=&quot;</SPAN>. 
+Remember that many elementary types and certain array types have predefined 
+<SPAN Class="swiss">&quot;&lt;&quot;</SPAN> as well as <SPAN Class="swiss">&quot;=&quot;</SPAN> 
+and to get the relationship messed up would have been confusing.</div>
+<div class="Normal">However, Ada 95 introduced tagged record types and 
+inheritance of operations became an important feature. So it seemed natural 
+that if a structure (array or record) had components of a tagged type 
+and equality for that tagged type had been redefined then it would be 
+natural to expect that equality for the structure should use the redefined 
+equality. But, fearful of introducing an incompatibility, the rule for 
+untagged record types was left unchanged so that predefined equality 
+re-emerges.</div>
+<div class="Normal">On reflection, this difference between tagged and 
+untagged records was surprising and so has been changed in Ada 2012 so 
+that all record types behave the same way and use the primitive operation. 
+This is often called composability of equality so we can say that in 
+Ada 2012, record types always compose for equality. Remember that this 
+only applies to records; components which are of array types and elementary 
+types continue to use predefined equality. So in Ada 2012, equality for 
+<SPAN Class="swiss">Mixed</SPAN> only compares <SPAN Class="swiss">T.X1</SPAN> 
+and <SPAN Class="swiss">U.Y1</SPAN> but not <SPAN Class="swiss">U.Y2</SPAN> 
+and still does not raise <SPAN Class="swiss">Havoc</SPAN>.</div>
+<div class="Normal">Concern for incompatibility and inconsistency has 
+been allayed by a deep analysis of a number of programs. No nasties were 
+revealed and in the only cases where it made a difference it was clear 
+that the original behaviour was in fact wrong.</div>
+<div class="Normal">The final miscellaneum (singular of miscellanea?) 
+concerns tags.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The package <SPAN Class="swiss">Ada.Tags</SPAN> 
+defines various functions operating on tags. For example</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Parent_Tag(T:&nbsp;Tag)&nbsp;<B>return</B>&nbsp;Tag;</div>
+<div class="Normal">returns the tag of the parent unless the type has 
+no parent in which case it returns <SPAN Class="swiss">No_Tag</SPAN>.</div>
+<div class="Normal">A type can be abstract or concrete. The key property 
+of abstract types is that we cannot have an object of an abstract type. 
+If we wish to create an object using <SPAN Class="swiss">Generic_Dispatching_Constructor</SPAN> 
+and the tag passed as a parameter represents an abstract type then <SPAN Class="swiss">Tag_Error</SPAN> 
+is raised. It would, of course, be far better to check whether a tag 
+represents an abstract type before using <SPAN Class="swiss">Generic_Dispatching_Constructor</SPAN>.</div>
+<div class="Normal">Moreover, given a tag, there is no sensible way in 
+Ada 2005 to find out whether it represents an abstract type. We could 
+attempt to create an object and see if it raises <SPAN Class="swiss">Tag_Error</SPAN>. 
+If it doesn't then we know that it was not abstract but we have also 
+created an object we maybe didn't want; if it does raise <SPAN Class="swiss">Tag_Error</SPAN> 
+then it might or might not have been abstract since there are other reasons 
+for the exception being raised. Either way this is madness.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 2012, we can 
+test the tag using the new function</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Is_Abstract(T:&nbsp;Tag)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="Normal">which is added near the end of the package <SPAN Class="swiss">Ada.Tags</SPAN> 
+just before the declaration of the exception <SPAN Class="swiss">Tag_Error</SPAN>. 
+<A NAME="I1549"></A><A NAME="I1550"></A><A NAME="I1551"></A><A NAME="I1552"></A><A NAME="I1553"></A></div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-6-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

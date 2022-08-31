@@ -1,0 +1,103 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 3.3: Multiple Declarations</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 3: Classical Programming</H2>
+
+<H3><a name="3.3">3.3 Multiple Declarations</a></H3>
+
+An object  declaration may declare more than one object, in which case
+it is called a multiple object declaration. For example
+<p>
+<PRE>    DIVISOR, STEP :  POSITIVE  :=  5;
+</PRE><p>
+is a  multiple declaration  that declares  two  variables  of  subtype
+POSITIVE which  are initialized  with the  value of  the literal  5. A
+large number  of multiple  declarations are  of the  above  form:  the
+initial value  is given  by a  literal or  by a  pure expression  that
+delivers the  same value  each time  it is evaluated. But consider now
+the multiple declaration:
+<p>
+<PRE>    YESTERDAY, TODAY, TOMORROW :  DAY  :=  GET_NEXT_DAY;
+</PRE><p>
+where the  function GET_NEXT_DAY  returns a different day each time it
+is called.  Then there  are two  possible interpretations. One of them
+would be equivalent to:
+<p>
+<table border cellpadding=6><tr><td><pre>
+some_day      :  constant DAY  :=  GET_NEXT_DAY;
+
+YESTERDAY  :  DAY  :=  some_day;
+TODAY      :  DAY  :=  some_day;
+TOMORROW   :  DAY  :=  some_day;</pre></td></tr></table>
+<p>
+in which  case all three variables would have the same value, obtained
+by the  single evaluation  of the  function.  However,  the  semantics
+selected for  Ada is  different. In  fact the  multiple declaration is
+equivalent to the following sequence of single declarations:
+<p>
+<table border cellpadding=6><tr><td><pre>
+YESTERDAY  :  DAY  :=  GET_NEXT_DAY;
+TODAY      :  DAY  :=  GET_NEXT_DAY;
+TOMORROW   :  DAY  :=  GET_NEXT_DAY;
+</pre></td></tr></table>
+<p>
+in this order. This means that the function will be called three times
+and the variables will therefore be given three successive day values,
+as one expects in the present example.
+<p>
+Clearly, the  two semantics  do not  differ  when  the  initialization
+always yields the same value (the most frequent case). However we have
+found that  when multiple evaluations yield different values, the most
+natural  semantics   is  almost  always  the  one  involving  multiple
+evaluations - hence the choice for Ada. Other examples are:
+<p>
+<PRE>    JOHN, PAUL :  PERSON_NAME  :=  new PERSON;
+</PRE><p>
+where we certainly want to allocate two new persons, and similarly:
+<p>
+<PRE>    FIRST, SECOND :  constant STRING  :=  GET_NEW_TEXT;
+</PRE><p>
+In this  last example  these two  constants may have different values,
+and they  need not  even have  the same  length. Thus FIRST and SECOND
+need not  even be  of the  same subtype  of the  type STRING. The same
+situation would also arise with
+<p>
+<PRE>    A, B :  STRING(1 .. F)  :=  (others =&gt; "&#42;");
+</PRE><p>
+if F  were a  function and  the  two  implied  calls  of  F  delivered
+different values.
+<p>
+In later  chapters, when  we discuss  default expressions  for  record
+components and  for parameters,  we will  see that  the Ada  semantics
+requires dynamic evaluation of these default expressions - as the need
+arises; this  is quite  consistent  with  the  semantics  of  multiple
+evaluation selected for multiple declarations.
+
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-03-04.html#3.4"><b>NEXT</b></a>
+&#128; <a href="ratl-03-02.html#3.2"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-03.html#3"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

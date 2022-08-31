@@ -1,0 +1,255 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Membership tests</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-3-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-3-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>3.6 Membership tests</H1>
+<div class="Normal">Membership tests in Ada 83 to Ada 2005 are somewhat 
+restrictive. They take two forms <A NAME="I1327"></A></div>
+<div class="Bulleted">to test whether a value is in a given range, or</div>
+<div class="Bulleted">to test whether a value is in a given subtype. 
+</div>
+<div class="Normal" style="margin-bottom: 0.4em">Examples of these are</div>
+<div class="SwissExamples"><B>if</B>&nbsp;M&nbsp;<B>in</B>&nbsp;June&nbsp;..&nbsp;August&nbsp;<B>then</B></div>
+<div class="SwissExamples"><B>if</B>&nbsp;I&nbsp;<B>in</B>&nbsp;Index&nbsp;<B>then</B></div>
+<div class="Normal" style="margin-bottom: 0.4em">However, the restrictions 
+are annoying. If we want to test whether it is safe to eat an oyster 
+(there has to be an R in the month) then we would really like to write</div>
+<div class="SwissExamples"><B>if</B>&nbsp;M&nbsp;<B>in</B><BR>
+&nbsp;Jan&nbsp;..&nbsp;April&nbsp;|&nbsp;Sep&nbsp;..&nbsp;Dec&nbsp;<B>then</B>&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal&nbsp;in&nbsp;Ada&nbsp;2005</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">whereas we are forced 
+to write something like</div>
+<div class="SwissExamples"><B>if</B>&nbsp;M&nbsp;<B>in</B>&nbsp;Jan&nbsp;..&nbsp;April&nbsp;<B>or</B>&nbsp;M&nbsp;<B>in</B>&nbsp;Sep&nbsp;..&nbsp;Dec&nbsp;<B>then</B></div>
+<div class="Normal" style="margin-bottom: 0.4em">which means repeating 
+<SPAN Class="swiss">M</SPAN> and then perhaps worrying about whether 
+to use <B>or</B> or <B>or else</B>. Or in this case we could do the test 
+the other way</div>
+<div class="SwissExamples"><B>if</B>&nbsp;M&nbsp;<B>not&nbsp;in</B>&nbsp;May&nbsp;..&nbsp;Aug&nbsp;<B>then</B></div>
+<div class="Normal">What we would really like to do is use the vertical 
+bar as in case statements and aggregates to select a combination of ranges, 
+subtypes, and values.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 2012 is much more 
+flexible in this area. To see the differences it is probably easiest 
+to look at the old and new syntax. The relevant old syntax for Ada 2005 
+is</div>
+<div class="SwissExamples"><SPAN Class="swiss">relation</SPAN>&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="swiss">simple_expression</SPAN>&nbsp;[<SPAN Class="swiss">relational_operator</SPAN>&nbsp;<SPAN Class="swiss">simple_expression</SPAN>]<BR>
+&nbsp;&nbsp;|&nbsp;<SPAN Class="swiss">simple_expression</SPAN>&nbsp;[<SPAN Class="roman"><B>not</B></SPAN>]&nbsp;<SPAN Class="roman"><B>in</B></SPAN>&nbsp;<SPAN Class="swiss">range</SPAN><BR>
+&nbsp;&nbsp;|&nbsp;<SPAN Class="swiss">simple_expression</SPAN>&nbsp;[<SPAN Class="roman"><B>not</B></SPAN>]&nbsp;<SPAN Class="roman"><B>in</B></SPAN>&nbsp;<SPAN Class="swiss">subtype_mark</SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">where the last two 
+productions define membership tests. The syntax regarding choices in 
+aggregates and case statements in Ada 2005 is</div>
+<div class="SwissExamples"><SPAN Class="swiss">discrete_choice_list</SPAN>&nbsp;::=&nbsp;<SPAN Class="swiss">discrete_choice</SPAN>&nbsp;{&nbsp;|&nbsp;<SPAN Class="swiss">discrete_choice</SPAN>}</div>
+<div class="SwissExamples"><SPAN Class="swiss">discrete_choice</SPAN>&nbsp;::=&nbsp;<SPAN Class="swiss">expression</SPAN>&nbsp;|&nbsp;<SPAN Class="swiss">discrete_range</SPAN>&nbsp;|&nbsp;<SPAN Class="roman"><B>others</B></SPAN></div>
+<div class="SwissExamples"><SPAN Class="swiss">discrete_range</SPAN>&nbsp;::=&nbsp;<I>discrete_</I><SPAN Class="swiss">subtype_indication</SPAN>&nbsp;|&nbsp;<SPAN Class="swiss">range</SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">The syntax in Ada 2012 
+is rather different and changes <SPAN Class="swiss">relation</SPAN> to 
+use new productions for <SPAN Class="swiss">membership_choice_list</SPAN> 
+and <SPAN Class="swiss">membership_choice</SPAN> (this enables the vertical 
+bar to be used in membership tests). And then a <SPAN Class="swiss">membership_choice</SPAN> 
+in turn uses <SPAN Class="swiss">choice_expression</SPAN> and <SPAN Class="swiss">choice_relation</SPAN> 
+as follows</div>
+<div class="SwissExamples"><SPAN Class="swiss">relation</SPAN>&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="swiss">simple_expression</SPAN>&nbsp;[<SPAN Class="swiss">relational_operator</SPAN>&nbsp;<SPAN Class="swiss">simple_expression</SPAN>]<BR>
+&nbsp;&nbsp;|&nbsp;<SPAN Class="swiss">simple_expression</SPAN>&nbsp;[<SPAN Class="roman"><B>not</B></SPAN>]&nbsp;<SPAN Class="roman"><B>in</B></SPAN>&nbsp;<SPAN Class="swiss">membership_choice_list</SPAN>}</div>
+<div class="SwissExamples"><SPAN Class="swiss">membership_choice_list</SPAN>&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="swiss">membership_choice</SPAN>&nbsp;{&nbsp;|&nbsp;<SPAN Class="swiss">membership_choice</SPAN>}</div>
+<div class="SwissExamples"><SPAN Class="swiss">membership_choice</SPAN>&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="swiss">choice_expression</SPAN>&nbsp;|&nbsp;<SPAN Class="swiss">range</SPAN>&nbsp;|&nbsp;<SPAN Class="swiss">subtype_mark</SPAN></div>
+<div class="SwissExamples"><SPAN Class="swiss">choice_expression</SPAN>&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="swiss">choice_relation</SPAN>&nbsp;{<SPAN Class="roman"><B>and</B></SPAN>&nbsp;<SPAN Class="swiss">choice_relation</SPAN>}<BR>
+&nbsp;&nbsp;|&nbsp;<SPAN Class="swiss">choice_relation</SPAN>&nbsp;{<SPAN Class="roman"><B>or</B></SPAN>&nbsp;<SPAN Class="swiss">choice_relation</SPAN>}<BR>
+&nbsp;&nbsp;|&nbsp;<SPAN Class="swiss">choice_relation</SPAN>&nbsp;{<SPAN Class="roman"><B>xor</B></SPAN>&nbsp;<SPAN Class="swiss">choice_relation</SPAN>}<BR>
+&nbsp;&nbsp;|&nbsp;<SPAN Class="swiss">choice_relation</SPAN>&nbsp;{<SPAN Class="roman"><B>and&nbsp;then</B></SPAN>&nbsp;<SPAN Class="swiss">choice_relation</SPAN>}<BR>
+&nbsp;&nbsp;|&nbsp;<SPAN Class="swiss">choice_relation</SPAN>&nbsp;{<SPAN Class="roman"><B>or&nbsp;else</B></SPAN>&nbsp;<SPAN Class="swiss">choice_relation</SPAN>}</div>
+<div class="SwissExamples"><SPAN Class="swiss">choice_relation</SPAN>&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="swiss">simple_expression</SPAN>&nbsp;[<SPAN Class="swiss">relational_operator</SPAN>&nbsp;<SPAN Class="swiss">simple_expression</SPAN>]}</div>
+<div class="Normal" style="margin-bottom: 0.4em">The difference between 
+a <SPAN Class="swiss">choice_relation</SPAN> and a <SPAN Class="swiss">relation</SPAN> 
+is that the <SPAN Class="swiss">choice_relation</SPAN> does not include 
+membership tests. Moreover, <SPAN Class="swiss">discrete_choice</SPAN> 
+is changed to</div>
+<div class="Normal"><SPAN Class="swiss">discrete_choice</SPAN> ::= <SPAN Class="swiss">choice_expression</SPAN> 
+| <I>discrete_</I><SPAN Class="swiss">subtype_indication</SPAN> | <SPAN Class="swiss">range</SPAN> 
+| <SPAN Class="roman"><B>others</B></SPAN></div>
+<div class="Normal">the difference being that a <SPAN Class="swiss">discrete_choice</SPAN> 
+now uses a <SPAN Class="swiss">choice_expression</SPAN> rather than an 
+<SPAN Class="swiss">expression</SPAN> as one of its possibilities.</div>
+<div class="Normal">The overall effect of the changes is to permit the 
+vertical bar in membership tests without getting too confused by nesting 
+membership tests.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Here are some examples 
+that are now permitted in Ada 2012 but were not permitted in Ada 2005</div>
+<div class="SwissExamples"><B>if</B>&nbsp;N&nbsp;<B>in</B>&nbsp;6&nbsp;|&nbsp;28&nbsp;|&nbsp;496&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;N<SPAN Class="roman"><I>&nbsp;is&nbsp;small&nbsp;and&nbsp;perfect!</I></SPAN></div>
+<div class="SwissExamples"><B>if</B>&nbsp;M&nbsp;<B>in</B>&nbsp;Spring&nbsp;|&nbsp;June&nbsp;|&nbsp;October&nbsp;..&nbsp;December&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>combination&nbsp;of&nbsp;subtype,&nbsp;single&nbsp;value&nbsp;and&nbsp;range</I></SPAN></div>
+<div class="SwissExamples"><B>if</B>&nbsp;X&nbsp;<B>in</B>&nbsp;0.5&nbsp;..&nbsp;Z&nbsp;|&nbsp;2.0*Z&nbsp;..&nbsp;10.0&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;discrete&nbsp;or&nbsp;static</I></SPAN></div>
+<div class="SwissExamples"><B>if</B>&nbsp;Obj&nbsp;<B>in</B>&nbsp;Triangle&nbsp;|&nbsp;Circle&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>with&nbsp;tagged&nbsp;types</I></SPAN></div>
+<div class="SwissExamples"><B>if</B>&nbsp;Letter&nbsp;<B>in</B>&nbsp;'A'&nbsp;|&nbsp;'E'&nbsp;|&nbsp;'I'&nbsp;|&nbsp;'O'&nbsp;|&nbsp;'U'&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>characters</I></SPAN></div>
+<div class="Normal">Membership tests are permitted for any type and values 
+do not have to be static. There is no change here but it should be remembered 
+that existing uses of the vertical bar in case statements and aggregates 
+do require the type to be discrete and the values to be static.</div>
+<div class="Normal">Another important point about membership tests is 
+that the membership choices are evaluated in order and as soon as one 
+is found to be true (or false if <B>not</B> is present) then the relation 
+as a whole is determined and the other membership choices are not evaluated. 
+This is therefore the same as using short circuit forms such as <B>or 
+else</B> and so gives another example of expressions which are statically 
+unevaluated.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There is one very minor 
+incompatibility. In Ada 2005 we can write</div>
+<div class="SwissExamples">X:&nbsp;Boolean&nbsp;:=&nbsp;...<BR>
+<B>case</B>&nbsp;X&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Y&nbsp;<B>in</B>&nbsp;1&nbsp;..&nbsp;10&nbsp;&nbsp;=&gt;&nbsp;F(10);<BR>
+&nbsp;&nbsp;&nbsp;<B>when&nbsp;others</B>&nbsp;=&gt;&nbsp;F(5);<BR>
+<B>end&nbsp;case</B>;</div>
+<div class="Normal">This is rather peculiar. The discrete choice <SPAN Class="swiss">Y</SPAN> 
+<B>in</B> <SPAN Class="swiss">1 .. 10</SPAN> must be static. Suppose 
+<SPAN Class="swiss">Y</SPAN> is <SPAN Class="swiss">5</SPAN>, so that 
+<SPAN Class="swiss">Y</SPAN> <B>in</B> <SPAN Class="swiss">1 .. 10</SPAN> 
+is <SPAN Class="swiss">True</SPAN>; then if <SPAN Class="swiss">X</SPAN> 
+is <SPAN Class="swiss">True</SPAN>, we call<SPAN Class="swiss">&nbsp;F(10)</SPAN> 
+whereas if <SPAN Class="swiss">X</SPAN> is <SPAN Class="swiss">False</SPAN> 
+we call <SPAN Class="swiss">F(5)</SPAN>. And vice versa for values of 
+<SPAN Class="swiss">Y</SPAN> not in the range 1 to 10.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is syntactically 
+illegal in Ada 2012 because a discrete choice can no longer be an expression 
+and so be a membership test. This was imposed because otherwise we might 
+have been tempted to write</div>
+<div class="SwissExamples">X:&nbsp;Boolean&nbsp;:=&nbsp;...<BR>
+<B>case</B>&nbsp;X&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Y&nbsp;<B>in</B>&nbsp;1&nbsp;..&nbsp;10&nbsp;|&nbsp;20&nbsp;=&gt;&nbsp;F(10);<BR>
+&nbsp;&nbsp;&nbsp;<B>when&nbsp;others</B>&nbsp;=&gt;&nbsp;F(5);<BR>
+<B>end&nbsp;case</B>;</div>
+<div class="Normal">and this is syntactically ambiguous because it might 
+be parsed as <SPAN Class="swiss">(Y</SPAN> <B>in</B> <SPAN Class="swiss">1 
+.. 10) | 20</SPAN> rather than as if we were allowed to write <SPAN Class="swiss">Y</SPAN> 
+<B>in</B> <SPAN Class="swiss">(1 .. 10) | 20</SPAN>. Although it would 
+be rejected anyway because of the type mismatch.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A nastier example might 
+make this clearer. Consider</div>
+<div class="SwissExamples"><B>case</B>&nbsp;X&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Y&nbsp;<B>in</B>&nbsp;False&nbsp;|&nbsp;True&nbsp;=&gt;&nbsp;Do_This;<BR>
+&nbsp;&nbsp;&nbsp;<B>when&nbsp;others</B>&nbsp;=&gt;&nbsp;Do_That;<BR>
+<B>end&nbsp;case</B>;</div>
+<div class="Normal">Now suppose that <SPAN Class="swiss">Y</SPAN> itself 
+is of type Boolean. Is it <SPAN Class="swiss">(Y</SPAN> <B>in</B> <SPAN Class="swiss">False) 
+| True</SPAN> rather than <SPAN Class="swiss">Y</SPAN> <B>in</B> <SPAN Class="swiss">(False 
+| True)</SPAN>? If <SPAN Class="swiss">Y</SPAN> happens to have the value 
+<SPAN Class="swiss">True</SPAN> then the first interpretation gives <SPAN Class="swiss">False 
+| True</SPAN> so whatever the value of <SPAN Class="swiss">X</SPAN> we 
+always <SPAN Class="swiss">Do_This</SPAN> but in the second interpretation 
+we get just <SPAN Class="swiss">True</SPAN> so if <SPAN Class="swiss">X</SPAN> 
+happens to be <SPAN Class="swiss">False</SPAN> we <SPAN Class="swiss">Do_That</SPAN>. 
+So it really is seriously ambiguous without any type mismatch in sight 
+and has to be forbidden.</div>
+<div class="Normal">However, this is clearly very unlikely to be a problem. 
+Case statements over Boolean types are pretty rare anyway.</div>
+<div class="Normal">There is one other change to membership tests which 
+concerns access types and so will be considered again in Section <A HREF="Rat12-6-4.html">6.4</A> 
+when we discussion access types and storage pools. The change is that 
+membership tests can be used to check accessibility.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It is often the case 
+that one uses a membership test before a conversion to ensure that the 
+conversion will succeed. This avoids raising an exception which then 
+has to be handled. Thus we might have</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Score&nbsp;<B>is</B>&nbsp;Integer&nbsp;<B>range</B>&nbsp;1&nbsp;..&nbsp;60;<BR>
+Total:&nbsp;Integer;<BR>
+S:&nbsp;Score;<BR>
+...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>compute&nbsp;Total&nbsp;somehow</I></SPAN><BR>
+<B>if</B>&nbsp;Total&nbsp;<B>in</B>&nbsp;Score&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;S&nbsp;:=&nbsp;Score(Total);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>reliable&nbsp;conversion</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>now&nbsp;use&nbsp;S&nbsp;knowing&nbsp;that&nbsp;it&nbsp;is&nbsp;OK</I></SPAN><BR>
+<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Total&nbsp;was&nbsp;excessive</I></SPAN><BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal">If we are indexing some arrays whose range is <SPAN Class="swiss">Score</SPAN> 
+then it is an advantage to use <SPAN Class="swiss">S</SPAN> as an index 
+since we know it will work and no checks are needed.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, in Ada 2005, 
+we cannot use a membership test to check accessibility. But Ada 2012 
+permits this and we can write</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Ptr&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;T;<BR>
+<B>procedure</B>&nbsp;P(X:&nbsp;<B>access</B>&nbsp;T)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Local:&nbsp;Ptr;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;X&nbsp;<B>in</B>&nbsp;Ptr&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Local&nbsp;:=&nbsp;Ptr(X);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>reliable&nbsp;conversion</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>now&nbsp;use&nbsp;Ptr&nbsp;knowing&nbsp;that&nbsp;it&nbsp;is&nbsp;OK</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>would&nbsp;have&nbsp;failed&nbsp;accessibility&nbsp;check</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We could also do the 
+check in a precondition thus</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(X:&nbsp;<B>access</B>&nbsp;T)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre&nbsp;=&gt;&nbsp;X&nbsp;<B>in</B>&nbsp;Ptr;</div>
+<div class="Normal">Here we have a precondition where the expression 
+is simply a membership test <SPAN Class="swiss">X</SPAN> <B>in</B> <SPAN Class="swiss">Ptr</SPAN>. 
+Of course this does not avoid the exception because it will raise Assertion_Error 
+if the accessibility is wrong.</div>
+<div class="Normal">Finally, note that two changes have been made in 
+the syntax for relation since ISO standardization. One concerns the addition 
+of a new form of expression, the raise expression; the other concerns 
+an ambiguity discovered in membership tests. These changes are described 
+in Section <A HREF="Rat12-9-5.html">9.5</A> of the Epilogue.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-3-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-3-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

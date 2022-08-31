@@ -1,0 +1,160 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Rationale, Sec 5.4: Implementation Considerations</TITLE>
+</HEAD>
+
+<BODY>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 5: Numeric Types</H2>
+
+<H3><a name="5.4">5.4 Implementation Considerations</a></H3>
+
+Fixed point  types can be represented on most machines with one or two
+machine words. Implementations should not support fixed point types in
+excess of  this length if credible performance is required (and cannot
+be provided).  Note that the predefined type DURATION requires 23 bits
+of accuracy (plus one sign bit), because the reference manual requires
+that intervals  of at  least twenty  milliseconds be  accommodated, as
+well as an interval of up to a day. Such an implementation would be as
+efficient in time and space as conventional assembler coding (assuming
+a good  register allocation algorithm). As with subranges of integers,
+tight packing  is possible, and this could result in a major advantage
+over floating point.
+<p>
+Good performance  depends largely upon the proper specification of the
+range and  delta. For machines with limited arithmetic shifts, a value
+in a  range  that  excludes  negative  values  could  have  its  scale
+converted by  the use  of logical  shifts. All  type conversions  with
+fixed types  could be  accomplished with  simple arithmetic shifts and
+masking. All the operations are likewise straightforward.
+<p>
+With real  types there  is a problem about the end points of the range
+with a  range constraint.  Ordinarily, such values would be in the set
+of values  permitted. However,  a fixed  point range  0.0 ..  1.0 on a
+two's complement  machine would  not usually  want to  include 1.0. To
+avoid giving  ranges as  0.0 ..  0.999999999, it  seems  best  not  to
+require that nonzero end values be within the specified range. See the
+wording in <a href="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.9">RM 3.5.9</a>(6) for details.
+<p>
+A lazy  implementation of  numeric types  which could  be  used  by  a
+diagnostic compiler  is as  follows. Every  value is  stored  in  long
+floating point format together with a flag indicating if it is integer
+or real.  The long  format must  be sufficiently long to encompass the
+longest integer, fixed point and floating point types supported by the
+implementation. Operations  can now  be applied  to these  values, the
+flag being  used to  ensure that integer results are correctly rounded
+to integers  (if the  floating point  hardware does  not give  integer
+results from  integer values).  This implementation  method is clearly
+inefficient, especially for fixed point types, which are often used as
+a method of avoiding expensive floating point. However, it illustrates
+the concept of the abstract value and the fact that the operators have
+the same meaning for each type.
+<p>
+Although  it  is  theoretically  feasible,  it  is  not  practical  to
+implement floating  point types  as fixed  point quantities.  This  is
+because of  the potentially  large dynamic  range  of  floating  point
+values -  a floating  point mantissa length B would need small = 2&#42;&#42;(-
+5&#42;B) and hence fixed point mantissa length 9&#42;B.
+<p>
+With the  real types,  the  language  does  not  specify  rounding  or
+truncation, since either choice could be excessively expensive on some
+machines. The  user can control its effect by increasing the digits or
+decreasing the  delta in  the type declaration, but should note that a
+small decrease  in the  delta could  require going  from 1  word to  2
+words, with  consequent performance  degradation. With  multiplication
+and division,  rounding may  be required  in  order  to  preserve  the
+relational inequalities.  Exact  conversion  can  only  occur  between
+integer types  (although many  other conversions  may not  require any
+rounding). No  conversions are significantly more troublesome than are
+integer to real and real to integer in (say) Algol 60.
+<p>
+Consider a  function ROOT  for taking  the square root of an argument,
+where the argument and the result are of type FRACTION:
+<PRE>    type FRACTION is delta D range 0.0 .. 1.0;</PRE>
+<p>
+By declaring  the fixed  point quantities  X and Y to have a type with
+larger delta:
+<table border cellpadding=6><tr><td><pre>
+type SIXTEEN is delta 16.0&#42;D range 0.0 .. 16.0;
+X, Y :  SIXTEEN;
+</pre></td></tr></table>
+<p>
+one can then take the square root of X by
+<PRE>    Y :=  SIXTEEN(4 &#42; ROOT(FRACTION (X/16)));</PRE>
+<p>
+and here  the division  by 16  is a  shift  that  corresponds  to  the
+converse of  the FRACTION  type conversion  and hence produces no code
+(assuming reasonable peephole optimization). (Note that the literals 4
+and 16 are integers; real literals would not be allowed here.)
+<p>
+The body of ROOT (for argument range 0.5 to 1) could be:
+<table border cellpadding=6><tr><td><pre>
+function ROOT(X :  FRACTION) return FRACTION is
+  HALF :  constant FRACTION :=  0.5;
+  APPROX :  FRACTION  :=  0.7;           -- a starting value
+begin
+  while abs(APPROX - FRACTION(X/APPROX)) &gt; FRACTION'DELTA loop
+    APPROX :=  FRACTION(HALF &#42; (APPROX + FRACTION(X/APPROX)));
+  end loop;
+  return APPROX;
+end ROOT;
+</pre></td></tr></table>
+<p>
+The machine  dependence is  largely restricted  to the  declaration of
+FRACTION, whose  range relative to the accuracy would reflect the word
+length of  the machine.  Note that  since the declared range is 0.0 ..
+1.0 the algorithm may give values equal to 1.0 for arguments near 1.0.
+This would cause overflow on a two's complement machine. The check for
+negative arguments is implicit in the type definition.
+<p>
+In evaluating an expression at compilation time, the identification of
+the operators  must be  performed.  Then  expressions  involving  only
+literals,  constants,   other  evaluated  expressions  and  predefined
+operators can  be evaluated.  The accuracy of real arithmetic may here
+be different from that of the target machine, although both are within
+that specified in the type declarations.
+<p>
+The efficient  implementation of some mathematical algorithms requires
+access to the component parts of a floating point value. For instance,
+a square  root routine  typically starts  by  estimating  a  value  by
+dividing the exponent by 2. We therefore need to be able to access and
+update the exponent. This can elegantly be done in Ada by the use of a
+record type  and associated  record representation clause defining the
+internal structure  of  the  floating  point  value,  and  then  using
+UNCHECKED_CONVERSION to  convert between  the floating  point type and
+the record  type. Such operations are best performed by subprograms in
+the mathematical  library; in  this way  the implementation  dependent
+operations can be encapsulated so that they are hidden from the normal
+user.
+<p>
+The above example illustrates the essential dilemma between efficiency
+and  portability   that  intrudes  into  certain  sensitive  areas  of
+numerical computation;  there are  occasions where  the demands  for a
+very efficient implementation outweigh those for complete portability.
+The facilities  in Ada  enable the  non-portable parts  to be  readily
+identified and  encapsulated so  that a  proper  balance  between  the
+conflicting aims can be obtained.
+
+<center>
+<hr width=60%>
+&#164; <a href="ratl-05-05.html#5.5"><b>NEXT</b></a>
+&#164; <a href="ratl-05-03.html#5.3"><b>PREVIOUS</b></a>
+&#164; <a href="ratl-05.html#5"><b>UP</b></a>
+&#164; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#164; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#164;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+</BODY></HTML>
+

@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 13.5: Address Clauses</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="13.5">13.5</A>.  Address Clauses</H2>
+<A HREF="lrm-13-04.html#13.4"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-13.html#13"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-13-06.html#13.6"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+An address clause specifies a required address in storage for an entity.
+<pre>
+      address_clause ::= for simple_name use at simple_expression;
+</pre>
+<P>
+The expression given after the reserved word at must be of the type ADDRESS 
+defined in the package SYSTEM (see <a href="lrm-13-07.html#13.7">13.7</a>); this package must be named by a 
+with clause that applies to the compilation unit in which the address 
+clause occurs.  The conventions that define the interpretation of a value 
+of the type ADDRESS as an address, as an interrupt level, or whatever it 
+may be, are implementation-dependent.  The allowed nature of the simple 
+name and the meaning of the corresponding address are as follows:
+<ol>
+<li>Name of an object: the address is that required for the object 
+(variable or constant).<br><br>
+<li>Name of a subprogram, package, or task unit: the address is that
+required for the machine code associated with the body of the program 
+unit.<br><br>
+<li>Name of a single entry: the address specifies a hardware interrupt to 
+which the single entry is to be linked.
+</ol>
+If the simple name is that of a single task, the address clause is 
+understood to refer to the task unit and not to the task object.  In all 
+cases, the address clause is only legal if exactly one declaration with 
+this identifier occurs earlier, immediately within the same declarative 
+part, package specification, or task specification.  A name declared by a 
+renaming declaration is not allowed as the simple name.  
+<P>
+Address clauses should not be used to achieve overlays of objects or 
+overlays of program units. Nor should a given interrupt be linked to more 
+than one entry. Any program using address clauses to achieve such effects 
+is erroneous.
+<P>
+Example:
+<pre>
+    for CONTROL use at 16#0020#; -- assuming that SYSTEM.ADDRESS is an integer 
+    type
+</pre>
+<P>
+Notes:
+<P>
+The above rules imply that if two subprograms overload each other and are 
+visible at a given point, an address clause for any of them is not legal at 
+this point.  Similarly if a task specification declares entries that 
+overload each other, they cannot be interrupt entries.  The syntax does not 
+allow an address clause for a library unit.  An implementation may provide 
+pragmas for the specification of program overlays. 
+<P>
+<b>References:</b> <A HREF="lrm-13-07.html#13.7">address predefined type</A>,
+<A HREF="lrm-10-01.html#10.1.1">apply</A>,
+<A HREF="lrm-10-01.html#10.1">compilation unit</A>,
+<A HREF="lrm-03-02.html#3.2.1">constant</A>,
+<A HREF="lrm-03-01.html#3.1">entity</A>,
+<A HREF="lrm-09-05.html#9.5">entry</A>,
+<A HREF="lrm-01-06.html#1.6">erroneous</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="lrm-10-01.html#10.1">library unit</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-03-02.html#3.2">object</A>,
+<A HREF="lrm-07.html#7">package</A>,
+<A HREF="lrm-02-08.html#2.8">pragma</A>,
+<A HREF="lrm-06.html#6">program unit</A>,
+<A HREF="lrm-02-09.html#2.9">reserved word</A>,
+<A HREF="lrm-04-04.html#4.4">simple expression</A>,
+<A HREF="lrm-04-01.html#4.1">simple name</A>,
+<A HREF="lrm-06.html#6">subprogram</A>,
+<A HREF="lrm-06-03.html#6.3">subprogram body</A>,
+<A HREF="lrm-13-07.html#13.7">system package</A>,
+<A HREF="lrm-09-01.html#9.1">task body</A>,
+<A HREF="lrm-09-02.html#9.2">task  object</A>,
+<A HREF="lrm-09.html#9">task unit</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-03-02.html#3.2.1">variable</A>,
+<A HREF="lrm-10-01.html#10.1.1">with clause</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-13-02.html#13.2.8">13.2.8&nbsp;Interrupts</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-15-04.html#15.4.4">15.4.4&nbsp;Address Clauses</a>
+<p>
+
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-09.html#5.9.4">5.9.4&nbsp;Multiple Address Clauses</a>
+<p>
+
+<b>Sub-topics:</b>
+<ul>
+<li><A HREF="#13.5.1">13.5.1</A> Interrupts 
+</ul>
+
+<H3><A NAME="13.5.1">13.5.1</A>.  Interrupts </H3>
+<A HREF="#13.5"><img src="lrm-up.gif" alt="[UP]"></A>
+<P>
+An address clause given for an entry associates the entry with some device 
+that may cause an interrupt; such an entry is referred to in this section 
+as an interrupt entry.  If control information is supplied upon an 
+interrupt, it is passed to an associated interrupt entry as one or more 
+parameters of mode in; only parameters of this mode are allowed.
+<P>
+An interrupt acts as an entry call issued by a hardware task whose priority 
+is higher than the priority of the main program, and also higher than the 
+priority of any user-defined task (that is, any task whose type is declared 
+by a task unit in the program).  The entry call may be an ordinary entry 
+call, a timed entry call, or a conditional entry call, depending on the 
+kind of interrupt and on the implementation.  
+<P>
+If a select statement contains both a terminate alternative and an accept 
+alternative for an interrupt entry, then an implementation may impose 
+further requirements for the selection of the terminate alternative in 
+addition to those given in section <a href="lrm-09-04.html#9.4">9.4</a>.
+<P>
+Example:
+<pre>
+      task INTERRUPT_HANDLER is
+        entry DONE;
+        for DONE use at 16#40#; assuming that SYSTEM.ADDRESS is an integer 
+          type
+        end INTERRUPT_HANDLER;
+</pre>
+<P>
+Notes: 
+<P>
+Interrupt entry calls need only have the semantics described above; they 
+may be implemented by having the hardware directly execute the appropriate 
+accept statements. 
+<P>
+Queued interrupts correspond to ordinary entry calls. Interrupts that are 
+lost if not immediately processed correspond to conditional entry calls. It 
+is a consequence of the priority rules that an accept statement executed in 
+response to an interrupt takes precedence over ordinary, user-defined 
+tasks, and can be executed without first invoking a scheduling action.
+<P>
+One of the possible effects of an address clause for an interrupt entry is 
+to specify the priority of the interrupt (directly or indirectly).  Direct 
+calls to an interrupt entry are allowed. 
+<P>
+<b>References:</b> <A HREF="lrm-09-07.html#9.7.1">accept alternative</A>,
+<A HREF="lrm-09-05.html#9.5">accept statement</A>,
+<A HREF="lrm-13-07.html#13.7">address  predefined type</A>,
+<A HREF="lrm-01-06.html#1.6">allow</A>,
+<A HREF="lrm-09-07.html#9.7.2">conditional entry call</A>,
+<A HREF="lrm-09-05.html#9.5">entry</A>,
+<A HREF="lrm-06-01.html#6.1">mode</A>,
+<A HREF="lrm-06-02.html#6.2">parameter of a subprogram</A>,
+<A HREF="lrm-09-08.html#9.8">priority of a task</A>,
+<A HREF="lrm-09-07.html#9.7.1">select  alternative</A>,
+<A HREF="lrm-09-07.html#9.7">select statement</A>,
+<A HREF="lrm-13-07.html#13.7">system package</A>,
+<A HREF="lrm-09.html#9">task</A>,
+<A HREF="lrm-09-07.html#9.7.1">terminate alternative</A>,
+<A HREF="lrm-09-07.html#9.7.3">timed entry call</A>.
+<P>
+
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-04-01.html#4.1.7">4.1.7&nbsp;Tasks</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-09.html#5.9.4">5.9.4&nbsp;Multiple Address Clauses</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

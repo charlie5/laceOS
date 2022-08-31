@@ -1,0 +1,658 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>The Context of Overload Resolution</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    SPAN.insert1 {text-decoration: underline; color: rgb(0,51,51) }
+    SPAN.delete1 {text-decoration: line-through; color: rgb(0,51,51) }
+    SPAN.insert2 {text-decoration: underline; color: rgb(0,102,0) }
+    SPAN.delete2 {text-decoration: line-through; color: rgb(0,102,0) }
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 6.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.SmallExamples {font-family: "Courier New", monospace; font-size: 72%; line-height: 122%; margin-left: 9.6em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NestedBulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 5.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><B><SPAN Style="font-size:200%; color: rgb(0,51,153)">Annotated</SPAN><SPAN Style="font-size:200%; color: rgb(0,0,102)">&nbsp;Ada Reference Manual</SPAN></B> &mdash; <A HREF="AA-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-8-5-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-9.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>8.6 The Context of Overload Resolution</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal">[<SPAN STYLE="font-size: 80%">{<I>overload resolution</I>}</SPAN> 
+<A NAME="I3819"></A>Because declarations can be overloaded, it is possible 
+for an occurrence of a usage name to have more than one possible interpretation; 
+in most cases, ambiguity is disallowed. This clause describes how the 
+possible interpretations resolve to the actual interpretation.</DIV>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>overloading rules</I>}</SPAN> 
+<A NAME="I3820"></A>Certain rules of the language (the Name Resolution 
+Rules) are considered &ldquo;overloading rules&rdquo;. If a possible 
+interpretation violates an overloading rule, it is assumed not to be 
+the intended interpretation; some other possible interpretation is assumed 
+to be the actual interpretation. On the other hand, violations of non-overloading 
+rules do not affect which interpretation is chosen; instead, they cause 
+the construct to be illegal. To be legal, there usually has to be exactly 
+one acceptable interpretation of a construct that is a &ldquo;complete 
+context&rdquo;, not counting any nested complete contexts.</DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>grammar (resolution 
+of ambiguity)</I>}</SPAN> <A NAME="I3821"></A>The syntax rules of the 
+language and the visibility rules given in <A HREF="AA-8-3.html">8.3</A> 
+determine the possible interpretations. Most type checking rules (rules 
+that require a particular type, or a particular class of types, for example) 
+are overloading rules. Various rules for the matching of formal and actual 
+parameters are overloading rules.]&nbsp;</DIV>
+
+<H4 Class="centered">Language Design Principles</H4>
+<DIV Class="paranum">3.a</DIV>
+<DIV Class="Annotations">The type resolution rules are intended to minimize 
+the need for implicit declarations and preference rules associated with 
+implicit conversion and dispatching operations.&nbsp;</DIV>
+
+<H4 Class="centered">Name Resolution Rules</H4>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><SPAN STYLE="font-size: 80%">{<I>complete 
+context</I>}</SPAN> <A NAME="I3822"></A>[Overload resolution is applied 
+separately to each <I>complete context</I>, not counting inner complete 
+contexts.] Each of the following constructs is a <I>complete context</I>: 
+</DIV>
+<DIV Class="paranum">5</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>A <SPAN Class="swiss"><A HREF="AA-10-1-2.html#S0236">context_item</A></SPAN>.</LI></UL>
+<DIV Class="paranum">6</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>A <SPAN Class="swiss"><A HREF="AA-3-11.html#S0087">declarative_item</A></SPAN> 
+or declaration.&nbsp;</LI></UL>
+<DIV Class="paranum">6.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>A <SPAN Class="swiss"><A HREF="AA-5-5.html#S0144">loop_parameter_specification</A></SPAN> 
+is a declaration, and hence a complete context.&nbsp;</DIV>
+<DIV Class="paranum">7</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>A <SPAN Class="swiss"><A HREF="AA-5-1.html#S0131">statement</A></SPAN>.</LI></UL>
+<DIV Class="paranum">8</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>A <SPAN Class="swiss"><A HREF="AA-2-8.html#S0020">pragma_argument_association</A></SPAN>. 
+</LI></UL>
+<DIV Class="paranum">8.a</DIV>
+<DIV Class="Annotations"><B>Reason:&nbsp;</B>We would make it the whole <SPAN Class="swiss"><A HREF="AA-2-8.html#S0019">pragma</A></SPAN>, 
+except that certain pragma arguments are allowed to be ambiguous, and 
+ambiguity applies to a complete context.&nbsp;</DIV>
+<DIV Class="paranum">9</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The <SPAN Class="swiss"><A HREF="AA-4-4.html#S0115">expression</A></SPAN> 
+of a <SPAN Class="swiss"><A HREF="AA-5-4.html#S0140">case_statement</A></SPAN>. 
+</LI></UL>
+<DIV Class="paranum">9.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>This means that the <SPAN Class="swiss"><A HREF="AA-4-4.html#S0115">expression</A></SPAN> 
+is resolved without looking at the choices.&nbsp;</DIV>
+<DIV Class="paranum">10</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><SPAN STYLE="font-size: 80%">{<I>interpretation 
+(of a complete context)</I>}</SPAN> <A NAME="I3823"></A><SPAN STYLE="font-size: 80%">{<I>overall 
+interpretation (of a complete context)</I>}</SPAN> <A NAME="I3824"></A>An 
+(overall) <I>interpretation</I> of a complete context embodies its meaning, 
+and includes the following information about the constituents of the 
+complete context, not including constituents of inner complete contexts: 
+</DIV>
+<DIV Class="paranum">11</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>for each constituent of the complete 
+context, to which syntactic categories it belongs, and by which syntax 
+rules; and&nbsp;</LI></UL>
+<DIV Class="paranum">11.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>Syntactic categor<I>ies</I> 
+is plural here, because there are lots of trivial productions &mdash; 
+an <SPAN Class="swiss"><A HREF="AA-4-4.html#S0115">expression</A></SPAN> 
+might also be all of the following, in this order: <SPAN Class="swiss"><A HREF="AA-2-3.html#S0002">identifier</A></SPAN>, 
+<SPAN Class="swiss"><A HREF="AA-4-1.html#S0091">name</A></SPAN>, <SPAN Class="swiss"><A HREF="AA-4-4.html#S0120">primary</A></SPAN>, 
+<SPAN Class="swiss"><A HREF="AA-4-4.html#S0119">factor</A></SPAN>, <SPAN Class="swiss"><A HREF="AA-4-4.html#S0118">term</A></SPAN>, 
+<SPAN Class="swiss"><A HREF="AA-4-4.html#S0117">simple_expression</A></SPAN>, 
+and <SPAN Class="swiss"><A HREF="AA-4-4.html#S0116">relation</A></SPAN>. 
+Basically, we're trying to capture all the information in the parse tree 
+here, without using compiler-writer's jargon like &ldquo;parse tree&rdquo;. 
+</DIV>
+<DIV Class="paranum">12</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>for each usage name, which declaration 
+it denotes (and, therefore, which view and which entity it denotes); 
+and&nbsp;</LI></UL>
+<DIV Class="paranum">12.a/2</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00382.TXT">AI95-00382-01</A></I>} 
+In most cases, a usage name denotes the view declared by the denoted 
+declaration. However, in certain cases, a usage name that denotes a declaration 
+and appears inside the declarative region of that same declaration, denotes 
+the current instance of the declaration. For example, within a <SPAN Class="swiss"><A HREF="AA-9-1.html#S0192">task_body</A></SPAN><SPAN class="insert2">&nbsp;other than in an <SPAN Class="swiss"><A HREF="AA-3-10.html#S0084">access_definition</A></SPAN></SPAN>, 
+a usage name that denotes the <SPAN Class="swiss"><A HREF="AA-9-1.html#S0188">task_type_declaration</A></SPAN> 
+denotes the object containing the currently executing task, and not the 
+task type declared by the declaration.&nbsp;</DIV>
+<DIV Class="paranum">13</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>for a complete context that is a <SPAN Class="swiss"><A HREF="AA-3-11.html#S0087">declarative_item</A></SPAN>, 
+whether or not it is a completion of a declaration, and (if so) which 
+declaration it completes.&nbsp;</LI></UL>
+<DIV Class="paranum">13.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>Unfortunately, we are not 
+confident that the above list is complete. We'll have to live with that. 
+</DIV>
+<DIV Class="paranum">13.b</DIV>
+<DIV Class="Annotations"><B>To be honest:&nbsp;</B>For &ldquo;possible&rdquo; 
+interpretations, the above information is tentative.&nbsp;</DIV>
+<DIV Class="paranum">13.c</DIV>
+<DIV Class="Annotations"><B>Discussion:&nbsp;</B>A possible interpretation 
+(an <I>input</I> to overload resolution) contains information about what 
+a usage name <I>might</I> denote, but what it actually <I>does</I> denote 
+requires overload resolution to determine. Hence the term &ldquo;tentative&rdquo; 
+is needed for possible interpretations; otherwise, the definition would 
+be circular.&nbsp;</DIV>
+<DIV Class="paranum">14</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>possible interpretation</I>}</SPAN> 
+<A NAME="I3825"></A>A <I>possible interpretation</I> is one that obeys 
+the syntax rules and the visibility rules. <SPAN STYLE="font-size: 80%">{<I>acceptable 
+interpretation</I>}</SPAN> <A NAME="I3826"></A><SPAN STYLE="font-size: 80%">{<I>resolve 
+(overload resolution)</I>}</SPAN> <A NAME="I3827"></A><SPAN STYLE="font-size: 80%">{<I>interpretation 
+(overload resolution)</I>}</SPAN> <A NAME="I3828"></A>An <I>acceptable 
+interpretation</I> is a possible interpretation that obeys the <I>overloading 
+rules</I>[, that is, those rules that specify an expected type or expected 
+profile, or specify how a construct shall <I>resolve</I> or be <I>interpreted</I>.] 
+</DIV>
+<DIV Class="paranum">14.a</DIV>
+<DIV Class="Annotations"><B>To be honest:&nbsp;</B>One rule that falls into 
+this category, but does not use the above-mentioned magic words, is the 
+rule about numbers of parameter associations in a call (see <A HREF="AA-6-4.html">6.4</A>). 
+</DIV>
+<DIV Class="paranum">14.b</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>The Name Resolution Rules 
+are the ones that appear under the Name Resolution Rules heading. Some 
+Syntax Rules are written in English, instead of BNF. No rule is a Syntax 
+Rule or Name Resolution Rule unless it appears under the appropriate 
+heading.&nbsp;</DIV>
+<DIV Class="paranum">15</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>interpretation (of 
+a constituent of a complete context)</I>}</SPAN> <A NAME="I3829"></A>The 
+<I>interpretation</I> of a constituent of a complete context is determined 
+from the overall interpretation of the complete context as a whole. [Thus, 
+for example, &ldquo;interpreted as a <SPAN Class="swiss"><A HREF="AA-6-4.html#S0164">function_call</A></SPAN>,&rdquo; 
+means that the construct's interpretation says that it belongs to the 
+syntactic category <SPAN Class="swiss"><A HREF="AA-6-4.html#S0164">function_call</A></SPAN>.]</DIV>
+<DIV Class="paranum">16</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><SPAN STYLE="font-size: 80%">{<I>denote</I>}</SPAN> 
+<A NAME="I3830"></A>[Each occurrence of] a usage name <I>denotes</I> 
+the declaration determined by its interpretation. It also denotes the 
+view declared by its denoted declaration, except in the following cases: 
+</DIV>
+<DIV Class="paranum">16.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>As explained below, a pragma 
+argument is allowed to be ambiguous, so it can denote several declarations, 
+and all of the views declared by those declarations.&nbsp;</DIV>
+<DIV Class="paranum">17/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00382.TXT">AI95-00382-01</A></I>} 
+<SPAN STYLE="font-size: 80%">{<I>current instance (of a type)</I>}</SPAN> 
+<A NAME="I3831"></A>If a usage name appears within the declarative region 
+of a <SPAN Class="swiss"><A HREF="AA-3-2-1.html#S0023">type_declaration</A></SPAN> 
+and denotes that same <SPAN Class="swiss"><A HREF="AA-3-2-1.html#S0023">type_declaration</A></SPAN>, 
+then it denotes the <I>current instance</I> of the type (rather than 
+the type itself)<SPAN class="insert2">; the</SPAN><SPAN class="delete2">. 
+The</SPAN> current instance of a type is the object or value of the type 
+that is associated with the execution that evaluates the usage name.<SPAN class="insert2">&nbsp;This rule does not apply if the usage name appears within the <SPAN Class="swiss"><A HREF="AA-3-2-2.html#S0028">subtype_mark</A></SPAN> 
+of an <SPAN Class="swiss"><A HREF="AA-3-10.html#S0084">access_definition</A></SPAN> 
+for an access-to-object type, or within the subtype of a parameter or 
+result of an access-to-subprogram type.</SPAN>&nbsp;</LI></UL>
+<DIV Class="paranum">17.a/2</DIV>
+<DIV Class="Annotations"><B>Reason:&nbsp;</B>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00382.TXT">AI95-00382-01</A></I>} 
+This is needed, for example, for references to the Access attribute from 
+within the <SPAN Class="swiss"><A HREF="AA-3-2-1.html#S0023">type_declaration</A></SPAN>. 
+Also, within a <SPAN Class="swiss"><A HREF="AA-9-1.html#S0192">task_body</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="AA-9-4.html#S0198">protected_body</A></SPAN>, 
+we need to be able to denote the current task or protected object. (For 
+a <SPAN Class="swiss"><A HREF="AA-9-1.html#S0189">single_task_declaration</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="AA-9-4.html#S0194">single_protected_declaration</A></SPAN>, 
+the rule about current instances is not needed.)<SPAN class="insert2">&nbsp;We exclude anonymous access types so that they can be used to create 
+self-referencing types in the natural manner (otherwise such types would 
+be illegal).</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">17.b/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Discussion:&nbsp;</B></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00382.TXT">AI95-00382-01</A></I>} 
+<SPAN class="insert2">The phrase &ldquo;within the <SPAN Class="swiss"><A HREF="AA-3-2-2.html#S0028">subtype_mark</A></SPAN>&rdquo; 
+in the &ldquo;this rule does not apply&rdquo; part is intended to cover 
+a case like <B>access</B> T'Class appearing within the declarative region 
+of T: here T denotes the type, not the current instance.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">18</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><SPAN STYLE="font-size: 80%">{<I>current 
+instance (of a generic unit)</I>}</SPAN> <A NAME="I3832"></A>If a usage 
+name appears within the declarative region of a <SPAN Class="swiss"><A HREF="AA-12-1.html#S0252">generic_declaration</A></SPAN> 
+(but not within its <SPAN Class="swiss"><A HREF="AA-12-1.html#S0255">generic_formal_part</A></SPAN>) 
+and it denotes that same <SPAN Class="swiss"><A HREF="AA-12-1.html#S0252">generic_declaration</A></SPAN>, 
+then it denotes the <I>current instance</I> of the generic unit (rather 
+than the generic unit itself). See also <A HREF="AA-12-3.html">12.3</A>. 
+</LI></UL>
+<DIV Class="paranum">18.a</DIV>
+<DIV Class="Annotations"><B>To be honest:&nbsp;</B>The current instance of 
+a generic unit is the instance created by whichever <SPAN Class="swiss"><A HREF="AA-12-3.html#S0257">generic_instantiation</A></SPAN> 
+is of interest at any given time.&nbsp;</DIV>
+<DIV Class="paranum">18.b</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>Within a <SPAN Class="swiss"><A HREF="AA-12-1.html#S0255">generic_formal_part</A></SPAN>, 
+a <SPAN Class="swiss"><A HREF="AA-4-1.html#S0091">name</A></SPAN> that 
+denotes the <SPAN Class="swiss"><A HREF="AA-12-1.html#S0252">generic_declaration</A></SPAN> 
+denotes the generic unit, which implies that it is not overloadable. 
+</DIV>
+<DIV Class="paranum">19</DIV>
+<DIV Class="Normal">A usage name that denotes a view also denotes the 
+entity of that view.&nbsp;</DIV>
+<DIV Class="paranum">19.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>Usually, a usage name denotes 
+only one declaration, and therefore one view and one entity.&nbsp;</DIV>
+<DIV Class="paranum">20/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00231.TXT">AI95-00231-01</A></I>} 
+<SPAN STYLE="font-size: 80%">{<I>expected type</I> [distributed]}</SPAN> 
+<A NAME="I3833"></A>The <I>expected type</I> for a given <SPAN Class="swiss"><A HREF="AA-4-4.html#S0115">expression</A></SPAN>, 
+<SPAN Class="swiss"><A HREF="AA-4-1.html#S0091">name</A></SPAN>, or other 
+construct determines, according to the <I>type resolution rules</I> given 
+below, the types considered for the construct during overload resolution. 
+<SPAN STYLE="font-size: 80%">{<I>type resolution rules</I>}</SPAN> <A NAME="I3834"></A>[ 
+The type resolution rules provide support for class-wide programming, 
+universal <SPAN class="delete2">numeric&nbsp;</SPAN>literals, dispatching 
+operations, and anonymous access types:]&nbsp;</DIV>
+<DIV Class="paranum">20.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>Expected types are defined 
+throughout the RM95. The most important definition is that, for a subprogram, 
+the expected type for the actual parameter is the type of the formal 
+parameter.</DIV>
+<DIV Class="paranum">20.b</DIV>
+<DIV Class="Annotations">The type resolution rules are trivial unless 
+either the actual or expected type is universal, class-wide, or of an 
+anonymous access type.&nbsp;</DIV>
+<DIV Class="paranum">21</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><SPAN STYLE="font-size: 80%">{<I>type 
+resolution rules (if any type in a specified class of types is expected)</I> 
+[partial]}</SPAN> <A NAME="I3835"></A><SPAN STYLE="font-size: 80%">{<I>type 
+resolution rules (if expected type is universal or class-wide)</I> [partial]}</SPAN> 
+<A NAME="I3836"></A>If a construct is expected to be of any type in a 
+class of types, or of the universal or class-wide type for a class, then 
+the type of the construct shall resolve to a type in that class or to 
+a universal type that covers the class.&nbsp;</LI></UL>
+<DIV Class="paranum">21.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>This matching rule handles 
+(among other things) cases like the Val attribute, which denotes a function 
+that takes a parameter of type <I>universal_integer</I>.</DIV>
+<DIV Class="paranum">21.b/1</DIV>
+<DIV Class="Annotations">The last part of the rule, &ldquo;or to a universal 
+type that <SPAN class="insert1">covers</SPAN><SPAN class="delete1">&nbsp;includes</SPAN> 
+the class&rdquo; implies that if the expected type for an expression 
+is <I>universal_fixed</I>, then an expression whose type is <I>universal_real</I> 
+(such as a real literal) is OK.&nbsp;</DIV>
+<DIV Class="paranum">22</DIV>
+<UL Class="Bulleted" Style="margin-bottom: 0.3em"><LI TYPE=DISC><SPAN STYLE="font-size: 80%">{<I>type 
+resolution rules (if expected type is specific)</I> [partial]}</SPAN> 
+<A NAME="I3837"></A>If the expected type for a construct is a specific 
+type <I>T</I>, then the type of the construct shall resolve either to 
+<I>T</I>, or:&nbsp;</LI></UL>
+<DIV Class="paranum">22.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>{<I>Beaujolais effect</I> 
+[partial]} <A NAME="I3838"></A>This rule is <I>not</I> intended to create 
+a preference for the specific type &mdash; such a preference would cause 
+Beaujolais effects.&nbsp;</DIV>
+<DIV Class="paranum">23</DIV>
+<UL Class="NestedBulleted"><LI TYPE=DISC>to <I>T</I>'Class; or&nbsp;</LI></UL>
+<DIV Class="paranum">23.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>This will only be legal 
+as part of a call on a dispatching operation; see <A HREF="AA-3-9-2.html">3.9.2</A>, 
+&ldquo;<A HREF="AA-3-9-2.html">Dispatching Operations of Tagged Types</A>&rdquo;. 
+Note that that rule is not a Name Resolution Rule.&nbsp;</DIV>
+<DIV Class="paranum">24</DIV>
+<UL Class="NestedBulleted"><LI TYPE=DISC>to a universal type that covers 
+<I>T</I>; or</LI></UL>
+<DIV Class="paranum">25/2</DIV>
+<UL Class="NestedBulleted"><LI TYPE=DISC>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00230.TXT">AI95-00230-01</A></I>} 
+{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00231.TXT">AI95-00231-01</A></I>} 
+{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00254.TXT">AI95-00254-01</A></I>} 
+{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00409.TXT">AI95-00409-01</A></I>} 
+when <I>T</I> is <SPAN class="insert2">a specific</SPAN><SPAN class="delete2">&nbsp;an</SPAN> 
+anonymous access<SPAN class="insert2">-to-object</SPAN> type (see <A HREF="AA-3-10.html">3.10</A>) 
+with designated type <I>D</I>, to an access-to-<SPAN class="insert2">object</SPAN><SPAN class="delete2">&nbsp;variable</SPAN> 
+type whose designated type is <I>D</I>'Class or is covered by <I>D</I><SPAN class="insert2">; 
+or</SPAN><SPAN class="delete2">.</SPAN></LI></UL>
+<DIV Class="paranum">25.a/2</DIV>
+<DIV Class="Annotations"><SPAN STYLE="font-size: 80%"><I>This paragraph 
+was deleted.</I></SPAN><B>Ramification:&nbsp;</B>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00409.TXT">AI95-00409-01</A></I>} 
+<SPAN class="delete2">Because it says &ldquo;access-to-variable&rdquo; 
+instead of &ldquo;access-to-object,&rdquo; two subprograms that differ 
+only in that one has a parameter of an access-to-constant type, and the 
+other has an access parameter, are distinguishable during overload resolution.</SPAN></DIV>
+<DIV Class="paranum">25.b</DIV>
+<DIV Class="Annotations">The case where the actual is access-to-<I>D</I>'Class 
+will only be legal as part of a call on a dispatching operation; see 
+<A HREF="AA-3-9-2.html">3.9.2</A>, &ldquo;<A HREF="AA-3-9-2.html">Dispatching 
+Operations of Tagged Types</A>&rdquo;. Note that that rule is not a Name 
+Resolution Rule.&nbsp;</DIV>
+<DIV Class="paranum">25.1/2</DIV>
+<UL Class="NestedBulleted"><LI TYPE=DISC>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00254.TXT">AI95-00254-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00409.TXT">AI95-00409-01</A></I>} 
+<SPAN class="insert2">when <I>T</I> is an anonymous access-to-subprogram 
+type (see <A HREF="AA-3-10.html">3.10</A>), to an access-to-subprogram 
+type whose designated profile is type-conformant with that of <I>T</I>.</SPAN></LI></UL>
+<DIV Class="paranum">26</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>expected profile</I> 
+[distributed]}</SPAN> <A NAME="I3839"></A>In certain contexts, [such 
+as in a <SPAN Class="swiss"><A HREF="AA-8-5-4.html#S0186">subprogram_renaming_declaration</A></SPAN>,] 
+the Name Resolution Rules define an <I>expected profile</I> for a given 
+<SPAN Class="swiss"><A HREF="AA-4-1.html#S0091">name</A></SPAN>; <SPAN STYLE="font-size: 80%">{<I>profile 
+resolution rule (name with a given expected profile)</I>}</SPAN> <A NAME="I3840"></A>in 
+such cases, the <SPAN Class="swiss"><A HREF="AA-4-1.html#S0091">name</A></SPAN> 
+shall resolve to the name of a callable entity whose profile is type 
+conformant with the expected profile. <SPAN STYLE="font-size: 80%">{<I>type 
+conformance (required)</I>}</SPAN> <A NAME="I3841"></A></DIV>
+<DIV Class="paranum">26.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>The parameter and result 
+<I>sub</I>types are not used in overload resolution. Only type conformance 
+of profiles is considered during overload resolution. Legality rules 
+generally require at least mode-conformance in addition, but those rules 
+are not used in overload resolution.&nbsp;</DIV>
+
+<H4 Class="centered">Legality Rules</H4>
+<DIV Class="paranum">27/2</DIV>
+<DIV Class="Normal">&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00332.TXT">AI95-00332-01</A></I>} 
+<SPAN STYLE="font-size: 80%">{<I>single (class expected type)</I>}</SPAN> 
+<A NAME="I3842"></A>When <SPAN class="delete2">the expected type for 
+</SPAN>a construct is <SPAN class="insert2">one that requires that its 
+expected type</SPAN><SPAN class="delete2">&nbsp;required to</SPAN> be a <I>single</I> 
+type in a given class, the type <SPAN class="insert2">of</SPAN><SPAN class="delete2">&nbsp;expected 
+for</SPAN> the construct shall be determinable solely from the context 
+in which the construct appears, excluding the construct itself, but using 
+the requirement that it be in the given class<SPAN class="delete2">; 
+the type of the construct is then this single expected type</SPAN>. Furthermore, 
+the context shall not be one that expects any type in some class that 
+contains types of the given class; in particular, the construct shall 
+not be the operand of a <SPAN Class="swiss"><A HREF="AA-4-6.html#S0127">type_conversion</A></SPAN>.</DIV>
+<DIV Class="paranum">27.a/2</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00230.TXT">AI95-00230-01</A></I>} 
+For example, the expected type for <SPAN class="insert2">a string literal</SPAN><SPAN class="delete2">&nbsp;the 
+literal <B>null</B></SPAN> is required to be a single <SPAN class="insert2">string</SPAN><SPAN class="delete2">&nbsp;access</SPAN> 
+type. But the expected type for the operand of a <SPAN Class="swiss"><A HREF="AA-4-6.html#S0127">type_conversion</A></SPAN> 
+is any type. Therefore, <SPAN class="insert2">a string literal</SPAN><SPAN class="delete2">&nbsp;the 
+literal <B>null</B></SPAN> is not allowed as the operand of a <SPAN Class="swiss"><A HREF="AA-4-6.html#S0127">type_conversion</A></SPAN>. 
+This is true even if there is only one <SPAN class="insert2">string</SPAN><SPAN class="delete2">&nbsp;access</SPAN> 
+type in scope<SPAN class="insert2">&nbsp;(which is never the case)</SPAN>. 
+The reason for these rules is so that the compiler will not have to search 
+&ldquo;everywhere&rdquo; to see if there is exactly one type in a class 
+in scope.&nbsp;</DIV>
+<DIV Class="paranum">27.b/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Discussion:&nbsp;</B></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00332.TXT">AI95-00332-01</A></I>} 
+<SPAN class="insert2">The first sentence is carefully worded so that 
+it only mentions &ldquo;expected type&rdquo; as part of identifying the 
+interesting case, but doesn't require that the context actually provide 
+such an expected type. This allows such constructs to be used inside 
+of constructs that don't provide an expected type (like qualified expressions 
+and renames). Otherwise, such constructs wouldn't allow <SPAN Class="swiss"><A HREF="AA-4-3.html#S0104">aggregate</A></SPAN>s, 
+'Access, and so on.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">28</DIV>
+<DIV Class="Normal">A complete context shall have at least one acceptable 
+interpretation; if there is exactly one, then that one is chosen.&nbsp;</DIV>
+<DIV Class="paranum">28.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>This, and the rule below 
+about ambiguity, are the ones that suck in all the Syntax Rules and Name 
+Resolution Rules as compile-time rules. Note that this and the ambiguity 
+rule have to be Legality Rules.&nbsp;</DIV>
+<DIV Class="paranum">29</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>preference (for 
+root numeric operators and ranges)</I>}</SPAN> <A NAME="I3843"></A>There 
+is a <I>preference</I> for the primitive operators (and <SPAN Class="swiss"><A HREF="AA-3-5.html#S0037">range</A></SPAN>s) 
+of the root numeric types <I>root_integer</I> and <I>root_real</I>. In 
+particular, if two acceptable interpretations of a constituent of a complete 
+context differ only in that one is for a primitive operator (or <SPAN Class="swiss"><A HREF="AA-3-5.html#S0037">range</A></SPAN>) 
+of the type <I>root_integer</I> or <I>root_real</I>, and the other is 
+not, the interpretation using the primitive operator (or <SPAN Class="swiss"><A HREF="AA-3-5.html#S0037">range</A></SPAN>) 
+of the root numeric type is <I>preferred</I>.&nbsp;</DIV>
+<DIV Class="paranum">29.a</DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em"><B>Reason:&nbsp;</B>The 
+reason for this preference is so that expressions involving literals 
+and named numbers can be unambiguous. For example, without the preference 
+rule, the following would be ambiguous:&nbsp;</DIV>
+<DIV Class="paranum">29.b/1</DIV>
+<DIV Class="SmallExamples">N&nbsp;:&nbsp;<B>constant</B>&nbsp;:=&nbsp;123;<BR>
+<B>if</B>&nbsp;N&nbsp;&gt;&nbsp;100&nbsp;<B>then</B>&nbsp;--<SPAN Class="roman"><I>&nbsp;Preference&nbsp;for&nbsp;root_integer&nbsp;&quot;</I></SPAN><SPAN class="insert1"><SPAN Class="roman"><I>&gt;</I></SPAN></SPAN><SPAN Class="roman"><I></I></SPAN><SPAN class="delete1"><SPAN Class="roman"><I>&nbsp;&lt;</I></SPAN></SPAN><SPAN Class="roman"><I>&quot;&nbsp;operator.</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;<B>if</B>;</DIV>
+<DIV Class="paranum">30</DIV>
+<DIV Class="Normal">For a complete context, if there is exactly one overall 
+acceptable interpretation where each constituent's interpretation is 
+the same as or preferred (in the above sense) over those in all other 
+overall acceptable interpretations, then that one overall acceptable 
+interpretation is chosen. <SPAN STYLE="font-size: 80%">{<I>ambiguous</I>}</SPAN> 
+<A NAME="I3844"></A>Otherwise, the complete context is <I>ambiguous</I>.</DIV>
+<DIV Class="paranum">31</DIV>
+<DIV Class="Normal">A complete context other than a <SPAN Class="swiss"><A HREF="AA-2-8.html#S0020">pragma_argument_association</A></SPAN> 
+shall not be ambiguous.</DIV>
+<DIV Class="paranum">32</DIV>
+<DIV Class="Normal">A complete context that is a <SPAN Class="swiss"><A HREF="AA-2-8.html#S0020">pragma_argument_association</A></SPAN> 
+is allowed to be ambiguous (unless otherwise specified for the particular 
+pragma), but only if every acceptable interpretation of the pragma argument 
+is as a <SPAN Class="swiss"><A HREF="AA-4-1.html#S0091">name</A></SPAN> 
+that statically denotes a callable entity. <SPAN STYLE="font-size: 80%">{<I>denote 
+(name used as a pragma argument)</I> [partial]}</SPAN> <A NAME="I3845"></A>Such 
+a <SPAN Class="swiss"><A HREF="AA-4-1.html#S0091">name</A></SPAN> denotes 
+all of the declarations determined by its interpretations, and all of 
+the views declared by these declarations.&nbsp;</DIV>
+<DIV Class="paranum">32.a/2</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00224.TXT">AI95-00224-01</A></I>} 
+This applies to Inline, Suppress, Import, Export, and Convention <SPAN Class="swiss"><A HREF="AA-2-8.html#S0019">pragma</A></SPAN>s. 
+For example, it is OK to say &ldquo;<B>pragma</B> <SPAN class="insert2">Export(C, 
+Entity_Name</SPAN><SPAN class="delete2">&nbsp;Suppress(Elaboration_Check, 
+On</SPAN> =&gt; P.Q);&rdquo;, even if there are two directly visible 
+P's, and there are two Q's declared in the visible part of each P. In 
+this case, P.Q denotes four different declarations. This rule also applies 
+to certain pragmas defined in the Specialized Needs Annexes. It almost 
+applies to Pure, Elaborate_Body, and Elaborate_All <SPAN Class="swiss"><A HREF="AA-2-8.html#S0019">pragma</A></SPAN>s, 
+but those can't have overloading for other reasons.</DIV>
+<DIV Class="paranum">32.b</DIV>
+<DIV Class="Annotations">Note that if a pragma argument denotes a <I>call</I> 
+to a callable entity, rather than the entity itself, this exception does 
+not apply, and ambiguity is disallowed.</DIV>
+<DIV Class="paranum">32.c</DIV>
+<DIV Class="Annotations">Note that we need to carefully define which 
+pragma-related rules are Name Resolution Rules, so that, for example, 
+a <SPAN Class="swiss"><A HREF="AA-2-8.html#S0019">pragma</A></SPAN> Inline 
+does not pick up subprograms declared in enclosing declarative regions, 
+and therefore make itself illegal.</DIV>
+<DIV Class="paranum">32.d</DIV>
+<DIV Class="Annotations">We say &ldquo;statically denotes&rdquo; in the 
+above rule in order to avoid having to worry about how many times the 
+<SPAN Class="swiss"><A HREF="AA-4-1.html#S0091">name</A></SPAN> is evaluated, 
+in case it denotes more than one callable entity.&nbsp;</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">33</DIV>
+<DIV Class="Notes">17&nbsp;&nbsp;If a usage name has only one acceptable 
+interpretation, then it denotes the corresponding entity. However, this 
+does not mean that the usage name is necessarily legal since other requirements 
+exist which are not considered for overload resolution; for example, 
+the fact that an expression is static, whether an object is constant, 
+mode and subtype conformance rules, freezing rules, order of elaboration, 
+and so on.</DIV>
+<DIV Class="paranum">34</DIV>
+<DIV Class="Notes">Similarly, subtypes are not considered for overload 
+resolution (the violation of a constraint does not make a program illegal 
+but raises an exception during program execution).&nbsp;</DIV>
+
+<H4 Class="centered">Incompatibilities With Ada 83</H4>
+<DIV Class="paranum">34.a</DIV>
+<DIV Class="Annotations">{<I>incompatibilities with Ada 83</I>} <A NAME="I3846"></A>{<I>Beaujolais 
+effect</I> [partial]} <A NAME="I3847"></A>The new preference rule for 
+operators of root numeric types is upward incompatible, but only in cases 
+that involved <I>Beaujolais</I> effects in Ada 83. Such cases are ambiguous 
+in Ada 95.&nbsp;</DIV>
+
+<H4 Class="centered">Extensions to Ada 83</H4>
+<DIV Class="paranum">34.b</DIV>
+<DIV Class="Annotations">{<I>extensions to Ada 83</I>} <A NAME="I3848"></A>The 
+rule that allows an expected type to match an actual expression of a 
+universal type, in combination with the new preference rule for operators 
+of root numeric types, subsumes the Ada 83 &quot;implicit conversion&quot; 
+rules for universal types.&nbsp;</DIV>
+
+<H4 Class="centered">Wording Changes from Ada 83</H4>
+<DIV Class="paranum">34.c</DIV>
+<DIV Class="Annotations">In Ada 83, it is not clear what the &ldquo;syntax 
+rules&rdquo; are. AI83-00157 states that a certain textual rule is a 
+syntax rule, but it's still not clear how one tells in general which 
+textual rules are syntax rules. We have solved the problem by stating 
+exactly which rules are syntax rules &mdash; the ones that appear under 
+the &ldquo;Syntax&rdquo; heading.</DIV>
+<DIV Class="paranum">34.d</DIV>
+<DIV Class="Annotations">RM83 has a long list of the &ldquo;forms&rdquo; 
+of rules that are to be used in overload resolution (in addition to the 
+syntax rules). It is not clear exactly which rules fall under each form. 
+We have solved the problem by explicitly marking all rules that are used 
+in overload resolution. Thus, the list of kinds of rules is unnecessary. 
+It is replaced with some introductory (intentionally vague) text explaining 
+the basic idea of what sorts of rules are overloading rules.</DIV>
+<DIV Class="paranum">34.e</DIV>
+<DIV Class="Annotations">It is not clear from RM83 what information is 
+embodied in a &ldquo;meaning&rdquo; or an &ldquo;interpretation.&rdquo; 
+&ldquo;Meaning&rdquo; and &ldquo;interpretation&rdquo; were intended 
+to be synonymous; we now use the latter only in defining the rules about 
+overload resolution. &ldquo;Meaning&rdquo; is used only informally. This 
+clause attempts to clarify what is meant by &ldquo;interpretation.&rdquo;</DIV>
+<DIV Class="paranum">34.f</DIV>
+<DIV Class="Annotations">For example, RM83 does not make it clear that 
+overload resolution is required in order to match <SPAN Class="swiss">subprogram_bodies</SPAN> 
+with their corresponding declarations (and even to tell whether a given 
+<SPAN Class="swiss"><A HREF="AA-6-3.html#S0162">subprogram_body</A></SPAN> 
+is the completion of a previous declaration). Clearly, the information 
+needed to do this is part of the &ldquo;interpretation&rdquo; of a <SPAN Class="swiss"><A HREF="AA-6-3.html#S0162">subprogram_body</A></SPAN>. 
+The resolution of such things is defined in terms of the &ldquo;expected 
+profile&rdquo; concept. Ada 95 has some new cases where expected profiles 
+are needed &mdash; the resolution of P'Access, where P might denote a 
+subprogram, is an example.</DIV>
+<DIV Class="paranum">34.g</DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em">RM83-8.7(2) might 
+seem to imply that an interpretation embodies information about what 
+is denoted by each usage name, but not information about which syntactic 
+category each construct belongs to. However, it seems necessary to include 
+such information, since the Ada grammar is highly ambiguous. For example, 
+X(Y) might be a <SPAN Class="swiss"><A HREF="AA-6-4.html#S0164">function_call</A></SPAN> 
+or an <SPAN Class="swiss"><A HREF="AA-4-1-1.html#S0096">indexed_component</A></SPAN>, 
+and no context-free/syntactic information can tell the difference. It 
+seems like we should view X(Y) as being, for example, &ldquo;interpreted 
+as a <SPAN Class="swiss"><A HREF="AA-6-4.html#S0164">function_call</A></SPAN>&rdquo; 
+(if that's what overload resolution decides it is). Note that there are 
+examples where the denotation of each usage name does not imply the syntactic 
+category. However, even if that were not true, it seems that intuitively, 
+the interpretation includes that information. Here's an example:&nbsp;</DIV>
+<DIV Class="paranum">34.h</DIV>
+<DIV Class="SmallExamples"><B>type</B>&nbsp;T;<BR>
+<B>type</B>&nbsp;A&nbsp;<B>is</B>&nbsp;<B>access</B>&nbsp;T;<BR>
+<B>type</B>&nbsp;T&nbsp;<B>is</B>&nbsp;<B>array</B>(Integer&nbsp;<B>range</B>&nbsp;1..10)&nbsp;<B>of</B>&nbsp;A;<BR>
+I&nbsp;:&nbsp;Integer&nbsp;:=&nbsp;3;<BR>
+<B>function</B>&nbsp;F(X&nbsp;:&nbsp;Integer&nbsp;:=&nbsp;7)&nbsp;<B>return</B>&nbsp;A;<BR>
+Y&nbsp;:&nbsp;A&nbsp;:=&nbsp;F(I);&nbsp;--<SPAN Class="roman"><I>&nbsp;Ambiguous?&nbsp;(We&nbsp;hope&nbsp;so.)</I></SPAN></DIV>
+<DIV Class="paranum">34.i/1</DIV>
+<DIV Class="Annotations">Consider the declaration of Y (a complete context). 
+In the above example, overload resolution can easily determine the declaration, 
+and therefore the entity, denoted by Y, A, F, and I. However, given all 
+of that information, we still don't know whether F(I) is a <SPAN Class="swiss"><A HREF="AA-6-4.html#S0164">function_call</A></SPAN> 
+or an <SPAN Class="swiss"><A HREF="AA-4-1-1.html#S0096">indexed_component</A></SPAN> 
+whose <SPAN class="insert1"><SPAN Class="swiss"><A HREF="AA-4-1.html#S0093">prefix</A></SPAN></SPAN><SPAN class="delete1">&nbsp;prefix</SPAN> 
+is a <SPAN Class="swiss"><A HREF="AA-6-4.html#S0164">function_call</A></SPAN>. 
+(In the latter case, it is equivalent to F(7).<B>all</B>(I).)</DIV>
+<DIV Class="paranum">34.j</DIV>
+<DIV Class="Annotations">It seems clear that the declaration of Y ought 
+to be considered ambiguous. We describe that by saying that there are 
+two interpretations, one as a <SPAN Class="swiss"><A HREF="AA-6-4.html#S0164">function_call</A></SPAN>, 
+and one as an <SPAN Class="swiss"><A HREF="AA-4-1-1.html#S0096">indexed_component</A></SPAN>. 
+These interpretations are both acceptable to the overloading rules. Therefore, 
+the complete context is ambiguous, and therefore illegal.</DIV>
+<DIV Class="paranum">34.k</DIV>
+<DIV Class="Annotations">{<I>Beaujolais effect</I> [partial]} <A NAME="I3849"></A>It 
+is the intent that the Ada 95 preference rule for root numeric operators 
+is more locally enforceable than that of RM83-4.6(15). It should also 
+eliminate interpretation shifts due to the addition or removal of a <SPAN Class="swiss"><A HREF="AA-8-4.html#S0179">use_clause</A></SPAN> 
+(the so called <I>Beaujolais</I> effect).</DIV>
+<DIV Class="paranum">34.l/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00114.TXT">AI95-00114-01</A></I>} 
+RM83-8.7 seems to be missing some complete contexts, such as <SPAN Class="swiss"><A HREF="AA-2-8.html#S0020">pragma_argument_association</A></SPAN>s, 
+<SPAN Class="swiss"><A HREF="AA-3-11.html#S0087">declarative_item</A></SPAN>s 
+that are not declarations or <SPAN class="insert2"><SPAN Class="swiss"><A HREF="AA-13-1.html#S0283">aspect_clause</A></SPAN>s</SPAN><SPAN class="delete2"><SPAN Class="swiss"><A HREF="AA-13-1.html#S0284">&nbsp;representation_clause</A></SPAN>s</SPAN>, 
+and <SPAN Class="swiss"><A HREF="AA-10-1-2.html#S0236">context_item</A></SPAN>s. 
+We have added these, and also replaced the &ldquo;must be determinable&rdquo; 
+wording of RM83-5.4(3) with the notion that the expression of a <SPAN Class="swiss"><A HREF="AA-5-4.html#S0140">case_statement</A></SPAN> 
+is a complete context.</DIV>
+<DIV Class="paranum">34.m</DIV>
+<DIV Class="Annotations">Cases like the Val attribute are now handled 
+using the normal type resolution rules, instead of having special cases 
+that explicitly allow things like &ldquo;any integer type.&rdquo;&nbsp;</DIV>
+
+<H4 Class="centered">Incompatibilities With Ada 95</H4>
+<DIV Class="paranum">34.n/2</DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00409.TXT">AI95-00409-01</A></I>} 
+<SPAN class="insert2">{<I>incompatibilities with Ada 95</I>} <A NAME="I3850"></A>Ada 
+95 allowed name resolution to distinguish between anonymous access-to-variable 
+and access-to-constant types. This is similar to distinguishing between 
+subprograms with <B>in</B> and <B>in out</B> parameters, which is known 
+to be bad. Thus, that part of the rule was dropped as we now have anonymous 
+access-to-constant types, making this much more likely.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">34.o/2</DIV>
+<DIV Class="SmallExamples"><SPAN class="insert2"><B>type</B>&nbsp;Cacc&nbsp;<B>is&nbsp;access&nbsp;constant</B>&nbsp;Integer;<BR>
+<B>procedure</B>&nbsp;Proc&nbsp;(Acc&nbsp;:&nbsp;<B>access</B>&nbsp;Integer)&nbsp;...<BR>
+<B>procedure</B>&nbsp;Proc&nbsp;(Acc&nbsp;:&nbsp;Cacc)&nbsp;...<BR>
+List&nbsp;:&nbsp;Cacc&nbsp;:=&nbsp;...;<BR>
+Proc&nbsp;(List);&nbsp;--&nbsp;<SPAN Class="roman"><I>OK&nbsp;in&nbsp;Ada&nbsp;95,&nbsp;ambiguous&nbsp;in&nbsp;Ada&nbsp;2005.</I></SPAN></SPAN></DIV>
+<DIV Class="paranum">34.p/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2">If there is any code like 
+this (such code should be rare), it will be ambiguous in Ada 2005.</SPAN> 
+</DIV>
+
+<H4 Class="centered">Extensions to Ada 95</H4>
+<DIV Class="paranum">34.q/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00230.TXT">AI95-00230-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00231.TXT">AI95-00231-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00254.TXT">AI95-00254-01</A></I>} 
+<SPAN class="insert2">{<I>extensions to Ada 95</I>} <A NAME="I3851"></A>Generalized 
+the anonymous access resolution rules to support the new capabilities 
+of anonymous access types (that is, access-to-subprogram and access-to-constant).</SPAN></DIV>
+<DIV Class="paranum">34.r/2</DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00382.TXT">AI95-00382-01</A></I>} 
+<SPAN class="insert2">We now allow the creation of self-referencing types 
+via anonymous access types. This is an extension in unusual cases involving 
+task and protected types. For example:</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">34.s/2</DIV>
+<DIV Class="SmallExamples"><SPAN class="insert2"><B>task&nbsp;type</B>&nbsp;T;</SPAN></DIV>
+<DIV Class="paranum">34.t/2</DIV>
+<DIV Class="SmallExamples"><SPAN class="insert2"><B>task&nbsp;body</B>&nbsp;T&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;P&nbsp;(X&nbsp;:&nbsp;<B>access</B>&nbsp;T)&nbsp;<B>is</B>&nbsp;--&nbsp;<SPAN Class="roman"><I>Illegal&nbsp;in&nbsp;Ada&nbsp;95,&nbsp;legal&nbsp;in&nbsp;Ada&nbsp;2005</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;P;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;T;</SPAN></DIV>
+
+<H4 Class="centered">Wording Changes from Ada 95</H4>
+<DIV Class="paranum">34.u/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00332.TXT">AI95-00332-01</A></I>} 
+<SPAN class="insert2">Corrected the &ldquo;single expected type&rdquo; 
+so that it works in contexts that don't have expected types (like object 
+renames and qualified expressions). This fixes a hole in Ada 95 that 
+appears to prohibit using <SPAN Class="swiss"><A HREF="AA-4-3.html#S0104">aggregate</A></SPAN>s, 
+'Access, character literals, string literals, and <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN>s 
+in qualified expressions.</SPAN>&nbsp;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-8-5-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-9.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="font-size: 125%">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

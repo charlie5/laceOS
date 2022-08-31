@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Operators and Expression Evaluation</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.SyntaxIndented {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-bottom: 0.4em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-4-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-4-5-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>4.5 Operators and Expression Evaluation</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal"><A NAME="I2571"></A><A NAME="I2572"></A>The language 
+defines the following six categories of operators (given in order of 
+increasing precedence). The corresponding <SPAN Class="swiss"><A HREF="RM-6-1.html#S0155">operator_symbol</A></SPAN>s, 
+and only those, can be used as <SPAN Class="swiss"><A HREF="RM-6-1.html#S0152">designator</A></SPAN>s 
+in declarations of functions for user-defined operators. See <A HREF="RM-6-6.html">6.6</A>, 
+&ldquo;<A HREF="RM-6-6.html">Overloading of Operators</A>&rdquo;.&nbsp;</DIV>
+
+<H4 Class="centered">Syntax</H4>
+<DIV Class="paranum">2</DIV>
+<DIV Class="SyntaxIndented"><SPAN Class="swiss">logical_operator</SPAN><A NAME="I2573"></A><A NAME="S0121"></A><SPAN Class="swiss">&nbsp;::=&nbsp;</SPAN>&nbsp;&nbsp;<B>and</B>&nbsp;|&nbsp;<B>or</B>&nbsp;&nbsp;|&nbsp;<B>xor</B></DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="SyntaxIndented"><SPAN Class="swiss">relational_operator</SPAN><A NAME="I2574"></A><A NAME="S0122"></A><SPAN Class="swiss">&nbsp;::=&nbsp;</SPAN>&nbsp;&nbsp;=&nbsp;&nbsp;&nbsp;|&nbsp;/=&nbsp;&nbsp;|&nbsp;&lt;&nbsp;&nbsp;&nbsp;|&nbsp;&lt;=&nbsp;|&nbsp;&gt;&nbsp;|&nbsp;&gt;=</DIV>
+<DIV Class="paranum">4</DIV>
+<DIV Class="SyntaxIndented"><SPAN Class="swiss">binary_adding_operator</SPAN><A NAME="I2575"></A><A NAME="S0123"></A><SPAN Class="swiss">&nbsp;::=&nbsp;</SPAN>&nbsp;&nbsp;+&nbsp;&nbsp;&nbsp;|&nbsp;&ndash;&nbsp;&nbsp;&nbsp;|&nbsp;&amp;</DIV>
+<DIV Class="paranum">5</DIV>
+<DIV Class="SyntaxIndented"><SPAN Class="swiss">unary_adding_operator</SPAN><A NAME="I2576"></A><A NAME="S0124"></A><SPAN Class="swiss">&nbsp;::=&nbsp;</SPAN>&nbsp;&nbsp;+&nbsp;&nbsp;&nbsp;|&nbsp;&ndash;</DIV>
+<DIV Class="paranum">6</DIV>
+<DIV Class="SyntaxIndented"><SPAN Class="swiss">multiplying_operator</SPAN><A NAME="I2577"></A><A NAME="S0125"></A><SPAN Class="swiss">&nbsp;::=&nbsp;</SPAN>&nbsp;&nbsp;*&nbsp;&nbsp;&nbsp;|&nbsp;/&nbsp;&nbsp;&nbsp;|&nbsp;<B>mod</B>&nbsp;|&nbsp;<B>rem</B></DIV>
+<DIV Class="paranum">7</DIV>
+<DIV Class="SyntaxIndented"><SPAN Class="swiss">highest_precedence_operator</SPAN><A NAME="I2578"></A><A NAME="S0126"></A><SPAN Class="swiss">&nbsp;::=&nbsp;</SPAN>&nbsp;&nbsp;**&nbsp;&nbsp;|&nbsp;<B>abs</B>&nbsp;|&nbsp;<B>not</B></DIV>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">8</DIV>
+<DIV Class="Normal">For a sequence of operators of the same precedence 
+level, the operators are associated with their operands in textual order 
+from left to right. Parentheses can be used to impose specific associations. 
+</DIV>
+<DIV Class="paranum">9</DIV>
+<DIV Class="Normal"><A NAME="I2579"></A><A NAME="I2580"></A>For each 
+form of type definition, certain of the above operators are <I>predefined</I>; 
+that is, they are implicitly declared immediately after the type definition. 
+<A NAME="I2581"></A><A NAME="I2582"></A><A NAME="I2583"></A><A NAME="I2584"></A>For 
+each such implicit operator declaration, the parameters are called Left 
+and Right for <I>binary</I> operators; the single parameter is called 
+Right for <I>unary</I> operators. An expression of the form X op Y, where 
+op is a binary operator, is equivalent to a <SPAN Class="swiss"><A HREF="RM-6-4.html#S0164">function_call</A></SPAN> 
+of the form &quot;op&quot;(X, Y). An expression of the form op Y, where 
+op is a unary operator, is equivalent to a <SPAN Class="swiss"><A HREF="RM-6-4.html#S0164">function_call</A></SPAN> 
+of the form &quot;op&quot;(Y). The predefined operators and their effects 
+are described in subclauses <A HREF="RM-4-5-1.html">4.5.1</A> through 
+<A HREF="RM-4-5-6.html">4.5.6</A>.&nbsp;</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">10</DIV>
+<DIV Class="Normal"><A NAME="I2585"></A>The predefined operations on 
+integer types either yield the mathematically correct result or raise 
+the exception Constraint_Error. For implementations that support the 
+Numerics Annex, the predefined operations on real types yield results 
+whose accuracy is defined in <A HREF="RM-G.html">Annex G</A>, or raise 
+the exception Constraint_Error.&nbsp;</DIV>
+
+<H4 Class="centered">Implementation Requirements</H4>
+<DIV Class="paranum">11</DIV>
+<DIV Class="Normal"><A NAME="I2586"></A>The implementation of a predefined 
+operator that delivers a result of an integer or fixed point type may 
+raise Constraint_Error only if the result is outside the base range of 
+the result type.</DIV>
+<DIV Class="paranum">12</DIV>
+<DIV Class="Normal"><A NAME="I2587"></A>The implementation of a predefined 
+operator that delivers a result of a floating point type may raise Constraint_Error 
+only if the result is outside the safe range of the result type.&nbsp;</DIV>
+
+<H4 Class="centered">Implementation Permissions</H4>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Normal">For a sequence of predefined operators of the same 
+precedence level (and in the absence of parentheses imposing a specific 
+association), an implementation may impose any association of the operators 
+with operands so long as the result produced is an allowed result for 
+the left-to-right association, but ignoring the potential for failure 
+of language-defined checks in either the left-to-right or chosen order 
+of association.&nbsp;</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">14</DIV>
+<DIV Class="Notes">11&nbsp;&nbsp;The two operands of an expression of 
+the form X op Y, where op is a binary operator, are evaluated in an arbitrary 
+order, as for any <SPAN Class="swiss"><A HREF="RM-6-4.html#S0164">function_call</A></SPAN> 
+(see <A HREF="RM-6-4.html">6.4</A>).&nbsp;</DIV>
+
+<H4 Class="centered">Examples</H4>
+<DIV Class="paranum">15</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><I>Examples of precedence:</I> 
+</DIV>
+<DIV Class="paranum">16</DIV>
+<DIV Class="Examples"><B>not</B>&nbsp;Sunny&nbsp;<B>or</B>&nbsp;Warm&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;same&nbsp;as&nbsp;(not&nbsp;Sunny)&nbsp;or&nbsp;Warm</I></SPAN><BR>
+X&nbsp;&gt;&nbsp;4.0&nbsp;<B>and</B>&nbsp;Y&nbsp;&gt;&nbsp;0.0&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;same&nbsp;as&nbsp;(X&nbsp;&gt;&nbsp;4.0)&nbsp;and&nbsp;(Y&nbsp;&gt;&nbsp;0.0)</I></SPAN></DIV>
+<DIV Class="paranum">17</DIV>
+<DIV Class="Examples">-4.0*A**2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;same&nbsp;as&nbsp;&ndash;(4.0&nbsp;*&nbsp;(A**2))</I></SPAN><BR>
+<B>abs</B>(1&nbsp;+&nbsp;A)&nbsp;+&nbsp;B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;same&nbsp;as&nbsp;(abs&nbsp;(1&nbsp;+&nbsp;A))&nbsp;+&nbsp;B</I></SPAN><BR>
+Y**(-3)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;parentheses&nbsp;are&nbsp;necessary</I></SPAN><BR>
+A&nbsp;/&nbsp;B&nbsp;*&nbsp;C&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;same&nbsp;as&nbsp;(A/B)*C</I></SPAN><BR>
+A&nbsp;+&nbsp;(B&nbsp;+&nbsp;C)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;evaluate&nbsp;B&nbsp;+&nbsp;C&nbsp;before&nbsp;adding&nbsp;it&nbsp;to&nbsp;A&nbsp;</I></SPAN></DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-4-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-4-5-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

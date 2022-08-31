@@ -1,0 +1,353 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Type invariants</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>2.4 Type invariants</H1>
+<div class="Normal">Type invariants are designed for use with private 
+types where we want some relationship to always hold between components 
+of the type. Like pre- and postconditions there are both specific invariants 
+that can be applied to any type and class wide invariants that can only 
+be applied to tagged types. <A NAME="I1273"></A><A NAME="I1274"></A><A NAME="I1275"></A><A NAME="I1276"></A><A NAME="I1277"></A><A NAME="I1278"></A><A NAME="I1279"></A><A NAME="I1280"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">One example mentioned 
+above and discussed in the Introduction was a type <SPAN Class="swiss">Stack</SPAN> 
+with specific invariant <SPAN Class="swiss">Is_Unduplicated</SPAN>. Thus 
+we write</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Stack&nbsp;<B>is&nbsp;private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Type_Invariant&nbsp;&nbsp;=&gt;&nbsp;Is_Unduplicated(Stack);</div>
+<div class="Normal">After calls of <SPAN Class="swiss">Push</SPAN> and 
+<SPAN Class="swiss">Pop</SPAN> and any other operations that manipulate 
+the stack, the function<SPAN Class="swiss">&nbsp;Is_Unduplicated&nbsp;</SPAN>is 
+called to ensure that there are no duplicates on the stack.</div>
+<div class="Normal">The monitoring is controlled by the pragma <SPAN Class="swiss">Assertion_Policy</SPAN> 
+in the same way as pre- and postconditions. If an invariant fails (that 
+is, has value <SPAN Class="swiss">False</SPAN>) then <SPAN Class="swiss">Assertion_Error</SPAN> 
+is raised. <A NAME="I1281"></A><A NAME="I1282"></A></div>
+<div class="Normal">The invariant <SPAN Class="swiss">Is_Unduplicated</SPAN> 
+is a curious example because it cannot be violated by <SPAN Class="swiss">Pop</SPAN> 
+anyway since if there were no duplicates then removing the top item cannot 
+make one appear.</div>
+<div class="Normal">Moreover, <SPAN Class="swiss">Push</SPAN> needs to 
+ensure that the item to be added is not a duplicate of one on the stack 
+already and so essentially much of the checking is repeated. Indeed, 
+when writing <SPAN Class="swiss">Push</SPAN> we should be able to assume 
+that no items are already duplicated and hence all we need to do is check 
+that the new item to be added is not equal to one of the existing items 
+(so <I>n</I> comparisons). However, a general function <SPAN Class="swiss">Is_Unduplicated</SPAN> 
+will need to compare all pairs and thus require a double loop (so <I>n</I>(<I>n</I>+1)/2 
+comparisons).</div>
+<div class="Normal">The reader is invited to meditate over this conundrum. 
+One's first reaction might be that this is a bad example. However, one 
+way to ensure reliability is to introduce redundancy. Thus if the encoding 
+of <SPAN Class="swiss">Is_Unduplicated</SPAN> and <SPAN Class="swiss">Push</SPAN> 
+are done independently then there is an increased probability that any 
+error will be detected.</div>
+<div class="Normal">The aspect <SPAN Class="swiss">Type_Invariant</SPAN> 
+requires an expression of a Boolean type. The mad programmer could therefore 
+also write <A NAME="I1283"></A><A NAME="I1284"></A></div>
+<div class="SwissExamples"><B>type</B>&nbsp;Stack<B>&nbsp;is&nbsp;private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Type_Invariant;</div>
+<div class="Normal">which would thus be <SPAN Class="swiss">True</SPAN> 
+by default and so useless! Actually it might not be entirely useless 
+since it might act as a placeholder for an invariant to be defined later 
+and meanwhile the program will compile and execute.</div>
+<div class="Normal">Type invariants are useful whenever a type is more 
+than just the sum of its components. Note carefully that the invariant 
+may not hold when an object is being manipulated by a subprogram having 
+access to the full type. In the case of <SPAN Class="swiss">Push</SPAN> 
+and <SPAN Class="swiss">Pop</SPAN> and the invariant <SPAN Class="swiss">Is_Unduplicated</SPAN> 
+this will not happen but consider the following simple example.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Suppose we have a type 
+<SPAN Class="swiss">Point</SPAN> which describes the position of an object 
+in a plane. It might simply be</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Point&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X,&nbsp;Y:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose we want 
+to ensure that all points are within a unit circle. We could ensure that 
+a point lies within a square by means of range constraints by writing</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Point&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X,&nbsp;Y:&nbsp;Float&nbsp;<B>range</B>&nbsp;&ndash;1.0&nbsp;..&nbsp;+1.0;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">but we need to ensure 
+that <SPAN Class="swiss">X**2 + Y**2</SPAN> is not greater than <SPAN Class="swiss">1.0,</SPAN> 
+and that cannot be done by individual constraints. So we might declare 
+a type <SPAN Class="swiss">Disc_Pt</SPAN> with an invariant as follows</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Places&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Disc_Pt&nbsp;<B>is&nbsp;private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Type_Invariant&nbsp;=&gt;&nbsp;Check_In(Disc_Pt);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Check_In(D:&nbsp;Disc_Pt)&nbsp;<B>return</B>&nbsp;Boolean<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Inline;<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;various&nbsp;operations&nbsp;on&nbsp;disc&nbsp;points</I></SPAN></div>
+<div class="SwissExamples"><B>private</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Disc_Pt&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X,&nbsp;Y:&nbsp;Float&nbsp;<B>range</B>&nbsp;&ndash;1.0&nbsp;..&nbsp;+1.0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Check_In(D:&nbsp;Disc_Pt)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(D.X**2&nbsp;+&nbsp;D.Y**2&nbsp;&lt;=&nbsp;1.0);</div>
+<div class="SwissExamples"><B>end</B>&nbsp;Places;</div>
+<div class="Normal">Note that we have used an expression function for 
+<SPAN Class="swiss">Check_In</SPAN>. Expression functions were outlined 
+in the Introduction (see <A HREF="Rat12-1-3-2.html">1.3.2</A>) and will 
+be discussed in detail in .}section <A HREF="Rat12-3-5.html">3.5</A>. 
+They are very useful for small functions in situations like this and 
+typically will be given the aspect <SPAN Class="swiss">Inline</SPAN> 
+on the specification as shown.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose that we 
+wish to make available to the user a procedure <SPAN Class="swiss">Flip</SPAN> 
+that reflects a <SPAN Class="swiss">Disc_Pt</SPAN> in the line <I>x</I> 
+= <I>y</I>, or in other words interchanges its <SPAN Class="swiss">X</SPAN> 
+and <SPAN Class="swiss">Y</SPAN> components. The body might be</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Flip(D:&nbsp;<B>in&nbsp;out</B>&nbsp;Disc_Pt)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;T:&nbsp;Float;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>temporary</I></SPAN><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;T&nbsp;:=&nbsp;D.X;&nbsp;&nbsp;D.X&nbsp;:=&nbsp;D.Y;&nbsp;&nbsp;D.Y&nbsp;:=&nbsp;T;<BR>
+<B>end</B>&nbsp;Flip;</div>
+<div class="Normal">This works just fine but note that just before the 
+assignment to <SPAN Class="swiss">D.Y</SPAN>, it is quite likely that 
+the invariant does not hold. If the original value of <SPAN Class="swiss">D</SPAN> 
+was <SPAN Class="swiss">(0.1, 0.8)</SPAN> then at the intermediate stage 
+it will be<SPAN Class="swiss">(0.8, 0.8)</SPAN> and so well outside the 
+unit circle.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So there is a general 
+principle that an intermediate value not visible externally need not 
+satisfy the invariant. There is an analogy with numeric types. The intermediate 
+value of an expression can fall outside the range of the type but will 
+be within range when the final value is assigned to the object. For example, 
+suppose type <SPAN Class="swiss">Integer</SPAN> is 16 bits (a small machine) 
+but the registers perform arithmetic in 32 bits, then a statement such 
+as</div>
+<div class="SwissExamples">J&nbsp;:=&nbsp;K&nbsp;*&nbsp;L&nbsp;/&nbsp;M;</div>
+<div class="Normal">could easily produce an intermediate result <SPAN Class="swiss">K 
+* L</SPAN> outside the range of <SPAN Class="swiss">Integer</SPAN> but 
+the final value could be in range.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In many cases it will 
+not be necessary for the user to know that a type invariant applies to 
+the type; it is after all merely a detail of the implementation. So perhaps 
+the above should be rewritten as</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Places&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Disc_Pt&nbsp;<B>is&nbsp;private</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>various&nbsp;operations&nbsp;on&nbsp;disc&nbsp;points</I></SPAN><BR>
+<B>private</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Disc_Pt&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X,&nbsp;Y:&nbsp;Float&nbsp;<B>range</B>&nbsp;&ndash;1.0&nbsp;..&nbsp;+1.0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Type_Invariant&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Disc_Pt.X**2&nbsp;+&nbsp;Disc_Pt.Y**2&nbsp;&lt;=&nbsp;1.0;</div>
+<div class="SwissExamples"><B>end</B>&nbsp;Places;</div>
+<div class="Normal">In this case we do not need to declare a function 
+<SPAN Class="swiss">Check_In</SPAN> at all. Note the use of the type 
+name <SPAN Class="swiss">Disc_Pt</SPAN> in the invariant expression. 
+This is another example of the use of a type name to denote a current 
+instance (this is familiar from way back in Ada 83 with task type names).</div>
+<div class="Normal" style="margin-bottom: 0.4em">We now turn to consider 
+the places where a type invariant on a private type <SPAN Class="swiss">T</SPAN> 
+is checked. These are basically when it can be changed from the point 
+of view of the outside user. They are</div>
+<div class="Bulleted">after default initialization of an object of type 
+<SPAN Class="swiss">T</SPAN>,</div>
+<div class="Bulleted">after a conversion to type <SPAN Class="swiss">T</SPAN>,</div>
+<div class="Bulleted">after assigning to a view conversion involving 
+descendants and ancestors of type <SPAN Class="swiss">T</SPAN>,</div>
+<div class="Bulleted">after a call of <SPAN Class="swiss">T'Read</SPAN> 
+or <SPAN Class="swiss">T'Input</SPAN>,</div>
+<div class="Bulleted">after a call of a subprogram declared in the immediate 
+scope of <SPAN Class="swiss">T</SPAN> and visible outside that has a 
+parameter (of any mode including an access parameter) with a part of 
+type <SPAN Class="swiss">T</SPAN> or returns a result with a part of 
+type <SPAN Class="swiss">T</SPAN>.&nbsp;</div>
+<div class="Normal">Note that by saying a part of type <SPAN Class="swiss">T</SPAN>, 
+the checks not only apply to subprograms with parameters and results 
+of type <SPAN Class="swiss">T</SPAN> but they also apply to parameters 
+and results whose components are of the type <SPAN Class="swiss">T</SPAN> 
+or are view conversions involving the type <SPAN Class="swiss">T</SPAN>. 
+Observe that parameters of mode in are also checked because, as is well 
+known, there are accepted techniques for changing such parameters.</div>
+<div class="Normal">But note that checks on <B>in</B> parameters only 
+apply to procedures and not to functions. This was a retrospective change 
+after ISO standardization as explained in Section <A HREF="Rat12-9-5.html">9.5</A> 
+of the Epilogue.</div>
+<div class="Normal">Beware, however, that the checks do not extend to 
+deeply nested situations, such as components with components that are 
+access values to objects that themselves involve type <SPAN Class="swiss">T</SPAN> 
+or worse. Thus there are holes in the protection offered by type invariants. 
+However, if the types are straightforward and the writer does not do 
+foolish things like surreptitiously exporting access types referring 
+to <SPAN Class="swiss">T</SPAN> then all will be well. It is another 
+example of there being no defence against foolish programmers.</div>
+<div class="Normal">The checks on type invariants regarding parameters 
+and results can be conveniently implemented in the body of the subprogram 
+in much the same way as for postconditions. This saves duplicating the 
+code of the tests at each point of call.</div>
+<div class="Normal">If a subprogram such as <SPAN Class="swiss">Flip</SPAN> 
+which is visible outside is called from inside then the checks still 
+apply. This is not strictly necessary of course, but fits the simple 
+model of the checks being in the body and so simplifies the implementation.</div>
+<div class="Normal">If an untagged type is derived then any existing 
+specific invariant is inherited for inherited operations. However, a 
+further invariant can be given as well and both will apply to the inherited 
+operations. This fits in with the model of view conversions used to describe 
+how an inherited subprogram works on derivation. The parameters of the 
+derived type are view converted to the parent type before the body is 
+called and back again afterwards. As mentioned above, view conversions 
+are one of the places where invariants are checked.</div>
+<div class="Normal">However, if we add new operations then the old invariant 
+does not apply to them. In truth, the specific invariant is not really 
+inherited at all; it just comes along for free with the inherited operations 
+that are not overridden. So if we do add new operations then we need 
+to state the total invariant required.</div>
+<div class="Normal">Note that this is not quite the same model as specific 
+postconditions. We cannot add postconditions to an inherited operation 
+but have to override it and then any specific postconditions on the parent 
+are lost. In any event, in both cases, if we want to use inheritance 
+then we should really use tagged types and class wide aspects.</div>
+<div class="Normal">So there is also an aspect <SPAN Class="swiss">Type_Invariant'Class</SPAN> 
+for use with private tagged types. The distinction between <SPAN Class="swiss">Type_Invariant</SPAN> 
+and <SPAN Class="swiss">Type_Invariant'Class</SPAN> has similarities 
+to that between <SPAN Class="swiss">Post</SPAN> and <SPAN Class="swiss">Post'Class</SPAN>. 
+<A NAME="I1285"></A><A NAME="I1286"></A><A NAME="I1287"></A><A NAME="I1288"></A><A NAME="I1289"></A></div>
+<div class="Normal">The specific aspect <SPAN Class="swiss">Type_Invariant</SPAN> 
+can be applied to any type but <SPAN Class="swiss">Type_Invariant'Class</SPAN> 
+can only be applied to tagged types. A tagged type can have both an aspect 
+<SPAN Class="swiss">Type_Invariant</SPAN> and <SPAN Class="swiss">Type_Invariant'Class</SPAN>.</div>
+<div class="Normal"><SPAN Class="swiss">Type_Invariant</SPAN> cannot 
+be applied to an abstract type.</div>
+<div class="Normal"><SPAN Class="swiss">Type_Invariant'Class</SPAN> is 
+inherited by all derived types; it can also be applied to an abstract 
+type.</div>
+<div class="Normal">Note the subtle difference between <SPAN Class="swiss">Type_Invariant</SPAN> 
+and <SPAN Class="swiss">Type_Invariant'Class</SPAN>. <SPAN Class="swiss">Type_Invariant'Class</SPAN> 
+is inherited for all operations of the type but as noted above <SPAN Class="swiss">Type_Invariant</SPAN> 
+is only incidentally inherited by the operations that are inherited.</div>
+<div class="Normal">An interesting rule is that <SPAN Class="swiss">Type_Invariant'Class</SPAN> 
+cannot be applied to a full type declaration which completes a private 
+type such as <SPAN Class="swiss">Disc_Pt</SPAN> in the example above. 
+This is because the writer of an extension will need to see the applicable 
+invariants and this would not be possible if they were in the private 
+part.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So if we have a type 
+<SPAN Class="swiss">T</SPAN> with a class wide invariant thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is&nbsp;tagged&nbsp;private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Type_Invariant'Class&nbsp;=&gt;&nbsp;F(T);<BR>
+<B>procedure</B>&nbsp;Op1(X:&nbsp;<B>in&nbsp;out</B>&nbsp;T);<BR>
+<B>procedure</B>&nbsp;Op2(X:&nbsp;<B>in&nbsp;out</B>&nbsp;T);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then write</div>
+<div class="SwissExamples"><B>type</B>&nbsp;NT<B>&nbsp;is&nbsp;new</B>&nbsp;T&nbsp;<B>with&nbsp;private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Type_Invariant'Class&nbsp;=&gt;&nbsp;FN(NT);<BR>
+<B>overriding</B><BR>
+<B>procedure</B>&nbsp;Op2(X:&nbsp;<B>in&nbsp;out</B>&nbsp;NT);<BR>
+<B>not&nbsp;overriding</B><BR>
+<B>procedure</B>&nbsp;Op3(X:&nbsp;<B>in&nbsp;out</B>&nbsp;NT);</div>
+<div class="Normal">then both invariants <SPAN Class="swiss">F</SPAN> 
+and <SPAN Class="swiss">FN</SPAN> will apply to <SPAN Class="swiss">NT</SPAN>.</div>
+<div class="Normal">Note that the procedure <SPAN Class="swiss">Op1</SPAN> 
+is inherited unchanged by <SPAN Class="swiss">NT</SPAN>, procedure <SPAN Class="swiss">Op2</SPAN> 
+is overridden for <SPAN Class="swiss">NT</SPAN> and procedure <SPAN Class="swiss">Op3</SPAN> 
+is added.</div>
+<div class="Normal">Now consider various calls. The calls of <SPAN Class="swiss">Op1</SPAN> 
+will involve view conversions as mentioned earlier and these will apply 
+the checks for <SPAN Class="swiss">FN</SPAN> and the inherited body will 
+apply the checks for <SPAN Class="swiss">F</SPAN>. The body of <SPAN Class="swiss">Op2</SPAN> 
+will directly include checks for <SPAN Class="swiss">F</SPAN> and <SPAN Class="swiss">FN</SPAN> 
+as will the body of <SPAN Class="swiss">Op3</SPAN>. So the invariant<SPAN Class="swiss">&nbsp;F</SPAN> is properly inherited and all is well.</div>
+<div class="Normal">Remember that if the invariants were specific and 
+not class wide then although <SPAN Class="swiss">Op1</SPAN> will have 
+checks for <SPAN Class="swiss">F</SPAN> and <SPAN Class="swiss">FN</SPAN>, 
+<SPAN Class="swiss">Op2</SPAN> and <SPAN Class="swiss">Op3</SPAN> will 
+only check <SPAN Class="swiss">FN</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the case of the 
+type <SPAN Class="swiss">Disc_Pt</SPAN> we might decide to derive a type 
+which requires that all values are not only inside the unit circle but 
+outside an inner circle &ndash; in other words in an annulus or ring. 
+We use the class wide invariants so that the parent package is</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Places&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Disc_Pt&nbsp;<B>is&nbsp;tagged&nbsp;private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Type_Invariant'Class&nbsp;=&gt;&nbsp;Check_In(Disc_Pt);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Check_In(D:&nbsp;Disc_Pt)&nbsp;<B>return</B>&nbsp;Boolean<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Inline;<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;various&nbsp;operations&nbsp;on&nbsp;disc&nbsp;points</I></SPAN></div>
+<div class="SwissExamples"><B>private</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Disc_Pt&nbsp;<B>is&nbsp;tagged</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X,&nbsp;Y:&nbsp;Float&nbsp;<B>range</B>&nbsp;&ndash;1.0&nbsp;..&nbsp;+1.0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Check_In(D:&nbsp;Disc_Pt)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(D.X**2&nbsp;+&nbsp;D.Y**2&nbsp;&lt;=&nbsp;1.0);</div>
+<div class="SwissExamples"><B>end</B>&nbsp;Places;</div>
+<div class="Normal" style="margin-bottom: 0.4em">And then we might write</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Places.Inner&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Ring_Pt&nbsp;<B>is&nbsp;new</B>&nbsp;Disc_Pt&nbsp;<B>with&nbsp;null&nbsp;record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Type_Invariant'Class&nbsp;=&gt;&nbsp;Check_Out(Ring_Pt);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Check_Out(R:&nbsp;Ring_Pt)&nbsp;<B>return</B>&nbsp;Boolean<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Inline;</div>
+<div class="SwissExamples"><B>private</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Check_Out(R:&nbsp;Ring_Pt)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(R.X**2&nbsp;+&nbsp;R.Y**2&nbsp;&gt;=&nbsp;0.25);</div>
+<div class="SwissExamples"><B>end</B>&nbsp;Places.Inner;</div>
+<div class="Normal">And now the type <SPAN Class="swiss">Ring_Pt</SPAN> 
+has both its own type invariant but also that inherited from <SPAN Class="swiss">Disc_Pt</SPAN> 
+thereby ensuring that points are within the ring or annulus. It is unfortunate 
+that we could not make the size of the inner circle a discriminant but 
+a discriminant cannot be of a real type. Ah well, perhaps in Ada 2020??</div>
+<div class="Normal">Finally, it is worth emphasizing that it is good 
+advice not to use inheritance with specific invariants but they are invaluable 
+for checking internal and private properties of types.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

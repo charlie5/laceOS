@@ -1,0 +1,375 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Two - Chapter 8
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-7.html> Previous </a> |
+<a href=rat95-p2-9.html> Next </a>
+<hr>
+
+<h1>
+8   Visibility Rules
+</h1>
+
+<p>
+This is an area of the language which is largely ignored by the normal
+programmer except when it produces surprising or frustrating
+consequences.  The changes have thus been directed largely towards making
+the rules clear and consistent and with more helpful consequences.  The
+changes are
+</p>
+<ul>
+<li>
+    The visibility and scope rules are rewritten to make them consistent
+     and clearer.  They also incorporate the consequences of the
+     introduction of the hierarchical library.
+<li>
+    The use type clause is introduced for operators.
+<li>
+    Renaming is now allowed for subprogram bodies, generic units and
+     library units.
+<li>
+    There are also a number of minor improvements such as the preference
+     rules for overload resolution.
+</ul>
+
+<h2>
+<a name=1>
+8.1  Scope and Visibility
+</a>
+</h2>
+
+<p>
+This is an area where there is no substitute for a precise description of
+the rules.  Suffice it to say that the rules for Ada 83 were obscure and
+probably not truly understood by anybody; a consequence was subtle
+variation between compilers to the detriment of portability.  We will not
+attempt to summarize the 95 rules but refer the reader to [RM95] for the
+details.
+</p>
+<p>
+   One important change is that character literals are now treated like
+other literals with regard to visibility.  This means that they are
+always visible although the legality of their use will depend upon the
+context.  So
+<pre>
+   package P is
+      type Roman_Digit is ('I', 'V', 'X', 'L', 'C', 'D', 'M');
+   end P;
+
+   with P;
+   package Q is
+   ...
+      Five: constant P.Roman_Digit := 'V';
+   ...
+   end Q;
+</pre>
+is allowed in Ada 95 although in Ada 83 we would have had to write P.'V'
+or alternatively supplied a use clause for P.
+</p>
+<p>
+   The visibility rules now also take account of the introduction of
+child packages.  Most of the changes are straightforward but there is one
+interesting interaction with subunits.  Consider
+<pre>
+   package P is
+      ...
+   end P;
+
+   package P.Q is
+      ...
+   end P.Q;
+
+   package body P is
+      Q: Integer;  -- legal
+      procedure Sub is separate;
+   end P;
+
+   with P.Q;       -- illegal
+   separate(P)
+   procedure Sub is
+      ...
+   end Sub;
+</pre>
+</p>
+<p>
+The declaration of Q in the body of P is permitted because the body does
+not have a with clause for P.Q.  But the with clause makes the subunit
+illegal because it could otherwise see both P.Q the child package and P.Q
+the variable in the body, and they are not overloadable.
+</p>
+
+<h2>
+<a name=2>
+8.2  Use Clauses
+</a>
+</h2>
+
+<p>
+As mentioned in Part One the use of operators in Ada 83 caused problems.
+Many groups of users recognized that the use clause could make programs
+hard to understand because the origin of identifiers became obscure.
+Accordingly many organizations banned use clauses.  This meant that
+either operators of user defined types had to be called with prefix
+notation such as Complex."+"(P, Q) or else had to be locally renamed.
+</p>
+<p>
+   This difficulty also occurred with predefined operators.  Thus given
+an access type T declared in a package P, it was very annoying to find
+that one could not write
+<pre>
+   with P;
+   procedure Q is
+      X: P.T;
+   begin
+      ...
+      if X /= null then
+      ...
+   end Q;
+</pre>
+but had to provide a use clause for P or a renaming for "=" or write the
+diabolical
+<pre>
+   if P."/="(X, null) then
+</pre>
+</p>
+<p>
+   This problem is overcome in Ada 95 by the introduction of the use type
+clause which just provides visibility of the operators of a type and
+thereby allows them to be used in the natural infixed form.  This ensures
+that a use package clause is not needed and hence the full name is still
+required for other identifiers.
+</p>
+<p>
+   The introduction of child units causes some extension to the rules for
+packages.  As explained in Chapter 10, child units are treated like
+separately compiled but logically nested units.  Like nested units, the
+name of a child mentioned in a with clause becomes directly visible when
+the logically enclosing parent package is specified in a use clause.
+</p>
+<p>
+   And so, using the example from II.8
+<pre>
+   with OS.File_Manager;
+   procedure Hello is
+      use OS;  -- makes File_Manager directly visible
+               -- as well as other declarations in package OS
+      File: File_Descriptor :=
+              File_Manager.Open("Hello.Txt", File_Manager.Write_Only);
+   begin
+      File_Manager.Write(File, "Hello world.");
+      File_Manager.Close(File);
+   end Hello;
+</pre>
+</p>
+
+<h2>
+<a name=3>
+8.3  Renaming
+</a>
+</h2>
+
+<p>
+To enhance the usefulness of renaming, the body of a subprogram may be
+provided by a renaming declaration.
+</p>
+<p>
+   If the subprogram declaration is in a package specification while the
+subprogram definition via a renaming is in a package body, the renaming
+must be of a subprogram that has subtype conformance (see 6.2) with the
+subprogram's declaration.  This ensures that the caller of the subprogram
+will perform the correct constraint checks on the actual parameters, and
+pass the parameters following the correct calling convention seeing only
+the subprogram's specification.
+</p>
+<p>
+   A normal subprogram renaming requires only mode conformance. This kind
+of conformance is too weak for a renaming provided in the body.  Given
+only mode conformance, the caller might perform constraint checks that
+were too stringent or too lax, and might pass parameters following the
+wrong calling conventions, putting them in the wrong place on the stack,
+or in the wrong register.
+</p>
+<p>
+   We considered requiring subtype conformance for all subprogram
+renaming.  However, this introduces upward incompatibilities,
+particularly given the existing equivalence between generic formal
+subprogram matching and renaming.  Furthermore, it is not always possible
+to statically match the subtype of a formal parameter of a subprogram, if
+the subprogram is implicitly declared as part of the type definition.  In
+particular, if the subprogram is derived from a parent type, then the
+formal parameter subtypes have the constraints that were present on the
+parent type's subprogram.  If the derived type definition itself imposes
+a constraint, then it is likely that the constraint on the formal
+parameter of the derived subprogram is actually looser than the
+constraint on the first subtype of the derived type.  This means there is
+no nameable subtype that has constraints as loose as those on the formal
+parameter.
+</p>
+<p>
+   In the case of a primitive operation of a tagged type, renaming will
+cause a new slot in the dispatch table to be created if the renaming is
+itself primitive (that is in the same package specification as the type).
+If the original primitive operation is overridden then the renamed view
+will naturally depend upon whether renaming occurs before or after the
+overriding.  Consider
+<pre>
+   package P is
+      type T is tagged ...;
+      function Predefined_Equal(X, Y: T) return Boolean renames "=";
+      function "="(X, Y: T) return Boolean:  -- overrides
+      function User_Defined_Equal(X, Y: T) return Boolean renames "=";
+   end P;
+</pre>
+where we have renamed the predefined equality both before and after
+overriding it.  Both renamings create new slots which are then
+initialized with the current meaning of equality.  That for
+Predefined_Equal thus refers to the predefined equal whereas that for
+User_Defined_Equal refers to the overridden version.  The consequence is
+that renaming can be used to hang on to an old primitive operation
+irrespective of whether that old operation is subsequently overridden.
+Such a renaming is itself a distinct primitive operation which could
+later be overridden for any subsequently derived type.
+</p>
+<p>
+   On the other hand a renaming which is not a primitive operation will
+not create a new slot but will simply refer to the operation at the point
+of the renaming.  Thus if User_Defined_Equal is declared in a distinct
+package Q (after P), then it will not be primitive but will still refer
+to the overridden operation.  This will occur even if the overriding is
+in the private part and thus not visible to Q.  For a further discussion
+see [AARM 8.5.4].
+</p>
+<p>
+   This ability of renaming to create a new slot may be considered
+surprising because the general purpose of renaming is simply to create a
+new name for an existing entity; but there is of course no new entity
+being created but just a different way of accessing an existing entity.
+</p>
+<p>
+   Another very useful change is the ability to rename a library unit as
+a library unit.  (It was possible to rename a library unit in Ada 83 but
+only as a local unit.)  Library unit renaming is particularly important
+with the hierarchical library; this is discussed in detail in 10.1.2.
+</p>
+<p>
+   A related change is the ability to rename a generic unit.  Curiously
+enough this was not permitted in Ada 83 although most other entities
+could be renamed.  Thus we can write
+<pre>
+   generic package Enum_IO renames Ada.Text_IO.Enumeration_IO;
+</pre>
+as mentioned in [RM95 8.5.5].
+</p>
+<p>
+   In order to prevent difficulties with generic children, a child of a
+generic parent (such a child must be generic) can only be renamed if the
+renaming occurs inside the declarative region of its parent; it could be
+renamed as a child.  This is consistent with the rules regarding the
+instantiation of such generic child units mentioned in II.8.
+</p>
+
+<h2>
+<a name=4>
+8.4  Other Improvements
+</a>
+</h2>
+
+<p>
+The overload resolution rules of Ada 83 were confusing and unclear and
+this section of the reference manual has been completely rewritten.
+</p>
+<p>
+   An important new rule is the preference rule for operators and ranges
+of root numeric types (see 3.3).  Briefly this says that an ambiguity can
+be resolved by preferring the operator of the root type.  This rule
+coupled with automatic conversion from a universal type removes the need
+for the special rules in Ada 83 regarding universal convertible operands.
+</p>
+<p>
+   As an example, consider
+<pre>
+   C: constant := 2 + 3;
+</pre>
+which was allowed in Ada 83 because the expression was required to be
+universal and so no question of ambiguity arose.  It is not ambiguous in
+Ada 95 either but for different reasons; the expression 2 + 3 is
+considered to be of type root_integer (it could otherwise be Integer or
+Long_Integer).  The root_integer is then converted implicitly to
+universal_integer as required for the initial value.
+</p>
+<p>
+   The special rule regarding ranges in loops and for array indexes
+(which are in the distinct syntactic category
+discrete_subtype_definition) which result in them by treated as of type
+Integer if no specific subtype mark is specified is changed in Ada 95.
+The new rule is that if the range resolves to be of the type root_integer
+then it is taken to be of type Integer.
+</p>
+<p>
+   One outcome of all this is that we can now write
+<pre>
+   for I in -1 .. 100 loop
+</pre>
+as we have already mentioned in Part One.  The interpretation is that -1
+resolves to root_integer because of the preference rules and then the
+special rule just mentioned is used so that the range is finally treated
+as of type Integer.
+</p>
+
+<h2>
+<a name=5>
+8.5  Requirements Summary
+</a>
+</h2>
+
+<p>
+Many of the changes in this area of the language are aimed at making the
+language more precise and easier to understand as requested by the
+general requirement
+<pre>
+     R2.2-B(1) - Understandability
+</pre>
+and we note in particular that the example in [DoD 90 A.2.3] concerning
+visibility of literals and operations has been addressed and satisfied.
+</p>
+<p>
+   The related requirement
+<pre>
+     R2.2-C(1) - Minimize Special Case Restrictions
+</pre>
+discussed in [DoD 90 A.3.12] contains the example of negative literals in
+loops which has also been satisfied.
+</p>
+<p>
+   The requirement
+<pre>
+     R2.2-A(1) - Reduce Deterrents to Efficiency
+</pre>
+is addressed by the elimination of the problem of returning task objects
+explicitly mentioned in the requirement in [DoD 90].
+</p>
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-7.html> Previous </a> |
+<a href=rat95-p2-9.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

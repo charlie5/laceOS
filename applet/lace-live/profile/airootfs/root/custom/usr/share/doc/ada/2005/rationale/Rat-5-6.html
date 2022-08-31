@@ -1,0 +1,582 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>CPU clocks and timers</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.WideHanging-Body {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 6.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DIV.WideHanging-Term {float: left; font-family: "Times New Roman", Times, serif; line-height: 122%; margin-top: 0em; margin-bottom: 0em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>5.6 CPU clocks and timers</H1>
+<div class="Normal">Ada 2005 introduces three different kinds of timers. 
+Two are concerned with monitoring the CPU time of tasks &ndash; one applies 
+to a single task and the other to groups of tasks. The third timer measures 
+real time rather than execution time and can be used to trigger events 
+at specific real times. We will look first at the CPU timers because 
+that introduces more new concepts.<A NAME="I1204"></A><A NAME="I1205"></A></div>
+<div class="Normal">The execution time of one or more tasks can be monitored 
+and controlled by the new package <SPAN Class="swiss">Ada.Execution_Time</SPAN> 
+plus two child packages.<A NAME="I1206"></A>&nbsp;</div>
+<div class="WideHanging-Term"><SPAN Class="swiss">Ada.Execution_Time</SPAN> 
+&ndash;</div><div class="WideHanging-Body"><br clear="left">
+This is the root package and enables the monitoring of execution time 
+of individual tasks.</div>
+<div class="WideHanging-Term"><SPAN Class="swiss">Ada.Execution_Time.Timers</SPAN> 
+&ndash;</div><div class="WideHanging-Body"><br clear="left">
+This provides facilities for defining and enabling timers and for establishing 
+a handler which is called by the run time system when the execution time 
+of the task reaches a given value.</div>
+<div class="WideHanging-Term"><SPAN Class="swiss">Ada.Execution_Time.Group_Budgets</SPAN> 
+&ndash;</div><div class="WideHanging-Body"><br clear="left">
+ This enables several tasks to share a budget and provides means whereby 
+action can be taken when the budget expires.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The execution time 
+of a task, or CPU time as it is commonly called, is the time spent by 
+the system executing the task and services on its behalf. CPU times are 
+represented by the private type <SPAN Class="swiss">CPU_Time</SPAN>. 
+This type and various subprograms are declared in the root package <SPAN Class="swiss">Ada.Execution_Time</SPAN> 
+whose specification is as follows (as before we have added some use clauses 
+in order to ease the presentation)<A NAME="I1207"></A><A NAME="I1208"></A><A NAME="I1209"></A> 
+</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Task_Identification;&nbsp;&nbsp;<B>use</B>&nbsp;Ada.Task_Identification;<BR>
+<B>with</B>&nbsp;Ada.Real_Time;&nbsp;&nbsp;<B>use</B>&nbsp;Ada.Real_Time;<BR>
+<B>package</B>&nbsp;Ada.Execution_Time&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;CPU_Time&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;CPU_Time_First:&nbsp;<B>constant</B>&nbsp;CPU_Time;<BR>
+&nbsp;&nbsp;&nbsp;CPU_Time_Last:&nbsp;<B>constant</B>&nbsp;CPU_Time;<BR>
+&nbsp;&nbsp;&nbsp;CPU_Time_Unit:&nbsp;<B>constant</B>&nbsp;:=&nbsp;<SPAN Class="roman"><I>implementation-defined-real-number</I></SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;CPU_Tick:&nbsp;<B>constant</B>&nbsp;Time_Span;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Clock(T:&nbsp;Task_Id&nbsp;:=&nbsp;Current_Task)&nbsp;<B>return</B>&nbsp;CPU_Time;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;+&quot;&nbsp;(Left:&nbsp;CPU_Time;&nbsp;Right:&nbsp;Time_Span)&nbsp;<B>return</B>&nbsp;CPU_Time;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;+&quot;&nbsp;(Left:&nbsp;Time_Span;&nbsp;Right:&nbsp;CPU_Time)&nbsp;<B>return</B>&nbsp;CPU_Time;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&ndash;&quot;&nbsp;(Left:&nbsp;CPU_Time;&nbsp;Right:&nbsp;Time_Span)&nbsp;<B>return</B>&nbsp;CPU_Time;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&ndash;&quot;&nbsp;(Left:&nbsp;CPU_Time;&nbsp;Right:&nbsp;CPU_Time)&nbsp;<B>return</B>&nbsp;Time_Span;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&lt;&quot;&nbsp;(Left,&nbsp;Right:&nbsp;CPU_Time)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&lt;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;CPU_Time)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&gt;&quot;&nbsp;(Left,&nbsp;Right:&nbsp;CPU_Time)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&quot;&gt;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;CPU_Time)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Split(T:&nbsp;<B>in</B>&nbsp;CPU_Time;&nbsp;SC:&nbsp;<B>out</B>&nbsp;Seconds_Count;&nbsp;TS:&nbsp;<B>out</B>&nbsp;Time_Span);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Time_Of(SC:&nbsp;Seconds_Count;&nbsp;TS:&nbsp;Time_Span&nbsp;:=&nbsp;Time_Span_Zero)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;CPU_Time;</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;Ada.Execution_Time;</div>
+<div class="Normal">The CPU time of a particular task is obtained by 
+calling the function <SPAN Class="swiss">Clock</SPAN> with the task as 
+parameter. It is set to zero at task creation.</div>
+<div class="Normal">The constants <SPAN Class="swiss">CPU_Time_First</SPAN> 
+and <SPAN Class="swiss">CPU_Time_Last</SPAN> give the range of values 
+of <SPAN Class="swiss">CPU_Time</SPAN>. <SPAN Class="swiss">CPU_Tick</SPAN> 
+gives the average interval during which successive calls of <SPAN Class="swiss">Clock</SPAN> 
+give the same value and thus is a measure of the accuracy whereas <SPAN Class="swiss">CPU_Time_Unit</SPAN> 
+gives the unit of time measured in seconds. We are assured that <SPAN Class="swiss">CPU_Tick</SPAN> 
+is no greater than one millisecond and that the range of values of <SPAN Class="swiss">CPU_Time</SPAN> 
+is at least 50 years (provided always of course that the implementation 
+can cope).</div>
+<div class="Normal">The various subprograms perform obvious operations 
+on the type <SPAN Class="swiss">CPU_Time</SPAN> and the type <SPAN Class="swiss">Time_Span</SPAN> 
+of the package <SPAN Class="swiss">Ada.Real_Time</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A value of type <SPAN Class="swiss">CPU_Time</SPAN> 
+can be converted to a <SPAN Class="swiss">Seconds_Count</SPAN> plus residual 
+<SPAN Class="swiss">Time_Span</SPAN> by the function <SPAN Class="swiss">Split</SPAN> 
+which is similar to that in the package <SPAN Class="swiss">Ada.Real_Time</SPAN>. 
+The function <SPAN Class="swiss">Time_Of</SPAN> similarly works in the 
+opposite direction. Note the default value of <SPAN Class="swiss">Time_Span_Zero</SPAN> 
+for the second parameter &ndash; this enables times of exact numbers 
+of seconds to be given more conveniently thus&nbsp;</div>
+<div class="SwissExamples">Four_Secs:&nbsp;CPU_Time&nbsp;:=&nbsp;Time_Of(4);</div>
+<div class="Normal" style="margin-bottom: 0.4em">In order to find out 
+when a task reaches a particular CPU time we can use the facilities of 
+the child package <SPAN Class="swiss">Ada.Execution_Time.Timers</SPAN> 
+whose specification<A NAME="I1210"></A> is<A NAME="I1211"></A><A NAME="I1212"></A><A NAME="I1213"></A> 
+</div>
+<div class="SwissExamples"><B>with</B>&nbsp;System;&nbsp;&nbsp;<B>use</B>&nbsp;System;<BR>
+<B>package</B>&nbsp;Ada.Execution_Time.Timers&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Timer(T:&nbsp;<B>not&nbsp;null</B>&nbsp;<B>access</B>&nbsp;<B>constant</B>&nbsp;Task_Id)&nbsp;<B>is&nbsp;tagged&nbsp;limited&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Timer_Handler&nbsp;<B>is</B>&nbsp;<B>access&nbsp;protected&nbsp;procedure</B>&nbsp;(TM:<B>&nbsp;in&nbsp;out</B>&nbsp;Timer);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;Min_Handler_Ceiling:&nbsp;<B>constant</B>&nbsp;Any_Priority&nbsp;:=&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Handler(TM:&nbsp;<B>in&nbsp;out</B>&nbsp;Timer;&nbsp;In_Time:&nbsp;Time_Span;&nbsp;Handler:&nbsp;Timer_Handler);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Handler(TM:<B>&nbsp;in&nbsp;out</B>&nbsp;Timer;&nbsp;At_Time:&nbsp;CPU_Time;&nbsp;Handler:&nbsp;Timer_Handler);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Current_Handler(TM:&nbsp;Timer)&nbsp;<B>return</B>&nbsp;Timer_Handler;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Cancel_Handler(TM:&nbsp;<B>in&nbsp;out</B>&nbsp;Timer;&nbsp;Cancelled:&nbsp;<B>out</B>&nbsp;Boolean);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Time_Remaining(TM:&nbsp;Timer)&nbsp;<B>return</B>&nbsp;Time_Span;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;Timer_Resource_Error:&nbsp;<B>exception</B>;</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;Ada.Execution_Time.Timers;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The general idea is 
+that we declare an object of type <SPAN Class="swiss">Timer</SPAN> whose 
+discriminant identifies the task to be monitored &ndash; note the use 
+of <B>not null</B> and <B>constant</B> in the discriminant. We also declare 
+a protected procedure which takes the timer as its parameter and which 
+performs the actions required when the <SPAN Class="swiss">CPU_Time</SPAN> 
+of the task reaches some value. Thus to take some action (perhaps abort 
+for example although that would be ruthless) when the <SPAN Class="swiss">CPU_Time</SPAN> 
+of the task <SPAN Class="swiss">My_Task</SPAN> reaches 2.5 seconds we 
+might first declare&nbsp;</div>
+<div class="SwissExamples">My_Timer:&nbsp;Timer(My_Task'Identity'Access);<BR>
+Time_Max:&nbsp;CPU_Time&nbsp;:=&nbsp;Time_Of(2,&nbsp;Milliseconds(500));</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then&nbsp;</div>
+<div class="SwissExamples"><B>protected</B>&nbsp;Control&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Alarm(TM:&nbsp;<B>in&nbsp;out</B>&nbsp;Timer);<BR>
+<B>end</B>;</div>
+<div class="SwissExamples"><B>protected&nbsp;body</B>&nbsp;Control&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Alarm(TM:&nbsp;<B>in&nbsp;out</B>&nbsp;Timer)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>abort&nbsp;the&nbsp;task</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Abort_Task(TM.T.<B>all</B>);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Alarm;<BR>
+<B>end</B>&nbsp;Control;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Finally we set the 
+timer in motion by calling the procedure <SPAN Class="swiss">Set_Handler</SPAN> 
+which takes the timer, the time value and (an access to) the protected 
+procedure thus&nbsp;</div>
+<div class="SwissExamples">Set_Handler(My_Timer,&nbsp;Time_Max,&nbsp;Control.Alarm'Access);</div>
+<div class="Normal">and then when the CPU time of the task reaches <SPAN Class="swiss">Time_Max</SPAN>, 
+the protected procedure <SPAN Class="swiss">Control.Alarm</SPAN> is executed. 
+Note how the timer object incorporates the information regarding the 
+task concerned using an access discriminant <SPAN Class="swiss">T</SPAN> 
+and that this is passed to the handler via its parameter <SPAN Class="swiss">TM</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Aborting the task is 
+perhaps a little violent. Another possibility is simply to reduce its 
+priority so that it is no longer troublesome, thus&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>cool&nbsp;that&nbsp;task</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set_Priority(Priority'First,&nbsp;TM.T.<B>all</B>);</div>
+<div class="Normal">Another version of <SPAN Class="swiss">Set_Handler</SPAN> 
+enables the timer to be set for a given interval (of type <SPAN Class="swiss">Time_Span</SPAN>).</div>
+<div class="Normal">The handler associated with a timer can be found 
+by calling the function <SPAN Class="swiss">Current_Handler</SPAN>. This 
+returns null if the timer is not set in which case we say that the timer 
+is clear.</div>
+<div class="Normal" style="margin-bottom: 0.4em">When the timer expires, 
+and just before calling the protected procedure, the timer is set to 
+the clear state. One possible action of the handler, having perhaps made 
+a note of the expiration of the timer, it to set the handler again or 
+perhaps another handler. So we might have&nbsp;</div>
+<div class="SwissExamples"><B>protected&nbsp;body</B>&nbsp;Control&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Alarm(TM:&nbsp;<B>in&nbsp;out</B>&nbsp;Timer)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Log_Overflow(TM);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>note&nbsp;that&nbsp;timer&nbsp;had&nbsp;expired</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>and&nbsp;then&nbsp;reset&nbsp;it&nbsp;for&nbsp;another&nbsp;500&nbsp;milliseconds</I></SPAN></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set_Handler(TM,&nbsp;Milliseconds(500),&nbsp;Kill'Access);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Alarm;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Kill(TM:<B>&nbsp;in&nbsp;out</B>&nbsp;Timer)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>expired&nbsp;again&nbsp;so&nbsp;kill&nbsp;it</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Abort_Task(TM.T.<B>all</B>);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Kill;<BR>
+<B>end</B>&nbsp;Control;</div>
+<div class="Normal">In this scenario we make a note of the fact that 
+the task has overrun and then give it another 500 milliseconds but with 
+the handler <SPAN Class="swiss">Control.Kill</SPAN> so that the second 
+time is the last chance.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Setting the value of 
+500 milliseconds directly in the call is a bit crude. It might be better 
+to parameterize the protected type thus&nbsp;</div>
+<div class="SwissExamples"><B>protected&nbsp;type</B>&nbsp;Control(MS:&nbsp;Integer)&nbsp;<B>is</B>&nbsp;...<BR>
+...<BR>
+My_Control:&nbsp;Control(500);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then the call of 
+<SPAN Class="swiss">Set_Handler</SPAN> in the protected procedure <SPAN Class="swiss">Alarm</SPAN> 
+would be&nbsp;</div>
+<div class="SwissExamples">Set_Handler(TM,&nbsp;Milliseconds(MS),&nbsp;Kill'Access);</div>
+<div class="Normal">Observe that overload resolution neatly distinguishes 
+whether we are calling <SPAN Class="swiss">Set_Handler</SPAN> with an 
+absolute time or a relative time.</div>
+<div class="Normal">The procedure <SPAN Class="swiss">Cancel_Handler</SPAN> 
+can be used to clear a timer. The out parameter <SPAN Class="swiss">Cancelled</SPAN> 
+is set to <SPAN Class="swiss">True</SPAN> if the timer was in fact set 
+and <SPAN Class="swiss">False</SPAN> if it was clear. The function <SPAN Class="swiss">Time_Remaining</SPAN> 
+returns <SPAN Class="swiss">Time_Span_Zero</SPAN> if the timer is not 
+set and otherwise the time remaining.</div>
+<div class="Normal">Note also the constant <SPAN Class="swiss">Min_Handler_Ceiling</SPAN>. 
+This is the minimum ceiling priority that the protected procedure should 
+have to ensure that ceiling violation cannot occur.</div>
+<div class="Normal">This timer facility might be implemented on top of 
+a POSIX system. There might be a limit on the number of timers that can 
+be supported and an attempt to exceed this limit will raise <SPAN Class="swiss">Timer_Resource_Error</SPAN>.</div>
+<div class="Normal">We conclude by summarizing the general principles. 
+A timer can be set or clear. If it is set then it has an associated (non-null) 
+handler which will be called after the appropriate time. The key subprograms 
+are <SPAN Class="swiss">Set_Handler</SPAN>, <SPAN Class="swiss">Cancel_Handler</SPAN> 
+and <SPAN Class="swiss">Current_Handler</SPAN>. The protected procedure 
+has a parameter which identifies the event for which it has been called. 
+The same protected procedure can be the handler for many events. The 
+same general structure applies to other kinds of timers which will now 
+be described.</div>
+<div class="Normal">In order to program various so-called aperiodic servers 
+it is necessary for tasks to share a CPU budget.<A NAME="I1214"></A><A NAME="I1215"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">This can be done using 
+the child package <SPAN Class="swiss">Ada.Execution_Time.Group_Budgets</SPAN> 
+whose specification is<A NAME="I1216"></A><A NAME="I1217"></A><A NAME="I1218"></A> 
+</div>
+<div class="SwissExamples"><B>with</B>&nbsp;System;&nbsp;&nbsp;<B>use</B>&nbsp;System;<BR>
+<B>package</B>&nbsp;Ada.Execution_Time.Group_Budgets&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Group_Budget&nbsp;<B>is&nbsp;tagged&nbsp;limited&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Group_Budget_Handler&nbsp;<B>is&nbsp;access</B>&nbsp;<B>protected&nbsp;procedure&nbsp;</B>(GB:&nbsp;<B>in&nbsp;out</B>&nbsp;Group_Budget);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Task_Array&nbsp;<B>is&nbsp;array</B>&nbsp;(Positive&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;<B>of</B>&nbsp;Task_Id;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;Min_Handler_Ceiling:&nbsp;<B>constant</B>&nbsp;Any_Priority&nbsp;:=&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Add_Task(GB:&nbsp;<B>in&nbsp;out</B>&nbsp;Group_Budget;&nbsp;T:&nbsp;<B>in</B>&nbsp;Task_Id);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Remove_Task(GB:&nbsp;<B>in&nbsp;out</B>&nbsp;Group_Budget;&nbsp;T:&nbsp;<B>in</B>&nbsp;Task_Id);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Is_Member(GB:&nbsp;Group_Budget;&nbsp;T:&nbsp;Task_Id)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Is_A_Group_Member(T:&nbsp;Task_Id)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Members(GB:&nbsp;Group_Budget)&nbsp;<B>return</B>&nbsp;Task_Array;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Replenish(GB:&nbsp;<B>in&nbsp;out</B>&nbsp;Group_Budget;&nbsp;To:&nbsp;<B>in</B>&nbsp;Time_Span);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Add(GB:&nbsp;<B>in&nbsp;out</B>&nbsp;Group_Budget;&nbsp;Interval:&nbsp;<B>in</B>&nbsp;Time_Span);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Budget_Has_Expired(GB:&nbsp;Group_Budget)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Budget_Remaining(GB:&nbsp;Group_Budget)&nbsp;<B>return</B>&nbsp;Time_Span;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Handler(GB:&nbsp;<B>in&nbsp;out</B>&nbsp;Group_Budget;&nbsp;Handler:&nbsp;<B>in</B>&nbsp;Group_Budget_Handler);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Current_Handler(GB:&nbsp;Group_Budget)&nbsp;<B>return</B>&nbsp;Group_Budget_Handler;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Cancel_Handler(GB:&nbsp;<B>in&nbsp;out&nbsp;</B>Group_Budget;&nbsp;Cancelled:&nbsp;<B>out</B>&nbsp;Boolean);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;Group_Budget_Error:&nbsp;<B>exception</B>;</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;Ada.Execution_Time.Group_Budgets;</div>
+<div class="Normal">This has much in common with its sibling package 
+<SPAN Class="swiss">Timers</SPAN> but there are a number of important 
+differences.</div>
+<div class="Normal">The first difference is that we are here considering 
+a CPU budget shared among several tasks. The type <SPAN Class="swiss">Group_Budget</SPAN> 
+both identifies the group of tasks it covers and the size of the budget.</div>
+<div class="Normal">Various subprograms enable tasks in a group to be 
+manipulated. The procedures <SPAN Class="swiss">Add_Task</SPAN> and <SPAN Class="swiss">Remove_Task</SPAN> 
+add or remove a task. The function <SPAN Class="swiss">Is_Member</SPAN> 
+identifies whether a task belongs to a specific group whereas <SPAN Class="swiss">Is_A_Group_Member</SPAN> 
+identifies whether a task belongs to any group. A task cannot be a member 
+of more than one group. An attempt to add a task to more than one group 
+or remove it from the wrong group and so on raises <SPAN Class="swiss">Group_Budget_Error</SPAN>. 
+Finally the function <SPAN Class="swiss">Members</SPAN> returns all the 
+members of a group as an array.</div>
+<div class="Normal">The value of the budget (initially <SPAN Class="swiss">Time_Span_Zero</SPAN>) 
+can be loaded by the procedure <SPAN Class="swiss">Replenish</SPAN> and 
+increased by the procedure <SPAN Class="swiss">Add</SPAN>. Whenever a 
+budget is non-zero it is counted down as the tasks in the group execute 
+and so consume CPU time. Whenever a budget goes to <SPAN Class="swiss">Time_Span_Zero</SPAN> 
+it is said to have become exhausted and is not reduced further. Note 
+that <SPAN Class="swiss">Add</SPAN> with a negative argument can reduce 
+a budget &ndash; it can even cause it to become exhausted but not make 
+it negative.</div>
+<div class="Normal">The function <SPAN Class="swiss">Budget_Remaining</SPAN> 
+simply returns the amount left and <SPAN Class="swiss">Budget_Has_Expired</SPAN> 
+returns <SPAN Class="swiss">True</SPAN> if the budget is exhausted and 
+so has value <SPAN Class="swiss">Time_Span_Zero</SPAN>.</div>
+<div class="Normal">Whenever a budget <I>becomes</I> exhausted (that 
+is when the value transitions to zero) a hander is called if one has 
+been set. A handler is a protected procedure as before and  procedures 
+<SPAN Class="swiss">Set_Handler</SPAN>, <SPAN Class="swiss">Cancel_Handler</SPAN>, 
+and function <SPAN Class="swiss">Current_Handler</SPAN> are much as expected. 
+But a major difference is that <SPAN Class="swiss">Set_Handler</SPAN> 
+does not set the time value of the budget since that is done by <SPAN Class="swiss">Replenish</SPAN> 
+and <SPAN Class="swiss">Add</SPAN>. The setting of the budget and the 
+setting of the handler are decoupled in this package. Indeed a handler 
+can be set even though the budget is exhausted and the budget can be 
+counting down even though no handler is set. The reason for the different 
+approach simply reflects the usage paradigm for the feature.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So we could set up 
+a mechanism to monitor the CPU time usage of a group of three tasks <SPAN Class="swiss">TA</SPAN>, 
+<SPAN Class="swiss">TB</SPAN>, and <SPAN Class="swiss">TC</SPAN> by first 
+declaring an object of type <SPAN Class="swiss">Group_Budget</SPAN>, 
+adding the three tasks to the group and then setting an appropriate handler. 
+Finally we call <SPAN Class="swiss">Replenish</SPAN> which sets the counting 
+mechanism going. So we might write&nbsp;</div>
+<div class="SwissExamples">ABC:&nbsp;Group_Budget;<BR>
+...<BR>
+Add_Task(ABC,&nbsp;TA'Identity);<BR>
+Add_Task(ABC,&nbsp;TB'Identity);<BR>
+Add_Task(ABC,&nbsp;TC'Identity);</div>
+<div class="SwissExamples">Set_Handler(ABC,&nbsp;Control.Monitor'Access);<BR>
+Replenish(ABC,&nbsp;Seconds(10));</div>
+<div class="Normal">Remember that functions <SPAN Class="swiss">Seconds</SPAN> 
+and <SPAN Class="swiss">Minutes</SPAN> have been added to the package 
+<SPAN Class="swiss">Ada.Real_Time</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The protected procedure 
+might be&nbsp;</div>
+<div class="SwissExamples"><B>protected&nbsp;body</B>&nbsp;Control&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Monitor(GB:&nbsp;<B>in&nbsp;out</B>&nbsp;Group_Budget)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Log_Budget;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Add(GB,&nbsp;Seconds(10));&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>add&nbsp;more&nbsp;time</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Monitor;<BR>
+<B>end</B>&nbsp;Control;</div>
+<div class="Normal">The procedure <SPAN Class="swiss">Monitor</SPAN> 
+logs the fact that the budget was exhausted and then adds a further 10 
+seconds to it. Remember that the handler remains set all the time in 
+the case of group budgets whereas in the case of the single task timers 
+it automatically becomes cleared and has to be set again if required.</div>
+<div class="Normal">If a task terminates then it is removed from the 
+group as part of the finalization process.</div>
+<div class="Normal">Note that again there is the constant <SPAN Class="swiss">Min_Handler_Ceiling</SPAN>.</div>
+<div class="Normal">The final kind of timer concerns real time rather 
+than CPU time and so is provided by a child package of <SPAN Class="swiss">Ada.Real_Time</SPAN> 
+whereas the timers we have seen so far were provided by child packages 
+of <SPAN Class="swiss">Ada.Execution_Time</SPAN>. The specification of 
+the package <SPAN Class="swiss">Ada.Real_Time.Timing_Events</SPAN> is<A NAME="I1219"></A><A NAME="I1220"></A><A NAME="I1221"></A><A NAME="I1222"></A> 
+</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Real_Time.Timing_Events&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Timing_Event&nbsp;<B>is&nbsp;tagged&nbsp;limited&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Timing_Event_Handler&nbsp;<B>is&nbsp;access</B>&nbsp;<B>protected&nbsp;procedure</B>&nbsp;(Event:&nbsp;<B>in&nbsp;out</B>&nbsp;Timing_Event);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Handler(Event:&nbsp;<B>in&nbsp;out</B>&nbsp;Timing_Event;&nbsp;At_Time:&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Handler:&nbsp;Timing_Event_Handler);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Handler(Event:&nbsp;<B>in&nbsp;out</B>&nbsp;Timing_Event;&nbsp;In_Time:&nbsp;Time_Span;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Handler:&nbsp;Timing_Event_Handler);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Current_Handler(Event:&nbsp;Timing_Event)&nbsp;<B>return</B>&nbsp;Timing_Event_Handler;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Cancel_Handler(Event:&nbsp;<B>in&nbsp;out</B>&nbsp;Timing_Event;&nbsp;Cancelled:&nbsp;<B>out</B>&nbsp;Boolean);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Time_Of_Event(Event:&nbsp;Timing_Event)&nbsp;<B>return</B>&nbsp;Time;</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;Ada.Real_Time.Timing_Events;</div>
+<div class="Normal">This package provides a very low level facility and 
+does not involve Ada tasks at all. It has a very similar pattern to the 
+package <SPAN Class="swiss">Execution_Time.Timers</SPAN>. A handler can 
+be set by <SPAN Class="swiss">Set_Handler</SPAN> and again there are 
+two versions one for a relative time and one for absolute time. There 
+are also subprograms <SPAN Class="swiss">Current_Handler</SPAN> and <SPAN Class="swiss">Cancel_Handler</SPAN>. 
+If no handler is set then <SPAN Class="swiss">Current_Handler</SPAN> 
+returns null.</div>
+<div class="Normal"><SPAN Class="swiss">Set_Handler</SPAN> also specifies 
+the protected procedure to be called when the time is reached. Times 
+are of course specified using the type <SPAN Class="swiss">Real_Time</SPAN> 
+rather than <SPAN Class="swiss">CPU_Time</SPAN>.</div>
+<div class="Normal">A minor difference is that this package has a function 
+<SPAN Class="swiss">Time_Of_Event</SPAN> rather than <SPAN Class="swiss">Time_Remaining</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A simple example was 
+given in the introductory chapter. We repeat it here for convenience. 
+The idea is that we wish to ring a pinger when our egg is boiled after 
+four minutes. The protected procedure might be&nbsp;</div>
+<div class="SwissExamples"><B>protected</B>&nbsp;<B>body</B>&nbsp;Egg&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Is_Done(Event:&nbsp;<B>in&nbsp;out</B>&nbsp;Timing_Event)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ring_The_Pinger;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Is_Done;<BR>
+<B>end</B>&nbsp;Egg;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then&nbsp;</div>
+<div class="SwissExamples">Egg_Done:&nbsp;Timing_Event;<BR>
+Four_Min:&nbsp;Time_Span&nbsp;:=&nbsp;Minutes(4);<BR>
+...<BR>
+Put_Egg_In_Water;<BR>
+Set_Handler(Event&nbsp;=&gt;&nbsp;Egg_Done,&nbsp;In_Time&nbsp;=&gt;&nbsp;Four_Min,&nbsp;Handler&nbsp;=&gt;&nbsp;Egg.Is_Done'Access);<BR>
+--&nbsp;<SPAN Class="roman"><I>now&nbsp;read&nbsp;newspaper&nbsp;whilst&nbsp;waiting&nbsp;for&nbsp;egg</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">This is unreliable 
+because if we are interrupted between the calls of <SPAN Class="swiss">Put_Egg_In_Water</SPAN> 
+and <SPAN Class="swiss">Set_Handler</SPAN> then the egg will be boiled 
+for too long. We can overcome this by adding a further protected procedure 
+<SPAN Class="swiss">Boil</SPAN> to the protected object and placing <SPAN Class="swiss">Is_Done</SPAN> 
+in the private part so that it becomes&nbsp;</div>
+<div class="SwissExamples"><B>protected</B>&nbsp;Egg&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Boil(For_Time:&nbsp;<B>in</B>&nbsp;Time_Span);<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Is_Done(Event:&nbsp;<B>in&nbsp;out</B>&nbsp;Timing_Event);<BR>
+&nbsp;&nbsp;&nbsp;Egg_Done:&nbsp;Timing_Event;<BR>
+<B>end</B>&nbsp;Egg;</div>
+<div class="SwissExamples"><B>protected</B>&nbsp;<B>body</B>&nbsp;Egg&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Boil(For_Time:&nbsp;<B>in</B>&nbsp;Time_Span)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put_Egg_In_Water;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set_Handler(Egg_Done,&nbsp;For_Time,&nbsp;Is_Done'Access);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Boil;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Is_Done(Event:&nbsp;<B>in&nbsp;out</B>&nbsp;Timing_Event)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ring_The_Pinger;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Is_Done;<BR>
+<B>end</B>&nbsp;Egg;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is much better. 
+The timing mechanism is now completely encapsulated in the protected 
+object and the procedure <SPAN Class="swiss">Is_Done</SPAN> is no longer 
+visible outside. So all we have to do is&nbsp;</div>
+<div class="SwissExamples">Egg.Boil(Minutes(4));<BR>
+--&nbsp;<SPAN Class="roman"><I>now&nbsp;read&nbsp;newspaper&nbsp;whilst&nbsp;waiting&nbsp;for&nbsp;egg</I></SPAN></div>
+<div class="Normal">Of course if the telephone rings as the pinger goes 
+off and before we have a chance to eat the egg then it still gets overdone. 
+One solution is to eat the egg within the protected procedure <SPAN Class="swiss">Is_Done</SPAN> 
+as well. A gentleman would never let a telephone call disturb his breakfast.<A NAME="I1223"></A></div>
+<div class="Normal">One protected procedure could be used to respond 
+to several events. In the case of the CPU timer the discriminant of the 
+parameter identifies the task; in the case of the group and real-time 
+timers, the parameter identifies the event.</div>
+<div class="Normal">If we want to use the same timer for several events 
+then various techniques are possible. Note that the timers are limited 
+so we cannot test for them directly. However, they are tagged and so 
+can be extended. Moreover, we know that they are passed by reference 
+and that the parameters are considered aliased.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Suppose we are boiling 
+six eggs in one of those French breakfast things with a different coloured 
+holder for each egg. We can write&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Colour&nbsp;<B>is</B>&nbsp;(Black,&nbsp;Blue,&nbsp;Red,&nbsp;Green,&nbsp;Yellow,&nbsp;Purple);</div>
+<div class="SwissExamples">Eggs_Done:&nbsp;<B>array</B>&nbsp;(Colour)&nbsp;<B>of&nbsp;aliased</B>&nbsp;Timing_Event;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can then set the 
+handler for the egg in the red holder by something like&nbsp;</div>
+<div class="SwissExamples">Set_Handler(Eggs_Done(Red),&nbsp;For_Time,&nbsp;Is_Done'Access);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then the protected 
+procedure might be&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Is_Done(E:&nbsp;<B>in&nbsp;out&nbsp;</B>Timing_Event)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;Colour&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;E'Access&nbsp;=&nbsp;Eggs_Done(C)'Access&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>egg&nbsp;in&nbsp;holder&nbsp;colour&nbsp;C&nbsp;is&nbsp;ready</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;loop</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>falls&nbsp;out&nbsp;of&nbsp;loop&nbsp;&ndash;&nbsp;unknown&nbsp;event!</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>raise</B>&nbsp;Not_An_Egg&nbsp;;<BR>
+<B>end</B>&nbsp;Is_Done;</div>
+<div class="Normal">Although this does work it is more than a little 
+distasteful to compare access values in this way and moreover requires 
+a loop to see which event occurred.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A much better approach 
+is to use type extension and view conversions. First we extend the type 
+<SPAN Class="swiss">Timing_Event</SPAN> to include additional information 
+about the event (in this case the colour) so that we can identify the 
+particular event from within the handler&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Egg_Event&nbsp;<B>is&nbsp;new</B>&nbsp;Timing_Event&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Event_Colour:&nbsp;Colour;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We then declare an 
+array of these extended events (they need not be aliased)&nbsp;</div>
+<div class="SwissExamples">Eggs_Done:&nbsp;<B>array</B>&nbsp;(Colour)&nbsp;<B>of</B>&nbsp;Egg_Event;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can now call <SPAN Class="swiss">Set_Handler</SPAN> 
+for the egg in the red holder&nbsp;</div>
+<div class="SwissExamples">Set_Handler(Eggs_Done(Red),&nbsp;For_Time,&nbsp;Is_Done'Access);</div>
+<div class="Normal">This is actually a call on the <SPAN Class="swiss">Set_Handler</SPAN> 
+for the type <SPAN Class="swiss">Egg_Event</SPAN> inherited from <SPAN Class="swiss">Timing_Event</SPAN>. 
+But it is the same code anyway.</div>
+<div class="Normal">Remember that values of tagged types are always passed 
+by reference. This means that from within the procedure <SPAN Class="swiss">Is_Done</SPAN> 
+we can recover the underlying type and so discover the information in 
+the extension. This is done by using view conversions.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In fact we have to 
+use two view conversions, first we convert to the class wide type <SPAN Class="swiss">Timing_Event'Class</SPAN> 
+and then to the specific type <SPAN Class="swiss">Egg_Event</SPAN>. And 
+then we can select the component <SPAN Class="swiss">Event_Colour</SPAN>. 
+In fact we can do these operations in one statement thus&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Is_Done(E:&nbsp;<B>in&nbsp;out&nbsp;</B>Timing_Event)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;C:&nbsp;<B>constant</B>&nbsp;Colour&nbsp;:=&nbsp;Egg_Event(Timing_Event'Class(E)).Event_Colour;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>egg&nbsp;in&nbsp;holder&nbsp;colour&nbsp;C&nbsp;is&nbsp;ready</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Is_Done;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that there is 
+a check on the conversion from the class wide type <SPAN Class="swiss">Timing_Event'Class</SPAN> 
+to the specific type <SPAN Class="swiss">Egg_Event</SPAN> to ensure that 
+the object passed as parameter is indeed of the type <SPAN Class="swiss">Egg_Event</SPAN> 
+(or a further extension of it). If this fails then <SPAN Class="swiss">Tag_Error</SPAN> 
+is raised. In order to avoid this possibility we can use a membership 
+test. For example&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Is_Done(E:&nbsp;<B>in&nbsp;out&nbsp;</B>Timing_Event)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;C:&nbsp;Colour;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Timing_Event'Class(E)&nbsp;<B>in</B>&nbsp;Egg_Event&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C&nbsp;:=&nbsp;Egg_Event(Timing_Event'Class(E)).Event_Colour;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>egg&nbsp;in&nbsp;holder&nbsp;colour&nbsp;C&nbsp;is&nbsp;ready</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>unknown&nbsp;event&nbsp;&ndash;&nbsp;not&nbsp;an&nbsp;egg&nbsp;event!</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>raise</B>&nbsp;Not_An_Egg;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end</B>&nbsp;Is_Done;</div>
+<div class="Normal">The membership test ensures that the event is of 
+the specific type <SPAN Class="swiss">Egg_Event</SPAN>. We could avoid 
+the double conversion to the class wide type by introducing an intermediate 
+variable.</div>
+<div class="Normal">It is important to appreciate that no dispatching 
+is involved in these operations at all &ndash; everything is static apart 
+from the membership test.</div>
+<div class="Normal">Of course, it would have been a little more flexible 
+if the various subprograms took a parameter of type <SPAN Class="swiss">Timing_Event'Class</SPAN> 
+but this would have conflicted with the <SPAN Class="swiss">Restrictions</SPAN> 
+identifier <SPAN Class="swiss">No_Dispatch</SPAN>. Note that Ravenscar 
+itself does not impose <SPAN Class="swiss">No_Dispatch</SPAN> but the 
+restriction is in the High-Integrity annex and thus might be imposed 
+on some high-integrity applications which might nevertheless wish to 
+use timers in a simple manner.</div>
+<div class="Normal">A few minor points of difference between the timers 
+are worth summarizing.</div>
+<div class="Normal">The two CPU timers have a constant <SPAN Class="swiss">Min_Handler_Ceiling</SPAN>. 
+This prevents ceiling violation. It is not necessary for the real-time 
+timer because the call of the protected procedure is treated like an 
+interrupt and thus is at interrupt ceiling level.</div>
+<div class="Normal">The group budget timer and the real-time timer do 
+not have an exception corresponding to <SPAN Class="swiss">Timer_Resource_Error</SPAN> 
+for the single task CPU timer. As mentioned above, it is anticipated 
+that the single timer might be implemented on top of a POSIX system in 
+which case there might be a limit to the number of timers especially 
+since each task could be using several timers. In the group case, a task 
+can only be in one group so the number of group timers is necessarily 
+less than the number of tasks and no limit is likely to be exceeded. 
+In the real-time case the events are simply placed on the delay queue 
+and no other resources are required anyway.</div>
+<div class="Normal">It should also be noted that the group timer could 
+be used to monitor the execution time of a single task. However, a task 
+can only be in one group and so only one timer could be applied to a 
+task that way whereas, as just mentioned, the single CPU timer is quite 
+different since a given task could have several timers set for it to 
+expire at different times. Thus both kinds of timers have their own distinct 
+usage patterns.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

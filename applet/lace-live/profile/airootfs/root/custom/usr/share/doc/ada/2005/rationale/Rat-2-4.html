@@ -1,0 +1,699 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Interfaces</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-2-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-2-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>2.4 Interfaces</H1>
+<div class="Normal">In Ada 95, a derived type can really only have one 
+immediate ancestor. This means that true multiple inheritance is not 
+possible although curious techniques involving discriminants and generics 
+can be used in some circumstances.<A NAME="I1074"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">General multiple inheritance 
+has problems. Suppose that we have a type <SPAN Class="swiss">T</SPAN> 
+with some components and operations. Perhaps&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is&nbsp;tagged</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;B:&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Op1(X:&nbsp;T);<BR>
+<B>procedure</B>&nbsp;Op2(X:&nbsp;T);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose we derive 
+two new types from <SPAN Class="swiss">T</SPAN> thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T1&nbsp;<B>is&nbsp;new</B>&nbsp;T&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C:&nbsp;Character;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Op3(X:&nbsp;T1);</div>
+<div class="SwissExamples">--&nbsp;<SPAN Class="roman"><I>Op1&nbsp;and&nbsp;Op2&nbsp;inherited,&nbsp;Op3&nbsp;added</I></SPAN></div>
+<div class="SwissExamples"><B>type</B>&nbsp;T2&nbsp;<B>is&nbsp;new</B>&nbsp;T&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C:&nbsp;Colour;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Op1(X:&nbsp;T2);<BR>
+<B>procedure</B>&nbsp;Op4(X:&nbsp;T2);</div>
+<div class="SwissExamples">--&nbsp;<SPAN Class="roman"><I>Op1&nbsp;overridden,&nbsp;Op2&nbsp;inherited,&nbsp;Op4&nbsp;added</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose that we 
+were able to derive a further type from both <SPAN Class="swiss">T1</SPAN> 
+and <SPAN Class="swiss">T2</SPAN> by perhaps writing&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;TT&nbsp;<B>is&nbsp;new</B>&nbsp;T1&nbsp;<B>and</B>&nbsp;T2&nbsp;<B>with&nbsp;null&nbsp;record</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal">This is about the simplest example one could imagine. 
+We have added no further components or operations. But what would <SPAN Class="swiss">TT</SPAN> 
+have inherited from its two parents?</div>
+<div class="Normal">There is a general rule that a record cannot have 
+two components with the same identifier so presumably it has just one 
+component <SPAN Class="swiss">A</SPAN> and one component <SPAN Class="swiss">B</SPAN>. 
+But what about <SPAN Class="swiss">C</SPAN>? Does it inherit the character 
+or the colour? Or is it illegal because of the clash? Suppose <SPAN Class="swiss">T2</SPAN> 
+had a component <SPAN Class="swiss">D</SPAN> instead of <SPAN Class="swiss">C</SPAN>. 
+Would that be OK? Would <SPAN Class="swiss">TT</SPAN> then have four 
+components?</div>
+<div class="Normal">And then consider the operations. Presumably it has 
+both <SPAN Class="swiss">Op1</SPAN> and <SPAN Class="swiss">Op2</SPAN>. 
+But which implementation of <SPAN Class="swiss">Op1</SPAN>? Is it the 
+original <SPAN Class="swiss">Op1</SPAN> inherited from <SPAN Class="swiss">T</SPAN> 
+via <SPAN Class="swiss">T1</SPAN> or the overridden version inherited 
+from <SPAN Class="swiss">T2</SPAN>? Clearly it cannot have both. But 
+there is no reason why it cannot have both <SPAN Class="swiss">Op3</SPAN> 
+and <SPAN Class="swiss">Op4</SPAN>, one inherited from each parent.</div>
+<div class="Normal">The problems arise when inheriting components from 
+more than one parent and inheriting different<I>&nbsp;implementations&nbsp;</I>of 
+the same operation from more than one parent. There is no problem with 
+inheriting the same specification of an operation from two parents.</div>
+<div class="Normal">These observations provide the essence of the solution. 
+At most one parent can have components and at most one parent can have 
+concrete operations &ndash; for simplicity we make them the same parent. 
+But abstract operations can be inherited from several parents. This can 
+be phrased as saying that this kind of multiple inheritance is about 
+merging contracts to be satisfied rather than merging algorithms or state.</div>
+<div class="Normal">So Ada 2005 introduces the concept of an interface 
+which is a tagged type with no components and no concrete operations. 
+The idea of a null procedure as an operation of a tagged type is also 
+introduced; this has no body but behaves as if it has a null body. Interfaces 
+are only permitted to have abstract subprograms and null procedures as 
+operations.<A NAME="I1075"></A></div>
+<div class="Normal">We will outline the ways in which interfaces can 
+be declared and composed in a symbolic way and then conclude with a more 
+practical example.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We might declare a 
+package <SPAN Class="swiss">Pi1</SPAN> containing an interface <SPAN Class="swiss">Int1</SPAN> 
+thus&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Pi1&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Int1&nbsp;<B>is&nbsp;interface</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op1(X:&nbsp;Int1)&nbsp;<B>is&nbsp;abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;N1(X:&nbsp;Int1)&nbsp;<B>is&nbsp;null</B>;<BR>
+<B>end</B>&nbsp;Pi1;</div>
+<div class="Normal">Note the syntax. It uses the new reserved word <B>interface</B>. 
+It does not say <B>tagged</B> although all interface types are tagged. 
+The abstract procedure <SPAN Class="swiss">Op1</SPAN> has to be explicitly 
+stated to be abstract as usual. The null procedure <SPAN Class="swiss">N1</SPAN> 
+uses new syntax as well. Remember that a null procedure behaves as if 
+its body comprises a single null statement; but it doesn't actually have 
+a concrete body.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The main type derivation 
+rule then becomes that a tagged type can be derived from zero or one 
+conventional tagged types plus zero or more interface types. Thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;NT&nbsp;<B>is&nbsp;new</B>&nbsp;T&nbsp;<B>and</B>&nbsp;Int1&nbsp;<B>and</B>&nbsp;Int2&nbsp;<B>with</B><BR>
+...&nbsp;;</div>
+<div class="Normal">where <SPAN Class="swiss">Int1</SPAN> and <SPAN Class="swiss">Int2</SPAN> 
+are interface types. The normal tagged type if any has to be given first 
+in the declaration. The first type is known as the parent so the parent 
+could be a normal tagged type or an interface. The other types are known 
+as progenitors. Additional components and operations are allowed in the 
+usual way.<A NAME="I1076"></A><A NAME="I1077"></A></div>
+<div class="Normal">The term progenitors may seem strange but the term 
+ancestors in this context was confusing and so a new term was necessary. 
+Progenitors comes from the Latin progignere, to beget, and so is very 
+appropriate.</div>
+<div class="Normal">It might have been thought that it would be quite 
+feasible to avoid the formal introduction of the concept of an interface 
+by simply saying that multiple parents are allowed provided only the 
+first has components and concrete operations. However, there would have 
+been implementation complexities with the risk of violating privacy and 
+distributed overheads. Moreover, it would have caused maintenance problems 
+since simply adding a component to a type or making one of its abstract 
+operations concrete would cause errors elsewhere in the system if it 
+was being used as a secondary parent. It is thus much better to treat 
+interfaces as a fundamentally new concept. Another advantage is that 
+this provides a new class of generic parameter rather neatly without 
+complex rules for instantiations.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If the normal tagged 
+type <SPAN Class="swiss">T</SPAN> is in a package <SPAN Class="swiss">Pt</SPAN> 
+with operations <SPAN Class="swiss">Opt1</SPAN>, <SPAN Class="swiss">Opt2</SPAN> 
+and so on we could now write&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Pi1,&nbsp;Pt;<BR>
+<B>package</B>&nbsp;PNT&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;NT&nbsp;<B>is&nbsp;new</B>&nbsp;Pt.T&nbsp;<B>and</B>&nbsp;Pi1.Int1&nbsp;<B>with</B>&nbsp;...&nbsp;;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op1(X:&nbsp;NT);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>concrete&nbsp;procedure</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>&nbsp;possibly&nbsp;other&nbsp;ops&nbsp;of&nbsp;NT</I></SPAN><BR>
+<B>end</B>&nbsp;PNT;</div>
+<div class="Normal">We must of course provide a concrete procedure for 
+<SPAN Class="swiss">Op1</SPAN> inherited from the interface <SPAN Class="swiss">Int1</SPAN> 
+since we have declared <SPAN Class="swiss">NT</SPAN> as a concrete type. 
+We could also provide an overriding for <SPAN Class="swiss">N1</SPAN> 
+but if we do not then we simply inherit the null procedure of <SPAN Class="swiss">Int1</SPAN>. 
+We could also override the inherited operations <SPAN Class="swiss">Opt1</SPAN> 
+and <SPAN Class="swiss">Opt2</SPAN> from <SPAN Class="swiss">T</SPAN> 
+in the usual way.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Interfaces can be composed 
+from other interfaces thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Int2<B>&nbsp;is&nbsp;interface</B>;<BR>
+...<BR>
+<B>type</B>&nbsp;Int3&nbsp;<B>is&nbsp;interface&nbsp;and</B>&nbsp;Int1;<BR>
+...<BR>
+<B>type</B>&nbsp;Int4&nbsp;<B>is&nbsp;interface&nbsp;and</B>&nbsp;Int1&nbsp;<B>and</B>&nbsp;Int2;<BR>
+...</div>
+<div class="Normal">Note the syntax. A tagged type declaration always 
+has just one of <B>interface</B>, <B>tagged</B> and <B>with</B> (it doesn't 
+have any if it is not a tagged type). When we derive interfaces in this 
+way we can add new operations so that the new interface such as <SPAN Class="swiss">Int4</SPAN> 
+will have all the operations of both <SPAN Class="swiss">Int1</SPAN> 
+and <SPAN Class="swiss">Int2</SPAN> plus possibly some others declared 
+specifically as operations of <SPAN Class="swiss">Int4</SPAN>. All these 
+operations must be abstract or null and there are fairly obvious rules 
+regarding what happens if two or more of the ancestor interfaces have 
+the same operation. Thus a null procedure overrides an abstract one but 
+otherwise repeated operations must have profiles that are type conformant 
+and have the same convention.</div>
+<div class="Normal">We refer to all the interfaces in an interface list 
+as progenitors. So <SPAN Class="swiss">Int1</SPAN> and <SPAN Class="swiss">Int2</SPAN> 
+are progenitors of <SPAN Class="swiss">Int4</SPAN>. The first one is 
+not a parent &ndash; that term is only used when deriving a type as opposed 
+to composing an interface.</div>
+<div class="Normal">Note that the term ancestor covers all generations 
+whereas parent and progenitors are first generation only.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Similar rules apply 
+when a tagged type is derived from another type plus one or more interfaces 
+as in the case of the type <SPAN Class="swiss">NT</SPAN> which was&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;NT&nbsp;<B>is&nbsp;new</B>&nbsp;T&nbsp;<B>and</B>&nbsp;Int1&nbsp;<B>and</B>&nbsp;Int2&nbsp;<B>with</B>&nbsp;...&nbsp;;</div>
+<div class="Normal">In this case it might be that <SPAN Class="swiss">T</SPAN> 
+already has some of the operations of <SPAN Class="swiss">Int1</SPAN> 
+and/or <SPAN Class="swiss">Int2</SPAN>. If so then the operations of 
+<SPAN Class="swiss">T</SPAN> must match those of <SPAN Class="swiss">Int1</SPAN> 
+or <SPAN Class="swiss">Int2</SPAN> (be type conformant etc).</div>
+<div class="Normal">We informally speak of a specific tagged type as 
+implementing an interface from which it is derived (directly or indirectly). 
+The phrase &quot;implementing an interface&quot; is not used formally 
+in the definition of Ada 2005 but it is useful for purposes of discussion.<A NAME="I1078"></A></div>
+<div class="Normal">Thus in the above example the tagged type <SPAN Class="swiss">NT</SPAN> 
+must implement all the operations of the interfaces <SPAN Class="swiss">Int1</SPAN> 
+and <SPAN Class="swiss">Int2</SPAN>. If the type <SPAN Class="swiss">T</SPAN> 
+already implements some of the operations then the type <SPAN Class="swiss">NT</SPAN> 
+will automatically implement them because it will inherit the implementations 
+from <SPAN Class="swiss">T</SPAN>. It could of course override such inherited 
+operations in the usual way.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The normal &quot;going 
+abstract&quot; rules apply in the case of functions. Thus if one operation 
+is a function <SPAN Class="swiss">F</SPAN> thus&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Pi2&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Int2&nbsp;<B>is&nbsp;interface</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;F(Y:&nbsp;Int2)&nbsp;<B>return</B>&nbsp;Int2<B>&nbsp;is&nbsp;abstract</B>;<BR>
+<B>end</B>&nbsp;Pi2;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and <SPAN Class="swiss">T</SPAN> 
+already has such a conforming operation</div>
+<div class="SwissExamples"><B>package</B>&nbsp;PT&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;tagged&nbsp;record</B>&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;F(X:&nbsp;T)&nbsp;<B>return</B>&nbsp;T;<BR>
+<B>end</B>&nbsp;PT;</div>
+<div class="Normal">then in this case the type <SPAN Class="swiss">NT</SPAN> 
+must provide a concrete function <SPAN Class="swiss">F</SPAN>. See however 
+the discussion in Section <A HREF="Rat-2-7.html">2.7</A>) for the case 
+when the type <SPAN Class="swiss">NT</SPAN> has a null extension.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Class wide types also 
+apply to interface types. The class wide type <SPAN Class="swiss">Int1'Class</SPAN> 
+covers all the types derived from the interface <SPAN Class="swiss">Int1</SPAN> 
+(both other interfaces as well as normal tagged types). We can then dispatch 
+using an object of a concrete tagged type in that class in the usual 
+way since we know that any abstract operation of <SPAN Class="swiss">Int1</SPAN> 
+will have been overridden. So we might have</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Int1_Ref&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Int1'Class;<BR>
+NT_Var:&nbsp;<B>aliased</B>&nbsp;NT;<BR>
+Ref:&nbsp;Int1_Ref&nbsp;:=&nbsp;NT_Var'Access;</div>
+<div class="Normal">Observe that conversion is permitted between the 
+access to class wide type <SPAN Class="swiss">Int1_Ref</SPAN> and any 
+access type that designates a type derived from the interface type <SPAN Class="swiss">Int1</SPAN>.</div>
+<div class="Normal">Interfaces can also be used in private extensions 
+and as generic parameters.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Thus&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;PT&nbsp;<B>is&nbsp;new&nbsp;</B>T&nbsp;<B>and</B>&nbsp;Int2&nbsp;<B>and</B>&nbsp;Int3&nbsp;<B>with&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;PT&nbsp;<B>is&nbsp;new</B>&nbsp;T&nbsp;<B>and</B>&nbsp;Int2&nbsp;<B>and</B>&nbsp;Int3&nbsp;<B>with&nbsp;null&nbsp;record</B>;</div>
+<div class="Normal">An important rule regarding private extensions is 
+that the full view and the partial view must agree with respect to the 
+set of interfaces they implement. Thus although the parent in the full 
+view need not be <SPAN Class="swiss">T</SPAN> but can be any type derived 
+from <SPAN Class="swiss">T</SPAN>, the same is not true of the interfaces 
+which must be such that they both implement the same set exactly. This 
+rule is important in order to prevent a client type from overriding private 
+operations of the parent if the client implements an interface added 
+in the private part.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Generic parameters 
+take the form&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;FI&nbsp;<B>is&nbsp;interface&nbsp;and</B>&nbsp;Int1&nbsp;<B>and</B>&nbsp;Int2;<BR>
+<B>package</B>&nbsp;...</div>
+<div class="Normal">and then the actual parameter must be an interface 
+which implements all the ancestors <SPAN Class="swiss">Int1</SPAN>, <SPAN Class="swiss">Int2</SPAN> 
+etc. The formal could also just be <B>type</B><SPAN Class="swiss">&nbsp;FI 
+</SPAN><B>is interface</B><SPAN Class="swiss">;</SPAN> in which case 
+the actual parameter can be any interface. There might be subprograms 
+passed as further parameters which would require that the actual has 
+certain operations. The interfaces <SPAN Class="swiss">Int1</SPAN> and 
+<SPAN Class="swiss">Int2</SPAN> might themselves be formal parameters 
+occurring earlier in the parameter list.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Interfaces (and formal 
+interfaces) can also be limited thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;LI<B>&nbsp;is&nbsp;limited&nbsp;interface</B>;</div>
+<div class="Normal">We can compose mixtures of limited and nonlimited 
+interfaces but if any one of them is nonlimited then the resulting interface 
+must not be specified as limited. This is because it must implement the 
+equality and assignment operations implied by the nonlimited interface. 
+Similar rules apply to types which implement one or more interfaces. 
+We will come back to this topic in a moment.</div>
+<div class="Normal">There are other forms of interfaces, namely synchronized 
+interfaces, task interfaces, and protected interfaces. These bring support 
+for polymorphic, class wide object oriented programming to the real time 
+programming arena. They are described in Section <A HREF="Rat-5-3.html">5.3</A>.</div>
+<div class="Normal">Having described the general ideas in somewhat symbolic 
+terms, we will now discuss a more concrete example.</div>
+<div class="Normal">Before doing so it is important to emphasize that 
+interfaces cannot have components and therefore if we are to perform 
+multiple inheritance then we should think in terms of abstract operations 
+to read and write components rather than the components themselves. This 
+is standard OO thinking anyway because it preserves abstraction by hiding 
+implementation details.</div>
+<div class="Normal">Thus rather than having a component such as <SPAN Class="swiss">Comp</SPAN> 
+it is better to have a pair of operations. The function to read the component 
+can simply be called <SPAN Class="swiss">Comp</SPAN>. A procedure to 
+update the component might be <SPAN Class="swiss">Set_Comp</SPAN>. We 
+will generally use this convention although it is not always appropriate 
+to treat the components as unrelated entities.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Suppose now that we 
+want to print images of the geometrical objects. We will assume that 
+the root type is declared as&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Geometry&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Object&nbsp;<B>is&nbsp;abstract&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Move(O:&nbsp;<B>in&nbsp;out</B>&nbsp;Object'Class;&nbsp;X,&nbsp;Y:&nbsp;<B>in</B>&nbsp;Float);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Object&nbsp;<B>is&nbsp;abstract&nbsp;tagged</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X_Coord:&nbsp;Float&nbsp;:=&nbsp;0.0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y_Coord:&nbsp;Float&nbsp;:=&nbsp;0.0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>;</div>
+<div class="Normal">The type <SPAN Class="swiss">Object</SPAN> is private 
+and by default both coordinates have the value of zero. The procedure 
+<SPAN Class="swiss">Move</SPAN>, which is class wide, enables any object 
+to be moved to the location specified by the parameters.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Suppose also that we 
+have a line drawing package with the following specification&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Line_Draw&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Printable&nbsp;<B>is&nbsp;interface</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Colour&nbsp;<B>is</B>&nbsp;...&nbsp;;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Points&nbsp;<B>is</B>&nbsp;...&nbsp;;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Hue(P:&nbsp;<B>in&nbsp;out</B>&nbsp;Printable;&nbsp;C:&nbsp;<B>in</B>&nbsp;Colour)&nbsp;<B>is&nbsp;abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Hue(P:&nbsp;Printable)&nbsp;<B>return</B>&nbsp;Colour&nbsp;<B>is&nbsp;abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Width(P:&nbsp;<B>in&nbsp;out</B>&nbsp;Printable;&nbsp;W:&nbsp;<B>in</B>&nbsp;Points)&nbsp;<B>is&nbsp;abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Width(P:&nbsp;Printable)&nbsp;<B>return</B>&nbsp;Points&nbsp;<B>is&nbsp;abstract</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Line&nbsp;<B>is</B>&nbsp;...&nbsp;;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Line_Set&nbsp;<B>is</B>&nbsp;...&nbsp;;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;To_Lines(P:&nbsp;Printable)&nbsp;<B>return</B>&nbsp;Line_Set&nbsp;<B>is&nbsp;abstract</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Print(P:&nbsp;<B>in</B>&nbsp;Printable'Class);</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Draw_It(L:&nbsp;Line;&nbsp;C:&nbsp;Colour;&nbsp;W:&nbsp;Points);</div>
+<div class="SwissExamples"><B>end</B>&nbsp;Line_Draw;</div>
+<div class="Normal">The idea of this package is that it enables the drawing 
+of an image as a set of lines. The attributes of the image are the hue 
+and the width of the lines and there are pairs of subprograms to set 
+and read these properties of any object of the interface <SPAN Class="swiss">Printable</SPAN> 
+and its descendants. These operations are of course abstract.</div>
+<div class="Normal">In order to prepare an object in a form that can 
+be printed it has to be converted to a set of lines. The function <SPAN Class="swiss">To_Lines</SPAN> 
+converts an object of the type <SPAN Class="swiss">Printable</SPAN> into 
+a set of lines; again it is abstract. The details of various types such 
+as <SPAN Class="swiss">Line</SPAN> and <SPAN Class="swiss">Line_Set</SPAN> 
+are not shown.</div>
+<div class="Normal">Finally the package <SPAN Class="swiss">Line_Draw</SPAN> 
+declares a concrete procedure <SPAN Class="swiss">Print</SPAN> which 
+takes an object of type <SPAN Class="swiss">Printable'Class</SPAN> and 
+does the actual drawing using the slave procedure <SPAN Class="swiss">Draw_It</SPAN> 
+declared in the private part. Note that <SPAN Class="swiss">Print</SPAN> 
+is class wide and is concrete. This is an important point. Although all 
+primitive operations of an interface must be abstract this does not apply 
+to class wide operations since these are not primitive.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The body of the procedure 
+<SPAN Class="swiss">Print</SPAN> could take the form&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Print(P:&nbsp;<B>in</B>&nbsp;Printable'Class)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;L:&nbsp;Line_Set&nbsp;:=&nbsp;To_Lines(P);<BR>
+&nbsp;&nbsp;&nbsp;A_Line:&nbsp;Line;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>iterate&nbsp;over&nbsp;the&nbsp;Line_Set&nbsp;and&nbsp;extract&nbsp;each&nbsp;line</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A_Line&nbsp;:=&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Draw_It(A_Line,&nbsp;Hue(P),&nbsp;Width(P));<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;loop</B>;<BR>
+<B>end</B>&nbsp;Print;</div>
+<div class="Normal">but this is all hidden from the user. Note that the 
+procedure <SPAN Class="swiss">Draw_It</SPAN> is declared in the private 
+part since it need not be visible to the user.</div>
+<div class="Normal">One reason why the user has to provide <SPAN Class="swiss">To_Lines</SPAN> 
+is that only the user knows about the details of how best to represent 
+the object. For example the poor circle will have to be represented crudely 
+as a polygon of many sides, perhaps a hectogon of 100 sides.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can now take at 
+least two different approaches. We can for example write&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Geometry,&nbsp;Line_Draw;<B><BR>
+package</B>&nbsp;Printable_Geometry&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Printable_Object&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>abstract&nbsp;new</B>&nbsp;Geometry.Object&nbsp;<B>and</B>&nbsp;Line_Draw.Printable&nbsp;<B>with&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Hue(P:&nbsp;<B>in&nbsp;out</B>&nbsp;Printable_Object;&nbsp;C:&nbsp;<B>in</B>&nbsp;Colour);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Hue(P:&nbsp;Printable_Object)&nbsp;<B>return</B>&nbsp;Colour;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Width(P:&nbsp;<B>in&nbsp;out</B>&nbsp;Printable_Object;&nbsp;W:&nbsp;<B>in</B>&nbsp;Points);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Width(P:&nbsp;Printable_Object)&nbsp;<B>return</B>&nbsp;Points;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;To_Lines(P:&nbsp;Printable_Object)&nbsp;<B>return</B>&nbsp;Line_Set&nbsp;<B>is&nbsp;abstract</B>;</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Printable_Geometry;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The type <SPAN Class="swiss">Printable_Object</SPAN> 
+is a descendant of both <SPAN Class="swiss">Object</SPAN> and <SPAN Class="swiss">Printable</SPAN> 
+and all concrete types descended from <SPAN Class="swiss">Printable_Object</SPAN> 
+will therefore have all the operations of both <SPAN Class="swiss">Object</SPAN> 
+and <SPAN Class="swiss">Printable</SPAN>. Note carefully that we have 
+to put <SPAN Class="swiss">Object</SPAN> first in the declaration of 
+<SPAN Class="swiss">Printable_Object</SPAN> and that the following would 
+be illegal&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Printable_Object&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>abstract&nbsp;new</B>&nbsp;Line_Draw.Printable&nbsp;<B>and</B>&nbsp;Geometry.Object&nbsp;<B>with&nbsp;private</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal">This is because of the rule that only the first type 
+in the list can be a normal tagged type; any others must be interfaces. 
+Remember that the first type is always known as the parent type and so 
+the parent type in this case is <SPAN Class="swiss">Object</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The type <SPAN Class="swiss">Printable_Object</SPAN> 
+is declared as abstract because we do not want to implement <SPAN Class="swiss">To_Lines</SPAN> 
+at this stage. Nevertheless we can provide concrete subprograms for all 
+the other operations of the interface <SPAN Class="swiss">Printable</SPAN>. 
+We have given the type a private extension and so in the private part 
+of its containing package we might have&nbsp;</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Printable_Object&nbsp;<B>is&nbsp;abstract&nbsp;new</B>&nbsp;Geometry.Object&nbsp;<B>and</B>&nbsp;Line_Draw.Printable&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hue:&nbsp;Colour&nbsp;:=&nbsp;Black;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width:&nbsp;Points&nbsp;:=&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+<B>end</B>&nbsp;Printable_Geometry;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Just for way of illustration, 
+the components have been given default values. In the package body the 
+operations such as the function <SPAN Class="swiss">Hue</SPAN> are simply 
+</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Hue(P:&nbsp;Printable_Object)&nbsp;<B>return</B>&nbsp;Colour&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;P.Hue;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>;</div>
+<div class="Normal">Luckily the visibility rules are such that this does 
+not do an infinite recursion!</div>
+<div class="Normal">Note that the information containing the style components 
+is in the record structure following the geometrical properties. This 
+is a simple linear structure since interfaces cannot add components. 
+However, since the type <SPAN Class="swiss">Printable_Object</SPAN> has 
+all the operations of both an <SPAN Class="swiss">Object</SPAN> and a 
+<SPAN Class="swiss">Printable</SPAN>, this adds a small amount of complexity 
+to the arrangement of dispatch tables. But this detail is hidden from 
+the user.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The key point is that 
+we can now pass any object of the type <SPAN Class="swiss">Printable_Object</SPAN> 
+or its descendants to the procedure&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Print(P:&nbsp;<B>in</B>&nbsp;Printable'Class);</div>
+<div class="Normal">and then (as outlined above) within <SPAN Class="swiss">Print</SPAN> 
+we can find the colour to be used by calling the function <SPAN Class="swiss">Hue</SPAN> 
+and the line width to use by calling the function <SPAN Class="swiss">Width 
+</SPAN>and we can convert the object into a set of lines by calling the 
+function <SPAN Class="swiss">To_Lines</SPAN>.</div>
+<div class="Normal">And now we can declare the various types <SPAN Class="swiss">Circle</SPAN>, 
+<SPAN Class="swiss">Triangle</SPAN>, <SPAN Class="swiss">Square</SPAN> 
+and so on by making them descendants of the type <SPAN Class="swiss">Printable_Object</SPAN> 
+and in each case we have to implement the function <SPAN Class="swiss">To_Lines</SPAN>.</div>
+<div class="Normal">The unfortunate aspect of this approach is that we 
+have to move the geometry hierarchy. For example the triangle package 
+might now be&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Printable_Geometry.Triangles&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Printable_Triangle&nbsp;<B>is&nbsp;new</B>&nbsp;Printable_Object&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A,&nbsp;B,&nbsp;C:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>functions&nbsp;Area,&nbsp;To_Lines&nbsp;etc</I></SPAN><BR>
+<B>end</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can now declare 
+a <SPAN Class="swiss">Printable_Triangle</SPAN> thus&nbsp;</div>
+<div class="SwissExamples">A_Triangle:&nbsp;Printable_Triangle&nbsp;:=&nbsp;(Printable_Object&nbsp;<B>with</B>&nbsp;A&nbsp;=&gt;&nbsp;4.0,&nbsp;B&nbsp;=&gt;&nbsp;4.0,&nbsp;C&nbsp;=&gt;&nbsp;4.0);</div>
+<div class="Normal">This declares an equilateral triangle with sides 
+of length 4.0. Its private <SPAN Class="swiss">Hue</SPAN> and <SPAN Class="swiss">Width</SPAN> 
+components are set by default. Its coordinates which are also private 
+are by default set to zero so that it is located at the origin. (The 
+reader can improve the example by making the components <SPAN Class="swiss">A</SPAN>,<SPAN Class="swiss">&nbsp;B</SPAN> and <SPAN Class="swiss">C</SPAN> private as well.)</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can conveniently 
+move it to wherever we want by using the procedure <SPAN Class="swiss">Move</SPAN> 
+which being class wide applies to all types derived from <SPAN Class="swiss">Object</SPAN>. 
+So we can write&nbsp;</div>
+<div class="SwissExamples">A_Triangle.Move(1.0,&nbsp;2.0);</div>
+<div class="Normal" style="margin-bottom: 0.4em">And now we can make 
+a red sign&nbsp;</div>
+<div class="SwissExamples">Sign:&nbsp;Printable_Triangle&nbsp;:=&nbsp;A_Triangle;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Having declared the 
+object <SPAN Class="swiss">Sign</SPAN>, we can give it width and hue 
+and print it&nbsp;</div>
+<div class="SwissExamples">Sign.Set_Hue(Red);<BR>
+Sign.Set_Width(3);<BR>
+Sign.Print;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>print&nbsp;thick&nbsp;red&nbsp;triangle</I></SPAN></div>
+<div class="Normal">As we observed earlier this approach has the disadvantage 
+that we had to move the geometry hierarchy. A different approach which 
+avoids this is to declare printable objects of just the kinds we want 
+as and when we want them.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So assume now that 
+we have the package <SPAN Class="swiss">Line_Draw</SPAN> as before and 
+the original package <SPAN Class="swiss">Geometry</SPAN> and its child 
+packages. Suppose we want to make printable triangles and circles. We 
+could write&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Geometry,&nbsp;Line_Draw;&nbsp;&nbsp;<B>use&nbsp;</B>Geometry;<B><BR>
+package</B>&nbsp;Printable_Objects&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Printable_Triangle&nbsp;<B>is&nbsp;new</B>&nbsp;Triangles.Triangle&nbsp;<B>and</B>&nbsp;Line_Draw.Printable&nbsp;<B>with&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Printable_Circle<B>&nbsp;is&nbsp;new</B>&nbsp;Circles.Circle&nbsp;<B>and</B>&nbsp;Line_Draw.Printable&nbsp;<B>with&nbsp;private</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Hue(P:&nbsp;<B>in&nbsp;out</B>&nbsp;Printable_Triangle;&nbsp;C:&nbsp;<B>in</B>&nbsp;Colour);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Hue(P:&nbsp;Printable_Triangle&nbsp;<B>return</B>&nbsp;Colour;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Width(P:&nbsp;<B>in&nbsp;out</B>&nbsp;Printable_Triangle;&nbsp;W:&nbsp;<B>in</B>&nbsp;Points);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Width(P:&nbsp;Printable_Triangle)&nbsp;<B>return</B>&nbsp;Points;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;To_Lines(T:&nbsp;Printable_Triangle)&nbsp;<B>return</B>&nbsp;Line_Set;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Hue(P:&nbsp;<B>in&nbsp;out</B>&nbsp;Printable_Circle;&nbsp;C:&nbsp;<B>in</B>&nbsp;Colour);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Hue(P:&nbsp;Printable_Circle)&nbsp;<B>return</B>&nbsp;Colour;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Width(P:&nbsp;<B>in&nbsp;out</B>&nbsp;Printable_Circle;&nbsp;W:&nbsp;<B>in</B>&nbsp;Points);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Width(P:&nbsp;Printable_Circle)&nbsp;<B>return</B>&nbsp;Points;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;To_Lines(C:&nbsp;Printable_Circle)&nbsp;<B>return</B>&nbsp;Line_Set;<BR>
+<B>private</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Printable_Triangle&nbsp;<B>is&nbsp;new</B>&nbsp;Triangles.Triangle&nbsp;<B>and</B>&nbsp;Line_Draw.Printable&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hue:&nbsp;Colour&nbsp;:=&nbsp;Black;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width:&nbsp;Points&nbsp;:=&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Printable_Circle<B>&nbsp;is&nbsp;new</B>&nbsp;Circles.Circle&nbsp;<B>and</B>&nbsp;Line_Draw.Printable&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hue:&nbsp;Colour&nbsp;:=&nbsp;Black;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width:&nbsp;Points&nbsp;:=&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+<B>end</B>&nbsp;Printable_Objects;</div>
+<div class="Normal">and the body of the package will provide the various 
+subprogram bodies.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose we already 
+have a normal triangle thus&nbsp;</div>
+<div class="SwissExamples">A_Triangle:&nbsp;Geometry.Triangles.Triangle&nbsp;:=&nbsp;...&nbsp;;</div>
+<div class="Normal" style="margin-bottom: 0.4em">In order to print <SPAN Class="swiss">A_Triangle</SPAN> 
+we first have to declare a printable triangle thus&nbsp;</div>
+<div class="SwissExamples">Sign:&nbsp;Printable_Triangle;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and now we can set 
+the triangle components of it using a view conversion thus&nbsp;</div>
+<div class="SwissExamples">Triangle(Sign)&nbsp;:=&nbsp;A_Triangle;</div>
+<div class="Normal" style="margin-bottom: 0.4em">And then as before 
+we write&nbsp;</div>
+<div class="SwissExamples">Sign.Set_Hue(Red);<BR>
+Sign.Set_Width(3);<BR>
+Sign.Print_It;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>print&nbsp;thick&nbsp;red&nbsp;triangle</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">This second approach 
+is probably better since it does not require changing the geometry hierarchy. 
+The downside is that we have to declare the boring hue and width subprograms 
+repeatedly. We can make this much easier by declaring a generic package 
+thus&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Line_Draw;&nbsp;&nbsp;<B>use</B>&nbsp;Line_Draw;<BR>
+<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;abstract&nbsp;tagged&nbsp;private</B>;<BR>
+<B>package</B>&nbsp;Make_Printable&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Printable_T&nbsp;<B>is</B>&nbsp;<B>abstract&nbsp;new</B>&nbsp;T&nbsp;<B>and</B>&nbsp;Printable&nbsp;<B>with&nbsp;private</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Hue(P:&nbsp;<B>in&nbsp;out</B>&nbsp;Printable_T;&nbsp;C:&nbsp;<B>in</B>&nbsp;Colour);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Hue(P:&nbsp;Printable_T)&nbsp;<B>return</B>&nbsp;Colour;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Width(P:&nbsp;<B>in&nbsp;out</B>&nbsp;Printable_T;&nbsp;W:&nbsp;<B>in</B>&nbsp;Points);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Width(P:&nbsp;Printable_T)&nbsp;<B>return</B>&nbsp;Points;</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Printable_T&nbsp;<B>is&nbsp;abstract&nbsp;new&nbsp;</B>T&nbsp;<B>and</B>&nbsp;Printable&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hue:&nbsp;Colour&nbsp;:=&nbsp;Black;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width:&nbsp;Points&nbsp;:=&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+<B>end</B>;</div>
+<div class="Normal">This generic can be used to make any type printable. 
+We simply write&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P_Triangle&nbsp;<B>is&nbsp;new</B>&nbsp;Make_Printable(Triangle);<BR>
+<B>type</B>&nbsp;Printable_Triangle<B>&nbsp;is&nbsp;new&nbsp;</B>P_Triangle.Printable_T&nbsp;<B>with&nbsp;null&nbsp;record</B>;<BR>
+<B>function</B>&nbsp;To_Lines(T:&nbsp;Printable_Triangle)&nbsp;<B>return</B>&nbsp;Line_Set;</div>
+<div class="Normal">The instantiation of the package creates a type <SPAN Class="swiss">Printable_T</SPAN> 
+which has all the hue and width operations and the required additional 
+components. However, it simply inherits the abstract function <SPAN Class="swiss">To_Lines</SPAN> 
+and so itself has to be an abstract type. Note that the function <SPAN Class="swiss">To_Lines</SPAN> 
+has to be especially coded for each type anyway unlike the hue and width 
+operations which can be the same.</div>
+<div class="Normal">We now do a further derivation largely in order to 
+give the type <SPAN Class="swiss">Printable_T</SPAN> the required name 
+<SPAN Class="swiss">Printable_Triangle</SPAN> and at this stage we provide 
+the concrete function <SPAN Class="swiss">To_Lines</SPAN>.</div>
+<div class="Normal">We can then proceed as before. Thus the generic makes 
+the whole process very easy &ndash; any type can be made printable by 
+just writing three lines plus the body of the function <SPAN Class="swiss">To_Lines</SPAN>.</div>
+<div class="Normal">Hopefully this example has illustrated a number of 
+important points about the use of interfaces. The key thing perhaps is 
+that we can use the procedure <SPAN Class="swiss">Print</SPAN> to print 
+anything that implements the interface <SPAN Class="swiss">Printable</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Earlier we stated that 
+it was a common convention to provide pairs of operations to read and 
+update properties such as <SPAN Class="swiss">Hue</SPAN> and <SPAN Class="swiss">Set_Hue</SPAN> 
+and <SPAN Class="swiss">Width</SPAN> and <SPAN Class="swiss">Set_Width</SPAN>. 
+This is not always appropriate. Thus if we have related components such 
+as <SPAN Class="swiss">X_Coord</SPAN> and <SPAN Class="swiss">Y_Coord 
+</SPAN>then although individual functions to read them might be sensible, 
+it is undoubtedly  better to update the two values together with a single 
+procedure such as the procedure <SPAN Class="swiss">Move</SPAN> declared 
+earlier. Thus if we wish to move an object from the origin (0.0, 0.0) 
+to say (3.0, 4.0) and do it by two calls&nbsp;</div>
+<div class="SwissExamples">Obj.Set_X_Coord(3.0);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>first&nbsp;change&nbsp;X</I></SPAN><BR>
+Obj.Set_Y_Coord(4.0);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>then&nbsp;change&nbsp;Y</I></SPAN></div>
+<div class="Normal">then it seems as if it was transitorily at the point 
+(3.0, 0.0). There are various other risks as well. We might forget to 
+set one component or accidentally set the same component twice.</div>
+<div class="Normal">Finally, as discussed earlier, null procedures are 
+a new kind of subprogram and the user-defined operations of an interface 
+must be null procedures or abstract subprograms &ndash; there is of course 
+no such thing as a null function.</div>
+<div class="Normal">(Nonlimited interfaces do have one concrete operation 
+and that is predefined equality; it could even be overridden with an 
+abstract one.)</div>
+<div class="Normal">Null procedures will be found useful for interfaces 
+but are in fact applicable to any types. As an example the package <SPAN Class="swiss">Ada.Finalization</SPAN> 
+now uses null procedures for <SPAN Class="swiss">Initialize</SPAN>, <SPAN Class="swiss">Adjust</SPAN>, 
+and <SPAN Class="swiss">Finalize</SPAN> as described in the Introduction.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We conclude this section 
+with a few further remarks on limitedness. We noted earlier that an interface 
+can be explicitly stated to be limited so we might have<A NAME="I1079"></A><A NAME="I1080"></A> 
+</div>
+<div class="SwissExamples"><B>type</B>&nbsp;LI&nbsp;<B>is&nbsp;limited&nbsp;interface</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>limited</I></SPAN><BR>
+<B>type</B>&nbsp;NLI&nbsp;<B>is&nbsp;interface</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>nonlimited</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">An interface is limited 
+only if it says limited (or synchronized etc). As mentioned earlier, 
+a descendant of a nonlimited interface must be nonlimited since it must 
+implement assignment and equality. So if an interface is composed from 
+a mixture of limited and nonlimited interfaces it must be nonlimited 
+</div>
+<div class="SwissExamples"><B>type</B>&nbsp;I&nbsp;<B>is&nbsp;interface&nbsp;and</B>&nbsp;LI&nbsp;<B>and</B>&nbsp;NLI;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal</I></SPAN><BR>
+<B>type</B>&nbsp;I&nbsp;<B>is&nbsp;limited&nbsp;interface&nbsp;and</B>&nbsp;LI&nbsp;<B>and</B>&nbsp;NLI;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">In other words, limitedness 
+is never inherited from an interface but has to be stated explicitly. 
+This applies to both the composition of interfaces and type derivation. 
+On the other hand, in the case of type derivation, limitedness is inherited 
+from the parent provided it is not an interface. This is necessary for 
+compatibility with Ada 95. So given&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;LT&nbsp;<B>is&nbsp;limited&nbsp;tagged</B>&nbsp;...<BR>
+<B>type</B>&nbsp;NLT<B>&nbsp;is&nbsp;tagged&nbsp;</B>...</div>
+<div class="Normal" style="margin-bottom: 0.4em">then</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T<B>&nbsp;is&nbsp;new</B>&nbsp;NLT&nbsp;<B>and</B>&nbsp;LI&nbsp;<B>with</B>&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>legal,&nbsp;T&nbsp;not&nbsp;limited</I></SPAN><BR>
+<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;new</B>&nbsp;NLT&nbsp;<B>and</B>&nbsp;NLI&nbsp;<B>with</B>&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>legal,&nbsp;T&nbsp;not&nbsp;limited</I></SPAN><BR>
+<B>type</B>&nbsp;T<B>&nbsp;is&nbsp;new</B>&nbsp;LT&nbsp;<B>and</B>&nbsp;LI&nbsp;<B>with</B>&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal,&nbsp;T&nbsp;limited</I></SPAN><BR>
+<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;new</B>&nbsp;LT&nbsp;<B>and</B>&nbsp;NLI&nbsp;<B>with</B>&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal">The last is illegal because <SPAN Class="swiss">T</SPAN> 
+is expected to be limited because it is derived from the limited parent 
+type <SPAN Class="swiss">LT</SPAN> and yet it is also a descendant of 
+the nonlimited interface <SPAN Class="swiss">NLI</SPAN>.</div>
+<div class="Normal">In order to avoid certain curious difficulties, Ada 
+2005 permits <B>limited</B> to be stated explicitly on type derivation. 
+(It would have been nice to insist on this always for clarity but such 
+a change would have been too much of an incompatibility.) If we do state 
+<B>limited</B> explicitly then the parent must be limited (whether it 
+is a type or an interface).</div>
+<div class="Normal" style="margin-bottom: 0.4em">Using <B>limited</B> 
+is necessary if we wish to derive a limited type from a limited interface 
+thus&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is&nbsp;limited&nbsp;new&nbsp;</B>LI&nbsp;<B>with</B>&nbsp;...</div>
+<div class="Normal">These rules really all come down to the same thing. 
+If a parent or progenitor (indeed any ancestor) is nonlimited then the 
+descendant must be nonlimited. We can state that in reverse, if a type 
+(including an interface) is limited then all its ancestors must be limited.</div>
+<div class="Normal" style="margin-bottom: 0.4em">An earlier version 
+of Ada 2005 ran into difficulties in this area because in the case of 
+a type derived just from interfaces, the behaviour could depend upon 
+the order of their appearance in the list (because the rules for parent 
+and progenitors are a bit different). But in the final version of the 
+language the order does not matter. So&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is&nbsp;new</B>&nbsp;NLI&nbsp;<B>and</B>&nbsp;LI&nbsp;<B>with</B>&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>legal,&nbsp;not&nbsp;limited</I></SPAN><BR>
+<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;new</B>&nbsp;LI&nbsp;<B>and</B>&nbsp;NLI&nbsp;<B>with</B>&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>legal,&nbsp;not&nbsp;limited</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">But the following are 
+of course illegal&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is&nbsp;limited&nbsp;new</B>&nbsp;NLI&nbsp;<B>and</B>&nbsp;LI&nbsp;<B>with</B>&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;limited&nbsp;new</B>&nbsp;LI&nbsp;<B>and</B>&nbsp;NLI&nbsp;<B>with</B>&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal">There are also similar changes to generic formals 
+and type extension &ndash; Ada 2005 permits <B>limited</B> to be given 
+explicitly in both cases.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-2-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-2-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

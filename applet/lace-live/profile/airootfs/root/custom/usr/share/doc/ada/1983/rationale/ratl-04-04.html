@@ -1,0 +1,252 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 4.4: Constraints and Subtypes</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 4: Types</H2>
+
+<H3><a name="4.4">4.4 Constraints and Subtypes</a></H3>
+
+So far we have seen that a type characterizes a set of values that may
+be assumed by objects of the type, and a set of operations that may be
+applied to  these values  and objects.  The fact  that an object has a
+certain type  is a static property of the program: it follows directly
+from the declaration of the object.
+<p>
+We shall  now see how to restrict the values that may be assumed by an
+object to  a subset  of the  values of the type. Such a restriction is
+called a  constraint, and  it does  not affect  the set  of applicable
+operations.  A   subtype  is   a  type  together  with  an  associated
+constraint. An  object can  be declared to have a certain subtype, and
+this is  then a  static property of the object. But in general it will
+not always  be possible  to determine statically (at compilation time)
+whether or not a value satisfies a constraint and thereby belongs to a
+corresponding subtype. Thus constraints and subtypes are concepts that
+are, in general, related to the dynamic behavior of programs.
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#4.4.1">4.4.1  Constraints</a><BR>
+<a href="#4.4.2">4.4.2  Subtypes</a><BR>
+<a href="#4.4.3">4.4.3  Evaluation of Constraints</a><BR>
+<b>
+     </TD>
+   </TR>
+</TABLE></center>
+<p>
+
+<H3><BR><a name="4.4.1">4.4.1 Constraints</a></H3>
+<p>
+
+A constraint  can be  used to  restrict the  set of values that may be
+assumed by an object of a given type, as in the following example:
+<p>
+<PRE>    START :  DAY range MON .. WED;
+</PRE><p>
+Had we declared the variable START as
+<p>
+<PRE>    START :  DAY;       -- only on MON, TUE, and WED
+</PRE><p>
+then all  values of  this type  would be  assignable to  START  -  the
+comment notwithstanding.  Given  the  constraint,  however,  the  only
+assignable values  are those  in the  range MON  .. WED,  that is, the
+values MON, TUE, and WED.
+<p>
+Constraints may  be used  effectively by  compilers  for  optimization
+purposes.  Their  major  purpose,  however,  is  for  greater  program
+reliability: a  constraint expresses  a  logical  requirement  on  our
+program  in  an  explicit  manner,  and  it  therefore  opens  up  the
+possibility of  reporting  violations  of  this  logical  requirement,
+should they ever occur.
+<p>
+In principle  these violations  will be  reported at execution time by
+raising the  exception CONSTRAINT_ERROR.  This means that, in general,
+compilers  will  generate  code  that  dynamically  checks  constraint
+satisfaction. In  practice however,  compilers will  be able to report
+certain potential  constraint violations at compilation time. In other
+situations they  will be  in a  position to  omit a given check, since
+success has been guaranteed by a prior check.
+<p>
+Examples of  assignments are  given in  the block statement below. The
+comment static  check refers to situations where the check can be done
+at compilation  time (in  anticipation).  The  comment  dynamic  check
+refers to situations where a check at run time is actually required.
+<p>
+<table border cellpadding=6><tr><td><pre>
+declare
+  TODAY  :  DAY;
+  START  :  DAY     range MON .. WED;
+  STOP   :  DAY     range MON .. FRI;
+  MID    :  DAY     range WED .. THU;
+begin
+  START  :=  TUE;        -- static check : since TUE is a literal
+  STOP   :=  FRI;        -- static check : since FRI is a literal
+  ...
+  TODAY  :=  START;      -- static check : any value is allowed for TODAY
+  STOP   :=  START;      -- static check : the range of STOP
+                         --  includes that of START
+  ...
+  START  :=  STOP;       -- dynamic check : STOP &lt;=  WED
+  MID    :=  TODAY;      -- dynamic check : TODAY in WED .. THU
+  ...
+  STOP   :=  MID;        -- static check : the range of MID is
+                         --  included in that of STOP
+end;
+</pre></td></tr></table>
+<p>
+<H3><BR><a name="4.4.2">4.4.2 Subtypes</a></H3>
+
+It is  good programming practice to factor out the knowledge of common
+properties, and  this applies  to  constraints  as  well.  Assume  for
+example that  at several  places in a program we find objects declared
+with a type and constraint such as
+<p>
+<PRE>    DAY range MON .. FRI
+</PRE><p>
+Then it  would be  better to  associate a name with this group and use
+this name  for the  corresponding object  declarations.  This  can  be
+achieved  by  a  subtype  declaration  (a  type  name  followed  by  a
+constraint is actually called a subtype indication):
+<p>
+<PRE>    subtype WORKDAY is DAY range MON .. FRI;</PRE>
+<p>
+where the  name chosen  for the  subtype is carefully chosen to convey
+the intent.
+<p>
+The name  of a subtype is an abbreviation for the associated type name
+and constraint. Thus a subtype declaration does not define a new type,
+and objects  of different  subtypes of a given type are compatible for
+assignment. In  an expression,  such objects  can be used at any place
+where a  value of  the given  type is  expected; the  constraint on an
+object need be checked only upon assignment to the object, as shown in
+the previous examples.
+<p>
+The  advantages  of  using  subtypes  are  the  usual  maintainability
+advantages of  any factoring  mechanism. For  example, if  we want  to
+change the  range of workdays, then a single textual change is needed,
+namely in the subtype declaration. Without named subtypes, it would be
+necessary to  inspect all  occurrences of  the range MON .. FRI in the
+program, in  order to detect those occurrences where the intent was to
+use this range for workdays.
+<p>
+We can  also define  hierarchies of  subtypes  by  constraining  other
+subtypes. Consider  for example  the type  CHARACTER. In Ada this is a
+predefined enumeration  type whose  enumeration literals are character
+literals (such  enumeration types  are called character types). Now we
+can define a subtype such as
+<p>
+<PRE>    subtype LETTER is CHARACTER range 'A' .. 'Z';</PRE>
+<p>
+for upper-case letters. Subsequently we can define a subtype such as
+<p>
+<PRE>    subtype LAST_11 is LETTER range 'O' .. 'Z';</PRE>
+<p>
+For this  to be  correct, the range 'O' .. 'Z' must be compatible with
+that of  LETTER, that is, it must be a subinterval of 'A' .. 'Z'. This
+is checked,  and so  an error  such as  writing the character '0' (the
+digit zero)  instead of  the upper-case letter 'O' would be detected -
+the character '0' (zero) does not belong to the range 'A ' .. 'Z'.
+
+<H3><BR><a name="4.4.3">4.4.3 Evaluation of Constraints</a></H3>
+<p>
+
+All the  examples presented  so far  included constraints  that can be
+evaluated statically.  Certain  constraints  that  determine  critical
+space requirements  must be  known at  compilation time,  since  space
+optimization would not be possible in the case of dynamically computed
+values. For  example, the range of an integer type had better be known
+statically, in  order to  allow the compiler to select the appropriate
+single-length or double-length machine instructions.
+<p>
+However, requiring  static evaluation  in every case would be much too
+restrictive. The  assertions expressed  by range  constraints would be
+too coarse, ranges could not be used as general loop iteration ranges,
+and arrays  could only  be of static size. A balance must be struck in
+this respect,  and the  rules of  Ada represent a deliberate choice of
+when evaluation must be static.
+<p>
+An issue  to be  considered is the time when the expressions appearing
+in constraints should be evaluated. Consider the subtype declaration:
+<p>
+<PRE>    subtype PAST is DAY range MON .. TODAY;</PRE>
+<p>
+where TODAY  is a variable. The rule adopted in Ada is that the bounds
+of a  range constraint  are evaluated  when the subtype declaration is
+elaborated. This  means that  the subtype declaration is equivalent to
+the following sequence:
+<p>
+<table border cellpadding=6><tr><td><pre>
+today_now :  constant DAY  :=  TODAY;
+subtype PAST is DAY range MON .. today_now;
+</pre></td></tr></table>
+<p>
+where today_now  represents an  identifier  not  used  elsewhere.  The
+bounds of  the subtype  PAST are  denoted by  the  subtype  attributes
+PAST'FIRST (same as MON) and PAST'LAST (same as today_now).
+<p>
+Note that  if the  bounds of  the range  are not  known at compilation
+time,  the  compiler  will  often  need  to  generate  (implicitly)  a
+descriptor containing  the value  of the  bounds. Hence,  to  minimize
+descriptor overhead,  it is  important to localize the knowledge about
+equivalent constraints in a single subtype declaration and then to use
+the name  of this  subtype, instead  of repeating  the  constraint  in
+several variable declarations.
+<p>
+Note also  that, for  reliability and maintainability, using a subtype
+is far  better than  repeating the corresponding constraint at various
+points of  the text, since the value of an expression defining a bound
+may differ at these points. Thus it is preferable to write:
+<p>
+<table border cellpadding=6><tr><td><pre>
+declare
+  subtype INDEX is INTEGER range K&#42;M .. K&#42;N;
+  TABLE :  array (INDEX) of FLOAT;
+    ...
+  procedure UPDATE(X :  INDEX) is
+    ...
+  end UPDATE;
+begin
+  for J in INDEX loop
+    if TABLE(J) &lt; TABLE(INDEX'LAST) then
+      ...
+    end if;
+  end loop;
+end;
+</pre></td></tr></table>
+<p>
+rather than  to repeat  the range  K&#42;M .. K&#42;N at various points of the
+text or to use K&#42;N directly (for INDEX'LAST).
+<p>
+In the  case of the subprogram UPDATE the language does not even leave
+us this  choice, since  it requires a type or subtype name for subtype
+indications of formal parameters.
+
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-04-05.html#4.5"><b>NEXT</b></a>
+&#128; <a href="ratl-04-03.html#4.3"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-04.html#4"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

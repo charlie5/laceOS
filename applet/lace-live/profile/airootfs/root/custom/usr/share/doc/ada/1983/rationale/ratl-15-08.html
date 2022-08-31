@@ -1,0 +1,105 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 15.8: Unchecked Conversions</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 15: Representation Clauses and Machine Dependences</H2>
+
+<H3><a name="15.8">15.8 Unchecked Conversions</a></H3>
+
+The conversions  allowed between  numeric types and between types that
+are derived  from each  other are safe conversions that do not violate
+the rules of type checking.
+<p>
+Unchecked type  conversions can  be  achieved  in  any  language  that
+permits code  insertions or address clauses. Such conversions may, for
+example, be  needed if  a user  wants to  define  his  own  allocation
+strategy for  access types.  In this case, conversions from integer to
+access values  are necessary  to define  an ALLOCATE  procedure and  a
+converse FREE procedure.
+<p>
+From the  point  of  view  of  programming  management  (and  also  of
+maintainability) it  is desirable to provide a standard way to achieve
+such unchecked  conversions. In  this way  the parts of a program that
+use such dangerous features are made easier to identify. The following
+generic library function is predefined to that effect.
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type SOURCE    is limited private;
+  type TARGET    is limited private;
+function UNCHECKED_CONVERSION(S  :   SOURCE) return  TARGET;
+</pre></td></tr></table>
+<p>
+A  program
+unit that  uses unchecked  type conversions  must mention this generic
+function in  its with  clauses. A  possible scenario is indicated with
+the package LIST_HANDLING given below:
+<p>
+<table border cellpadding=6><tr><td><pre>
+package LIST_HANDLING is
+  type PLACE;
+  type LIST is access PLACE;
+
+  type PLACE is
+    record
+      SUCC, PRED :  LIST;
+      VALUE      :  INTEGER;
+    end record;
+  ...
+  procedure ALLOCATE  (X :  out LIST);
+  procedure FREE   (X :  in out LIST);
+  ...
+  pragma CONTROLLED(LIST);        -- no garbage collection
+  for LIST'STORAGE_SIZE use 0;    -- new will not be usable
+ end;
+
+with UNCHECKED_CONVERSION;
+package body LIST_HANDLING is
+  function INT_TO_LIST is
+    new UNCHECKED_CONVERSION(SOURCE =&gt;  INTEGER,
+                         TARGET =&gt;  LIST);
+  ...
+  procedure ALLOCATE(X :  out LIST) is
+    ADDRESS :  INTEGER;
+  begin
+    ...
+    -- Compute address, Then:
+    X :=  INT_TO_LIST(ADDRESS);
+  end;
+  ...
+end LIST_HANDLING;
+</pre></td></tr></table>
+<p>
+The function  INT_TO_LIST is obtained within the body of LIST_HANDLING
+by instantiation  of UNCHECKED_CONVERSION,  and is  used to convert an
+integer address into a LIST.
+<p>
+The programming  environment may  be able  to control and restrict the
+programs  that   are  allowed   to  get   access   to   the   function
+UNCHECKED_CONVERSION.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-16.html#16"><b>NEXT</b></a>
+&#128; <a href="ratl-15-07.html#15.7"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-15.html#15"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>

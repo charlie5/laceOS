@@ -1,0 +1,139 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Other Optimizations and Determinism Rules</TITLE>
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    DIV.paranum {position: absolute; font-family: Arial, Helvetica, sans-serif; left: 0.5em; top: auto}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; margin-bottom: 0.6em}
+    DIV.Wide {font-family: "Times New Roman", Times, serif; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.WideAnnotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Index {font-family: "Times New Roman", Times, serif}
+    DIV.SyntaxSummary {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; margin-left: 2.0em}
+    DIV.SyntaxIndented {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Indented {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-bottom: 0.6em}
+    DIV.CodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.SmallIndented {font-family: "Times New Roman", Times, serif; margin-left:  10.0em; margin-bottom: 0.6em}
+    DIV.SmallCodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SmallExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left: 7.5em; margin-bottom: 0.6em}
+    DIV.IndentedExamples {font-family: "Courier New", monospace; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.SmallIndentedExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left:  15.0em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.IndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SyntaxIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.Hanging {font-family: "Times New Roman", Times, serif; margin-top: 0em; margin-bottom: 0.6em}
+    DD.Hanging {margin-left: 6.0em}
+    DL.IndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.IndentedHanging {margin-left: 2.0em}
+    DL.HangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.HangingInBulleted {margin-left: 4.0em}
+    DL.SmallHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallHanging {margin-left: 7.5em}
+    DL.SmallIndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallIndentedHanging {margin-left: 2.0em}
+    DL.SmallHangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallHangingInBulleted {margin-left: 5.0em}
+    DL.Enumerated {font-family: "Times New Roman", Times, serif; margin-right: 0.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.Enumerated {margin-left: 2.0em}
+    DL.SmallEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallEnumerated {margin-left: 2.5em}
+    DL.NestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.SmallNestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<P><A HREF="RM-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-D-11.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-E.html">Next</A></P>
+<HR>
+<H1> D.12 Other Optimizations and Determinism Rules</H1>
+<DIV Class="Paranum"><FONT SIZE=-2>1</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;This clause describes various requirements for
+improving the response and determinism in a real-time system. </DIV>
+
+<H4 ALIGN=CENTER>Implementation Requirements</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>2</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;If the implementation blocks interrupts (see <A HREF="RM-C-3.html">C.3</A>)
+not as a result of direct user action (e.g. an execution of a protected
+action) there shall be an upper bound on the duration of this blocking.
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>3</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The implementation shall recognize entry-less
+protected types. The overhead of acquiring the execution resource of
+an object of such a type (see <A HREF="RM-9-5-1.html">9.5.1</A>) shall
+be minimized. In particular, there should not be any overhead due to
+evaluating <FONT FACE="Arial, Helvetica">entry_barrier</FONT> <FONT FACE="Arial, Helvetica">condition</FONT>s.
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>4</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;Unchecked_Deallocation shall be supported for
+terminated tasks that are designated by access types, and shall have
+the effect of releasing all the storage associated with the task. This
+includes any run-time system or heap storage that has been implicitly
+allocated for the task by the implementation.</DIV>
+
+<H4 ALIGN=CENTER>Documentation Requirements</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>5</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The implementation shall document the upper bound
+on the duration of interrupt blocking caused by the implementation. If
+this is different for different interrupts or interrupt priority levels,
+it should be documented for each case. </DIV>
+
+<H4 ALIGN=CENTER>Metrics</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>6</FONT></DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;The implementation
+shall document the following metric: </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>7</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The overhead associated with obtaining
+a mutual-exclusive access to an entry-less protected object. This shall
+be measured in the following way:</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>8</FONT></DIV>
+<UL Class="Bulleted" Style="margin-bottom: 0.3em">For a protected object
+of the form: </UL>
+<DIV Class="Paranum"><FONT SIZE=-2>9</FONT></DIV>
+<DIV Class="Examples"><TT><B>protected</B>&nbsp;Lock&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Read&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;Flag&nbsp;:&nbsp;Boolean&nbsp;:=&nbsp;False;<BR>
+<B>end</B>&nbsp;Lock;</TT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>10</FONT></DIV>
+<DIV Class="Examples"><TT><B>protected&nbsp;body</B>&nbsp;Lock&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Flag&nbsp;:=&nbsp;True;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Read&nbsp;<B>return</B>&nbsp;Boolean<BR>
+&nbsp;&nbsp;&nbsp;<B>Begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Flag;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Read;<BR>
+<B>end</B>&nbsp;Lock;</TT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>11</FONT></DIV>
+<UL Class="Bulleted">The execution time, in processor clock cycles, of
+a call to Set. This shall be measured between the point just before issuing
+the call, and the point just after the call completes. The function Read
+shall be called later to verify that Set was indeed called (and not optimized
+away). The calling task shall have sufficiently high priority as to not
+be preempted during the measurement period. The protected object shall
+have sufficiently high ceiling priority to allow the task to call Set.</UL>
+<DIV Class="Paranum"><FONT SIZE=-2>12</FONT></DIV>
+<UL Class="Bulleted">For a multiprocessor, if supported, the metric shall
+be reported for the case where no contention (on the execution resource)
+exists from tasks executing on other processors. </UL>
+
+<HR>
+<P><A HREF="RM-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-D-11.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-E.html">Next</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-TTL.html">Legal</A></P>
+</BODY>
+</HTML>

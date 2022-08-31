@@ -1,0 +1,615 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Maps</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-8-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-8-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>8.3 Maps</H1>
+<div class="Normal">We will now turn to the maps and sets packages. We 
+will start by considering maps which are more exciting than sets and 
+begin with ordered maps which are a little simpler and then consider 
+hashed maps.<A NAME="I1394"></A><A NAME="I1395"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Remember that a map 
+is just a means of getting from a value of one type (the key) to another 
+type (the element). This is not a one-one relationship. Given a key there 
+is a unique element (if any), but several keys may correspond to the 
+same element. A simple example is an array. This is a map from the index 
+type to the component type. Thus if we have&nbsp;</div>
+<div class="SwissExamples">S:&nbsp;String&nbsp;:=&nbsp;&quot;animal&quot;;</div>
+<div class="Normal">then this provides a map from integers in the range 
+1 to 6 to some values of the type <SPAN Class="swiss">Character</SPAN>. 
+Given an integer such as <SPAN Class="swiss">3</SPAN> there is a unique 
+character <SPAN Class="swiss">'i'</SPAN> but given a character such as 
+<SPAN Class="swiss">'a'</SPAN> there might be several corresponding integers 
+(in this case both <SPAN Class="swiss">1</SPAN> and <SPAN Class="swiss">5</SPAN>).</div>
+<div class="Normal">More interesting examples are where the set of used 
+key values is quite sparse. For example we might have a store where various 
+spare parts are held. The parts have a five-digit part number and there 
+are perhaps twenty racks where they are held identified by a letter. 
+However, only a handful of the five digit numbers are in use so it would 
+be very wasteful to use an array with the part number as index. What 
+we want instead is a container which holds just the pairs that matter 
+such as (34618, 'F'), (27134, 'C') and so on. We can do this using a 
+map. We usually refer to the pairs of values as nodes of the map.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There are two maps 
+packages with much in common. One keeps the keys in order and the other 
+uses a hash function. Here is the specification of the ordered maps package 
+generally showing just those facilities common to both.<A NAME="I1396"></A><A NAME="I1397"></A><A NAME="I1398"></A> 
+</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Key_Type&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;&lt;&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Ada.Containers.Ordered_Maps&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Ordered_Maps);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Equivalent_Keys(Left:&nbsp;Right:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="Normal">The generic parameters include the ordering relationship 
+<SPAN Class="swiss">&quot;&lt;&quot;</SPAN> on the keys and equality 
+for the elements.</div>
+<div class="Normal">It is assumed that the ordering relationship is well 
+behaved in the sense that if <SPAN Class="swiss">x &lt; y</SPAN> is true 
+then <SPAN Class="swiss">y &lt; x</SPAN> is false. We say that two keys 
+<SPAN Class="swiss">x</SPAN> and <SPAN Class="swiss">y</SPAN> are equivalent 
+if both <SPAN Class="swiss">x &lt; y</SPAN> and <SPAN Class="swiss">y 
+&lt; x</SPAN> are false. In other words this defines an equivalence class 
+on keys. The relationship must also be transitive, that is, if <SPAN Class="swiss">x 
+&lt; y</SPAN> and <SPAN Class="swiss">y &lt; z</SPAN> are both true then 
+<SPAN Class="swiss">x &lt; z</SPAN> must also be true.</div>
+<div class="Normal">This concept of an equivalence relationship occurs 
+throughout the various maps and sets. Sometimes, as here, it is defined 
+in terms of an order but in other cases, as we shall see, it is defined 
+by an equivalence function.</div>
+<div class="Normal">It is absolutely vital that the equivalence relations 
+are defined properly and meet the above requirements. It is not possible 
+for the container packages to check this and if the operations are wrong 
+then peculiar behaviour is almost inevitable.</div>
+<div class="Normal" style="margin-bottom: 0.4em">For the convenience 
+of the user the function <SPAN Class="swiss">Equivalent_Keys</SPAN> is 
+declared explicitly. It is equivalent to&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Equivalent_Keys(Left,&nbsp;Right:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;<B>not</B>&nbsp;(Left&nbsp;&lt;&nbsp;Right)&nbsp;<B>and&nbsp;not</B>&nbsp;(Right&nbsp;&lt;&nbsp;Left);<BR>
+<B>end</B>&nbsp;Equivalent_Keys;</div>
+<div class="Normal">The equality operation on elements is not so demanding. 
+It must be symmetric so that <SPAN Class="swiss">x = y</SPAN> and <SPAN Class="swiss">y 
+= x</SPAN> are the same but transitivity is not required (although cases 
+where it would not automatically be transitive are likely to be rare). 
+The operation is only used for the function <SPAN Class="swiss">&quot;=&quot;</SPAN> 
+on the containers as a whole.</div>
+<div class="Normal">Note that <SPAN Class="swiss">Find</SPAN> and similar 
+operations for maps and sets work in terms of the equivalence relationship 
+rather than equality as was the case with lists and vectors.</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Map&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(Map);<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Cursor&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(Cursor);<BR>
+&nbsp;&nbsp;&nbsp;Empty_Map:&nbsp;<B>constant</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;No_Element:&nbsp;<B>constant</B>&nbsp;Cursor;</div>
+<div class="Normal">The types <SPAN Class="swiss">Map</SPAN> and <SPAN Class="swiss">Cursor</SPAN> 
+and constants <SPAN Class="swiss">Empty_Map</SPAN> and <SPAN Class="swiss">No_Element</SPAN> 
+are similar to the corresponding entities in the lists and vectors containers.</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Map)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>function</B>&nbsp;Length(Container:&nbsp;Map)&nbsp;<B>return</B>&nbsp;Count_Type;<BR>
+<B>function</B>&nbsp;Is_Empty(Container:&nbsp;Map)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>procedure</B>&nbsp;Clear(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Map);</div>
+<div class="Normal">These are again similar to the corresponding entities 
+for lists. Note that two maps are said to be equal if they have the same 
+number of nodes with equivalent keys (as defined by <SPAN Class="swiss">&quot;&lt;&quot;</SPAN>) 
+whose corresponding elements are equal (as defined by <SPAN Class="swiss">&quot;=&quot;</SPAN>).</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Key(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Key_Type;<BR>
+<B>function</B>&nbsp;Element(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Element_Type;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Replace_Element(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Query_Element(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Key:&nbsp;<B>in</B>&nbsp;Key_Type;&nbsp;Element:&nbsp;<B>in</B>&nbsp;Element_Type));</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Update_Element(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Key:&nbsp;<B>in</B>&nbsp;Key_Type;&nbsp;Element:&nbsp;<B>in&nbsp;out</B>&nbsp;Element_Type));</div>
+<div class="Normal">In this case there is a function <SPAN Class="swiss">Key</SPAN> 
+as well as a function <SPAN Class="swiss">Element</SPAN>. But there is 
+no procedure <SPAN Class="swiss">Replace_Key</SPAN> since it would not 
+make sense to change a key without changing the element as well and this 
+really comes down to deleting the whole node and then inserting a new 
+one.</div>
+<div class="Normal">The procedures <SPAN Class="swiss">Query_Element</SPAN> 
+and <SPAN Class="swiss">Update_Element</SPAN> are slightly different 
+in that the procedure <SPAN Class="swiss">Process</SPAN> also takes the 
+key as parameter as well as the element to be read or updated. Note again 
+that the key cannot be changed. Nevertheless the value of the key is 
+given since it might be useful in deciding how the update should be performed. 
+Remember that we cannot get uniquely from an element to a key but only 
+from a key to an element.</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Move(Target,&nbsp;Source:&nbsp;<B>in&nbsp;out</B>&nbsp;Map);</div>
+<div class="Normal">This moves the map from the source to the target 
+after first clearing the target. It does not make copies of the nodes 
+so that after the operation the source is empty and <SPAN Class="swiss">Length(Source)</SPAN> 
+is zero.</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Insert(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key:&nbsp;<B>in</B>&nbsp;Key_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Inserted:&nbsp;<B>out</B>&nbsp;Boolean);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Insert(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key:&nbsp;<B>in</B>&nbsp;Key_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>out</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Inserted:&nbsp;<B>out</B>&nbsp;Boolean);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Insert(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key:&nbsp;<B>in</B>&nbsp;Key_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type);</div>
+<div class="Normal">These insert a new node into the map unless a node 
+with an equivalent key already exists. If it does exist then the first 
+two return with <SPAN Class="swiss">Inserted</SPAN> set to <SPAN Class="swiss">False</SPAN> 
+and <SPAN Class="swiss">Position</SPAN> indicating the node whereas the 
+third raises <SPAN Class="swiss">Constraint_Error</SPAN> (the element 
+value is not changed). If a node with equivalent key is not found then 
+a new node is created with the given key, the element value is set to 
+<SPAN Class="swiss">New_Item</SPAN> when that is given and otherwise 
+it takes its default value (if any), and <SPAN Class="swiss">Position</SPAN> 
+is set when given.</div>
+<div class="Normal">Unlike vectors and lists, we do not have to say where 
+the new node is to be inserted because of course this is an ordered map 
+and it just goes in the correct place according to the order given by 
+the generic parameter <SPAN Class="swiss">&quot;&lt;&quot;</SPAN>.</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Include(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key:&nbsp;<B>in</B>&nbsp;Key_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type);</div>
+<div class="Normal">This is somewhat like the last <SPAN Class="swiss">Insert</SPAN> 
+except that if an existing node with an equivalent key is found then 
+it is replaced (rather than raising <SPAN Class="swiss">Constraint_Error</SPAN>). 
+Note that both the key and the element are updated. This is because equivalent 
+keys might not be totally equal.</div>
+<div class="Normal" style="margin-bottom: 0.4em">For example the key 
+part might be a record with part number and year of introduction, thus 
+</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Part_Key&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Part_Number:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Year:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and we might define 
+the ordering relationship to be used as the generic parameter simply 
+in terms of the part number&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;&lt;&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Part_Key)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Left.Part_Number&nbsp;&lt;&nbsp;Right.Part_Number;<BR>
+<B>end</B>&nbsp;&quot;&lt;&quot;;</div>
+<div class="Normal">In this situation, the keys could match without the 
+year component being the same and so it would need to be updated. In 
+other words with this definition of the ordering relation, two keys are 
+equivalent provided just the part numbers are the same.</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Replace(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key:&nbsp;<B>in</B>&nbsp;Key_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type);</div>
+<div class="Normal">In this case, <SPAN Class="swiss">Constraint_Error</SPAN> 
+is raised if the node does not already exist. On replacement both the 
+key and the element are updated as for <SPAN Class="swiss">Include</SPAN>.</div>
+<div class="Normal">Perhaps a better example of equivalent keys not being 
+totally equal is if the key were a string. We might decide that the case 
+of letter did not need to match in the test for equivalence but nevertheless 
+we would probably want to update with the string as used in the parameter 
+of <SPAN Class="swiss">Replace</SPAN>.&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Exclude(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;&nbsp;Key:&nbsp;<B>in</B>&nbsp;Key_Type);</div>
+<div class="Normal">If there is a node with an equivalent key then it 
+is deleted. If there is not then nothing happens.</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Delete(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;&nbsp;Key:&nbsp;<B>in</B>&nbsp;Key_Type);</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Delete(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;&nbsp;Position:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor);</div>
+<div class="Normal">These delete a node. In the first case if there is 
+no such equivalent key then <SPAN Class="swiss">Constraint_Error</SPAN> 
+is raised (by contrast to <SPAN Class="swiss">Exclude</SPAN> which remains 
+silent in this case). In the second case if the cursor is <SPAN Class="swiss">No_Element</SPAN> 
+then again <SPAN Class="swiss">Constraint_Error</SPAN> is raised &ndash; 
+there is also a check to ensure that the cursor otherwise does designate 
+a node in the correct map (remember that cursors designate both an entity 
+and the container); if this check fails then <SPAN Class="swiss">Program_Error</SPAN> 
+is raised.</div>
+<div class="Normal">Perhaps it is worth observing that <SPAN Class="swiss">Insert</SPAN>, 
+<SPAN Class="swiss">Include</SPAN>, <SPAN Class="swiss">Replace</SPAN>, 
+<SPAN Class="swiss">Exclude</SPAN> and <SPAN Class="swiss">Delete</SPAN> 
+form a sort of progression from an operation that will insert something, 
+through operations that might insert, will neither insert nor delete, 
+might delete, to the final operation that will delete something. Note 
+also that <SPAN Class="swiss">Include</SPAN>, <SPAN Class="swiss">Replace</SPAN> 
+and <SPAN Class="swiss">Exclude</SPAN> do not apply to lists and vectors.</div>
+<div class="SwissExamples"><B>function</B>&nbsp;First(Container:&nbsp;Map)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+<B>function</B>&nbsp;Last(Container:&nbsp;Map)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+<B>function</B>&nbsp;Next(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+<B>procedure</B>&nbsp;Next(Position:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor);<BR>
+<B>function</B>&nbsp;Find(Container:&nbsp;Map;&nbsp;Key:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+<B>function</B>&nbsp;Element(Container:&nbsp;Map;&nbsp;Key:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Element;<BR>
+<B>function</B>&nbsp;Contains(Container:&nbsp;Map;&nbsp;Key:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="Normal">These should be self-evident. Unlike the operations 
+on vectors and lists, <SPAN Class="swiss">Find</SPAN> logically searches 
+the whole map and not just starting at some point (and since it searches 
+the whole map there is no point in having <SPAN Class="swiss">Reverse_Find</SPAN>). 
+(In implementation terms it won't actually search the whole map because 
+it will be structured in a way that makes this unnecessary &ndash; as 
+a balanced tree perhaps.) Moreover, <SPAN Class="swiss">Find</SPAN> uses 
+the equivalence relation based on the <SPAN Class="swiss">&quot;&lt;&quot;</SPAN> 
+parameter so in the example it only has to match the part number and 
+not the year. The function call <SPAN Class="swiss">Element(My_Map, My_Key)</SPAN> 
+is equivalent to <SPAN Class="swiss">Element(Find(My_Map, My_Key))</SPAN>.</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Has_Element(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Iterate(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Position:&nbsp;<B>in</B>&nbsp;Cursor));</div>
+<div class="Normal">These are also as for other containers.</div>
+<div class="Normal" style="margin-bottom: 0.4em">And at last we have 
+</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;Ada.Containers.Ordered_Maps;</div>
+<div class="Normal">We have omitted to mention quite a few operations 
+that have no equivalent in hashed maps &ndash; we will come back to these 
+in a moment.</div>
+<div class="Normal" style="margin-bottom: 0.4em">As an example we can 
+make a container to hold the information concerning spare parts. We can 
+use the type <SPAN Class="swiss">Part_Key</SPAN> and the function <SPAN Class="swiss">&quot;&lt;&quot;</SPAN> 
+as above. We can suppose that the element type is&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Stock_Info&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Shelf:&nbsp;Character&nbsp;<B>range</B>&nbsp;'A'&nbsp;..&nbsp;'T';<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Stock:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal">This gives both the shelf letter and the number in 
+stock.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can then declare 
+the container thus&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Store_Maps&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Ordered_Maps(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key_Type&nbsp;=&gt;&nbsp;Part_Key,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type&nbsp;=&gt;&nbsp;Stock_Info,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&lt;&quot;&nbsp;=&gt;&nbsp;&quot;&lt;&quot;);</div>
+<div class="SwissExamples">The_Store:&nbsp;Store_Maps.Map;</div>
+<div class="Normal">The last parameter could be omitted because the formal 
+has a <SPAN Class="swiss">&lt;&gt;</SPAN> default.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can now add items 
+to our store by calling&nbsp;</div>
+<div class="SwissExamples">The_Store.Insert((34618,&nbsp;1998),&nbsp;('F',&nbsp;25));<BR>
+The_Store.Insert((27134,&nbsp;2004),&nbsp;('C',&nbsp;45));<BR>
+...</div>
+<div class="Normal">We might now have a procedure which, given a part 
+number, checks to see if it exists and that the stock is not zero, and 
+if so returns the shelf letter and year number and decrements the stock 
+count.</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Request(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Part:&nbsp;<B>in</B>&nbsp;Integer;&nbsp;OK:&nbsp;<B>out</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Year:&nbsp;<B>out</B>&nbsp;Integer;&nbsp;Shelf:&nbsp;<B>out</B>&nbsp;Character)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;C:&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;K:&nbsp;Part_Key;<BR>
+&nbsp;&nbsp;&nbsp;E:&nbsp;Stock_Info;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;C&nbsp;:=&nbsp;The_Store.Find((Part,&nbsp;0));<BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;C&nbsp;=&nbsp;No_Element&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OK&nbsp;:=&nbsp;False;&nbsp;<B>return</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>no&nbsp;such&nbsp;key</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;E&nbsp;:=&nbsp;Element(C);&nbsp;&nbsp;K&nbsp;:=&nbsp;Key(C);<BR>
+&nbsp;&nbsp;&nbsp;Year&nbsp;:=&nbsp;K.Year;&nbsp;&nbsp;Shelf&nbsp;:=&nbsp;E.Shelf;<BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;E.Stock&nbsp;=&nbsp;0&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OK&nbsp;:=&nbsp;False;&nbsp;<B>return</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>out&nbsp;of&nbsp;stock</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;Replace_Element(C,&nbsp;(Shelf,&nbsp;E.Stock&ndash;1));<BR>
+&nbsp;&nbsp;&nbsp;OK&nbsp;:=&nbsp;True;<BR>
+<B>end</B>&nbsp;Request;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that we had to 
+put a dummy year number in the call of <SPAN Class="swiss">Find</SPAN>. 
+We could of course use the new <SPAN Class="swiss">&lt;&gt;</SPAN> notation 
+for this&nbsp;</div>
+<div class="SwissExamples">C&nbsp;:=&nbsp;The_Store.Find((Part,&nbsp;<B>others</B>&nbsp;=&gt;&nbsp;&lt;&gt;));</div>
+<div class="Normal">The reader can improve this example at leisure &ndash; 
+by using <SPAN Class="swiss">Update_Element</SPAN> for example.</div>
+<div class="Normal" style="margin-bottom: 0.4em">As another example 
+suppose we wish to check all through the stock looking for parts whose 
+stock is low, perhaps less than some given parameter. We can use <SPAN Class="swiss">Iterate</SPAN> 
+for this as follows&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Check_Stock(Low:&nbsp;<B>in</B>&nbsp;Integer)&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Check_It(C:&nbsp;<B>in</B>&nbsp;Cursor)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Element(C).Stock&nbsp;&lt;&nbsp;Low&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>print&nbsp;a&nbsp;message&nbsp;perhaps</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put(&quot;Low&nbsp;stock&nbsp;of&nbsp;part&nbsp;&quot;);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put_Line(Key(C).Part_Number);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Check_It;</div>
+<div class="SwissExamples"><B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;The_Store.Iterate(Check_It'Access);<BR>
+<B>end</B>&nbsp;Check_Stock;</div>
+<div class="Normal">Note that this uses a so-called downward closure. 
+The procedure <SPAN Class="swiss">Check_It</SPAN> has to be declared 
+locally to <SPAN Class="swiss">Check_Stock</SPAN> in order to access 
+the parameter <SPAN Class="swiss">Low</SPAN>. (Well you could declare 
+it outside and copy the parameter <SPAN Class="swiss">Low</SPAN> to a 
+global variable but that is just the sort of wicked thing one has to 
+do in lesser languages (such as even Ada 95). It is not task safe for 
+one thing.)</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another approach is 
+to use <SPAN Class="swiss">First</SPAN> and <SPAN Class="swiss">Next</SPAN> 
+and so on thus&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Check_Stock(Low:&nbsp;<B>in</B>&nbsp;Integer)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;C:&nbsp;Cursor&nbsp;:=&nbsp;The_Store.First;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>exit&nbsp;when</B>&nbsp;C&nbsp;=&nbsp;No_Element;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Element(C).Stock&nbsp;&lt;&nbsp;Low&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>print&nbsp;a&nbsp;message&nbsp;perhaps</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put(&quot;Low&nbsp;stock&nbsp;of&nbsp;part&nbsp;&quot;);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put_Line(Key(C).Part_Number);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C&nbsp;:=&nbsp;The_Store.Next(C);<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;loop</B>;<BR>
+<B>end</B>&nbsp;Check_Stock;</div>
+<div class="Normal">We will now consider hashed maps. The trouble with 
+ordered maps in general is that searching can be slow when the map has 
+many entries. Techniques such as a binary tree can be used but even so 
+the search time will increase at least as the logarithm of the number 
+of entries. A better approach is to use a hash function. This will be 
+familiar to many readers (especially those who have written compilers). 
+The general idea is as follows.</div>
+<div class="Normal">We define a function which takes a key and returns 
+some value in a given range. In the case of the Ada containers it has 
+to return a value of the modular type <SPAN Class="swiss">Hash_Type</SPAN> 
+which is declared in the root package <SPAN Class="swiss">Ada.Containers</SPAN>. 
+We could then convert this value onto a range representing an index into 
+an array whose size corresponds to the capacity of the map. This index 
+value is the preferred place to store the entry. If there already is 
+an entry at this place (because some other key has hashed to the same 
+value) then a number of approaches are possible. One way is to create 
+a list of entries with the same index value (often called buckets); another 
+way is simply to put it in the next available slot. The details don't 
+matter. But the overall effect is that provided the map is not too full 
+and the hash function is good then we can find an entry almost immediately 
+more or less irrespective of the size of the map.</div>
+<div class="Normal">So as users all we have to do is to define a suitable 
+hash function. It should give a good spread of values across the range 
+of <SPAN Class="swiss">Hash_Type</SPAN> for the population of keys, it 
+should avoid clustering and above all for a given key it must <I>always</I> 
+return the same hash value. A good discussion on hash functions by Knuth 
+will be found in <A HREF="Rat-0-2.html#R10">[10]</A>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Defining good hash 
+functions needs care. In the case of the part numbers we might multiply 
+the part number by some obscure prime number and then truncate the result 
+down to the modular type <SPAN Class="swiss">Hash_Type</SPAN>. The author 
+hesitates to give an example but perhaps&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Part_Hash(P:&nbsp;Part_Key)&nbsp;<B>return</B>&nbsp;Hash_Type&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;M31:&nbsp;<B>constant</B>&nbsp;:=&nbsp;2**31&ndash;1;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>a&nbsp;nice&nbsp;Mersenne&nbsp;prime</I></SPAN><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Hash_Type(P.Part_Number)&nbsp;*&nbsp;M31;<BR>
+<B>end</B>&nbsp;Part_Hash;</div>
+<div class="Normal">On reflection that's probably a very bad prime to 
+use because it is so close to half of <SPAN Class="swiss">2**32</SPAN> 
+a typical value of <SPAN Class="swiss">Hash_Type'Last+1</SPAN>. Of course 
+it doesn't have to be prime but simply relatively prime to it such as 
+<SPAN Class="swiss">5**13</SPAN>. Knuth suggests dividing the range by 
+the golden number &#964; = (&#8730;5+1)/2 = 1.618... and then taking 
+the nearest number relatively prime which is in fact simply the nearest 
+odd number (in this case it is 2654435769).</div>
+<div class="Normal">Here is a historic interlude. Marin Mersenne (1588-1648) 
+was a Franciscan monk who lived in Paris. He studied numbers of the form 
+<I>M</I><I></I><SUB><SPAN STYLE="font-size: 140%"><SPAN STYLE="font-size: 64%"><I>p</I></SPAN></SPAN></SUB><I></I> 
+= 2<I></I><SUP><SPAN STYLE="font-size: 140%"><SPAN STYLE="font-size: 64%"><I>p</I></SPAN></SPAN></SUP><I></I> 
+&ndash; 1 where <I>p</I> is prime. A lot of these are themselves prime. 
+Mersenne gave a list of those up to 257 which he said were prime (namely 
+2, 3, 5, 7, 13, 17, 19, 31, 67, 127, 257). It was not until 1947 that 
+it was finally settled that he got some of them wrong (61, 89, and 107 
+are also prime but 67 and 257 are not). At the time of writing there 
+are 44 known Mersenne primes and the largest which is also the largest 
+known prime number is <I>M</I><SUB><SPAN STYLE="font-size: 140%"><SPAN STYLE="font-size: 64%">32582657</SPAN></SPAN></SUB> 
+&ndash; see <A HREF="http://www.mersenne.org">www.mersenne.org</A>.</div>
+<div class="Normal">The specification of the hashed maps package is very 
+similar to that for ordered maps. It starts<A NAME="I1399"></A><A NAME="I1400"></A><A NAME="I1401"></A></div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Key_Type&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Hash(Key:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Hash_Type;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Equivalent_Keys(Left,&nbsp;Right:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Ada.Containers.Hashed_Maps&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Hashed_Maps);</div>
+<div class="Normal">The differences from the ordered maps package are 
+that there is an extra generic parameter <SPAN Class="swiss">Hash</SPAN> 
+giving the hash function and the ordering parameter <SPAN Class="swiss">&quot;&lt;&quot;</SPAN> 
+has been replaced by the function <SPAN Class="swiss">Equivalent_Keys</SPAN>. 
+It is this function that defines the equivalence relationship for hashed 
+maps; it is important that <SPAN Class="swiss">Equivalent_Keys(X, Y)</SPAN> 
+is always the same as <SPAN Class="swiss">Equivalent_Keys(Y, X)</SPAN>. 
+Moreover if <SPAN Class="swiss">X</SPAN> and <SPAN Class="swiss">Y</SPAN> 
+are equivalent and <SPAN Class="swiss">Y</SPAN> and <SPAN Class="swiss">Z</SPAN> 
+are equivalent then <SPAN Class="swiss">X</SPAN> and <SPAN Class="swiss">Z</SPAN> 
+must also be equivalent.</div>
+<div class="Normal">Note that the function <SPAN Class="swiss">Equivalent_Keys</SPAN> 
+in the ordered maps package discussed above corresponds to the formal 
+generic parameter of the same name in this hashed maps package. This 
+should make it easier to convert between the two forms of packages.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Returning to our example, 
+if we now write&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Equivalent_Parts(Left,&nbsp;Right:&nbsp;Part_Key)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Left.Part_Number&nbsp;=&nbsp;Right.Part_Number;<BR>
+<B>end</B>&nbsp;Equivalent_Parts;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then we can instantiate 
+the hashed maps package as follows&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Store_Maps&nbsp;<B>is&nbsp;new</B>&nbsp;Hashed_Maps(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key_Type&nbsp;=&gt;&nbsp;Part_Key,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type&nbsp;=&gt;&nbsp;Stock_Info,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hash&nbsp;=&gt;&nbsp;Part_Hash,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Equivalent_Keys&nbsp;=&gt;&nbsp;Equivalent_Parts);</div>
+<div class="SwissExamples">The_Store:&nbsp;Store_Maps.Map;</div>
+<div class="Normal">and then the rest of our example will be exactly 
+as before. It is thus easy to convert from an ordered map to a hashed 
+map and vice versa provided of course that we only use the facilities 
+common to both.</div>
+<div class="Normal">We will finish this discussion of maps by briefly 
+considering the additional facilities in the two packages.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The ordered maps package 
+has the following additional subprograms&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Delete_First(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Map);<BR>
+<B>procedure</B>&nbsp;Delete_Last(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Map);</div>
+<div class="SwissExamples"><B>function</B>&nbsp;First_Element(Container:&nbsp;Map)&nbsp;<B>return</B>&nbsp;Element_Type;<BR>
+<B>function</B>&nbsp;First_Key(Container:&nbsp;Map)&nbsp;<B>return</B>&nbsp;Key_Type;<BR>
+<B>function</B>&nbsp;Last_Element(Container:&nbsp;Map)&nbsp;<B>return</B>&nbsp;Element_Type;<BR>
+<B>function</B>&nbsp;Last_Key(Container:&nbsp;Map)&nbsp;<B>return</B>&nbsp;Key_Type;<BR>
+<B>function</B>&nbsp;Previous(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+<B>procedure</B>&nbsp;Previous(Position:&nbsp;<B>in&nbsp;out</B>&nbsp;Cursor);</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Floor(Container:&nbsp;Map;&nbsp;Key:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Cursor;<BR>
+<B>function</B>&nbsp;Ceiling(Container:&nbsp;Map;&nbsp;Key:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Cursor;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;&lt;&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>function</B>&nbsp;&quot;&gt;&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>function</B>&nbsp;&quot;&lt;&quot;&nbsp;(Left:&nbsp;Cursor;&nbsp;Right:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>function</B>&nbsp;&quot;&gt;&quot;&nbsp;(Left:&nbsp;Cursor;&nbsp;Right:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>function</B>&nbsp;&quot;&lt;&quot;&nbsp;(Left:&nbsp;Key_Type;&nbsp;Right:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>function</B>&nbsp;&quot;&gt;&quot;&nbsp;(Left:&nbsp;Key_Type;&nbsp;Right:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Reverse_Iterate(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Container:&nbsp;<B>in</B>&nbsp;Map;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Position:&nbsp;<B>in</B>&nbsp;Cursor));</div>
+<div class="Normal">These are again largely self-evident. The functions 
+<SPAN Class="swiss">Floor</SPAN> and <SPAN Class="swiss">Ceiling</SPAN> 
+are interesting. <SPAN Class="swiss">Floor</SPAN> searches for the last 
+node whose key is not greater than <SPAN Class="swiss">Key</SPAN> and 
+similarly <SPAN Class="swiss">Ceiling</SPAN> searches for the first node 
+whose key is not less than <SPAN Class="swiss">Key</SPAN> &ndash; they 
+return <SPAN Class="swiss">No_Element</SPAN> if there is no such element. 
+The subprograms <SPAN Class="swiss">Previous</SPAN> are of course the 
+opposite of <SPAN Class="swiss">Next</SPAN> and <SPAN Class="swiss">Reverse_Iterate</SPAN> 
+is like <SPAN Class="swiss">Iterate</SPAN> only backwards.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The functions <SPAN Class="swiss">&quot;&lt;&quot;</SPAN> 
+and <SPAN Class="swiss">&quot;&gt;&quot;</SPAN> are mostly for convenience. 
+Thus the first is equivalent to&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;&lt;&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Key(Left)&nbsp;&lt;&nbsp;Key(Right);<BR>
+<B>end</B>&nbsp;&quot;&lt;&quot;;</div>
+<div class="Normal">Clearly these additional operations must be avoided 
+if we wish to retain the option of converting to a hashed map later.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Hashed maps have a 
+very important facility not in ordered maps which is the ability to specify 
+a capacity as for the vectors package. (Underneath their skin the hashed 
+maps are a bit like vectors whereas the ordered maps are a bit like lists.) 
+Thus we have&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Reserve_Capacity(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Map;&nbsp;Capacity:&nbsp;<B>in</B>&nbsp;Count_Type);</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Capacity(Container:&nbsp;Map)&nbsp;<B>return</B>&nbsp;Count_Type;</div>
+<div class="Normal">The behaviour is much as for vectors. We don't have 
+to set the capacity ourselves since it will be automatically extended 
+as necessary but it might significantly improve performance to do so. 
+In the case of maps, increasing the capacity requires the hashing to 
+be redone which could be quite time consuming, so if we know that our 
+map is going to be a big one, it is a good idea to set an appropriate 
+capacity right from the beginning. Note again that <SPAN Class="swiss">Length(M)</SPAN> 
+cannot exceed <SPAN Class="swiss">Capacity(M)</SPAN> but might be much 
+less.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The other additional 
+subprograms for hashed maps are&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Equivalent_Keys(Left,&nbsp;Right:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>function</B>&nbsp;Equivalent_Keys(Left:&nbsp;Cursor;&nbsp;Right:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>function</B>&nbsp;Equivalent_Keys(Left:&nbsp;Key_Type;&nbsp;Right:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;</div>
+<div class="Normal" style="margin-bottom: 0.4em">These (like the additional 
+<SPAN Class="swiss">&quot;&lt;&quot;</SPAN> and <SPAN Class="swiss">&quot;&gt;&quot;</SPAN> 
+for ordered maps) are again mostly for convenience. The first is equivalent 
+to&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Equivalent_Keys(Left,&nbsp;Right:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Equivalent_Keys(Key(Left),&nbsp;Key(Right));<BR>
+<B>end</B>&nbsp;Equivalent_Keys;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Before moving on to 
+sets it should be noticed that there are also some useful functions in 
+the string packages. The main one is<A NAME="I1402"></A><A NAME="I1403"></A><A NAME="I1404"></A> 
+</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Containers;<BR>
+<B>function</B>&nbsp;Ada.Strings.Hash(Key:&nbsp;String)&nbsp;<B>return</B>&nbsp;Containers.Hash_Type;<BR>
+<B>pragma</B>&nbsp;Pure(Ada.Strings.Hash);</div>
+<div class="Normal">There is a similar function <SPAN Class="swiss">Ada.Strings.Unbounded.Hash</SPAN> 
+where the parameter <SPAN Class="swiss">Key</SPAN> has type <SPAN Class="swiss">Unbounded_String</SPAN>. 
+It simply converts the parameter to the type <SPAN Class="swiss">String</SPAN> 
+and then calls <SPAN Class="swiss">Ada.Strings.Hash</SPAN>. There is 
+also a generic function for bounded strings which again calls the basic 
+function <SPAN Class="swiss">Ada.Strings.Hash</SPAN>. For completeness 
+the function <SPAN Class="swiss">Ada.Strings.Fixed.Hash</SPAN> is a renaming 
+of <SPAN Class="swiss">Ada.Strings.Hash</SPAN>.</div>
+<div class="Normal">These are provided because it is often the case that 
+the key is a string and they save the user from devising good hash functions 
+for strings which might cause a nasty headache.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We could for example 
+save ourselves the worry of defining a good hash function in the above 
+example by making the part number into a 5-character string. So we might 
+write&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Part_Hash(P:&nbsp;Part_Key)&nbsp;<B>return</B>&nbsp;Hash_Type&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Ada.Strings.Hash(P.Part_Number);<BR>
+<B>end</B>&nbsp;Part_Hash;</div>
+<div class="Normal">and if this doesn't work well then we can blame the 
+vendor.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-8-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-8-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

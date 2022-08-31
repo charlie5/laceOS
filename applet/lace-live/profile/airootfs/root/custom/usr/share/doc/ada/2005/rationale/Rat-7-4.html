@@ -1,0 +1,458 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Operational environment</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.Indented1 {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>7.4 Operational environment</H1>
+<div class="Normal">Two new packages are added to Ada 2005 in order to 
+aid communication with the operational environment. They are <SPAN Class="swiss">Ada.Environment_Variables</SPAN> 
+and <SPAN Class="swiss">Ada.Directories</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The package <SPAN Class="swiss">Ada.Environment_Variables</SPAN> 
+has the following specification<A NAME="I1287"></A><A NAME="I1288"></A><A NAME="I1289"></A> 
+</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Environment_Variables&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Environment_Variables);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Value(Name:&nbsp;String)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Exists(Name:&nbsp;String)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set(Name:&nbsp;<B>in</B>&nbsp;String;&nbsp;Value:&nbsp;<B>in</B>&nbsp;String);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Clear(Name:&nbsp;<B>in</B>&nbsp;String);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Clear;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Iterate(Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B>&nbsp;(Name,&nbsp;Value:&nbsp;<B>in</B>&nbsp;String));</div>
+<div class="SwissExamples"><B>end</B>&nbsp;Ada.Environment_Variables;</div>
+<div class="Normal">This package provides access to environment variables 
+by name. What this means and whether it is supported depends upon the 
+implementation. But most operating systems have environment variables 
+of some sort. And if not, the implementation is encouraged to simulate 
+them.</div>
+<div class="Normal">The values of the variable are also implementation 
+defined and so simply represented by strings.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The behaviour is straightforward. 
+We might check to see if there is a variable with the name <SPAN Class="swiss">&quot;Ada&quot;</SPAN> 
+and then read and print her value and set it to 2005 if it is not, thus 
+</div>
+<div class="SwissExamples"><B>if&nbsp;not</B>&nbsp;Exists(&quot;Ada&quot;)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;<B>raise</B>&nbsp;Horror;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>quel&nbsp;dommage!</I></SPAN><BR>
+<B>end&nbsp;if</B>;</div>
+<div class="SwissExamples">Put(&quot;Current&nbsp;value&nbsp;of&nbsp;Ada&nbsp;is&nbsp;&quot;);&nbsp;&nbsp;Put_Line(Value(&quot;Ada&quot;));</div>
+<div class="SwissExamples"><B>if</B>&nbsp;Value(&quot;Ada&quot;)&nbsp;/=&nbsp;&quot;2005&quot;&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;Put_Line(&quot;Revitalizing&nbsp;Ada&nbsp;now&quot;);<BR>
+&nbsp;&nbsp;&nbsp;Set(&quot;Ada&quot;,&nbsp;&quot;2005&quot;);<BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal">The procedure <SPAN Class="swiss">Clear</SPAN> with 
+a parameter deletes the variable concerned. Thus <SPAN Class="swiss">Clear(&quot;Ada&quot;)</SPAN> 
+eliminates her completely so that a subsequent call <SPAN Class="swiss">Exists(&quot;Ada&quot;)</SPAN> 
+will return <SPAN Class="swiss">False</SPAN>. Note that <SPAN Class="swiss">Set</SPAN> 
+actually clears the variable concerned and then defines a new one with 
+the given name and value. The procedure <SPAN Class="swiss">Clear</SPAN> 
+without a parameter clears all variables.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can iterate over 
+the variables using the procedure <SPAN Class="swiss">Iterate</SPAN>. 
+For example we can print out the current state by&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Print_One(Name,&nbsp;Value:&nbsp;<B>in</B>&nbsp;String)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Put_Line(Name&nbsp;&amp;&nbsp;&quot;=&quot;&nbsp;&amp;&nbsp;Value);<BR>
+<B>end</B>&nbsp;Print_One;<BR>
+...<BR>
+Iterate(Print_One'Access);</div>
+<div class="Normal">The procedure <SPAN Class="swiss">Print_One</SPAN> 
+prints the name and value of the variable passed as parameters. We then 
+pass an access to this procedure as a parameter to the procedure <SPAN Class="swiss">Iterate</SPAN> 
+and <SPAN Class="swiss">Iterate</SPAN> then calls <SPAN Class="swiss">Print_One</SPAN> 
+for each variable in turn.</div>
+<div class="Normal">Note that the slave procedure has both <SPAN Class="swiss">Name</SPAN> 
+and <SPAN Class="swiss">Value</SPAN> as parameters. It might be thought 
+that this was unnecessary since the user can always call the function 
+<SPAN Class="swiss">Value</SPAN>. However, real operating systems can 
+sometimes have several variables with the same name; providing two parameters 
+ensures that the name/value pairs are correctly matched.</div>
+<div class="Normal">Attempting to misuse the environment package such 
+as reading a variable that doesn't exist raises <SPAN Class="swiss">Constraint_Error</SPAN> 
+or <SPAN Class="swiss">Program_Error</SPAN>.</div>
+<div class="Normal">There are big dangers of race conditions because 
+the environment variables are really globally shared. Moreover, they 
+might be shared with the operating system itself as well as programs 
+written in other languages.</div>
+<div class="Normal">A particular point is that we must not call the procedures 
+<SPAN Class="swiss">Set</SPAN> or <SPAN Class="swiss">Clear</SPAN> within 
+a procedure passed as a parameter to <SPAN Class="swiss">Iterate</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The other environment 
+package is <SPAN Class="swiss">Ada.Directories</SPAN>. Its specification 
+is<A NAME="I1290"></A><A NAME="I1291"></A><A NAME="I1292"></A><A NAME="I1293"></A> 
+</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.IO_Exceptions;<BR>
+<B>with</B>&nbsp;Ada.Calendar;<BR>
+<B>package</B>&nbsp;Ada.Directories&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Directory&nbsp;and&nbsp;file&nbsp;operations:</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Current_Directory&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Directory(Directory:&nbsp;<B>in</B>&nbsp;String);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Create_Directory(New_Directory:&nbsp;<B>in&nbsp;</B>String;&nbsp;Form:&nbsp;<B>in&nbsp;</B>String&nbsp;:=&nbsp;&quot;&quot;);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Delete_Directory(Directory:&nbsp;<B>in</B>&nbsp;String);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Create_Path(New_Directory:&nbsp;<B>in</B>&nbsp;String;&nbsp;Form:&nbsp;<B>in&nbsp;</B>String&nbsp;:=&nbsp;&quot;&quot;);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Delete_Tree(Directory:&nbsp;<B>in</B>&nbsp;String);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Delete_File(Name:&nbsp;<B>in</B>&nbsp;String);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Rename(Old_Name:&nbsp;<B>in</B>&nbsp;String;&nbsp;New_Name:&nbsp;<B>in</B>&nbsp;String);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Copy_File(Source_Name:&nbsp;<B>in</B>&nbsp;String;&nbsp;Target_Name:&nbsp;<B>in</B>&nbsp;String;&nbsp;Form:&nbsp;<B>in</B>&nbsp;String&nbsp;:=&nbsp;&quot;&quot;);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>File&nbsp;and&nbsp;directory&nbsp;name&nbsp;operations:</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Full_Name(Name:&nbsp;String)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Simple_Name(Name:&nbsp;String)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Containing_Directory(Name:&nbsp;String)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Extension(Name:&nbsp;String)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Base_Name(Name:&nbsp;String)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Compose(Containing_Directory:&nbsp;String&nbsp;:=&nbsp;&quot;&quot;;&nbsp;Name:&nbsp;String;&nbsp;Extension:&nbsp;String&nbsp;:=&nbsp;&quot;&quot;)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;String;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>File&nbsp;and&nbsp;directory&nbsp;queries:</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;File_Kind&nbsp;<B>is</B>&nbsp;(Directory,&nbsp;Ordinary_File,&nbsp;Special_File);<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;File_Size&nbsp;<B>is&nbsp;range</B>&nbsp;0&nbsp;..&nbsp;<SPAN Class="roman"><I>implementation_defined</I></SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Exists(Name:&nbsp;String)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Kind(Name:&nbsp;String)&nbsp;<B>return</B>&nbsp;File_Kind;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Size(Name:&nbsp;String)&nbsp;<B>return</B>&nbsp;File_Size;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Modification_Time(Name:&nbsp;String)&nbsp;<B>return</B>&nbsp;Ada.Calendar.Time;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Directory&nbsp;searching:</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Directory_Entry_Type&nbsp;<B>is&nbsp;limited&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Filter_Type&nbsp;<B>is&nbsp;array&nbsp;</B>(File_Kind)&nbsp;<B>of</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Search_Type&nbsp;<B>is&nbsp;limited&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Start_Search(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Search:&nbsp;<B>in&nbsp;out</B>&nbsp;Search_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Directory:&nbsp;<B>in</B>&nbsp;String;&nbsp;Pattern:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Filter:&nbsp;<B>in</B>&nbsp;Filter_Type&nbsp;:=&nbsp;(<B>others</B>&nbsp;=&gt;&nbsp;True));<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;End_Search(Search:&nbsp;<B>in&nbsp;out</B>&nbsp;Search_Type);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;More_Entries(Search:&nbsp;Search_Type)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Get_Next_Entry(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Search:&nbsp;<B>in&nbsp;out</B>&nbsp;Search_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Directory_Entry:&nbsp;<B>out</B>&nbsp;Directory_Entry_Type);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Search(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Directory:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pattern:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Filter:&nbsp;<B>in</B>&nbsp;Filter_Type&nbsp;:=&nbsp;(<B>others</B>&nbsp;=&gt;&nbsp;True);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Directory_Entry:&nbsp;<B>in</B>&nbsp;Directory_Entry_Type));</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Operations&nbsp;on&nbsp;Directory&nbsp;Entries:</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Simple_Name(Directory_Entry:&nbsp;Directory_Entry_Type)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Full_Name(Directory_Entry:&nbsp;Directory_Entry_Type)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Kind(Directory_Entry:&nbsp;Directory_Entry_Type)&nbsp;<B>return</B>&nbsp;File_Kind;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Size(Directory_Entry:&nbsp;Directory_Entry_Type)&nbsp;<B>return</B>&nbsp;File_Size;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Modification_Time(Directory_Entry:&nbsp;Directory_Entry_Type)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Ada.Calendar.Time;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;Status_Error:&nbsp;<B>exception&nbsp;renames&nbsp;</B>Ada.IO_Exceptions.Status_Error;<BR>
+&nbsp;&nbsp;&nbsp;Name_Error:&nbsp;<B>exception&nbsp;renames&nbsp;</B>Ada.IO_Exceptions.Name_Error;<BR>
+&nbsp;&nbsp;&nbsp;Use_Error:&nbsp;<B>exception&nbsp;renames&nbsp;</B>Ada.IO_Exceptions.Use_Error;<BR>
+&nbsp;&nbsp;&nbsp;Device_Error:&nbsp;<B>exception&nbsp;renames&nbsp;A</B>da.IO_Exceptions.Device_Error;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;Ada.Directories;</div>
+<div class="Normal">Most operating systems have some sort of tree-structured 
+filing system. The general idea of this package is that it allows the 
+manipulation of file and directory names as far as is possible in a unified 
+manner which is not too dependent on the implementation and operating 
+system.</div>
+<div class="Normal">Files are classified as directories, special files 
+and ordinary files. Special files are things like devices on Windows 
+and soft links on Unix; these cannot be created or read by the predefined 
+Ada input&ndash;output packages.</div>
+<div class="Normal">Files and directories are identified by strings in 
+the usual way. The interpretation is implementation defined.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The full name of a 
+file is a string such as&nbsp;</div>
+<div class="SwissExamples">&quot;c:\adastuff\rat\library.doc&quot;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and the simple name 
+is&nbsp;</div>
+<div class="SwissExamples">&quot;library.doc&quot;</div>
+<div class="Normal" style="margin-bottom: 0.4em">At least that is in 
+good old DOS. In Windows XP it is something like&nbsp;</div>
+<div class="SwissExamples">&quot;C:\Documents&nbsp;and&nbsp;Settings\john.JBI3\My&nbsp;Documents\adastuff\rat\library.doc&quot;</div>
+<div class="Normal" style="margin-bottom: 0.4em">For the sake of illustration 
+we will continue with the simple DOS example. The current directory is 
+that set by the <SPAN Class="swiss">&quot;cd&quot;</SPAN> command. So 
+assuming we have done&nbsp;</div>
+<div class="SwissExamples">c:\&gt;cd&nbsp;adastuff<BR>
+c:\adastuff&gt;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then the function <SPAN Class="swiss">Current_Directory</SPAN> 
+will return the string <SPAN Class="swiss">&quot;c:\adastuff&quot;</SPAN>. 
+The procedure <SPAN Class="swiss">Set_Directory</SPAN> sets the current 
+default directory. The procedures <SPAN Class="swiss">Create_Directory</SPAN> 
+and <SPAN Class="swiss">Delete_Directory</SPAN> create and delete a single 
+directory. We can either give the full name or just the part starting 
+from the current default. Thus<A NAME="I1294"></A><A NAME="I1295"></A><A NAME="I1296"></A><A NAME="I1297"></A><A NAME="I1298"></A> 
+</div>
+<div class="SwissExamples">Create_Directory(&quot;c:\adastuff\history&quot;);<BR>
+Delete_Directory(&quot;history&quot;);</div>
+<div class="Normal">will cancel out.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The procedure <SPAN Class="swiss">Create_Path</SPAN> 
+creates several nested directories as necessary. Thus starting from the 
+situation above, if we write&nbsp;</div>
+<div class="SwissExamples">Create_Path(&quot;c:\adastuff\books\old&quot;);</div>
+<div class="Normal">then it will first create a directory <SPAN Class="swiss">&quot;books&quot;</SPAN> 
+in <SPAN Class="swiss">&quot;c:\adastuff&quot;</SPAN> and then a directory 
+<SPAN Class="swiss">&quot;old&quot;</SPAN> in <SPAN Class="swiss">&quot;books&quot;</SPAN>. 
+On the other hand if we wrote <SPAN Class="swiss">Create_Path(&quot;c:\adastuff\rat&quot;);</SPAN> 
+then it would do nothing since the path already exists. The procedure 
+<SPAN Class="swiss">Delete_Tree</SPAN> deletes a whole tree including 
+subdirectories and files.</div>
+<div class="Normal">The procedures <SPAN Class="swiss">Delete_File</SPAN>, 
+<SPAN Class="swiss">Rename</SPAN> and <SPAN Class="swiss">Copy_File</SPAN> 
+behave as expected. Note in particular that <SPAN Class="swiss">Copy_File</SPAN> 
+can be used to copy any file that could be copied using a normal input&ndash;output 
+package such as <SPAN Class="swiss">Text_IO</SPAN>. For example, it is 
+really tedious to use <SPAN Class="swiss">Text_IO</SPAN> to copy a file 
+intact including all line and page terminators. It is a trivial matter 
+using <SPAN Class="swiss">Copy_File</SPAN>.</div>
+<div class="Normal">Note also that the procedures <SPAN Class="swiss">Create_Directory</SPAN>, 
+<SPAN Class="swiss">Create_Path</SPAN> and <SPAN Class="swiss">Copy_File</SPAN> 
+have an optional <SPAN Class="swiss">Form</SPAN> parameter. Like similar 
+parameters in the predefined input&ndash;output packages the meaning 
+is implementation defined.</div>
+<div class="Normal">The next group of six functions, <SPAN Class="swiss">Full_Name</SPAN>, 
+<SPAN Class="swiss">Simple_Name</SPAN>, <SPAN Class="swiss">Containing_Directory</SPAN>, 
+<SPAN Class="swiss">Extension</SPAN>, <SPAN Class="swiss">Base_Name</SPAN> 
+and <SPAN Class="swiss">Compose</SPAN> just manipulate strings representing 
+file names and do not in any way interact with the actual external file 
+system. Moreover, of these, only the behaviour of <SPAN Class="swiss">Full_Name</SPAN> 
+depends upon the current directory.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The function <SPAN Class="swiss">Full_Name</SPAN> 
+returns the full name of a file. Thus assuming the current directory 
+is still <SPAN Class="swiss">&quot;c:\adastuff&quot;</SPAN><A NAME="I1299"></A> 
+</div>
+<div class="SwissExamples">Full_Name(&quot;rat\library.doc&quot;)</div>
+<div class="Normal" style="margin-bottom: 0.4em">returns <SPAN Class="swiss">&quot;c:\adastuff\rat\library.doc&quot;</SPAN> 
+and&nbsp;</div>
+<div class="SwissExamples">Full_Name(&quot;library.doc&quot;)</div>
+<div class="Normal">returns <SPAN Class="swiss">&quot;c:\adastuff\library.doc&quot;</SPAN>. 
+The fact that such a file does not exist is irrelevant. We might be making 
+up the name so that we can then create the file. If the string were malformed 
+in some way (such as <SPAN Class="swiss">&quot;66##77&quot;</SPAN>) so 
+that the corresponding full name if returned would be nonsense then <SPAN Class="swiss">Name_Error</SPAN> 
+is raised. But <SPAN Class="swiss">Name_Error</SPAN> is never raised 
+just because the file does not exist.</div>
+<div class="Normal" style="margin-bottom: 0.4em">On the other hand&nbsp;</div>
+<div class="SwissExamples">Simple_Name(&quot;c:\adastuff\rat\library.doc&quot;)</div>
+<div class="Normal" style="margin-bottom: 0.4em">returns <SPAN Class="swiss">&quot;library.doc&quot;</SPAN> 
+and not <SPAN Class="swiss">&quot;rat\library.doc&quot;</SPAN>. We can 
+also apply <SPAN Class="swiss">Simple_Name</SPAN> to a string that does 
+not go back to the root. Thus<A NAME="I1300"></A><A NAME="I1301"></A> 
+</div>
+<div class="SwissExamples">Simple_Name(&quot;rat\library.doc&quot;);</div>
+<div class="Normal">is allowed and also returns <SPAN Class="swiss">&quot;library.doc&quot;</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The function <SPAN Class="swiss">Containing_Directory_Name</SPAN> 
+removes the simple name part of the parameter. We can even write&nbsp;</div>
+<div class="SwissExamples">Containing_Directory_Name(&quot;..\rat\library.doc&quot;)</div>
+<div class="Normal" style="margin-bottom: 0.4em">and this returns <SPAN Class="swiss">&quot;..\rat&quot;</SPAN>; 
+note that it also removes the separator <SPAN Class="swiss">&quot;\&quot;</SPAN>. 
+&quot;\&quot;. We can apply it again&nbsp;</div>
+<div class="SwissExamples">Containing_Directory_Name(&quot;..\rat&quot;)</div>
+<div class="Normal">and this returns &quot;..&quot; on its own.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The functions <SPAN Class="swiss">Extension</SPAN> 
+and <SPAN Class="swiss">Base_Name</SPAN> return the corresponding parts 
+of a file name thus<A NAME="I1302"></A><A NAME="I1303"></A>&nbsp;</div>
+<div class="SwissExamples">Base_Name(&quot;rat\library.doc&quot;)&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>&quot;library&quot;</I></SPAN><BR>
+Extension(&quot;rat\library.doc&quot;)&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>&quot;doc&quot;</I></SPAN></div>
+<div class="Normal">Note that they can be applied to a simple name or 
+to a full name or, as here, to something midway between.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The function <SPAN Class="swiss">Compose</SPAN> 
+can be used to put the various bits together, thus&nbsp;</div>
+<div class="SwissExamples">Compose(&quot;rat&quot;,&nbsp;&quot;library&quot;,&nbsp;&quot;doc&quot;)</div>
+<div class="Normal" style="margin-bottom: 0.4em">returns <SPAN Class="swiss">&quot;rat\library.doc&quot;</SPAN>. 
+The default parameters enable bits to be omitted. In fact if the third 
+parameter is omitted then the second parameter is treated as a simple 
+name rather than a base name. So we could equally write&nbsp;</div>
+<div class="SwissExamples">Compose(&quot;rat&quot;,&quot;library.doc&quot;)</div>
+<div class="Normal">The next group of functions, <SPAN Class="swiss">Exists</SPAN>, 
+<SPAN Class="swiss">Kind</SPAN>, <SPAN Class="swiss">Size</SPAN> and 
+<SPAN Class="swiss">Modification_Time</SPAN> act on a file name (that 
+is the name of a real external file) and return the obvious result. (The 
+size is measured in stream elements &ndash; usually bytes.)<A NAME="I1304"></A><A NAME="I1305"></A> 
+<A NAME="I1306"></A><A NAME="I1307"></A><A NAME="I1308"></A><A NAME="I1309"></A><A NAME="I1310"></A><A NAME="I1311"></A></div>
+<div class="Normal">Various types and subprograms are provided to support 
+searching over<A NAME="I1312"></A><A NAME="I1313"></A> a directory structure 
+for entities with appropriate properties. This can be done in two ways, 
+either as a loop under the direct control of the programmer (sometimes 
+called an active iterator) or via an access to subprogram parameter (often 
+called a passive iterator). We will look at the active iterator approach 
+first.<A NAME="I1314"></A><A NAME="I1315"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">The procedures <SPAN Class="swiss">Start_Search</SPAN>, 
+<SPAN Class="swiss">End_Search</SPAN> and <SPAN Class="swiss">Get_Next_Entry</SPAN> 
+and the function <SPAN Class="swiss">More_Entries</SPAN> control the 
+search loop. The general pattern is&nbsp;</div>
+<div class="SwissExamples">Start_Search(&nbsp;...&nbsp;);<BR>
+<B>while</B>&nbsp;More_Entries(&nbsp;...&nbsp;)&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;Get_Next_Entry(&nbsp;...&nbsp;);<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;with&nbsp;the&nbsp;entry&nbsp;found</I></SPAN><BR>
+<B>end&nbsp;loop</B>;<BR>
+End_Search(&nbsp;...&nbsp;);</div>
+<div class="Normal">Three types are involved. The type <SPAN Class="swiss">Directory_Entry_Type</SPAN> 
+is limited private and acts as a sort of handle to the entries found. 
+Valid values of this type can only be created by a call of <SPAN Class="swiss">Get_Next_Entry</SPAN> 
+whose second parameter is an out parameter of the type <SPAN Class="swiss">Directory_Entry_Type</SPAN>. 
+The type <SPAN Class="swiss">Search_Type</SPAN> is also limited private 
+and contains the state of the search. The type <SPAN Class="swiss">Filter_Type</SPAN> 
+provides a simple means of identifying the kinds of file to be found. 
+It has three components corresponding to the three values of the enumeration 
+type <SPAN Class="swiss">File_Kind</SPAN> and is used by the procedure 
+<SPAN Class="swiss">Start_Search</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Suppose we want to 
+look for all ordinary files with extension <SPAN Class="swiss">&quot;doc&quot;</SPAN> 
+in the directory <SPAN Class="swiss">&quot;c:\adastuff\rat&quot;</SPAN>. 
+We could write&nbsp;</div>
+<div class="SwissExamples">Rat_Search:&nbsp;Search_Type;<BR>
+Item:&nbsp;Directory_Entry_Type;<BR>
+Filter:&nbsp;Filter_Type&nbsp;:=&nbsp;(Ordinary_File&nbsp;=&gt;&nbsp;True,&nbsp;<B>others</B>&nbsp;=&gt;&nbsp;False);<BR>
+...<BR>
+Start_Search(Rat_Search,&nbsp;&quot;c:\adastuff\rat&quot;,&nbsp;&quot;*.doc&quot;,&nbsp;Filter);<BR>
+<B>while</B>&nbsp;More_Entries(Rat_Search)&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;Get_Next_Entry(Rat_Search,&nbsp;Item);<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;with&nbsp;Item</I></SPAN><BR>
+<B>end&nbsp;loop</B>;<BR>
+End_Search(Rat_Search);</div>
+<div class="Normal">The third parameter of <SPAN Class="swiss">Start_Search</SPAN> 
+(which is <SPAN Class="swiss">&quot;*.doc&quot;</SPAN> in the above example) 
+represents a pattern for matching names and thus provides further filtering 
+of the search. The interpretation is implementation defined except that 
+a null string means match everything. However, we would expect that writing 
+<SPAN Class="swiss">&quot;*.doc&quot;</SPAN> would mean search only for 
+files with the extension <SPAN Class="swiss">&quot;doc&quot;</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The alternative mechanism 
+using a passive iterator is as follows. We first declare a subprogram 
+such as&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Do_It(Item:&nbsp;<B>in</B>&nbsp;Directory_Entry_Type)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;with&nbsp;item</I></SPAN><BR>
+<B>end</B>&nbsp;Do_It;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then declare a 
+filter and call the procedure <SPAN Class="swiss">Search</SPAN> thus 
+</div>
+<div class="SwissExamples">Filter:&nbsp;Filter_Type&nbsp;:=&nbsp;(Ordinary_File&nbsp;=&gt;&nbsp;True,&nbsp;<B>others</B>&nbsp;=&gt;&nbsp;False);<BR>
+...<BR>
+Search(&quot;c:\adastuff\rat&quot;,&nbsp;&quot;*.doc&quot;,&nbsp;Filter,&nbsp;Do_It'Access);</div>
+<div class="Normal">The parameters of <SPAN Class="swiss">Search</SPAN> 
+are the same as those of <SPAN Class="swiss">Start_Search</SPAN> except 
+that the first parameter of type <SPAN Class="swiss">Search_Type</SPAN> 
+is omitted and a final parameter which identifies the procedure <SPAN Class="swiss">Do_It</SPAN> 
+is added. The variable <SPAN Class="swiss">Item</SPAN> which we declared 
+in the active iterator is now the parameter <SPAN Class="swiss">Item</SPAN> 
+of the procedure<SPAN Class="swiss">&nbsp;Do_It</SPAN>.</div>
+<div class="Normal">Each approach has its advantages. The passive iterator 
+has the merit that we cannot make mistakes such as forget to call <SPAN Class="swiss">End_Search</SPAN>. 
+But some find the active iterator easier to understand and it can be 
+easier to use for parallel searches.</div>
+<div class="Normal">The final group of functions enables us to do useful 
+things with the results of our search. Thus <SPAN Class="swiss">Simple_Name</SPAN> 
+and <SPAN Class="swiss">Full_Name</SPAN> convert a value of <SPAN Class="swiss">Directory_Entry_Type</SPAN> 
+to the corresponding simple or full file name. Having obtained the file 
+name we can do everything we want but for convenience the functions <SPAN Class="swiss">Kind</SPAN>, 
+<SPAN Class="swiss">Size</SPAN> and <SPAN Class="swiss">Modification_Time 
+</SPAN>are provided which also directly take a parameter of <SPAN Class="swiss">Directory_Entry_Type</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So to complete this 
+example we might print out a table of the files found giving their simple 
+name, size and modification time. Using the active approach the loop 
+might then become&nbsp;</div>
+<div class="SwissExamples"><B>while</B>&nbsp;More_Entries(Rat_Search)&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;Get_Next_Entry(Rat_Search,&nbsp;Item);<BR>
+&nbsp;&nbsp;&nbsp;Put(Simple_Name(Item));&nbsp;&nbsp;Set_Col(15);<BR>
+&nbsp;&nbsp;&nbsp;Put(Size(Item/1000));&nbsp;&nbsp;Put(&quot;&nbsp;KB&quot;);&nbsp;&nbsp;Set_Col(25);<BR>
+&nbsp;&nbsp;&nbsp;Put_Line(Image(Modification_Time(Item)));<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This might produce 
+a table such as&nbsp;</div>
+<div class="Indented1"><TABLE frame="void" rules="none" border="0" cellpadding="2"><TR><TD align="left"><SPAN Class="swiss">access.doc</SPAN><TD align="left"><SPAN Class="swiss">152 
+KB</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">2005-04-05</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">09:03:10</SPAN>
+<TR><TD align="left"><SPAN Class="swiss">containers.doc</SPAN><TD align="left"><SPAN Class="swiss">372 
+KB</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">2005-06-14</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">21:39:05</SPAN>
+<TR><TD align="left"><SPAN Class="swiss">general.doc</SPAN><TD align="left"><SPAN Class="swiss">181 
+KB</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">2005-03-03</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">08:43:15</SPAN>
+<TR><TD align="left"><SPAN Class="swiss">intro.doc</SPAN><TD align="left"><SPAN Class="swiss">173 
+KB</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">2004-11-25</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">15:52:20</SPAN>
+<TR><TD align="left"><SPAN Class="swiss">library.doc</SPAN><TD align="left"><SPAN Class="swiss">149 
+KB</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">2005-04-08</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">13:50:05</SPAN>
+<TR><TD align="left"><SPAN Class="swiss">oop.doc</SPAN><TD align="left"><SPAN Class="swiss">179 
+KB</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">2005-02-25</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">18:34:55</SPAN>
+<TR><TD align="left"><SPAN Class="swiss">structure.doc</SPAN><TD align="left"><SPAN Class="swiss">151 
+KB</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">2005-04-05</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">09:09:25</SPAN>
+<TR><TD align="left"><SPAN Class="swiss">tasking.doc</SPAN><TD align="left"><SPAN Class="swiss">174 
+KB</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">2005-03-31</SPAN>&nbsp;&nbsp;<TD align="left"><SPAN Class="swiss">11:16:40</SPAN>
+</table></div>
+<div class="Normal">Note that the function <SPAN Class="swiss">Image</SPAN> 
+is from the package <SPAN Class="swiss">Ada.Calendar.Formatting</SPAN> 
+discussed in the previous section.</div>
+<div class="Normal">Observe that the search is carried out on the directory 
+given and does not look at subdirectories. If we want to do that then 
+we can use the function <SPAN Class="swiss">Kind</SPAN> to identify subdirectories 
+and then search recursively.</div>
+<div class="Normal">It has to be emphasized that the package <SPAN Class="swiss">Ada.Directories</SPAN> 
+is very implementation dependent and indeed might not be supported by 
+some implementations at all. Implementations are advised to provide any 
+additional useful functions concerning retrieving other information about 
+files (such as name of the owner or the original creation date) in a 
+child package <SPAN Class="swiss">Ada.Directories.Information</SPAN>.</div>
+<div class="Normal">Finally, note that misuse of the various operations 
+will raise one of the exceptions <SPAN Class="swiss">Status_Error</SPAN>, 
+<SPAN Class="swiss">Name_Error</SPAN>, <SPAN Class="swiss">Use_Error</SPAN> 
+or <SPAN Class="swiss">Device_Error</SPAN> from the package <SPAN Class="swiss">IO_Exceptions</SPAN>.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

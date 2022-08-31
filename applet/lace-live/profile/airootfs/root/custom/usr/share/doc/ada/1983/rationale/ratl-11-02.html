@@ -1,0 +1,185 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 11.2: Program Structure</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 11: General Program Structure - Visibility and Overloading</H2>
+
+<H3><a name="11.2">11.2 Program Structure</a></H3>
+
+The overall  structure of  an Ada program text (a compilation unit) is
+similar to  that of an <a href="ratl-BIB.html#languages">Algol 60</a> or <a href="ratl-BIB.html#languages">Pascal</a> text: it appears as a nested
+structure of  program units  - subprograms,  packages, task units, and
+generic units - and block statements.
+<p>
+Nesting is  achieved through declarative parts: A declarative part may
+contain bodies of program units, and each of these may in turn contain
+a declarative  part; furthermore, a sequence of statements may contain
+a block statement that contains a declarative part.
+<p>
+A key  question in  the definition of program structure is that of the
+purpose of  nesting. Clearly,  nesting has  been used  in Algol 60 and
+Pascal in  relation to  visibility. In  these languages, two units are
+written in  the context  of the  same declarative  part if they are to
+share the visibility of some common outer entities.
+<p>
+Is this,  however, the  only purpose of nesting? If it were, a logical
+conclusion would  be the  systematic unnesting  of units  that do  not
+share any common visibility.
+<p>
+We consider  this view  to be  too extreme. Units that do not have any
+visibility dependence  may nevertheless  be maintained  together in  a
+nested text structure for the benefit of the logical exposition of the
+program. There  is an  analogy with an encyclopedia, whose material is
+organized  into   nested  subjects:   It  is  the  knowledge  of  this
+organization that enables the easy retrieval of a given subject.
+<p>
+Systematic unnesting  of units that do not share any common visibility
+would produce  a sequence  of small  units -  not unlike a sequence of
+<a href="ratl-BIB.html#languages">Fortran</a> subprograms.  Finding a  given unit  in  such  a  sequence  is
+difficult unless  aided by  a directory  or by some convention such as
+alphabetical ordering. Reading the program may also be difficult since
+the structure  of the  text does  not reflect the logical organization
+and the logical connections.
+<p>
+For these  reasons, the ability to nest units has been retained in Ada
+along with  the ability  to control  visibility that  is  afforded  by
+packages and  use clauses. Thus an Ada program appears as a collection
+of nested  declarative regions. A given declarative region may include
+the declarations  of inner  program units,  in which case it will also
+include the  bodies of these program units. Each of these bodies again
+defines a  declarative region  which may  in turn  declare other inner
+program units.
+<p>
+In general it is possible to provide the definition of program units -
+especially packages - in two textually distinct parts:
+<ol>
+<li>the  specification,   which   defines   the   logical
+   interface (between definition and use) of the program unit
+<p>
+<li>the body, which describes a particular realization of
+   the specification.
+</ol>
+
+This possibility  has far reaching implications, in that it provides a
+single basis  for  achieving  several  different  objectives,  notably
+textual clarity, abstraction, and separate compilation.
+<p>
+We first  illustrate this ability in the case of a procedure. Consider
+for instance the procedure declaration:
+<p>
+<PRE>    procedure PUSH(E :  in ELEMENT;  S :  in out STACK);</PRE>
+<p>
+This  declaration   contains  the   name  of  the  procedure  and  the
+specification of  the mode  and type of each formal parameter. This is
+the  information  needed  to  specify  the  interface  of  PUSH,  both
+syntactically and semantically, at least with regard to type checking.
+From this  point of view the declaration conveys all one needs to know
+in order  to  call  the  procedure  PUSH.  The  declaration  could  be
+augmented by  comments specifying  pre-conditions and  post-conditions
+and any exception that might be raised by PUSH.
+<p>
+Obviously, however,  this formulation of PUSH is incomplete in that it
+does not  define an  implementation of  the procedure.  The latter  is
+provided by a procedure body:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure PUSH(E :  in ELEMENT;  S :  in out STACK) is
+begin
+  if S.INDEX = S.SIZE then
+    raise STACK_OVERFLOW;
+  else
+    S.INDEX :=  S.INDEX + 1;
+    S.SPACE(S.INDEX) :=  E;
+  end if;
+end PUSH;
+</pre></td></tr></table>
+<p>
+These two  constructs -  the declaration and the body - jointly define
+the procedure. In cases where the advantages of separate specification
+are not  essential, the  procedure declaration  may be omitted. In any
+case, the  specification of the parameters must always be given in the
+body for  reasons of  readability, and also because of the possibility
+of overloading:  there could  be push  procedures for items, integers,
+and so on.
+<p>
+A similar  separation is  provided for packages. A package declaration
+provides the interface to the user: the visible part. For example, the
+declaration of a SIMPLE_IO package is provided as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+package SIMPLE_IO is
+  type FILE_NAME is limited private;
+  procedure CREATE(FILE    :  out    FILE_NAME);
+  procedure READ      (ELEM     :  out    INTEGER;  F :  in
+FILE_NAME);
+  procedure WRITE     (ELEM     :  in     INTEGER;  F :  in
+FILE_NAME);
+private
+  type FILE_NAME is new INTEGER range 0 .. 50;
+end SIMPLE_IO;
+</pre></td></tr></table>
+<p>
+This declaration  provides the user with the specification of the name
+of a  type -  FILE_NAME -  and also  with  the  specification  of  the
+associated procedures  CREATE, READ,  and WRITE.  This constitutes the
+logical interface of the package.
+<p>
+The package  implementation is always provided as a textually distinct
+package body as shown in the sketch below:
+<p>
+<table border cellpadding=6><tr><td><pre>
+package body SIMPLE_IO is
+  type FILE_DESCRIPTOR is
+    record
+      -- components of each file descriptor
+    end record;
+  DIRECTORY :  array (FILE_NAME) of FILE_DESCRIPTOR;
+
+  -- other local constants, variables and subprograms
+
+  procedure CREATE(FILE  :  out FILE_NAME) is
+    ...
+  end CREATE;
+  procedure READ(ELEM :  out INTEGER;  F :  in FILE_NAME) is ...
+end READ;
+  procedure WRITE(ELEM :  in INTEGER;  F :  in FILE_NAME) is ...
+end WRITE;
+end SIMPLE_IO;
+</pre></td></tr></table>
+<p>
+As in  the case of procedures, the package declaration and the package
+body jointly  define the  package considered. For pragmatic reasons (a
+package  declaration   is  generally  much  larger  than  a  procedure
+declaration),  the  package  body  does  not  repeat  the  information
+contained in  the package  declaration; furthermore packages cannot be
+overloaded and so there is no problem of identification.
+<p>
+A similar  separation is  also used  for task  units and  for  generic
+units.
+
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-11-03.html#11.3"><b>NEXT</b></a>
+&#128; <a href="ratl-11-01.html#11.1"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-11.html#11"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>

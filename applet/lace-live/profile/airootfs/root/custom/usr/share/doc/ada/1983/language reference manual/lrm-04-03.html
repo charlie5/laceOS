@@ -1,0 +1,338 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 4.3: Aggregates</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="4.3">4.3</A>.  Aggregates  </H2>
+<A HREF="lrm-04-02.html#4.2"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-04.html#4"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-04-04.html#4.4"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+An  aggregate  is  a  basic operation that combines component values into a
+composite value of a record or array type. 
+<pre>
+    aggregate ::=
+       (component_association {, component_association}) 
+
+    component_association ::=
+       [choice {| choice} =&gt; ] expression 
+</pre>
+<P>
+Each  component  association  associates  an  expression  with   components
+(possibly  none).   A  component  association  is  said  to be named if the
+components are specified explicitly by choices;  it is otherwise said to be
+positional.  For  a  positional  association,  the  (single)  component  is
+implicitly  specified  by  position,  in  the  order  of  the corresponding
+component declarations for record components,  in  index  order  for  array
+components. 
+<P>
+Named  associations  can  be  given  in  any  order  (except for the choice
+others), but if both positional and named associations are used in the same
+aggregate, then positional associations must occur first, at  their  normal
+position.   Hence  once  a  named  association  is  used,  the  rest of the
+aggregate must use only named associations.  Aggregates containing a single
+component association must always be given  in  named  notation.   Specific
+rules  concerning  component  associations  exist for record aggregates and
+array aggregates. 
+<P>
+Choices in component associations have the same syntax as in variant  parts
+(see <a href="lrm-03-07.html#3.7.3">3.7.3</a>).  A choice that is a component simple name is only allowed in a
+record  aggregate.   For a component association, a choice that is a simple
+expression or a discrete range is only allowed in an  array  aggregate;   a
+choice  that  is  a  simple  expression  specifies  the  component  at  the
+corresponding index  value;   similarly  a  discrete  range  specifies  the
+components  at  the  index  values in the range.  The choice others is only
+allowed in a component association if the association appears last and  has  
+this single choice;  it specifies all remaining components, if any. 
+<P>
+Each  component  of  the  value defined by an aggregate must be represented
+once and only once in the aggregate.  Hence each aggregate must be complete
+and a given component is not allowed to  be  specified  by  more  than  one
+choice. 
+<P>
+The  type  of  an aggregate must be determinable solely from the context in
+which the aggregate appears, excluding the aggregate itself, but using  the
+fact  that  this  type  must  be composite and not limited.  The type of an
+aggregate in turn determines the required type for each of its  components.                                              
+<P>
+Notes: 
+<P>
+The  above  rule implies that the determination of the type of an aggregate
+cannot use any information from within the aggregate.  In particular,  this
+determination  cannot  use  the  type  of  the  expression  of  a component
+association, or the form or the type of a choice.  An aggregate can  always
+be  distinguished  from  an  expression enclosed by parentheses:  this is a
+consequence of the fact that named notation is required  for  an  aggregate
+with a single component. 
+<P>
+<b>References:</b>   <A HREF="#4.3.2">array aggregate</A>,
+<A HREF="lrm-03-06.html#3.6">array type</A>,
+<A HREF="lrm-03-03.html#3.3.3">basic operation</A>,
+<A HREF="lrm-03-07.html#3.7.3">choice</A>,
+<A HREF="lrm-03-03.html#3.3">component</A>,
+<A HREF="lrm-03-03.html#3.3">composite  type</A>,
+<A HREF="lrm-03-03.html#3.3">composite  value</A>,
+<A HREF="lrm-03-06.html#3.6">discrete  range</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="lrm-03-06.html#3.6">index</A>,
+<A HREF="lrm-07-04.html#7.4.4">limited type</A>,
+<A HREF="lrm-04-04.html#4.4">primary</A>,
+<A HREF="#4.3.1">record aggregate</A>,
+<A HREF="lrm-03-07.html#3.7">record type</A>,
+<A HREF="lrm-04-04.html#4.4">simple expression</A>,
+<A HREF="lrm-04-01.html#4.1">simple name</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-03-07.html#3.7.3">variant part</A>.
+<P>
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-03-05.html#3.5">3.5&nbsp;Aggregates</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-04-06.html#4.6">4.6&nbsp;Record Types</a>
+<p>
+
+<b>Sub-topics:</b>
+<ul>
+<li><A HREF="#4.3.1">4.3.1</A> Record Aggregates  
+<li><A HREF="#4.3.2">4.3.2</A> Array Aggregates  
+</ul>
+<H3><A NAME="4.3.1">4.3.1</A>.  Record Aggregates  </H3>
+<A HREF="#4.3"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#4.3.2"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+If the type of an aggregate is a record type, the component names given  as
+choices  must  denote  components  (including  discriminants) of the record
+type.  If the choice others is given as a choice of a record aggregate,  it
+must  represent  at  least one component.  A component association with the
+choice others or  with  more  than  one  choice  is  only  allowed  if  the
+represented  components  are  all  of  the  same type.  The expression of a
+component  association  must  have  the  type  of  the  associated   record
+components. 
+<P>
+The  value specified for a discriminant that governs a variant part must be
+given by a  static  expression  (note  that  this  value  determines  which
+dependent components must appear in the record value). 
+<P>
+For  the  evaluation  of  a  record aggregate, the expressions given in the
+component associations are evaluated in some order that is not  defined  by
+the  language.  The expression of a named association is evaluated once for
+each associated component.   A  check  is  made  that  the  value  of  each
+subcomponent  of the aggregate belongs to the subtype of this subcomponent.
+<P>
+The exception CONSTRAINT_ERROR is raised if this check fails. 
+<P>
+Example of a record aggregate with positional associations: 
+<pre>
+    (4, JULY, 1776)                      --  see <a href="lrm-03-07.html#3.7">3.7</a> 
+</pre>
+<P>
+Examples of record aggregates with named associations: 
+<pre>
+    (DAY =&gt; 4, MONTH =&gt; JULY, YEAR =&gt; 1776)
+    (MONTH =&gt; JULY, DAY =&gt; 4, YEAR =&gt; 1776) 
+
+    (DISK, CLOSED, TRACK =&gt; 5, CYLINDER =&gt; 12)       --  see <a href="lrm-03-07.html#3.7.3">3.7.3</a>
+    (UNIT =&gt; DISK, STATUS =&gt; CLOSED, CYLINDER =&gt; 9, TRACK =&gt; 1) 
+</pre>
+<P>
+Example of component association with several choices:   
+<pre>
+    (VALUE =&gt; 0, SUCC|PRED =&gt; new CELL'(0, null, null))   --  see <a href="lrm-03-08.html#3.8.1">3.8.1</a>
+
+    --  The allocator is evaluated twice:  SUCC and PRED designate
+        different cells
+</pre>
+<P>
+Note:    
+<P>
+For an aggregate with positional associations, discriminant  values  appear
+first  since  the  discriminant  part  is  given  first  in the record type
+declaration;  they must be in the same order as in the  discriminant  part.                                                 
+<P>
+<b>References:</b>    <A HREF="#4.3">aggregate</A>,
+<A HREF="lrm-04-08.html#4.8">allocator</A>,
+<A HREF="lrm-03-07.html#3.7.3">choice</A>,
+<A HREF="#4.3">component association</A>,
+<A HREF="lrm-03-07.html#3.7">component  name</A>,
+<A HREF="lrm-03-03.html#3.3">constraint</A>,
+<A HREF="lrm-11-01.html#11.1">constraint_error exception</A>,
+<A HREF="lrm-03-07.html#3.7.1">depend  on  a  discriminant</A>,
+<A HREF="lrm-03-03.html#3.3">discriminant</A>,
+<A HREF="lrm-03-07.html#3.7.1">discriminant part</A>,
+<A HREF="lrm-04-05.html#4.5">evaluate</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="lrm-01-06.html#1.6">in some  order</A>,
+<A HREF="lrm-10.html#10">program</A>,
+<A HREF="lrm-11.html#11">raising  of  exceptions</A>,
+<A HREF="lrm-03-07.html#3.7">record component</A>,
+<A HREF="lrm-03-07.html#3.7">record type</A>,
+<A HREF="lrm-03-03.html#3.3">satisfy</A>,
+<A HREF="lrm-04-09.html#4.9">static expression</A>,
+<A HREF="lrm-03-03.html#3.3">subcomponent</A>,
+<A HREF="lrm-03-03.html#3.3.2">subtype</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-03-07.html#3.7.3">variant part</A>.
+<P>
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-06.html#5.6.10">5.6.10&nbsp;Aggregates</a>
+
+<H3><A NAME="4.3.2">4.3.2</A>.  Array Aggregates  </H3>
+<A HREF="#4.3.1"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#4.3"><img src="lrm-up.gif" alt="[UP]"></A>
+<P>
+If  the  type  of  an  aggregate is a one-dimensional array type, then each
+choice must specify values of the index type, and the  expression  of  each
+component association must be of the component type. 
+<P>
+If  the  type  of  an  aggregate  is  a  multidimensional  array  type,  an
+n-dimensional aggregate is written as a one-dimensional aggregate, in which
+the expression specified for each component association is  itself  written
+as  an  (n-1)-dimensional  aggregate  which  is called a subaggregate;  the
+index subtype of the one-dimensional aggregate is given by the first  index
+position  of the array type.  The same rule is used to write a subaggregate
+if it is again  multidimensional,  using  successive  index  positions.   A
+string literal is allowed in a multidimensional aggregate at the place of a
+one-dimensional  array  of  a  character  type.  In what follows, the rules 
+concerning array aggregates are  formulated  in  terms  of  one-dimensional
+aggregates. 
+<P>
+Apart from a final component association with the single choice others, the
+rest  (if  any) of the component associations of an array aggregate must be
+either all positional or all  named.   A  named  association  of  an  array
+aggregate  is only allowed to have a choice that is not static, or likewise
+a choice that is a null range, if the aggregate includes a single component
+association and this component association has a single choice.  An  others
+choice is static if the applicable index constraint is static. 
+<P>
+The  bounds  of an array aggregate that has an others choice are determined
+by the applicable index constraint.  An others choice is  only  allowed  if
+the  aggregate  appears in one of the following contexts (which defines the
+applicable index constraint): 
+<ol>
+<li>The aggregate is an actual parameter, a generic actual parameter,  the
+result  expression  of  a  function, or the expression that follows an
+assignment  compound  delimiter.   Moreover,  the   subtype   of   the
+corresponding  formal  parameter,  generic  formal parameter, function
+result, or object is a constrained array subtype. 
+<br><br>
+For an aggregate that appears  in  such  a  context  and  contains  an
+association  with an others choice, named associations are allowed for
+other associations only in the case of a (nongeneric) actual parameter
+or function result.  If the aggregate  is  a  multidimensional  array,
+this restriction also applies to each of its subaggregates.    
+<br><br>
+<li>The aggregate is the operand of a qualified expression whose type mark
+denotes a constrained array subtype. 
+<br><br>
+<li>The aggregate is the expression of the  component  association  of  an   
+enclosing  (array  or  record) aggregate.  Moreover, if this enclosing
+aggregate is a multidimensional array aggregate then it is  itself  in
+one of these three contexts. 
+</ol>
+The  bounds  of  an array aggregate that does not have an others choice are
+determined as follows.  For an aggregate that has named  associations,  the
+bounds  are  determined  by  the smallest and largest choices given.  For a
+positional aggregate, the lower bound is determined by the applicable index
+constraint if the aggregate appears in one of the contexts (a) through (c);
+otherwise, the lower bound is  given  by  S'FIRST  where  S  is  the  index
+subtype;   in  either  case, the upper bound is determined by the number of
+components.                                                                       
+<P>
+The evaluation of an array aggregate that is not a subaggregate proceeds in
+two steps.  First, the choices of this aggregate and of its  subaggregates,
+if  any,  are  evaluated in some order that is not defined by the language.
+Second,  the  expressions  of  the  component  associations  of  the  array
+aggregate  are evaluated in some order that is not defined by the language;
+the expression of a named association is evaluated once for each associated
+component.  The evaluation of a subaggregate consists of this  second  step
+(the  first step is omitted since the choices have already been evaluated). 
+<P>
+For the evaluation of an aggregate that is not a null  array,  a  check  is
+made  that  the index values defined by choices belong to the corresponding
+index subtypes, and also  that  the  value  of  each  subcomponent  of  the
+aggregate   belongs   to   the   subtype  of  this  subcomponent.   For  an
+n-dimensional  multidimensional  aggregate,  a  check  is  made  that   all  
+(n-1)-dimensional  subaggregates  have  the  same  bounds.   The  exception
+CONSTRAINT_ERROR is raised if any of these checks fails.
+<P>
+Note: 
+<P>
+The allowed contexts for an array aggregate including an others choice  are
+such  that  the  bounds  of  such  an  aggregate  are always known from the
+context. 
+<P>
+Examples of array aggregates with positional associations: 
+<pre>
+    (7, 9, 5, 1, 3, 2, 4, 8, 6, 0)
+    TABLE'(5, 8, 4, 1, others =&gt; 0)  --  see <a href="lrm-03-06.html#3.6">3.6</a> 
+</pre>
+<P>
+Examples of array aggregates with named associations: 
+<pre>
+    (1 .. 5 =&gt; (1 .. 8 =&gt; 0.0))     --  two-dimensional
+    (1 .. N =&gt; new CELL)            --  N new cells, in particular for N =  0
+
+    TABLE'(2 | 4 | 10 =&gt; 1, others =&gt; 0)
+    SCHEDULE'(MON .. FRI =&gt; TRUE,  others =&gt; FALSE)  --  see <a href="lrm-03-06.html#3.6">3.6</a>
+    SCHEDULE'(WED | SUN  =&gt; FALSE, others =&gt; TRUE)
+</pre>
+<P>
+Examples of two-dimensional array aggregates: 
+<pre>
+    -- Three aggregates for the same value of type MATRIX (see <a href="lrm-03-06.html#3.6">3.6</a>):
+
+    ((1.1, 1.2, 1.3), (2.1, 2.2, 2.3))
+    (1 =&gt; (1.1, 1.2, 1.3), 2 =&gt; (2.1, 2.2, 2.3))
+    (1 =&gt; (1 =&gt; 1.1, 2 =&gt; 1.2, 3 =&gt; 1.3), 2 =&gt; (1 =&gt; 2.1, 2 =&gt; 2.2, 3 =&gt; 2.3)) 
+</pre>
+<P>
+Examples of aggregates as initial values: 
+<pre>
+  A : TABLE := (7, 9, 5, 1, 3, 2, 4, 8, 6, 0);        -- A(1)=7, A(10)= 8
+  B : TABLE := TABLE'(2 | 4 | 10 =&gt; 1, others =&gt; 0);  -- B(1)=0, B(10)=1
+  C : constant MATRIX := (1 .. 5 =&gt; (1 .. 8 =&gt; 0.0));
+                                                 -- C'FIRST(1)=1, C'LAST(2)=8
+
+  D : BIT_VECTOR(M .. N) := (M .. N =&gt; TRUE);  -- see <a href="lrm-03-06.html#3.6">3.6</a>
+  E : BIT_VECTOR(M .. N) := (others =&gt; TRUE);
+  F : STRING(1 .. 1) := (1 =&gt; 'F');  -- a one component aggregate: same as "F"
+</pre>
+<P>
+<b>References:</b>   <A HREF="lrm-06-04.html#6.4.1">actual  parameter</A>,
+<A HREF="#4.3">aggregate</A>,
+<A HREF="lrm-03-06.html#3.6">array  type</A>,
+<A HREF="lrm-05-02.html#5.2">assignment  compound  delimiter</A>,
+<A HREF="lrm-03-07.html#3.7.3">choice</A>,
+<A HREF="lrm-03-03.html#3.3">component</A>,
+<A HREF="#4.3">component association</A>,
+<A HREF="lrm-03-03.html#3.3">component  type</A>,
+<A HREF="lrm-03-06.html#3.6">constrained  array  subtype</A>,
+<A HREF="lrm-03-03.html#3.3">constraint</A>,
+<A HREF="lrm-11-01.html#11.1">constraint_error  exception</A>,
+<A HREF="lrm-03-06.html#3.6">dimension</A>,
+<A HREF="lrm-04-05.html#4.5">evaluate</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="lrm-06-01.html#6.1">formal parameter</A>,
+<A HREF="lrm-06-05.html#6.5">function</A>,
+<A HREF="lrm-01-06.html#1.6">in some order</A>,
+<A HREF="lrm-03-06.html#3.6.1">index constraint</A>,
+<A HREF="lrm-03-06.html#3.6">index range</A>,
+<A HREF="lrm-03-06.html#3.6">index subtype</A>,
+<A HREF="lrm-03-06.html#3.6">index type</A>,
+<A HREF="#4.3">named component association</A>,
+<A HREF="lrm-03-06.html#3.6.1">null array</A>,
+<A HREF="lrm-03-02.html#3.2">object</A>,
+<A HREF="#4.3">positional component  association</A>,
+<A HREF="lrm-04-07.html#4.7">qualified expression</A>,
+<A HREF="lrm-11.html#11">raising of exceptions</A>,
+<A HREF="lrm-04-09.html#4.9">static expression</A>,
+<A HREF="lrm-03-03.html#3.3">subcomponent</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>.
+<P>
+
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="htttp://www.adaic.com/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

@@ -1,0 +1,203 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Postscript</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-9-3-10.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>9.4 Postscript</H1>
+<div class="Normal">Nothing is ever perfect and a number of small imperfections 
+have been found in Ada 2005 since the Amendment was completed. We will 
+briefly look at the more obvious of these.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Perhaps the most noticeable 
+since it affects the syntax is described by two Ada Issues namely <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0015-1.TXT">AI05-15</A> 
+and <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0053-1.TXT">AI05-53</A>. 
+The former points out that in an extended return statement<A NAME="I1435"></A> 
+it is useful to be able to mark a return object as <B>constant</B> whereas 
+the latter concludes that it is unwise to be able to mark the object 
+as <B>aliased</B>. So the syntax which reads&nbsp;</div>
+<div class="SwissExamples"><B>return</B>&nbsp;defining_identifer:&nbsp;[<B>aliased</B>]&nbsp;return_subtype_indication&nbsp;[:=&nbsp;expression}&nbsp;{<B>do</B></div>
+<div class="Normal" style="margin-bottom: 0.4em">should read&nbsp;</div>
+<div class="SwissExamples"><B>return</B>&nbsp;defining_identifer:&nbsp;[<B>constant</B>]&nbsp;return_subtype_indication&nbsp;[:=&nbsp;expression}&nbsp;{<B>do</B></div>
+<div class="Normal"><B>Aliased</B> is unwise on the return object (the 
+object in the extended return statement) because the result object (remember 
+that the result of a function is itself an object and might indeed be 
+providing the initial value of a limited object) need not be aliased 
+and this can lead to some curious anomalies.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another issue concerning 
+the extended return statement is <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0032-1.TXT">AI05-32</A> 
+regarding class wide functions. In Section <A HREF="Rat-4-5.html">4.5</A> 
+we saw that a function could return an indefinite type but nevertheless 
+the return object could be declared to be constrained thus&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Make(&nbsp;...&nbsp;)&nbsp;<B>return</B>&nbsp;UA&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;UA(1&nbsp;..&nbsp;N)&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;<BR>
+<B>end</B>&nbsp;Make;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The same rule should 
+apply to class wide types. Thus if the return type is class wide such 
+as Device'Class then we should be allowed to write&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Make(&nbsp;...&nbsp;)&nbsp;<B>return</B>&nbsp;Device'Class&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;R:&nbsp;My_Device&nbsp;<B>do</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;return</B>;<BR>
+<B>end</B>&nbsp;Make;</div>
+<div class="Normal">where My_Device is covered by Device'Class. This 
+is now permitted by <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0032-1.TXT">AI05-32</A>.</div>
+<div class="Normal">Another issue regarding functions is that a function 
+that returns an abstract type must be abstract (this was true in Ada 
+95 of course). However, <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0073-1.TXT">AI05-73</A> 
+points out that a function that returns an access to an abstract type 
+must also be abstract in order to avoid dispatching problems.</div>
+<div class="Normal">A trivial point is that a child package may not have 
+a limited with clause<A NAME="I1436"></A> for its parent (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0040-1.TXT">AI05-40</A>). 
+Limited with clauses are forbidden in a number of situations in order 
+to avoid confusion. One such rule is that a package cannot have both 
+a with clause and a limited with clause for the same unit. In the case 
+of a child it effectively has an implicit with clause for its parent 
+so disallowing a limited with clause is really the same rule.</div>
+<div class="Normal">A further trivial point mentioned by <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0016-1.TXT">AI05-16</A> 
+is that <SPAN Class="swiss">(<B>others</B> =&gt; &lt;&gt;)</SPAN> is 
+permitted as an aggregate for a null record.<A NAME="I1437"></A><A NAME="I1438"></A></div>
+<div class="Normal">There are a number of corrections and clarifications 
+regarding categorization. One is that a limited view is always considered 
+pure (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0034-1.TXT">AI05-34</A>). 
+Another is that Preelaborable_Initialization<A NAME="I1439"></A><A NAME="I1440"></A> 
+should not be restricted to just private types (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0028-1.TXT">AI05-28</A>).<A NAME="I1441"></A></div>
+<div class="Normal">Two pragmas have been added by <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0009-1.TXT">AI05-9</A>. 
+These are Independent and Independent_Components (much like Atomic and 
+Atomic_Components).<A NAME="I1442"></A><A NAME="I1443"></A><A NAME="I1444"></A><A NAME="I1445"></A> 
+They stipulate that the objects concerned are independently addressable 
+and so can be manipulated independently without explicit synchronization 
+in a multitasking program. This arose from consideration of confirming 
+representation clauses.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There are a number 
+of issues concerning null exclusions. One is that null exclusions must 
+textually match for full conformance. Thus we cannot write&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;tagged&nbsp;null&nbsp;record</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Q(X:&nbsp;<B>access</B>&nbsp;T);<BR>
+<B>end</B>&nbsp;P;<BR>
+<B>package&nbsp;body</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Q(X:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;T);&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal,&nbsp;doesn't&nbsp;match</I></SPAN><BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal">The standard as written doesn't cover this case since 
+it can be argued that in the specification <SPAN Class="swiss">Q</SPAN> 
+excludes null since it is controlling whereas in the body it excludes 
+null because it says so. But <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0045-1.TXT">AI05-45</A> 
+concludes that the intent was to require lexical matching to avoid confusion.</div>
+<div class="Normal">Another issue concerning null exclusions is addressed 
+by <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0062-1.TXT">AI05-62</A>. 
+If a deferred constant has a null exclusion then the full declaration 
+must also have a null exclusion. But the reverse is not true. If a deferred 
+constant does not have a null exclusion then the full declaration might 
+still have a null exclusion. This follows the same pattern as for constraints. 
+If a deferred constant has a constraint then the full declaration must 
+have a matching constraint but the reverse is not true.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It will recalled that 
+the issue of null exclusions causes a potential inconsistency between 
+Ada 95 and Ada 2005.<A NAME="I1446"></A> See <A HREF="Rat-9-1-2.html">9.1.2</A>, 
+item 4 and Section <A HREF="Rat-3-2.html">3.2</A>. It was therefore proposed 
+that Ada 95 should permit <B>not null</B> in the specification of an 
+access parameter thus&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(X:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;T);</div>
+<div class="Normal">The idea was that for Ada 95 this was merely a comment 
+but on transition to Ada 2005 it would give identical behaviour in all 
+cases so that the inconsistency would be avoided. This was written up 
+as <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00447.TXT">AI95-447</A> 
+and approved by the ARG. However, when it came to ratification by WG9 
+a difficulty arose. From the point of view of ISO there is only ever 
+one Ada standard and the current incarnation is what we call Ada 2005. 
+Thus WG9 can no longer talk about Ada 95. Nevertheless compiler writers 
+are encouraged to permit this &quot;comment&quot; in Ada 95 code (and 
+a test has been added to the test suite).</div>
+<div class="Normal">There are a number of other AIs regarding Ada 2005 
+which cover matters such as corner cases in accessibility rules. These 
+are too obscure to discuss here and are unlikely to impact on the typical 
+programmer.</div>
+<div class="Normal">However, it is hard to avoid the temptation to mention 
+just one more AI with which to finish this brief survey. This concerns 
+an error in the description of the procedure Set_Line. The idea of Set_Line 
+is to move down the page and of course if the required line number is 
+the current line number then do nothing. But if the current position 
+is beyond the required position first do New_Page and then move down 
+the page the required number of lines. Unfortunately, if the new position 
+required is at the beginning of the page (that is the parameter of Set_Line 
+is one) and New_Page is called then, according to the wording, this results 
+in New_Line(0) being called and this does not do nothing as hoped but 
+raises Constraint_Error because the parameter of New_Line is of the subtype 
+Positive_Count which excludes zero! This error has been there since Ada 
+83. Clearly all implementers have been doing the correct thing and just 
+ignored the foolish wording. This is now corrected by <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0038-1.TXT">AI05-38</A>. 
+</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-9-3-10.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

@@ -1,0 +1,626 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 4.7: Discriminants</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 4: Types</H2>
+
+<H3><a name="4.7">4.7 Discriminants</a></H3>
+
+The form  of record  type presented  so  far  corresponds  to  a  pure
+Cartesian product  (as described  by C.A.R.  Hoare in  Notes  on  Data
+Structuring <a href="ratl-BIB.html">[DDH  72]</a>), aside  from the requirement that components be
+named. A  typical example  of such  record types is the type PAIR with
+two components  of type  INTEGER: there is no dependence between these
+components -  any pair  of integers  will be of type PAIR, so that the
+set of values of this type is actually the Cartesian product INTEGER x
+INTEGER.
+<p>
+There are  however composite  objects in  which  there  is  dependence
+between components.  For example, in a record describing an attendance
+list, the  length of  one component - the table of attendants - may be
+given by  another component of the record. More generally, the overall
+structure of  a record,  in particular  the  presence  or  absence  of
+certain components, may depend on the value of a specific component.
+<p>
+Because  of  these  dependences,  such  composite  objects  cannot  be
+modelled as simple Cartesian products. Their description will requires
+the use of special components called discriminants.
+<p>
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#4.7.1">4.7.1  Record Types with Variants</a><BR>
+<a href="#4.7.2">4.7.2  Discriminant Constraints - Record Subtypes</a><BR>
+<a href="#4.7.3">4.7.3  Denoting Components of Variants</a><BR>
+<a href="#4.7.4">4.7.4  Initialization of Discriminants</a><BR>
+<a href="#4.7.5">4.7.5  Discriminants and Type Composition</a><BR>
+<b>
+     </TD>
+   </TR>
+</TABLE></center>
+<p>
+<H3><BR><a name="4.7.1">4.7.1 Record Types with Variants</a></H3>
+
+A record  type with  a  variant  part  specifies  several  alternative
+variants of  the type. The variant part depends on a special component
+called a  discriminant, and  each variant  defines the components that
+exist for  a given  value of  the discriminant. Consider for example a
+formulation of the type PERSON:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type GENDER is (M, F);
+
+type PERSON(SEX :  GENDER  :=  F) is
+  record
+    AGE :  INTEGER range 0 .. 123;
+    case SEX is
+      when M =&gt;  BEARDED :  BOOLEAN;
+      when F =&gt;  CHILDREN  :  INTEGER range 0 .. 20;
+    end case;
+  end record;
+</pre></td></tr></table>
+<p>
+Here  the   discriminant  is   the  component   SEX  declared  in  the
+discriminant part,  immediately after  the  name  of  the  type.  This
+special syntax brings out the fact that discriminants are not ordinary
+components: it  will be  possible for  other components  to depend  on
+discriminants. Furthermore,  as we shall see when presenting packages,
+this syntax  will allow  us to  declare private  types for  which  the
+discriminants are known, while keeping the rest of the type hidden.
+<p>
+In the record type definition we next encounter the declaration of the
+component AGE  (all persons  have an  age), and then the variant part,
+expressing a dependence on the discriminant SEX:
+<p>
+<table border cellpadding=6><tr><td><pre>
+case SEX is
+  ...
+end case;
+</pre></td></tr></table>
+<p>
+Within the  variant part, we next find the two variants - one for each
+possible value of the discriminant. For example we find the variant
+<p>
+<PRE>    when M =&gt; BEARDED :  BOOLEAN;</PRE>
+<p>
+that declares  the boolean  component BEARDED  to exist for persons of
+sex M  (only men  are bearded);  and similarly,  another variant  that
+declares the  component CHILDREN  to exist  for persons of sex F (only
+women bear children):
+<p>
+<PRE>    when F =&gt;  CHILDREN :  INTEGER range 0 .. 20;</PRE>
+<p>
+It follows  from this  description that  the set of values of the type
+PERSON is  the union  of disjoint subsets, which correspond to the two
+possible variants. Thus we have a subset of values of the form
+<p>
+<PRE>    (SEX =&gt;  F,  AGE =&gt;  integer_value,  CHILDREN =&gt;  integer_value)</PRE>
+<p>
+and another subset of values of the form
+<p>
+<PRE>    (SEX =&gt;  M,  AGE =&gt;  integer_value,  BEARDED =&gt;  boolean_value)</PRE>
+
+<H3><BR><a name="4.7.2">4.7.2 Discriminant Constraints - Record Subtypes</a></H3><p>
+
+We have  seen that  different subsets  of values  are associated  with
+different variants.  Seen in  this light, a subtype of the record type
+is associated  with each of its variants. When declaring an object, we
+can actually  specify that  it may  only  assume  values  of  a  given
+subtype: this  is achieved by a discriminant constraint that imposes a
+specific value on the discriminant. Thus whereas
+<p>
+<PRE>    ANYONE :  PERSON;</PRE>
+<p>
+declares  a   person  of   either  sex,  each  of  the  two  following
+declarations includes a discriminant constraint and declares an object
+constrained to one of the two possible subtypes:
+<p>
+<table border cellpadding=6><tr><td><pre>
+HE  :  PERSON(M);             -- positional notation
+SHE :  PERSON(SEX =&gt;  F);  -- named notation
+</pre></td></tr></table>
+<p>
+We can  also name  the two  possible  subtypes  by  means  of  subtype
+declarations:
+<p>
+<table border cellpadding=6><tr><td><pre>
+subtype MALE  is PERSON(SEX =&gt;  M);
+subtype FEMALE   is PERSON(SEX =&gt;  F);
+</pre></td></tr></table>
+<p>
+The compiler  may  take  advantage  of  the  information  provided  by
+constraints, when  setting the  amount of space to be used for a given
+record variable.  However, as with other forms of constraint, the main
+purpose of  discriminant constraints  is reliability: the requirements
+specified by  constraints can  be checked at execution time, unless it
+can already  be shown  at compilation  time that  the checks  are  not
+needed (either because they would always succeed or because they would
+always fail). The possible situations are illustrated below:
+<p>
+<table border cellpadding=6><tr><td><pre>
+declare
+  ANYONE :  PERSON;
+
+  HE     :  MALE;               -- equivalent methods of
+  PETER  :  PERSON(M);          -- declaring males
+
+  JOAN  :  FEMALE;
+  SHE   :  FEMALE;
+begin
+  ...
+  ANYONE :=  HE;                -- No run-time check needed since
+                                -- MALE is a subtype of PERSON
+
+  ANYONE :=  JOAN;              -- Similarly no run-time check needed
+
+  HE :=  PETER;                 -- No run-time check needed: both are males
+
+  HE :=  JOAN;                  -- Error! Can be reported at compilation time
+                                -- since MALE and FEMALE are disjoint subtypes
+
+  SHE :=  ANYONE;               -- check at run time that ANYONE.SEX = F and
+                                -- raise CONSTRAINT_ERROR if check fails
+end;
+</pre></td></tr></table>
+
+<H3><BR><a name="4.7.3">4.7.3 Denoting Components of Variants</a></H3>
+<p>
+
+Variants define certain components that exist only for specific values
+of the  discriminant. Checking  the validity of names that denote such
+dependent components  is part of the security that must be provided by
+Ada compilers. This implies that a reference to the component
+<p>
+<PRE>    ...    ANYONE.BEARDED    ...</PRE>
+<p>
+is logically equivalent to the following text
+<p>
+<table border cellpadding=6><tr><td><pre>
+if ANYONE.SEX /= M then
+  raise CONSTRAINT_ERROR;
+end if;
+...    ANYONE.BEARDED    ...
+</pre></td></tr></table>
+<p>
+We will  show in  <a href="ratl-04-07.html#4.7">section 4.7.4</a>  that this  check can  always be  done
+because the  language rules  guarantee that  discriminants are  always
+initialized. Furthermore direct assignment to a discriminant
+<p>
+<PRE>    ANYONE.SEX :=  F;      -- illegal!</PRE>
+<p>
+is forbidden  and will  be rejected  by the compiler. The only allowed
+way to  change the  value of  a discriminant  is by  assignment to the
+record as a whole. Thus
+<PRE>    ANYONE :=  (SEX =&gt;  F,  AGE =&gt;  13,  CHILDREN =&gt;  0);</PRE>
+<p>
+is a  whole-record assignment which (legally) sets ANYONE.SEX equal to
+F. Similarly, whole-record assignments such as
+<p>
+<table border cellpadding=6><tr><td><pre>
+ANYONE :=  PETER;
+ANYONE :=  JOAN;
+</pre></td></tr></table>
+<p>
+are legal  and each  has the  effect of  establishing a  new value for
+ANYONE.SEX.
+<p>
+Denoting components  of constrained  records -  such as  the component
+JOAN.CHILDREN of  the record  JOAN, or  the component PETER.BEARDED of
+the  record   PETER  -   is  always  secure  and  never  requires  any
+discriminant check  at  run  time  since  the  discriminant  value  is
+specified  by   the  constraint   and  is   static.  Furthermore   the
+discriminant value is invariable: this is guaranteed by the constraint
+checks that  are performed  before any assignment to these constrained
+variables - whether these checks are actually performed at run time or
+are anticipated at compilation time.
+<p>
+When denoting  dependent components of an unconstrained variable (such
+as ANYONE),  discriminant checks  will usually  have to be done at run
+time -  unless they  become unnecessary  because of  prior explicit or
+implicit checks.  Such explicit discrimination may take several forms.
+It can be achieved by an if statement:
+<p>
+<table border cellpadding=6><tr><td><pre>
+if ANYONE.SEX = M then
+  -- No check needed when denoting ANYONE.BEARDED
+  ...
+end if;
+</pre></td></tr></table>
+<p>
+or similarly by a case statement:
+<p>
+<table border cellpadding=6><tr><td><pre>
+case ANYONE.SEX is
+  when M =&gt;
+    -- No check needed when denoting ANYONE.BEARDED
+    ...
+  when F =&gt;
+    -- No check needed when denoting ANYONE.CHILDREN
+    ...
+end case;
+</pre></td></tr></table>
+<p>
+Of course,  the check  can only be omitted as long as the discriminant
+is not  changed as a result of a whole record assignment. Consider for
+example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+case ANYONE.SEX is
+  when M =&gt;
+    ...     ANYONE.BEARDED               ...         -- occurrence 1
+    ...     ANYONE.BEARDED               ...         -- occurrence 2
+    UPDATE(ANYONE);
+    ...     ANYONE.BEARDED               ...         -- occurrence 3
+    PRINT(ANYONE);
+    ...     ANYONE.BEARDED               ...         -- occurrence 4
+  when F =&gt;   ...
+end case;
+</pre></td></tr></table>
+<p>
+No checks  are needed for the first two occurrences. A check is needed
+for the  third (assuming  the mode of the parameter of UPDATE to be in
+out), but  no check  is needed for the fourth occurrence (assuming the
+mode of the parameter of PRINT to be in).
+<p>
+Note that  additional problems  exist if  a record  is shared  by  two
+tasks. One  task could  perform a  whole  record  assignment  (thereby
+changing the  discriminant) while  another was reading a component. We
+consider this  problem to  be a  danger inherent  in the use of shared
+variables rather  than a  problem concerning the formulation of record
+types. The  tasking facilities  of the language are powerful enough to
+make unsynchronized  access to  shared variables virtually useless. If
+they are  nevertheless used,  the appropriate  precautions  should  be
+taken by  the programmer.  On the  other hand,  we did  not believe it
+right to  distort the semantics of the language just to deal with such
+possible misuse.
+<p>
+It might be felt that the checking code is a high price to pay. It is,
+however,  essential   for  security  with  variant  records.  Previous
+experience with  languages such  as Simula and Algol 68, which force a
+similar discrimination  of variants, show that these checks are not as
+frequent as  one might suppose. The parts of the programs that operate
+on a  given variant  tend to  be textually  discriminated as  well  as
+dynamically discriminated.  Hence the  checks can  be  achieved  at  a
+rather low cost (see also <a href="ratl-BIB.html">[We 78]</a>).
+<p>
+One should  not underestimate  the  importance  of  secure  access  to
+components of  a variant  part. This  is well  demonstrated by  actual
+experience on  large programs  with Pascal compilers that perform such
+checks <a href="ratl-BIB.html">[Ha 77]</a>. Further confirmation has been obtained from experience
+with large Ada programs - Ada compilers in particular.
+
+<H3><BR><a name="4.7.4">4.7.4 Initialization of Discriminants</a></H3>
+<p>
+
+Discriminants are  components of special importance: We have seen that
+the structure  of a  record may depend on the value of a discriminant,
+and that this value is also critical for determining whether or not it
+is possible to denote a component defined by a corresponding variant.
+<p>
+For safety  reasons therefore,  it  is  essential  that  discriminants
+always be initialized; and this is actually guaranteed by the language
+rules. Before  discussing these rules, let us review two possible ways
+of initializing  a discriminant.  One  way  of  ensuring  discriminant
+initialization is by a constraint. For example, the elaboration of the
+constrained declaration
+<p>
+<PRE>    JOAN :  PERSON(SEX =&gt; F);</PRE>
+<p>
+initializes the  discriminant JOAN.SEX to the value F specified by the
+constraint (and  the  discriminant  value  is  thereafter  invariable,
+because of  the constraint).  However, as  we have  seen earlier, some
+objects are unconstrained; for example,
+<p>
+<PRE>    ANYONE :  PERSON;</PRE>
+<p>
+For this  unconstrained object, the initialization of the discriminant
+is obtained  by another  device,  namely,  by  means  of  the  default
+expression specified in the discriminant part of the type PERSON:
+<p>
+<PRE>    type PERSON(SEX :  GENDER  :=  F) is ...</PRE>
+<p>
+So the  elaboration of the declaration of ANYONE evaluates the default
+expression  and  uses  the  resulting  value  (F)  to  initialize  the
+discriminant: ANYONE.SEX  is initially  equal to F, but this value may
+be changed  later,  by  whole  record  assignments,  since  ANYONE  is
+unconstrained.
+<p>
+Safety of  variant records  is  achieved  in  Ada  by  requiring  that
+discriminants be  always initialized  in one of the two ways described
+above.
+<p>
+For a  type declared  with a  discriminant part,  the  language  rules
+require:
+<ol type=a>
+<li>              If   default    expressions    are    provided    for
+   discriminants, then  declarations of  constrained and unconstrained
+   objects of the type are both allowed.
+<p>
+<li>              In the  absence of  default expressions,  all  object
+   declarations must be constrained.
+</ol>
+
+Thus unconstrained declarations are not allowed in the latter case: In
+the absence  of a  default expression,  the discriminant value of such
+objects would be unspecified.
+<p>
+To illustrate  these rules,  we first  introduce a few additional type
+declarations
+<p>
+<table border cellpadding=6><tr><td><pre>
+type HUMAN(SEX :  GENDER) is
+  record
+    AGE :  INTEGER range 0 .. 123;
+    case SEX is
+      when M =&gt;  BEARDED  :  BOOLEAN;
+      when F =&gt;  CHILDREN :  INTEGER range 0 .. 20;
+    end case;
+  end record;
+
+subtype LENGTH is INTEGER range 0 .. 200;
+
+type TEXT(SIZE :  LENGTH) is
+  record
+    POS   :  LENGTH  :=  0;
+    DATA  :  STRING(1 .. SIZE);
+  end record;
+
+type LINE(SIZE :  LENGTH  :=  100) is
+  record
+    DATA :  STRING(1 .. SIZE);
+  end record;
+</pre></td></tr></table>
+<p>
+We may  now declare  constrained objects, very much in the same way as
+for the type PERSON:
+<p>
+<table border cellpadding=6><tr><td><pre>
+JOAN    :  PERSON(SEX =&gt;  F);   -- must be of sex F
+
+MARIA   :  HUMAN(SEX =&gt;  F);    -- must be of sex F
+JOHN    :  HUMAN(SEX =&gt;  M);    -- must be of sex M
+PAUL    :  HUMAN(M);            -- must be of sex M
+
+LARGE   :  TEXT(SIZE =&gt;  130);  -- must have 130 characters
+
+SMALL   :  LINE(SIZE =&gt;  20);   -- must have 20 characters
+MEDIUM  :  LINE(80);            -- must have 80 characters
+</pre></td></tr></table>
+<p>
+In  the   case  of   types  PERSON  and  LINE,  we  may  also  declare
+unconstrained objects such as
+<p>
+<table border cellpadding=6><tr><td><pre>
+ANYONE   :  PERSON;   -- Initially: ANYONE.SEX = F
+MESSAGE  :  LINE;     -- Initially: MESSAGE.SIZE = 100
+                      -- but later could vary up to 200 characters
+</pre></td></tr></table>
+<p>
+On the  other hand,  unconstrained object declarations are not allowed
+for types  such as  HUMAN and  TEXT, for  which there  are no  default
+discriminant values:
+<p>
+<table border cellpadding=6><tr><td><pre>
+ILLEGAL : HUMAN;      -- Illegal! What would the sex be?
+ERROR   : TEXT;       -- Illegal! What would the size be?
+</pre></td></tr></table>
+
+<H3><BR><a name="4.7.5">4.7.5 Discriminants and Type Composition</a></H3>
+<p>
+
+Ada provides  a very  general  ability  to  compose  types  from  more
+elementary types:  we can  have arrays  of records  that contain other
+arrays and  records, and  so on  to  an  arbitrary  depth.  This  type
+composition ability  can be  parameterized by  means of discriminants.
+Thus the  language allows two forms of parameterization of the subtype
+definitions of record components:
+<ol type =a>
+<li>              The value  of a discriminant may be used to specify a
+   bound in an index constraint for a record component - the component
+   being an array.
+<p>
+<li>              The  value  of  a  discriminant  may  be  used  in  a
+   discriminant constraint  for a  record component  -  the  component
+   being again a record.
+</ol>
+The first form of parameterization is what we have in the type TEXT:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type TEXT(SIZE :  LENGTH) is
+  record
+    POS    :  LENGTH  :=  0;
+    DATA :  STRING(1 .. SIZE);
+  end record;
+</pre></td></tr></table>
+<p>
+Thus the declaration of the component DATA specifies SIZE as the upper
+bound in  the index  constraint for this component. The implication is
+that when we declare
+<p>
+<table border cellpadding=6><tr><td><pre>
+LARGE :  TEXT(SIZE =&gt;  130);        -- or, equivalently:
+LARGE :  TEXT(130);                 -- in positional form
+</pre></td></tr></table>
+<p>
+then  the   discriminant  value   (130)  is   used  to  dimension  the
+corresponding  string,   so  that   LARGE.DATA  is  a  string  of  130
+characters.
+<p>
+The second  form of  parameterization is  illustrated by the following
+type:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type DUPLEX(DIMENSION :  LENGTH) is
+  record
+    FIRST  :  TEXT(SIZE =&gt;  DIMENSION);
+    SECOND :  TEXT(SIZE =&gt;  DIMENSION);
+  end record;
+</pre></td></tr></table>
+<p>
+in which the discriminant of the type DUPLEX is itself used to specify
+the discriminant  values for  the first and second components. So when
+we declare
+<p>
+<PRE>    DISTICH :  DUPLEX(40);</PRE>
+<p>
+the dimension  of the  type DUPLEX  is used to specify the size of the
+first and second texts, so that we have two strings of 40 characters.
+<p>
+We have  given different  names to  the discriminants to emphasize the
+two levels,  of type  composition. But  this is  not necessary, and we
+could have written
+<p>
+<table border cellpadding=6><tr><td><pre>
+type DUPLEX(SIZE :  LENGTH) is
+  record
+    FIRST  :  TEXT(SIZE =&gt;  SIZE);   -- size of text =&gt; size of duplex
+    SECOND :  TEXT(SIZE =&gt;  SIZE);
+  end record;
+</pre></td></tr></table>
+<p>
+or even simply
+<p>
+<table border cellpadding=6><tr><td><pre>
+type DUPLEX(SIZE :  LENGTH) is
+  record
+    FIRST  :  TEXT(SIZE);
+    SECOND :  TEXT(SIZE);
+  end record;
+</pre></td></tr></table>
+<p>
+Nothing prevents  the composition  of types  to further levels, and we
+may for example define a type such as
+<p>
+<table border cellpadding=6><tr><td><pre>
+type QUAD(SIZE :  LENGTH) is
+  record
+    LEFT, RIGHT :  DUPLEX(SIZE);
+  end record;
+</pre></td></tr></table>
+<p>
+and so on.
+<p>
+Note that  the first  form of  parameterization (that  is, that  of an
+index bound)  would not  suffice alone.  For example,  it would not be
+satisfactory (in general) to define DUPLEX in the following manner
+<p>
+<table border cellpadding=6><tr><td><pre>
+type OTHER_DUPLEX(SIZE :  LENGTH) is
+  record
+    POS_1, POS_2 :  LENGTH  :=  0;
+    FIRST  :  STRING(1 .. SIZE);
+    SECOND :  STRING(1 .. SIZE);
+  end record;
+</pre></td></tr></table>
+<p>
+since operations defined for the type TEXT such as
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure APPEND(TAIL :  in TEXT;  TO :  in out TEXT) is
+begin
+  TO.DATA(TO.POS + 1 .. TO.POS + TAIL.POS) :=  TAIL.DATA(1 .. TAIL.POS);
+  TO.POS :=  TO.POS + TAIL.POS;
+end;
+</pre></td></tr></table>
+<p>
+would  not  be  applicable  to  components  of  records  of  the  type
+OTHER_DUPLEX.
+<p>
+To conclude this presentation of discriminants, it will be interesting
+to compare  this form  of parameterization  with the  form offered  by
+generic  units.   It  is   certainly  possible  to  define  a  generic
+formulation of  the  type  TEXT,  in  which  the  size  is  a  generic
+parameter. But,  as we  shall see,  the functionality offered would be
+quite different. Consider for example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  SIZE :  POSITIVE;
+package TEXT_HANDLING is
+  type TEXT is
+    record
+      POS    :  NATURAL :=  0;
+      DATA :  STRING(1 .. SIZE);
+    end record;
+  ...
+  procedure APPEND(TAIL :  in TEXT;  TO :  in out TEXT);
+  ...
+end TEXT_HANDLING;
+</pre></td></tr></table>
+<p>
+We could later create instances of this generic package such as
+<p>
+<table border cellpadding=6><tr><td><pre>
+package TEXT_20 is new TEXT_HANDLING(SIZE =&gt;  20);
+package TEXT_50 is new TEXT_HANDLING(SIZE =&gt;  50);
+</pre></td></tr></table>
+<p>
+The main  drawback of  this formulation is that the types TEXT_20.TEXT
+and TEXT_50.TEXT  are now two distinct and completely unrelated types,
+with  the  consequence  that  we  cannot  intermix  their  objects  in
+operations such as APPEND.
+<p>
+What this  example shows is that if objects differ only in size, it is
+better to  consider that  they are still objects of the same type, but
+belonging to  different subtypes:  this form  of  parameterization  is
+therefore better dealt with by discriminant constraints.
+<p>
+Parameterization by  generic units  is more  appropriate if we want to
+parameterize  by   types,  or   if  we  are  prepared  to  accept  the
+consequences of  the fact  that several  instances of the generic unit
+will  create   several  types.   For  example,   the  two   forms   of
+parameterization are  used in  conjunction in this further formulation
+of text handling:
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  MAXIMUM :  POSITIVE;
+package TEXT_HANDLING is
+  subtype LENGTH is INTEGER range 0 .. MAXIMUM;
+
+  type TEXT(SIZE :  LENGTH) is
+    record
+      POS    :  LENGTH  :=  0;
+      DATA :  STRING(1 .. SIZE);
+    end record;
+  ...
+end TEXT_HANDLING;
+</pre></td></tr></table>
+<p>
+Different instantiations  will result  in different text types (and in
+fact the compiler is likely to use different representations for texts
+having a  maximum of  256 characters  and for larger maximum lengths).
+For  a   given  maximum   length  however,  we  can  use  discriminant
+constraints  to  represent  texts  of  different  lengths,  which  are
+nevertheless objects of the same type.
+
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-04-08.html#4.8"><b>NEXT</b></a>
+&#128; <a href="ratl-04-06.html#4.6"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-04.html#4"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

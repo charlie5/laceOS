@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Exception Handling</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-11-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-11-4-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>11.4 Exception Handling</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal">When an exception occurrence is raised, normal program 
+execution is abandoned and control is transferred to an applicable <SPAN Class="swiss"><A HREF="RM-11-2.html#S0248">exception_handler</A></SPAN>, 
+if any. <A NAME="I4130"></A>To <I>handle</I> an exception occurrence 
+is to respond to the exceptional event. <A NAME="I4131"></A>To <I>propagate</I> 
+an exception occurrence is to raise it again in another context; that 
+is, to fail to respond to the exceptional event in the present context. 
+</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal"><A NAME="I4132"></A><A NAME="I4133"></A>Within a 
+given task, if the execution of construct <I>a</I> is defined by this 
+International Standard to consist (in part) of the execution of construct 
+<I>b</I>, then while <I>b</I> is executing, the execution of <I>a</I> 
+is said to <I>dynamically enclose</I> the execution of <I>b</I>. <A NAME="I4134"></A>The 
+<I>innermost dynamically enclosing</I> execution of a given execution 
+is the dynamically enclosing execution that started most recently.&nbsp;</DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><A NAME="I4135"></A>When 
+an exception occurrence is raised by the execution of a given construct, 
+the rest of the execution of that construct is <I>abandoned</I>; that 
+is, any portions of the execution that have not yet taken place are not 
+performed. The construct is first completed, and then left, as explained 
+in <A HREF="RM-7-6-1.html">7.6.1</A>. Then:&nbsp;</DIV>
+<DIV Class="paranum">4</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If the construct is a <SPAN Class="swiss"><A HREF="RM-9-1.html#S0192">task_body</A></SPAN>, 
+the exception does not propagate further;&nbsp;</LI></UL>
+<DIV Class="paranum">5</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If the construct is the <SPAN Class="swiss"><A HREF="RM-5-1.html#S0130">sequence_of_statements</A></SPAN> 
+of a <SPAN Class="swiss"><A HREF="RM-11-2.html#S0247">handled_sequence_of_statements</A></SPAN> 
+that has a handler with a choice covering the exception, the occurrence 
+is handled by that handler;</LI></UL>
+<DIV Class="paranum">6</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I4136"></A>Otherwise, the 
+occurrence is <I>propagated</I> to the innermost dynamically enclosing 
+execution, which means that the occurrence is raised again in that context. 
+</LI></UL>
+<DIV Class="paranum">7</DIV>
+<DIV Class="Normal"><A NAME="I4137"></A><A NAME="I4138"></A><A NAME="I4139"></A>When 
+an occurrence is <I>handled</I> by a given handler, the <SPAN Class="swiss"><A HREF="RM-11-2.html#S0249">choice_parameter_specification</A></SPAN>, 
+if any, is first elaborated, which creates the choice parameter and initializes 
+it to the occurrence. Then, the <SPAN Class="swiss"><A HREF="RM-5-1.html#S0130">sequence_of_statements</A></SPAN> 
+of the handler is executed; this execution replaces the abandoned portion 
+of the execution of the <SPAN Class="swiss"><A HREF="RM-5-1.html#S0130">sequence_of_statements</A></SPAN>. 
+</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">8</DIV>
+<DIV Class="Notes">1&nbsp;&nbsp;Note that exceptions raised in a <SPAN Class="swiss"><A HREF="RM-3-11.html#S0086">declarative_part</A></SPAN> 
+of a body are not handled by the handlers of the <SPAN Class="swiss"><A HREF="RM-11-2.html#S0247">handled_sequence_of_statements</A></SPAN> 
+of that body.&nbsp;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-11-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-11-4-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

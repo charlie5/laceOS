@@ -1,0 +1,368 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 14.4: Tasks and Exceptions</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 14: Exception Handling</H2>
+
+<H3><a name="14.4">14.4 Tasks and Exceptions</a></H3>
+
+The exception  handling facility has so far been presented in terms of
+sequential  programs,   and  the   concepts  presented  are  therefore
+applicable within  a task  body. For  exception propagation there is a
+difference with tasks: in contrast to what is done for subprograms, if
+an exception  is not  serviced by  a handler  within a  task body, the
+exception is  not further  propagated -  the task  execution is merely
+completed.
+<p>
+Note that  if the  exception were  propagated to  the parent  task, it
+would mean  that child tasks could interfere asynchronously with their
+parent, and  it would  also mean  that these interferences could occur
+simultaneously, with disastrous results.
+<p>
+We will  now consider  two  other  interactions  between  tasking  and
+exception handling:
+<ul>
+<li>Exceptions raised during the activation of a task
+<p>
+<li>Exceptions raised during communication between tasks
+</ul>
+
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#14.4.1">14.4.1 Exceptions During Task Activation</a><BR>
+<a href="#14.4.2">14.4.2 Exceptions Raised During Communication Between Tasks</a><BR>
+<a href="#14.4.3">14.4.3 Abnormal Situations in an Accept Statement</a><BR>
+<a href="#14.4.4">14.4.4 Example of Exceptions in a Rendezvous</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="14.4.1">14.4.1 Exceptions During Task Activation</a></H3>
+
+Consider a procedure that declares three local tasks, A, B, and C. The
+actions performed  by the  procedure are  partially  subcontracted  to
+these local tasks.
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure PERFORM is
+  task A;
+  task B;
+  task C;
+  ...
+begin
+  -- activation of A, B, C, in parallel
+  -- (1)
+  ...
+exception
+  when TASKING_ERROR =&gt;
+  ...          --  (2)
+end;
+</pre></td></tr></table>
+<p>
+The semantics  of  Ada  specifies  that  the  three  local  tasks  are
+activated, in  parallel, after begin but before the first statement of
+the procedure. This means that at (1) we can rely on the fact that all
+three tasks are activated.
+<p>
+Consider now  what happens if the activation of one (or more) of these
+tasks is  not started as a consequence of the raising of an exception.
+It would  not make  much  sense  to  execute  the  statements  of  the
+procedure, once  it is  known that  one of the basic preconditions for
+its proper  operation is not satisfied. For this reason, the execution
+of statements  of the  procedure is  not started,  and the  predefined
+exception TASKING_ERROR  is propagated  at (1)  to be  handled by  the
+exception handler at (2).
+<p>
+(By analogy, if A, B, and C were array declarations, the statements of
+the procedure would not be executed if the elaboration of any of these
+declarations raised  an exception.  The analogy  stops there  however,
+since in  the case  of task  activation the exception is raised in the
+statements, and  can be handled locally, whereas in the case of arrays
+the exception  is raised in the declarative part and propagated to the
+caller to be dealt with. Activation of a task behaves like an implicit
+initialization statement - placed after begin.)
+<p>
+Note that  the exception  that is propagated at (1) does not depend on
+what caused  the abandonment  of task activation. What matters for the
+procedure is to know whether or not activations have succeeded. Should
+one or  more of them have failed, it does not matter much whether this
+is by  constraint violation,  or by  a numeric error: in any case some
+other treatment is needed. This therefore is the justification for the
+propagation of  the less specific exception TASKING_ERROR. By the same
+reasoning, it does not matter much whether one, or more than one, task
+failed to  be activated.  Hence a single exception is raised in either
+case.
+
+<H3><BR><a name="14.4.2">14.4.2 Exceptions Raised During Communication Between Tasks</a></H3>
+
+When two  tasks are  attempting to communicate with each other, or are
+engaged in communication, an abnormal situation arising in one of them
+may have an effect on the other.
+<p>
+As a basis for discussing the various cases that may arise, consider a
+task SERVER that provides the entry UPDATE:
+<p>
+<table border cellpadding=6><tr><td><pre>
+task SERVER is
+  entry UPDATE(THIS :  in out ITEM);
+end;
+
+task body SERVER is
+  ...
+begin
+  ...
+  accept UPDATE(THIS :  in out ITEM) do
+    -- statements for servicing the request
+  end UPDATE;
+  ...
+end SERVER;</pre></td></tr></table>
+
+<p>
+and another task called USER, having no entry at all:
+<p>
+<table border cellpadding=6><tr><td><pre>
+task USER;
+task body USER is
+  THING :  ITEM;
+begin
+  ...
+  SERVER.UPDATE(THIS =&gt;  THING);
+  ...
+end USER;
+</pre></td></tr></table>
+<p>
+The first interaction to consider is what happens if the USER calls an
+entry of the SERVER
+<p>
+<PRE>    SERVER.UPDATE(THIS =&gt;  THING);</PRE>
+<p>
+at a  time when  this called task has already completed its execution.
+Clearly the  called task  will never  accept the entry call, and hence
+there  is  no  point  in  letting  USER  (the  caller)  wait  forever.
+Consequently the  exception TASKING_ERROR  is propagated to the caller
+at the  point of  call: the  caller is  thereby informed that the call
+cannot be accepted. For similar reasons, this exception is also raised
+if the  called task  (SERVER) has not already completed its execution,
+but proceeds to do so without encountering an accept statement for the
+entry call.
+
+<H3><BR><a name="14.4.3">14.4.3 Abnormal Situations in an Accept Statement</a></H3>
+
+The other interactions to consider correspond to error situations that
+may arise  while two tasks are engaged in a rendezvous. We distinguish
+three possible error situations:
+<ol>
+<li>An exception is raised by the execution of the accept
+   statement
+<p>
+<li>The called task (SERVER) is disrupted while executing
+   the accept statement
+<p>
+<li>The caller  (USER)  is  disrupted  while  the  accept
+   statement is being executed
+</ol>
+
+The first  situation corresponds  to the  usual error  situations. The
+second and third cases are only possible if another task has issued an
+abort statement. For example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+abort SERVER;   -- in the second case
+abort USER;     -- in the third case
+</pre></td></tr></table>
+<p>
+Such a  statement, to  be used  only in  extreme  circumstances,  will
+eventually cause completion of the aborted task; this will in any case
+occur no  later than  when the  aborted task reaches a synchronization
+point: a  point where  it causes  the activation  of another  task; an
+entry call;  the start  or the  end of  an accept  statement; a select
+statement; a  delay statement;  an  exception  handler;  or  an  abort
+statement.
+<p>
+We next  analyze the  consequences of  each of these possible abnormal
+situations, both  with respect  to the  task issuing  the  entry  call
+(USER) and  with respect  to the  task containing the accept statement
+(SERVER).
+<p>
+<H4>An exception is raised within an accept statement</H4>
+<p>
+Consider a  situation in  which an  exception, say  error,  is  raised
+within the accept statement of SERVER:
+<p>
+
+<p>
+<table border cellpadding=6><tr><td><pre>
+task body USER is           
+  ...
+  SERVER.UPDATE(            
+     THIS =&gt;  SOME_ITEM);   
+  ...
+                            
+  ...
+                            
+  ...
+                            
+end USER;                   
+
+</pre></td><td><pre>
+task body SERVER is
+
+  ...
+
+
+   accept UPDATE(THIS :  out ITEM) do   
+
+    error
+
+   end;
+     ...
+end SERVER;
+</pre></td></tr></table>
+<p>
+From the  point of  view  of  the  caller,  the  accept  statement  is
+analogous to  a procedure body that is executed when the corresponding
+entry is  called. Hence  if an  exception is  raised (and  not handled
+within the  accept statement  itself) it  should be  propagated at the
+point of call of SERVER.UPDATE.
+<p>
+However, from  the point  of view of the task that contains the accept
+statement, this  statement is a normal statement of its body. Hence if
+an exception  is raised  within SERVER,  it should  be  handled  by  a
+handler provided within that same task (outside the accept statement).
+<p>
+To summarize,  an exception raised within an accept statement (and not
+handled there)  is propagated  both in  the calling  and in the called
+tasks. Both tasks may provide handlers for the exception.
+<p>
+<H4>The called task is disrupted</H4>
+<p>
+A different  treatment must be employed if the called task (SERVER) is
+aborted by  a third  task. In  this case  the caller  (USER)  must  be
+informed that the entry call will never be completed: For this reason,
+the exception  TASKING_ERROR is  propagated at  the point of the entry
+call.
+<p>
+<H4>The calling task is disrupted</H4>
+<p>
+In this  case, the  called  task  (SERVER)  completes  the  rendezvous
+normally: the called task is unaffected.
+<p>
+There are  good reasons  for this  dissymmetry of treatment. First, we
+can expect  servers to be programmed in a more robust manner than user
+tasks. Moreover  it is  important to ensure continuity of service, and
+this would  not be  the case  if it were possible for a single unsound
+user to  affect the  service to  all  user  tasks.  In  terms  of  the
+implementation, this  means that the storage of an aborted task cannot
+be reclaimed  before the  end of  the rendezvous: this is important if
+the entry  has in  out or out parameters that are implemented by copy,
+or parameters of any mode that are implemented by reference.
+
+<H3><BR><a name="14.4.4">14.4.4 Example of Exceptions in a Rendezvous</a></H3>
+
+The following  program fragment  shows a  task USER that starts a file
+transfer that  is performed  asynchronously by  a  task  SPOOLER.  The
+procedure OPEN  is used by SPOOLER to open the two files. If either of
+the files  is invalid,  an exception is raised, possibly after closing
+the other file.
+<p>
+<table border cellpadding=6><tr><td><pre>
+task SPOOLER is
+  entry START_TRANSFER(SOURCE,  DESTINATION :  in STRING);
+end;
+
+task body SPOOLER is
+  INPUT   :  FILE_TYPE;
+  OUTPUT  :  FILE_TYPE;
+  C       :  CHARACTER;
+
+  procedure OPEN(SOURCE,  DESTINATION :  in STRING) is
+  begin
+    OPEN(INPUT,  MODE =&gt;  IN_FILE,  NAME =&gt;  SOURCE);
+    begin
+      OPEN(OUTPUT,  MODE =&gt;  OUT_FILE,  NAME =&gt;  DESTINATION);
+    exception
+      when NAME_ERROR =&gt;        -- also propagated to calling task
+      CLOSE(INPUT);  raise;
+    end;
+  exception
+    when NAME_ERROR =&gt;  raise;
+  end;
+
+begin
+  loop
+    begin
+      accept START_TRANSFER(SOURCE,  DESTINATION :  in STRING) do
+        OPEN(SOURCE,  DESTINATION);
+      end;
+
+      loop
+        GET (INPUT,    C);
+        PUT (OUTPUT,  C);
+      end loop;
+    exception
+      when END_ERROR =&gt;           -- handled locally and not propagated
+        CLOSE(INPUT);
+        CLOSE(OUTPUT);
+      when NAME_ERROR =&gt;  null;   -- restart main loop
+      end;                        -- the calling task has also received this
+  end loop;
+end SPOOLER;
+</pre></td></tr></table>
+<p>
+Two forms  of input-output exceptions may be raised within the body of
+the task  SPOOLER. The  exception END_ERROR is handled locally and not
+propagated. The  exception NAME_ERROR  may be raised within the accept
+statement for  the entry  START_TRANSFER. The  handler provided within
+SPOOLER simply  prepares it  for another  iteration. In  addition, the
+occurrence of  this second exception also has an effect on the calling
+task USER.  The exception  is propagated  in that task where it can be
+serviced by a local handler:
+<p>
+<table border cellpadding=6><tr><td><pre>
+task body USER is
+  OLD_FILE :  constant STRING :=  "&gt;UDD&gt;PROJECT&gt;JAN";
+  NEW_FILE :  constant STRING :=  "&gt;UDD&gt;PROJECT&gt;FEB";
+begin
+  ...
+  begin
+    SPOOLER.START_TRANSFER(SOURCE         =&gt;  OLD_FILE,
+                           DESTINATION    =&gt;  NEW_FILE);
+  exception
+    when NAME_ERROR =&gt;
+      -- do something on OLD_FILE and NEW_FILE
+  end;
+  ...
+end;
+</pre></td></tr></table>
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-14-05.html#14.5"><b>NEXT</b></a>
+&#128; <a href="ratl-14-03.html#14.3"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-14.html#14"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

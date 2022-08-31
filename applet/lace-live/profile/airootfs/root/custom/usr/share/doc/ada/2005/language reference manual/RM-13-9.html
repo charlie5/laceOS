@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Unchecked Type Conversions</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-13-8.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-13-9-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>13.9 Unchecked Type Conversions</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal"><A NAME="I4653"></A><A NAME="I4654"></A><A NAME="I4655"></A><A NAME="I4656"></A><A NAME="I4657"></A>An 
+unchecked type conversion can be achieved by a call to an instance of 
+the generic function Unchecked_Conversion.&nbsp;</DIV>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The following language-defined 
+generic library function exists:&nbsp;</DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Examples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Source(&lt;&gt;)&nbsp;<B>is</B>&nbsp;<B>limited</B>&nbsp;<B>private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Target(&lt;&gt;)&nbsp;<B>is</B>&nbsp;<B>limited</B>&nbsp;<B>private</B>;<BR>
+<A NAME="I4658"></A><B>function</B>&nbsp;Ada.Unchecked_Conversion(S&nbsp;:&nbsp;Source)&nbsp;<B>return</B>&nbsp;Target;<BR>
+<B>pragma</B>&nbsp;Convention(Intrinsic,&nbsp;Ada.Unchecked_Conversion);<BR>
+<B>pragma</B>&nbsp;Pure(Ada.Unchecked_Conversion);</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Normal">The size of the formal parameter S in an instance 
+of Unchecked_Conversion is that of its subtype. This is the actual subtype 
+passed to Source, except when the actual is an unconstrained composite 
+subtype, in which case the subtype is constrained by the bounds or discriminants 
+of the value of the actual expression passed to S.</DIV>
+<DIV Class="paranum">5</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">If all of the following 
+are true, the effect of an unchecked conversion is to return the value 
+of an object of the target subtype whose representation is the same as 
+that of the source object S:&nbsp;</DIV>
+<DIV Class="paranum">6</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>S'Size = Target'Size.&nbsp;</LI></UL>
+<DIV Class="paranum">7</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>S'Alignment = Target'Alignment.</LI></UL>
+<DIV Class="paranum">8</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The target subtype is not an unconstrained 
+composite subtype.</LI></UL>
+<DIV Class="paranum">9</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I4659"></A><A NAME="I4660"></A>S 
+and the target subtype both have a contiguous representation.</LI></UL>
+<DIV Class="paranum">10</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The representation of S is a representation 
+of an object of the target subtype.&nbsp;</LI></UL>
+<DIV Class="paranum">11/2</DIV>
+<DIV Class="Normal">&nbsp;Otherwise, if the result type is scalar, the result 
+of the function is implementation defined, and can have an invalid representation 
+(see <A HREF="RM-13-9-1.html">13.9.1</A>). If the result type is nonscalar, 
+the effect is implementation defined; in particular, the result can be 
+abnormal (see <A HREF="RM-13-9-1.html">13.9.1</A>).</DIV>
+
+<H4 Class="centered">Implementation Permissions</H4>
+<DIV Class="paranum">12</DIV>
+<DIV Class="Normal">An implementation may return the result of an unchecked 
+conversion by reference, if the Source type is not a by-copy type. In 
+this case, the result of the unchecked conversion represents simply a 
+different (read-only) view of the operand of the conversion.&nbsp;</DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Normal">An implementation may place restrictions on Unchecked_Conversion. 
+</DIV>
+
+<H4 Class="centered">Implementation Advice</H4>
+<DIV Class="paranum">14/2</DIV>
+<DIV Class="Normal">&nbsp;Since the Size of an array object generally does 
+not include its bounds, the bounds should not be part of the converted 
+data.&nbsp;</DIV>
+<DIV Class="paranum">15</DIV>
+<DIV Class="Normal">The implementation should not generate unnecessary 
+run-time checks to ensure that the representation of S is a representation 
+of the target type. It should take advantage of the permission to return 
+by reference when possible. Restrictions on unchecked conversions should 
+be avoided unless required by the target environment.&nbsp;</DIV>
+<DIV Class="paranum">16</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><A NAME="I4661"></A>The 
+recommended level of support for unchecked conversions is:&nbsp;</DIV>
+<DIV Class="paranum">17</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>Unchecked conversions should be supported 
+and should be reversible in the cases where this clause defines the result. 
+<A NAME="I4662"></A><A NAME="I4663"></A>To enable meaningful use of unchecked 
+conversion, a contiguous representation should be used for elementary 
+subtypes, for statically constrained array subtypes whose component subtype 
+is one of the subtypes described in this paragraph, and for record subtypes 
+without discriminants whose component subtypes are described in this 
+paragraph.&nbsp;</LI></UL>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-13-8.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-13-9-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

@@ -1,0 +1,395 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 14.5: Technical Issues</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 14: Exception Handling</H2>
+
+<H3><a name="14.5">14.5 Technical Issues</a></H3>
+
+The discussion  of exception handling in <a href="ratl-BIB.html">[Go 75]</a> classifies exceptions
+into three categories:
+<ol type=a>
+<li>Escape exceptions  which require  termination of  the
+   operation that raised the exception
+<p>
+<li>Notify exceptions,  which forbid  termination of  the
+   operation that  raised the  exception and  require  its  resumption
+   after completion of the actions of the handler
+<p>
+<li>Signal exceptions,  which leave  the  choice  between
+   termination and resumption to the handler
+</ol>
+
+Exceptions in  Ada are  of the  escape category.  They serve  only for
+error situations  and as  terminating conditions, which simplifies the
+language: notify  and signal  exceptions are not provided, since these
+forms of  exception violate  program modularity  and make optimization
+difficult, if not impossible.
+<p>
+The technical  problems of  the interactions  between  exceptions  and
+parallelism have  been mentioned in the previous section. The key idea
+was to  provide a  simple rule for cases where simultaneous exceptions
+occur in  a given  task. For the TASKING_ERROR exception, multiplicity
+can only  occur in  the case of nested accept statements, and then the
+outer exception prevails.
+<p>
+The remainder  of this  discussion will  concentrate on  the following
+issues:
+<ul>
+<li>Exceptions raised during the elaboration of declarations
+<p>
+<li>Propagation of exceptions beyond their scope
+<p>
+<li>Suppression of exceptions
+<p>
+<li>Implementation of exception handling
+<p>
+<li>The case against asynchronous exceptions
+<p>
+<li>Proving programs with exceptions
+</ul>
+
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#14.5.1">14.5.1 Exceptions Raised During the Elaboration of Declarations</a><BR>
+<a href="#14.5.2">14.5.2 Propagation of an Exception Beyond its Scope</a><BR>
+<a href="#14.5.3">14.5.3 Suppression of Checks</a><BR>
+<a href="#14.5.4">14.5.4 Implementation of Exception Handling</a><BR>
+<a href="#14.5.5">14.5.5 The Case Against Asynchronous Exceptions</a><BR>
+<a href="#14.5.6">14.5.6 Proving Programs with Exceptions</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="14.5.1">14.5.1 Exceptions Raised During the Elaboration of Declarations</a></H3>
+
+The elaboration  of declarations  may involve  the evaluation  of some
+expressions, and  in consequence, exceptions may be raised during this
+elaboration. Consider for example the procedure
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure A(N :  INTEGER) is
+  C :  constant INTEGER  :=  N &#42; N;
+  D :  INTEGER  :=  C;
+  T :  array (1 .. C) of INTEGER;
+begin
+  -- statements of A
+exception
+  -- handlers of A
+end;
+</pre></td></tr></table>
+<p>
+If an  exception occurs  during the elaboration of the constant C, the
+procedure will be in a state where D is not initialized, and the space
+for the  array T is not yet allocated. Consequently, a handler may not
+be able  to do much; any reference to D or T will be erroneous and may
+cause a  further exception.  For these  reasons an exception raised by
+the elaboration  of a  declaration is  never handled  locally;  it  is
+propagated to  the place where the elaboration of the declarations was
+initiated: for  example, this  place may  be just  after the call of a
+subprogram in  whose body  the declarations  are written, or it may be
+just after a block in whose declarative part the declarations appear.
+
+<H3><BR><a name="14.5.2">14.5.2 Propagation of an Exception Beyond its Scope</a></H3>
+
+Since an  exception can be propagated, it can be propagated beyond its
+scope. It  is even  possible for an exception to be propagated outside
+its scope and then back again within its scope. Thus, in the following
+example, if  B calls  OUTSIDE and OUTSIDE calls A, the exception ERROR
+raised within A will be propagated to OUTSIDE and again to B:
+<p>
+<table border cellpadding=6><tr><td><pre>
+package D is
+  procedure A;
+  procedure B;
+end;
+
+procedure OUTSIDE is
+begin
+  ...
+  D.A;
+  ...
+end;
+
+package body D is
+  ERROR :  exception;
+  procedure A is
+  begin
+    ... raise ERROR; ...
+  end;
+
+  procedure B is
+  begin
+    ...
+    OUTSIDE;
+    ...
+  exception
+    when ERROR =&gt;
+      -- ERROR may be propagated by OUTSIDE calling A
+  end;
+end D;
+</pre></td></tr></table>
+<p>
+An exception  propagated beyond its scope can only be handled there by
+a handler  for others. It can be further propagated or raised again by
+the abbreviated form of the raise statement (raise;).
+<p>
+This rule provides a simple and consistent interpretation of the above
+example and  it avoids the complexity and run-time costs that would be
+incurred if  exceptions propagated  beyond their  scope were converted
+into a  unique undefined  exception. This  design also considered, and
+rejected, the  possibility of  associating the  names of  the possibly
+propagated exceptions with each procedure declaration. The main reason
+for rejecting  this possibility  is the  fact that  this would require
+extra run-time  code for  filtering the propagation of exceptions. For
+example, if a procedure were declared as
+<p>
+<PRE>    procedure P(X :  INTEGER) PROPAGATES A, B, C;      -- not in Ada</PRE>
+<p>
+its body  would have to be compiled as the equivalent of the following
+procedure:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure P(X :  INTEGER) is
+  ...
+begin
+  ...
+exception
+  when A | B | C =&gt;  raise;
+  when others =&gt;  raise anonymous_exception;
+end P;
+</pre></td></tr></table>
+<p>
+We  considered   the  resulting  code  expansion  to  be  prohibitive,
+especially in the case of small functions and procedures.
+<p>
+With the  solution adopted  in Ada,  the user  can always  put similar
+information in  comment form.  The choice  others covers  all possible
+anonymous exceptions, not just one.
+<p>
+The philosophy  behind the  Ada model  is that  an exception is not an
+error situation;  it is  only a  name that  is declared  for an  error
+situation. Like  any other declaration, an exception declaration has a
+scope. The  error situation, on the other hand has no such limits, and
+can always be referred to as part of the others exception choice.
+<p>
+The internal  codes associated  with exceptions must all be distinct -
+as are  the codes of the different literals of an enumeration type. In
+general, this  assignment of  codes to exceptions must be performed at
+linkage editing time.
+
+<H3><BR><a name="14.5.3">14.5.3 Suppression of Checks</a></H3>
+
+A given program unit, and in particular a procedure, may be robust, in
+that it  will perform  some computation,  and produce some result, for
+any value of its input parameters. On the other hand, its validity may
+only be  guaranteed  for  certain  values  of  these  parameters.  The
+exception mechanism  is a  useful tool to achieve robustness, but this
+may be  gained at  some cost  in efficiency,  since detection  of some
+error situations may be expensive unless aided by special hardware.
+<p>
+In some  cases where  robustness can  be attained  by means other than
+run-time checks,  the programmer  may not  wish to  incur the  cost of
+checking for certain error situations. The pragma
+<p>
+<PRE>    pragma SUPPRESS(check_name);</PRE>
+<p>
+indicates that  the check  named in  the pragma need not be performed.
+(Should a  violation of the corresponding condition occur, behavior of
+the program would be unpredictable.)
+<p>
+In the  presence of  such pragmas, the compiler may suppress the named
+checks, and will do so if this results in an optimization.
+<p>
+However, in the case of exceptions whose detection is aided by special
+hardware, inhibiting  the corresponding  hardware  mechanisms  may  be
+costlier than  actually performing the checks. Hence the pragma is not
+imperative - it does not mean that the checks are not done.
+<p>
+An alternative  view of  the SUPPRESS  pragma would  regard  it  as  a
+directive indicating  imperatively that no check is to be performed to
+detect the  exception. This  approach would  amount to  a decision  to
+continue execution  of the program in spite of any error situation. It
+would give  an appearance  of robustness  which might  be exploited in
+cases where  the programmer  knows that  the error situation will have
+some effects  that can be detected at a later time, but it is contrary
+to the general philosophy of the language.
+<p>
+In addition, the need to provide a semantics that reconciles software-
+and hardware-detected  exceptions would  have a negative effect on the
+efficiency of  programs. If  the pragma  were imperative,  then  on  a
+machine with  hardware-detected exceptions  it would  be necessary  to
+inhibit the  hardware checks  for a  scope in  which  a  corresponding
+pragma SUPPRESS  is given. Thereafter, it would be necessary to enable
+the hardware  detection again,  prior to  each call  to a unit outside
+that scope,  and again to inhibit the detection following a subsequent
+return from the call.
+
+<H3><BR><a name="14.5.4">14.5.4 Implementation of Exception Handling</a></H3>
+
+One important design consideration for the exception handling facility
+is that  exceptions should  add to  execution time  only if  they  are
+raised.
+<p>
+Several techniques may be used to reach that goal, and they may differ
+from one  implementation to  another. The  essential idea  is that the
+run-time processing  costs should  be concentrated on the treatment of
+the raise statement. Consequently, processing of a raise statement may
+be relatively  slow. In  contrast, the costs associated with exception
+declarations and  exception handlers are only in terms of space and in
+terms of  compilation time  - they  have no influence on the execution
+time.
+<p>
+As a feasibility proof, we outline a possible implementation technique
+in which  no run-time  costs whatsoever  are incurred  for  exceptions
+unless they  are  raised.  This  technique  has  been  used  for  some
+debugging systems  and it bears some resemblance to the technique used
+in Mesa <a href="ratl-BIB.html">[GMS 77]</a>. The basic principles are as follows:
+<ol type=a>
+<li>When  an  exception  occurs,  the  specific  run-time
+   system that  treats exceptions must be able to locate the addresses
+   of  the   currently  active  procedure  calls.  This  condition  is
+   satisfied if  (as is  usually the case) return addresses are stored
+   in procedure activations.
+<p>
+<li>Knowing the  code address  of a procedure, it must be
+   possible  to   locate  the  code  address  of  the  first  handler.
+   Similarly, given  a handler,  it must  be possible to find the next
+   handler. This  condition can  be satisfied by chaining the handlers
+   and by  storing the  address of  the first  handler just before the
+   code of the procedure.
+<p>
+<li>Each handler  must start  with the  indication of the
+   exception code (or codes) that it services. Some convention must be
+   used for the handler for others, which must appear last.
+<p>
+<li>When effecting the association of an exception with a
+   handler, the run-time system locates the procedure address and from
+   there the  chain of  handlers. It  may then  inspect the  exception
+   codes to find the appropriate handler, if any.
+</ol>
+
+We reiterate  that this  solution should  only  be  considered  as  an
+existence proof  that exceptions  may be implemented at no cost unless
+raised. Other  techniques may  be  more  suitable,  depending  on  the
+machine architecture.
+
+<H3><BR><a name="14.5.5">14.5.5 The Case Against Asynchronous Exceptions</a></H3>
+
+The normal  means of  communicating with  a task  is via  entry calls.
+Hence most  situations in  which the  termination of  a task  must  be
+decided by  another task  should be  programmed by  calling a  special
+entry, say STOP, of the task to be terminated (or by using a terminate
+alternative).  The   clear  advantage   of  such  a  solution  is  the
+possibility thus  offered of  including accept statements for the STOP
+entry at  those places where the termination can be done in an orderly
+fashion.
+<p>
+The ability  for one  task to  raise an exception in another task must
+however be  viewed as a possibility that has - potentially - extremely
+severe  consequences.   In  no   way  should  such  externally  raised
+exceptions be  considered  as  being  normal  terminating  conditions.
+Interfering asynchronously  with the  execution of a task may catch it
+in a  state where  it is not prepared to respond to such intervention.
+There is  then always  a risk  of leaving  the  task  in  a  state  of
+confusion,  and   also  of   contaminating  other   tasks  that   were
+communicating with it.
+
+<H3><BR><a name="14.5.6">14.5.6 Proving Programs with Exceptions</a></H3>
+
+The problems  of exception  handling facilities  such as  the <a href="ratl-BIB.html#languages">PL/I</a> on
+conditions, which  permit resumption  after the  exception, are  well-
+known.  For   instance,  assuming   integer  working,   consider   the
+consecutive statements:
+<p>
+<table border cellpadding=6><tr><td><pre>
+X :=  P + Q;
+Y :=  X - Q;
+ASSERT (Y = P);
+</pre></td></tr></table>
+<p>
+Unless overflow occurs in the evaluation of P + Q, the final assertion
+should be  satisfied. This  however would not be true if a handler for
+overflow were  able to  provide a  different value for X and return to
+the same statement list.
+<p>
+This simple  example shows  the near impossibility of proving programs
+with unrestricted  signal and notify exceptions. For the same reasons,
+such programs are extremely difficult to optimize.
+<p>
+In contrast, for the proposal chosen in Ada, simple proof rules may be
+given, as  has been  shown by  Bron <a href="ratl-BIB.html">[BFH  76]</a> and  Fokkinga  <a href="ratl-BIB.html">[Fo  77]</a>.
+Additional examples  may be  found in  the reference <a href="ratl-BIB.html">[DH 76]</a>. The main
+idea is a consequence of the definition of the role of a handler.
+<p>
+As mentioned  above, when  an exception  occurs in  a  procedure,  the
+execution of  the handler  completes the  execution of  the  procedure
+considered. Consequently the effect of a procedure is achieved either:
+<ol type=a>
+<li>by its body if no exception occurs
+<p>
+or, if the exception E occurs:
+<p>
+<li>by the  part of  its body  up to  the point where the
+   exception E occurs, and then by the handler for E.
+</ol>
+
+Two simple cases have been shown in the programming examples:
+<ol>
+<li>In the  SAFE_INSERT example of <a href="ratl-14-03.html#14.3.4">section 14.3.4</a> we have
+   shown a  case where  these two  rules reduce to a simpler form. The
+   effect of SAFE_INSERT is achieved either:
+<p>
+<ol type=a>
+    <li>by its body if no exception occurs, or
+<p>
+    <li>by the handler for TABLE_FULL if TABLE_FULL occurs.
+</ol>
+<p>
+<li>In the  file example  of <a href="ratl-14-03.html#14.3.3">section  14.3.3</a>,  where  the
+   exception END_ERROR  is used as a terminating condition, the effect
+   of the  procedure TRANSFER  is achieved  by the  succession of  the
+   effects of
+<p>
+<ol type=a>
+    <li>its body
+<p>
+    <li>the body of the handler for END_ERROR.
+</ol>
+</ol>
+
+This shows  that, with adequate programming conventions, the effect of
+a procedure that contains an exception handler can be characterized in
+a simple way. This simplifies correctness proofs.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-15.html#15"><b>NEXT</b></a>
+&#128; <a href="ratl-14-04.html#14.4"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-14.html#14"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

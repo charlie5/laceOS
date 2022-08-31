@@ -1,0 +1,535 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Interfacing with COBOL</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.CodeIndented {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 5.2em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedBulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 7.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-B-3-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-B-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>B.4 Interfacing with COBOL</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal"><A NAME="I6579"></A><A NAME="I6580"></A>The facilities 
+relevant to interfacing with the COBOL language are the package Interfaces.COBOL 
+and support for the Import, Export and Convention pragmas with <I>convention</I>_<SPAN Class="swiss"><A HREF="RM-2-3.html#S0002">identifier</A></SPAN> 
+COBOL.</DIV>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The COBOL interface 
+package supplies several sets of facilities:&nbsp;</DIV>
+<DIV Class="paranum">3</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>A set of types corresponding to the 
+native COBOL types of the supported COBOL implementation (so-called &ldquo;internal 
+COBOL representations&rdquo;), allowing Ada data to be passed as parameters 
+to COBOL programs</LI></UL>
+<DIV Class="paranum">4</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>A set of types and constants reflecting 
+external data representations such as might be found in files or databases, 
+allowing COBOL-generated data to be read by an Ada program, and Ada-generated 
+data to be read by COBOL programs</LI></UL>
+<DIV Class="paranum">5</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>A generic package for converting between 
+an Ada decimal type value and either an internal or external COBOL representation 
+</LI></UL>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">6</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The library package 
+Interfaces.COBOL has the following declaration:&nbsp;</DIV>
+<DIV Class="paranum">7</DIV>
+<DIV Class="Examples"><B>package</B>&nbsp;Interfaces.COBOL&nbsp;<B>is</B><A NAME="I6581"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(COBOL);</DIV>
+<DIV Class="paranum">8</DIV>
+<DIV Class="Examples"><SPAN Class="roman"><I>--&nbsp;Types&nbsp;and&nbsp;operations&nbsp;for&nbsp;internal&nbsp;data&nbsp;representations</I></SPAN></DIV>
+<DIV Class="paranum">9</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6582"></A>Floating&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>is</B>&nbsp;<B>digits</B>&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6583"></A>Long_Floating&nbsp;<B>is</B>&nbsp;<B>digits</B>&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;</DIV>
+<DIV Class="paranum">10</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6584"></A>Binary&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>is</B>&nbsp;<B>range</B>&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6585"></A>Long_Binary&nbsp;<B>is</B>&nbsp;<B>range</B>&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;</DIV>
+<DIV Class="paranum">11</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<A NAME="I6586"></A>Max_Digits_Binary&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>constant</B>&nbsp;:=&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6587"></A>Max_Digits_Long_Binary&nbsp;:&nbsp;<B>constant</B>&nbsp;:=&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;</DIV>
+<DIV Class="paranum">12</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6588"></A>Decimal_Element&nbsp;&nbsp;<B>is</B>&nbsp;<B>mod</B>&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6589"></A>Packed_Decimal&nbsp;<B>is</B>&nbsp;<B>array</B>&nbsp;(Positive&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;<B>of</B>&nbsp;Decimal_Element;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Pack(Packed_Decimal);</DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6590"></A>COBOL_Character&nbsp;<B>is</B>&nbsp;<SPAN Class="roman"><I>implementation-defined&nbsp;character&nbsp;type</I></SPAN>;</DIV>
+<DIV Class="paranum">14</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<A NAME="I6591"></A>Ada_To_COBOL&nbsp;:&nbsp;<B>array</B>&nbsp;(Character)&nbsp;<B>of</B>&nbsp;COBOL_Character&nbsp;:=&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;</DIV>
+<DIV Class="paranum">15</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<A NAME="I6592"></A>COBOL_To_Ada&nbsp;:&nbsp;<B>array</B>&nbsp;(COBOL_Character)&nbsp;<B>of</B>&nbsp;Character&nbsp;:=&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;</DIV>
+<DIV Class="paranum">16</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6593"></A>Alphanumeric&nbsp;<B>is</B>&nbsp;<B>array</B>&nbsp;(Positive&nbsp;range&nbsp;&lt;&gt;)&nbsp;<B>of</B>&nbsp;COBOL_Character;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Pack(Alphanumeric);</DIV>
+<DIV Class="paranum">17</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6594"></A>To_COBOL&nbsp;(Item&nbsp;:&nbsp;<B>in</B>&nbsp;String)&nbsp;<B>return</B>&nbsp;Alphanumeric;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6595"></A>To_Ada&nbsp;&nbsp;&nbsp;(Item&nbsp;:&nbsp;<B>in</B>&nbsp;Alphanumeric)&nbsp;<B>return</B>&nbsp;String;</DIV>
+<DIV Class="paranum">18</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6596"></A>To_COBOL&nbsp;(Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Target&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Alphanumeric;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Natural);</DIV>
+<DIV Class="paranum">19</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6597"></A>To_Ada&nbsp;(Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Alphanumeric;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Target&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Natural);</DIV>
+<DIV Class="paranum">20</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6598"></A>Numeric&nbsp;<B>is</B>&nbsp;<B>array</B>&nbsp;(Positive&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;<B>of</B>&nbsp;COBOL_Character;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Pack(Numeric);</DIV>
+<DIV Class="paranum">21</DIV>
+<DIV Class="Examples"><SPAN Class="roman"><I>--&nbsp;Formats&nbsp;for&nbsp;COBOL&nbsp;data&nbsp;representations</I></SPAN></DIV>
+<DIV Class="paranum">22</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6599"></A>Display_Format&nbsp;<B>is</B>&nbsp;<B>private</B>;</DIV>
+<DIV Class="paranum">23</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<A NAME="I6600"></A>Unsigned&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>constant</B>&nbsp;Display_Format;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6601"></A>Leading_Separate&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>constant</B>&nbsp;Display_Format;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6602"></A>Trailing_Separate&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>constant</B>&nbsp;Display_Format;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6603"></A>Leading_Nonseparate&nbsp;&nbsp;:&nbsp;<B>constant</B>&nbsp;Display_Format;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6604"></A>Trailing_Nonseparate&nbsp;:&nbsp;<B>constant</B>&nbsp;Display_Format;</DIV>
+<DIV Class="paranum">24</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6605"></A>Binary_Format&nbsp;<B>is</B>&nbsp;<B>private</B>;</DIV>
+<DIV Class="paranum">25</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<A NAME="I6606"></A>High_Order_First&nbsp;&nbsp;:&nbsp;<B>constant</B>&nbsp;Binary_Format;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6607"></A>Low_Order_First&nbsp;&nbsp;&nbsp;:&nbsp;<B>constant</B>&nbsp;Binary_Format;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6608"></A>Native_Binary&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>constant</B>&nbsp;Binary_Format;</DIV>
+<DIV Class="paranum">26</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6609"></A>Packed_Format&nbsp;<B>is</B>&nbsp;<B>private</B>;</DIV>
+<DIV Class="paranum">27</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<A NAME="I6610"></A>Packed_Unsigned&nbsp;&nbsp;&nbsp;:&nbsp;<B>constant</B>&nbsp;Packed_Format;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6611"></A>Packed_Signed&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>constant</B>&nbsp;Packed_Format;</DIV>
+<DIV Class="paranum">28</DIV>
+<DIV Class="Examples"><SPAN Class="roman"><I>--&nbsp;Types&nbsp;for&nbsp;external&nbsp;representation&nbsp;of&nbsp;COBOL&nbsp;binary&nbsp;data</I></SPAN></DIV>
+<DIV Class="paranum">29</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6612"></A>Byte&nbsp;<B>is</B>&nbsp;<B>mod</B>&nbsp;2**COBOL_Character'Size;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6613"></A>Byte_Array&nbsp;<B>is</B>&nbsp;<B>array</B>&nbsp;(Positive&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;<B>of</B>&nbsp;Byte;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Pack&nbsp;(Byte_Array);</DIV>
+<DIV Class="paranum">30</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<A NAME="I6614"></A>Conversion_Error&nbsp;:&nbsp;<B>exception</B>;</DIV>
+<DIV Class="paranum">31</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Num&nbsp;<B>is</B>&nbsp;<B>delta</B>&nbsp;&lt;&gt;&nbsp;<B>digits</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;<A NAME="I6615"></A>Decimal_Conversions&nbsp;<B>is</B></DIV>
+<DIV Class="paranum">32</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;Display&nbsp;Formats:&nbsp;data&nbsp;values&nbsp;are&nbsp;represented&nbsp;as&nbsp;Numeric</I></SPAN></DIV>
+<DIV Class="paranum">33</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6616"></A>Valid&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Numeric;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Display_Format)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">34</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6617"></A>Length&nbsp;(Format&nbsp;:&nbsp;<B>in</B>&nbsp;Display_Format)&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">35</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6618"></A>To_Decimal&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Numeric;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Display_Format)&nbsp;<B>return</B>&nbsp;Num;</DIV>
+<DIV Class="paranum">36</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6619"></A>To_Display&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Display_Format)&nbsp;<B>return</B>&nbsp;Numeric;</DIV>
+<DIV Class="paranum">37</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;Packed&nbsp;Formats:&nbsp;data&nbsp;values&nbsp;are&nbsp;represented&nbsp;as&nbsp;Packed_Decimal</I></SPAN></DIV>
+<DIV Class="paranum">38</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6620"></A>Valid&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Packed_Decimal;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Packed_Format)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">39</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6621"></A>Length&nbsp;(Format&nbsp;:&nbsp;<B>in</B>&nbsp;Packed_Format)&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">40</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6622"></A>To_Decimal&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Packed_Decimal;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Packed_Format)&nbsp;<B>return</B>&nbsp;Num;</DIV>
+<DIV Class="paranum">41</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6623"></A>To_Packed&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Packed_Format)&nbsp;<B>return</B>&nbsp;Packed_Decimal;</DIV>
+<DIV Class="paranum">42</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;Binary&nbsp;Formats:&nbsp;external&nbsp;data&nbsp;values&nbsp;are&nbsp;represented&nbsp;as&nbsp;Byte_Array</I></SPAN></DIV>
+<DIV Class="paranum">43</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6624"></A>Valid&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Byte_Array;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Binary_Format)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">44</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6625"></A>Length&nbsp;(Format&nbsp;:&nbsp;<B>in</B>&nbsp;Binary_Format)&nbsp;<B>return</B>&nbsp;Natural;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6626"></A>To_Decimal&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Byte_Array;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Binary_Format)&nbsp;<B>return</B>&nbsp;Num;</DIV>
+<DIV Class="paranum">45</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6627"></A>To_Binary&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Binary_Format)&nbsp;<B>return</B>&nbsp;Byte_Array;</DIV>
+<DIV Class="paranum">46</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;Internal&nbsp;Binary&nbsp;formats:&nbsp;data&nbsp;values&nbsp;are&nbsp;of&nbsp;type&nbsp;Binary&nbsp;or&nbsp;Long_Binary</I></SPAN></DIV>
+<DIV Class="paranum">47</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6628"></A>To_Decimal&nbsp;(Item&nbsp;:&nbsp;<B>in</B>&nbsp;Binary)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6629"></A>To_Decimal&nbsp;(Item&nbsp;:&nbsp;<B>in</B>&nbsp;Long_Binary)&nbsp;<B>return</B>&nbsp;Num;</DIV>
+<DIV Class="paranum">48</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6630"></A>To_Binary&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num)&nbsp;&nbsp;<B>return</B>&nbsp;Binary;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6631"></A>To_Long_Binary&nbsp;(Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num)&nbsp;&nbsp;<B>return</B>&nbsp;Long_Binary;</DIV>
+<DIV Class="paranum">49</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Decimal_Conversions;</DIV>
+<DIV Class="paranum">50</DIV>
+<DIV Class="Examples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;Interfaces.COBOL;</DIV>
+<DIV Class="paranum">51</DIV>
+<DIV Class="Normal">Each of the types in Interfaces.COBOL is COBOL-compatible.</DIV>
+<DIV Class="paranum">52</DIV>
+<DIV Class="Normal">The types Floating and Long_Floating correspond to 
+the native types in COBOL for data items with computational usage implemented 
+by floating point. The types Binary and Long_Binary correspond to the 
+native types in COBOL for data items with binary usage, or with computational 
+usage implemented by binary.</DIV>
+<DIV Class="paranum">53</DIV>
+<DIV Class="Normal">Max_Digits_Binary is the largest number of decimal 
+digits in a numeric value that is represented as Binary. Max_Digits_Long_Binary 
+is the largest number of decimal digits in a numeric value that is represented 
+as Long_Binary.</DIV>
+<DIV Class="paranum">54</DIV>
+<DIV Class="Normal">The type Packed_Decimal corresponds to COBOL's packed-decimal 
+usage.</DIV>
+<DIV Class="paranum">55</DIV>
+<DIV Class="Normal">The type COBOL_Character defines the run-time character 
+set used in the COBOL implementation. Ada_To_COBOL and COBOL_To_Ada are 
+the mappings between the Ada and COBOL run-time character sets.&nbsp;</DIV>
+<DIV Class="paranum">56</DIV>
+<DIV Class="Normal">Type Alphanumeric corresponds to COBOL's alphanumeric 
+data category.</DIV>
+<DIV Class="paranum">57</DIV>
+<DIV Class="Normal">Each of the functions To_COBOL and To_Ada converts 
+its parameter based on the mappings Ada_To_COBOL and COBOL_To_Ada, respectively. 
+The length of the result for each is the length of the parameter, and 
+the lower bound of the result is 1. Each component of the result is obtained 
+by applying the relevant mapping to the corresponding component of the 
+parameter.</DIV>
+<DIV Class="paranum">58</DIV>
+<DIV Class="Normal">Each of the procedures To_COBOL and To_Ada copies 
+converted elements from Item to Target, using the appropriate mapping 
+(Ada_To_COBOL or COBOL_To_Ada, respectively). The index in Target of 
+the last element assigned is returned in Last (0 if Item is a null array). 
+<A NAME="I6632"></A>If Item'Length exceeds Target'Length, Constraint_Error 
+is propagated.</DIV>
+<DIV Class="paranum">59</DIV>
+<DIV Class="Normal">Type Numeric corresponds to COBOL's numeric data 
+category with display usage.</DIV>
+<DIV Class="paranum">60</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.9em">The types Display_Format, 
+Binary_Format, and Packed_Format are used in conversions between Ada 
+decimal type values and COBOL internal or external data representations. 
+The value of the constant Native_Binary is either High_Order_First or 
+Low_Order_First, depending on the implementation.&nbsp;</DIV>
+<DIV Class="paranum">61</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Valid&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Numeric;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Display_Format)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">62</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.4em">The function 
+Valid checks that the Item parameter has a value consistent with the 
+value of Format. If the value of Format is other than Unsigned, Leading_Separate, 
+and Trailing_Separate, the effect is implementation defined. If Format 
+does have one of these values, the following rules apply:&nbsp;</DIV>
+<DIV Class="paranum">63/1</DIV>
+<UL Class="CodeIndentedBulleted"><LI TYPE=DISC>Format=Unsigned: if Item 
+comprises one or more decimal digit characters then Valid returns True, 
+else it returns False.</LI></UL>
+<DIV Class="paranum">64/1</DIV>
+<UL Class="CodeIndentedBulleted"><LI TYPE=DISC>Format=Leading_Separate: 
+if Item comprises a single occurrence of the plus or minus sign character, 
+and then one or more decimal digit characters, then Valid returns True, 
+else it returns False.</LI></UL>
+<DIV Class="paranum">65/1</DIV>
+<UL Class="CodeIndentedBulleted" Style="margin-bottom: 0.7em"><LI TYPE=DISC>Format=Trailing_Separate: 
+if Item comprises one or more decimal digit characters and finally a 
+plus or minus sign character, then Valid returns True, else it returns 
+False.&nbsp;</LI></UL>
+<DIV Class="paranum">66</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Length&nbsp;(Format&nbsp;:&nbsp;<B>in</B>&nbsp;Display_Format)&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">67</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">The Length function 
+returns the minimal length of a Numeric value sufficient to hold any 
+value of type Num when represented as Format.</DIV>
+<DIV Class="paranum">68</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;To_Decimal&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Numeric;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Display_Format)&nbsp;<B>return</B>&nbsp;Num;</DIV>
+<DIV Class="paranum">69</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Produces a value 
+of type Num corresponding to Item as represented by Format. The number 
+of digits after the assumed radix point in Item is Num'Scale. Conversion_Error 
+is propagated if the value represented by Item is outside the range of 
+Num.&nbsp;</DIV>
+<DIV Class="paranum">70</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;To_Display&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Display_Format)&nbsp;<B>return</B>&nbsp;Numeric;</DIV>
+<DIV Class="paranum">71/1</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">This function 
+returns the Numeric value for Item, represented in accordance with Format. 
+The length of the returned value is Length(Format), and the lower bound 
+is 1. Conversion_Error is propagated if Num is negative and Format is 
+Unsigned.</DIV>
+<DIV Class="paranum">72</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Valid&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Packed_Decimal;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Packed_Format)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">73</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">This function 
+returns True if Item has a value consistent with Format, and False otherwise. 
+The rules for the formation of Packed_Decimal values are implementation 
+defined.</DIV>
+<DIV Class="paranum">74</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Length&nbsp;(Format&nbsp;:&nbsp;<B>in</B>&nbsp;Packed_Format)&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">75</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">This function 
+returns the minimal length of a Packed_Decimal value sufficient to hold 
+any value of type Num when represented as Format.</DIV>
+<DIV Class="paranum">76</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;To_Decimal&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Packed_Decimal;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Packed_Format)&nbsp;<B>return</B>&nbsp;Num;</DIV>
+<DIV Class="paranum">77</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Produces a value 
+of type Num corresponding to Item as represented by Format. Num'Scale 
+is the number of digits after the assumed radix point in Item. Conversion_Error 
+is propagated if the value represented by Item is outside the range of 
+Num.</DIV>
+<DIV Class="paranum">78</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;To_Packed&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Packed_Format)&nbsp;<B>return</B>&nbsp;Packed_Decimal;</DIV>
+<DIV Class="paranum">79/1</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">This function 
+returns the Packed_Decimal value for Item, represented in accordance 
+with Format. The length of the returned value is Length(Format), and 
+the lower bound is 1. Conversion_Error is propagated if Num is negative 
+and Format is Packed_Unsigned.</DIV>
+<DIV Class="paranum">80</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Valid&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Byte_Array;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Binary_Format)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">81</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">This function 
+returns True if Item has a value consistent with Format, and False otherwise. 
+</DIV>
+<DIV Class="paranum">82</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;Length&nbsp;(Format&nbsp;:&nbsp;<B>in</B>&nbsp;Binary_Format)&nbsp;<B>return</B>&nbsp;Natural;</DIV>
+<DIV Class="paranum">83</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">This function 
+returns the minimal length of a Byte_Array value sufficient to hold any 
+value of type Num when represented as Format.</DIV>
+<DIV Class="paranum">84</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;To_Decimal&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Byte_Array;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Binary_Format)&nbsp;<B>return</B>&nbsp;Num;</DIV>
+<DIV Class="paranum">85</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">Produces a value 
+of type Num corresponding to Item as represented by Format. Num'Scale 
+is the number of digits after the assumed radix point in Item. Conversion_Error 
+is propagated if the value represented by Item is outside the range of 
+Num.</DIV>
+<DIV Class="paranum">86</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;To_Binary&nbsp;(Item&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Format&nbsp;:&nbsp;<B>in</B>&nbsp;Binary_Format)&nbsp;<B>return</B>&nbsp;Byte_Array;</DIV>
+<DIV Class="paranum">87/1</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">This function 
+returns the Byte_Array value for Item, represented in accordance with 
+Format. The length of the returned value is Length(Format), and the lower 
+bound is 1.</DIV>
+<DIV Class="paranum">88</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;To_Decimal&nbsp;(Item&nbsp;:&nbsp;<B>in</B>&nbsp;Binary)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Num;<BR>
+<BR>
+<B>function</B>&nbsp;To_Decimal&nbsp;(Item&nbsp;:&nbsp;<B>in</B>&nbsp;Long_Binary)&nbsp;<B>return</B>&nbsp;Num;</DIV>
+<DIV Class="paranum">89</DIV>
+<DIV Class="CodeIndented" Style="margin-bottom: 0.9em">These functions 
+convert from COBOL binary format to a corresponding value of the decimal 
+type Num. Conversion_Error is propagated if Item is too large for Num. 
+</DIV>
+<DIV Class="paranum">90</DIV>
+<DIV Class="Examples"><B>function</B>&nbsp;To_Binary&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num)&nbsp;&nbsp;<B>return</B>&nbsp;Binary;<BR>
+<BR>
+<B>function</B>&nbsp;To_Long_Binary&nbsp;(Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num)&nbsp;&nbsp;<B>return</B>&nbsp;Long_Binary;</DIV>
+<DIV Class="paranum">91</DIV>
+<DIV Class="CodeIndented">These functions convert from Ada decimal to 
+COBOL binary format. Conversion_Error is propagated if the value of Item 
+is too large to be represented in the result type.&nbsp;</DIV>
+
+<H4 Class="centered">Implementation Requirements</H4>
+<DIV Class="paranum">92</DIV>
+<DIV Class="Normal">An implementation shall support pragma Convention 
+with a COBOL <I>convention</I>_<SPAN Class="swiss"><A HREF="RM-2-3.html#S0002">identifier</A></SPAN> 
+for a COBOL-eligible type (see <A HREF="RM-B-1.html">B.1</A>).&nbsp;</DIV>
+
+<H4 Class="centered">Implementation Permissions</H4>
+<DIV Class="paranum">93</DIV>
+<DIV Class="Normal">An implementation may provide additional constants 
+of the private types Display_Format, Binary_Format, or Packed_Format. 
+</DIV>
+<DIV Class="paranum">94</DIV>
+<DIV Class="Normal">An implementation may provide further floating point 
+and integer types in Interfaces.COBOL to match additional native COBOL 
+types, and may also supply corresponding conversion functions in the 
+generic package Decimal_Conversions.&nbsp;</DIV>
+
+<H4 Class="centered">Implementation Advice</H4>
+<DIV Class="paranum">95</DIV>
+<DIV Class="Normal">An Ada implementation should support the following 
+interface correspondences between Ada and COBOL.&nbsp;</DIV>
+<DIV Class="paranum">96</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>An Ada <B>access</B> T parameter is 
+passed as a &ldquo;BY REFERENCE&rdquo; data item of the COBOL type corresponding 
+to T.</LI></UL>
+<DIV Class="paranum">97</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>An Ada <B>in</B> scalar parameter 
+is passed as a &ldquo;BY CONTENT&rdquo; data item of the corresponding 
+COBOL type.</LI></UL>
+<DIV Class="paranum">98</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>Any other Ada parameter is passed 
+as a &ldquo;BY REFERENCE&rdquo; data item of the COBOL type corresponding 
+to the Ada parameter type; for scalars, a local copy is used if necessary 
+to ensure by-copy semantics.&nbsp;</LI></UL>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">99</DIV>
+<DIV Class="Notes">14&nbsp;&nbsp;An implementation is not required to 
+support pragma Convention for access types, nor is it required to support 
+pragma Import, Export or Convention for functions.&nbsp;</DIV>
+<DIV Class="paranum">100</DIV>
+<DIV Class="Notes">15&nbsp;&nbsp;If an Ada subprogram is exported to 
+COBOL, then a call from COBOL call may specify either &ldquo;BY CONTENT&rdquo; 
+or &ldquo;BY REFERENCE&rdquo;.&nbsp;</DIV>
+
+<H4 Class="centered">Examples</H4>
+<DIV Class="paranum">101</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><I>Examples of Interfaces.COBOL:</I> 
+</DIV>
+<DIV Class="paranum">102</DIV>
+<DIV Class="Examples"><B>with</B>&nbsp;Interfaces.COBOL;<BR>
+<B>procedure</B>&nbsp;Test_Call&nbsp;<B>is</B></DIV>
+<DIV Class="paranum">103</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;Calling&nbsp;a&nbsp;foreign&nbsp;COBOL&nbsp;program</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;Assume&nbsp;that&nbsp;a&nbsp;COBOL&nbsp;program&nbsp;PROG&nbsp;has&nbsp;the&nbsp;following&nbsp;declaration</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;&nbsp;in&nbsp;its&nbsp;LINKAGE&nbsp;section:</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;&nbsp;01&nbsp;Parameter-Area</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;05&nbsp;NAME&nbsp;&nbsp;&nbsp;PIC&nbsp;X(20).</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;05&nbsp;SSN&nbsp;&nbsp;&nbsp;&nbsp;PIC&nbsp;X(9).</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;05&nbsp;SALARY&nbsp;PIC&nbsp;99999V99&nbsp;USAGE&nbsp;COMP.</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;The&nbsp;effect&nbsp;of&nbsp;PROG&nbsp;is&nbsp;to&nbsp;update&nbsp;SALARY&nbsp;based&nbsp;on&nbsp;some&nbsp;algorithm</I></SPAN></DIV>
+<DIV Class="paranum">104</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;COBOL&nbsp;<B>renames</B>&nbsp;Interfaces.COBOL;</DIV>
+<DIV Class="paranum">105</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Salary_Type&nbsp;<B>is</B>&nbsp;<B>delta</B>&nbsp;0.01&nbsp;<B>digits</B>&nbsp;7;</DIV>
+<DIV Class="paranum">106</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;COBOL_Record&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name&nbsp;&nbsp;&nbsp;:&nbsp;COBOL.Numeric(1..20);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SSN&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;COBOL.Numeric(1..9);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Salary&nbsp;:&nbsp;COBOL.Binary;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;Assume&nbsp;Binary&nbsp;=&nbsp;32&nbsp;bits</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;<B>record</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Convention&nbsp;(COBOL,&nbsp;COBOL_Record);</DIV>
+<DIV Class="paranum">107</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Prog&nbsp;(Item&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;COBOL_Record);<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Import&nbsp;(COBOL,&nbsp;Prog,&nbsp;&quot;PROG&quot;);</DIV>
+<DIV Class="paranum">108</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;Salary_Conversions&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;COBOL.Decimal_Conversions(Salary_Type);</DIV>
+<DIV Class="paranum">109</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;Some_Salary&nbsp;:&nbsp;Salary_Type&nbsp;:=&nbsp;12_345.67;<BR>
+&nbsp;&nbsp;&nbsp;Some_Record&nbsp;:&nbsp;COBOL_Record&nbsp;:=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Name&nbsp;&nbsp;&nbsp;=&gt;&nbsp;&quot;Johnson,&nbsp;John&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SSN&nbsp;&nbsp;&nbsp;&nbsp;=&gt;&nbsp;&quot;111223333&quot;,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Salary&nbsp;=&gt;&nbsp;Salary_Conversions.To_Binary(Some_Salary));</DIV>
+<DIV Class="paranum">110</DIV>
+<DIV Class="Examples"><B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Prog&nbsp;(Some_Record);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Test_Call;</DIV>
+<DIV Class="paranum">111</DIV>
+<DIV Class="Examples"><B>with</B>&nbsp;Interfaces.COBOL;<BR>
+<B>with</B>&nbsp;COBOL_Sequential_IO;&nbsp;<SPAN Class="roman"><I>--&nbsp;Assumed&nbsp;to&nbsp;be&nbsp;supplied&nbsp;by&nbsp;implementation</I></SPAN><BR>
+<B>procedure</B>&nbsp;Test_External_Formats&nbsp;<B>is</B></DIV>
+<DIV Class="paranum">112</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;Using&nbsp;data&nbsp;created&nbsp;by&nbsp;a&nbsp;COBOL&nbsp;program</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;Assume&nbsp;that&nbsp;a&nbsp;COBOL&nbsp;program&nbsp;has&nbsp;created&nbsp;a&nbsp;sequential&nbsp;file&nbsp;with</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;&nbsp;the&nbsp;following&nbsp;record&nbsp;structure,&nbsp;and&nbsp;that&nbsp;we&nbsp;need&nbsp;to</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;&nbsp;process&nbsp;the&nbsp;records&nbsp;in&nbsp;an&nbsp;Ada&nbsp;program</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;&nbsp;01&nbsp;EMPLOYEE-RECORD</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;05&nbsp;NAME&nbsp;&nbsp;&nbsp;&nbsp;PIC&nbsp;X(20).</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;05&nbsp;SSN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PIC&nbsp;X(9).</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;05&nbsp;SALARY&nbsp;&nbsp;PIC&nbsp;99999V99&nbsp;USAGE&nbsp;COMP.</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;05&nbsp;ADJUST&nbsp;&nbsp;PIC&nbsp;S999V999&nbsp;SIGN&nbsp;LEADING&nbsp;SEPARATE.</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;The&nbsp;COMP&nbsp;data&nbsp;is&nbsp;binary&nbsp;(32&nbsp;bits),&nbsp;high-order&nbsp;byte&nbsp;first</I></SPAN></DIV>
+<DIV Class="paranum">113</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;COBOL&nbsp;<B>renames</B>&nbsp;Interfaces.COBOL;</DIV>
+<DIV Class="paranum">114</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Salary_Type&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>is</B>&nbsp;<B>delta</B>&nbsp;0.01&nbsp;&nbsp;<B>digits</B>&nbsp;7;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Adjustments_Type&nbsp;<B>is</B>&nbsp;<B>delta</B>&nbsp;0.001&nbsp;<B>digits</B>&nbsp;6;</DIV>
+<DIV Class="paranum">115</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;COBOL_Employee_Record_Type&nbsp;<B>is</B>&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;External&nbsp;representation</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;COBOL.Alphanumeric(1..20);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SSN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;COBOL.Alphanumeric(1..9);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Salary&nbsp;&nbsp;:&nbsp;COBOL.Byte_Array(1..4);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adjust&nbsp;&nbsp;:&nbsp;COBOL.Numeric(1..7);&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;Sign&nbsp;and&nbsp;6&nbsp;digits</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;<B>record</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Convention&nbsp;(COBOL,&nbsp;COBOL_Employee_Record_Type);</DIV>
+<DIV Class="paranum">116</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;COBOL_Employee_IO&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;COBOL_Sequential_IO(COBOL_Employee_Record_Type);<BR>
+&nbsp;&nbsp;&nbsp;<B>use</B>&nbsp;COBOL_Employee_IO;</DIV>
+<DIV Class="paranum">117</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;COBOL_File&nbsp;:&nbsp;File_Type;</DIV>
+<DIV Class="paranum">118</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Ada_Employee_Record_Type&nbsp;<B>is</B>&nbsp;&nbsp;<SPAN Class="roman"><I>--&nbsp;Internal&nbsp;representation</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;String(1..20);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SSN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;String(1..9);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Salary&nbsp;&nbsp;:&nbsp;Salary_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adjust&nbsp;&nbsp;:&nbsp;Adjustments_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;<B>record</B>;</DIV>
+<DIV Class="paranum">119</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;COBOL_Record&nbsp;:&nbsp;COBOL_Employee_Record_Type;<BR>
+&nbsp;&nbsp;&nbsp;Ada_Record&nbsp;&nbsp;&nbsp;:&nbsp;Ada_Employee_Record_Type;</DIV>
+<DIV Class="paranum">120</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;Salary_Conversions&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;COBOL.Decimal_Conversions(Salary_Type);<BR>
+&nbsp;&nbsp;&nbsp;<B>use</B>&nbsp;Salary_Conversions;</DIV>
+<DIV Class="paranum">121</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;Adjustments_Conversions&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;COBOL.Decimal_Conversions(Adjustments_Type);<BR>
+&nbsp;&nbsp;&nbsp;<B>use</B>&nbsp;Adjustments_Conversions;</DIV>
+<DIV Class="paranum">122</DIV>
+<DIV Class="Examples"><B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Open&nbsp;(COBOL_File,&nbsp;Name&nbsp;=&gt;&nbsp;&quot;Some_File&quot;);</DIV>
+<DIV Class="paranum">123</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Read&nbsp;(COBOL_File,&nbsp;COBOL_Record);</DIV>
+<DIV Class="paranum">124</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ada_Record.Name&nbsp;:=&nbsp;To_Ada(COBOL_Record.Name);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ada_Record.SSN&nbsp;&nbsp;:=&nbsp;To_Ada(COBOL_Record.SSN);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ada_Record.Salary&nbsp;:=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;To_Decimal(COBOL_Record.Salary,&nbsp;COBOL.High_Order_First);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ada_Record.Adjust&nbsp;:=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;To_Decimal(COBOL_Record.Adjust,&nbsp;COBOL.Leading_Separate);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;<SPAN Class="roman"><I>--&nbsp;Process&nbsp;Ada_Record</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;<B>loop</B>;<BR>
+<B>exception</B><BR>
+&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;End_Error&nbsp;=&gt;&nbsp;...<BR>
+<B>end</B>&nbsp;Test_External_Formats;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-B-3-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-B-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

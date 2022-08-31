@@ -1,0 +1,494 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Queue containers</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.Indented1 {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>8.6 Queue containers</H1>
+<div class="Normal">When the goals of the revision to Ada 2005 were discussed, 
+one of the expectations was that it would be possible to improve the 
+containers, or maybe introduce variants, that would be task safe. However, 
+further investigation revealed that this would not be practicable because 
+the number of ways in which several tasks could interact with a container 
+such as a list or map was large.</div>
+<div class="Normal">However, one data structure that is amenable to controlled 
+access by several tasks is the queue. One or more tasks can place objects 
+on a queue and one or more can remove them. Moreover, the existing container 
+library did not include queues as such so we were not tied to any existing 
+structures.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There are in fact four 
+different queue containers in Ada 2012. These are all for elements of 
+a definite type. Two are bounded and two are unbounded. And there are 
+priority and synchronized queues. The names are<A NAME="I1653"></A><A NAME="I1654"></A></div>
+<div class="SwissExamples">A.C.Unbounded_Synchronized_Queues<BR>
+A.C.Bounded_Synchronized_Queues<BR>
+A.C.Unbounded_Priority_Queues<BR>
+A.C.Bounded_Priority_Queues</div>
+<div class="Normal">At one stage it was also planned to have unbounded 
+containers for elements of an indefinite type. This would then have been 
+similar to the other containers which have unbounded definite, unbounded 
+indefinite and bounded definite forms. However, there were significant 
+problems with the <SPAN Class="swiss">Dequeue</SPAN> operation to remove 
+an indefinite object related to the fact that Ada does not have entry 
+functions. This is easily overcome by making the elements of the queue 
+a holder container as described in the previous section.</div>
+<div class="Normal" style="margin-bottom: 0.4em">These four different 
+queue containers are all derived from a single synchronized interface 
+declared in a generic package whose specification is as follows</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type<B>&nbsp;is&nbsp;private</B>;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>definite</I></SPAN><BR>
+<B>package</B>&nbsp;A.C.Synchronized_Queue_Interfaces&nbsp;<B>is</B><A NAME="I1655"></A><A NAME="I1656"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Pure(Synchronized_Queue_Interfaces);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Queue&nbsp;<B>is&nbsp;synchronized&nbsp;interface</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Enqueue<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Queue;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;New_Item:&nbsp;<B>in</B>&nbsp;Element_Type)&nbsp;<B>is&nbsp;abstract</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Synchronization&nbsp;=&gt;&nbsp;By_Entry;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Dequeue<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in&nbsp;out</B>&nbsp;Queue;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element:&nbsp;<B>out</B>&nbsp;Element_Type)&nbsp;<B>is&nbsp;abstract</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Synchronization&nbsp;=&gt;&nbsp;By_Entry;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Current_Use(Container:&nbsp;Queue)&nbsp;<B>return</B>&nbsp;Count_Type&nbsp;<B>is&nbsp;abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Peak_Use(Container:&nbsp;Queue)&nbsp;<B>return</B>&nbsp;Count_Type&nbsp;<B>is&nbsp;abstract</B>;<BR>
+<B>end</B>&nbsp;A.C.Synchronized_Queue_Interfaces;</div>
+<div class="Normal">This generic package declares the synchronized interface 
+<SPAN Class="swiss">Queue</SPAN> and four operations on queues. These 
+are the procedures <SPAN Class="swiss">Enqueue</SPAN> and <SPAN Class="swiss">Dequeue</SPAN> 
+to add items to a queue and remove items from a queue respectively; note 
+the aspect <SPAN Class="swiss">Synchronization</SPAN> which ensures that 
+all implementations of these abstract procedures must be by an entry. 
+There are also functions <SPAN Class="swiss">Current_Use</SPAN> and <SPAN Class="swiss">Peak_Use</SPAN> 
+which can be used to monitor the number of items on a queue.</div>
+<div class="Normal">The four queue containers are generic packages which 
+themselves declare a type <SPAN Class="swiss">Queue</SPAN> derived in 
+turn from the interface <SPAN Class="swiss">Queue</SPAN> declared in 
+the package above. We will look first at the synchronized queues and 
+then at the priority queues.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The package for unbounded 
+synchronized queues is as follows</div>
+<div class="SwissExamples"><B>with</B>&nbsp;System;&nbsp;<B>use</B>&nbsp;System;<BR>
+<B>with</B>&nbsp;A.C.Synchronized_Queue_Interfaces;<BR>
+<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;<B>package</B>&nbsp;Queue_Interfaces&nbsp;<B>is&nbsp;new</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A.C.Synchronized_Queue_Interfaces(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;Default_Ceiling:&nbsp;Any_Priority&nbsp;:=&nbsp;Priority'Last;<BR>
+<B>package</B>&nbsp;A.C.Unbounded_Synchronized_Queues&nbsp;<B>is</B><A NAME="I1657"></A><A NAME="I1658"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Unbounded_Synchronized_Queues);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;Implementation&nbsp;is<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Implementation;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>protected&nbsp;type</B>&nbsp;Queue(Ceiling:&nbsp;Any_Priority&nbsp;:=&nbsp;Default_Ceiling)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Priority&nbsp;=&gt;&nbsp;Ceiling<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>is&nbsp;new</B>&nbsp;Queue_Interfaces.Queue&nbsp;<B>with</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;Enqueue(New_Item:&nbsp;<B>in</B>&nbsp;Queue_Interfaces.Element_Type);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;Dequeue(Element:&nbsp;<B>out</B>&nbsp;Queue_Interfaces.Element_Type);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Current_Use&nbsp;<B>return</B>&nbsp;Count_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Peak_Use&nbsp;<B>return</B>&nbsp;Count_Type;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Queue;</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;A.C.Unbounded_Synchronized_Queues;</div>
+<div class="Normal">Note that there are two generic parameters. The first 
+(<SPAN Class="swiss">Queue_Interfaces</SPAN>) has to be an instantiation 
+of the interface generic <SPAN Class="swiss">Synchronized_Queue_Interfaces</SPAN>; 
+remember that the parameter <SPAN Class="swiss">(&lt;&gt;)</SPAN> means 
+that any instantiation will do. The second parameter concerns priority 
+and has a default value so we can ignore it for the moment.</div>
+<div class="Normal">Inside this package there is a protected type <SPAN Class="swiss">Queue</SPAN> 
+which controls access to the queues via its entries <SPAN Class="swiss">Enqueue</SPAN> 
+and <SPAN Class="swiss">Dequeue</SPAN>. This protected type is derived 
+from <SPAN Class="swiss">Queue_Interfaces.Queue</SPAN> and so promises 
+to implement the operations <SPAN Class="swiss">Enqueue</SPAN>, <SPAN Class="swiss">Dequeue</SPAN>, 
+<SPAN Class="swiss">Current_Use</SPAN> and <SPAN Class="swiss">Peak_Use 
+</SPAN>of that interface. And indeed it does implement them and moreover 
+implements <SPAN Class="swiss">Enqueue</SPAN> and <SPAN Class="swiss">Dequeue</SPAN> 
+by entries as required by the aspect <SPAN Class="swiss">Synchronization</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">As an example suppose 
+we wish to create a queue of some records such as</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Rec<B>&nbsp;is&nbsp;record</B>&nbsp;...&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">First of all we instantiate 
+the interface package (using named notation for clarity) thus</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Rec_Interface&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;A.C.Synchronized_Queue_Interfaces&nbsp;(Element_Type&nbsp;=&gt;&nbsp;Rec);</div>
+<div class="Normal">This creates an interface from which we can create 
+various queuing mechanisms for dealing with objects of the type <SPAN Class="swiss">Rec</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Thus we might write</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Unbounded_Rec_Package&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;A.C.Unbounded_Synchronized_Queues&nbsp;(Queue_Interfaces&nbsp;=&gt;&nbsp;Rec_Interface);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Finally, we can declare 
+a protected object, <SPAN Class="swiss">My_Rec_U</SPAN>Q which is the 
+actual queue, thus</div>
+<div class="SwissExamples">My_Rec_UQ:&nbsp;Unbounded_Rec_Package.Queue;</div>
+<div class="Normal" style="margin-bottom: 0.4em">To place an object 
+on the queue we can write</div>
+<div class="SwissExamples">Enqueue(My_Rec_UQ,&nbsp;Some_Rec);</div>
+<div class="Normal" style="margin-bottom: 0.4em">or perhaps more neatly</div>
+<div class="SwissExamples">My_Rec_UQ.Enqueue(Some_Rec);</div>
+<div class="Normal" style="margin-bottom: 0.4em">And to remove an item 
+from the queue we can write</div>
+<div class="SwissExamples">My_Rec_UQ.Dequeue(The_Rec);</div>
+<div class="Normal">where <SPAN Class="swiss">The_Rec</SPAN> is some 
+object of type <SPAN Class="swiss">Rec</SPAN> which thereby is given 
+the value removed.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The statement</div>
+<div class="SwissExamples">N&nbsp;:=&nbsp;Current_Use(My_Rec_UQ);</div>
+<div class="Normal">assigns to <SPAN Class="swiss">N</SPAN> the number 
+of items on the queue when <SPAN Class="swiss">Current_Use</SPAN> was 
+called (it could be out of date by the time it gets into <SPAN Class="swiss">N</SPAN>) 
+and similarly <SPAN Class="swiss">Peak_Use(My_Rec_UQ)</SPAN> gives the 
+maximum number of items that have been on the queue since it was declared.</div>
+<div class="Normal">This is all task safe because of the protected type; 
+several tasks can place items on the queue and several, perhaps the same, 
+can remove items from the queue without interference.</div>
+<div class="Normal">It should also be noticed that since the queue is 
+unbounded, we never get blocked by <SPAN Class="swiss">Enqueue&nbsp;</SPAN>since 
+extra storage is allocated as required just as for the other unbounded 
+containers (I suppose we might get <SPAN Class="swiss">Storage_Error</SPAN>).</div>
+<div class="Normal">The observant reader will note the mysterious local 
+package called <SPAN Class="swiss">Implementation</SPAN>. This enables 
+the implementation to declare local types to be used by the protected 
+type. It will be recalled that there is an old rule that one cannot declare 
+a type within a type. These local types really ought to be within the 
+private part of the protected type; maybe this is something for Ada 2020.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The package for bounded 
+synchronized queues is very similar. The only differences (apart from 
+its name) are that it has an additional generic parameter <SPAN Class="swiss">Default_Capacity</SPAN> 
+and the protected type <SPAN Class="swiss">Queue</SPAN> has an additional 
+discriminant <SPAN Class="swiss">Capacity</SPAN>. So its specification 
+is</div>
+<div class="SwissExamples"><B>with</B>&nbsp;System;&nbsp;<B>use</B>&nbsp;System;<BR>
+<B>with</B>&nbsp;A.C.Synchronized_Queue_Interfaces;<BR>
+<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;<B>package</B>&nbsp;Queue_Interfaces&nbsp;<B>is&nbsp;new</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A.C.Synchronized_Queue_Interfaces(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;Default_Capacity:&nbsp;Count_Type;<BR>
+&nbsp;&nbsp;&nbsp;Default_Ceiling:&nbsp;Any_Priority&nbsp;:=&nbsp;Priority'Last;<BR>
+<B>package</B>&nbsp;A.C.Bounded_Synchronized_Queues&nbsp;<B>is</B><A NAME="I1659"></A><A NAME="I1660"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Bounded_Synchronized_Queues);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;Implementation&nbsp;is<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Implementation;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>protected&nbsp;type</B>&nbsp;Queue<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Capacity:&nbsp;Count_Type&nbsp;:=&nbsp;Default_Capacity,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ceiling:&nbsp;Any_Priority&nbsp;:=&nbsp;Default_Ceiling)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Priority&nbsp;=&gt;&nbsp;Ceiling<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>is&nbsp;new</B>&nbsp;Queue_Interfaces.Queue&nbsp;<B>with</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>etc&nbsp;as&nbsp;for&nbsp;the&nbsp;unbounded&nbsp;one</I></SPAN></div>
+<div class="SwissExamples"><B>end</B>&nbsp;A.C.Bounded_Synchronized_Queues;</div>
+<div class="Normal" style="margin-bottom: 0.4em">So using the same example, 
+we can use the same interface package <SPAN Class="swiss">Rec_Interface</SPAN>. 
+Now suppose we wish to declare a bounded queue with capacity 1000, we 
+can write</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Bounded_Rec_Package&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;A.C.Bounded_Synchronized_Queues<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Queue_Interfaces&nbsp;=&gt;&nbsp;Rec_Interface,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default_Capacity&nbsp;=&gt;&nbsp;1000);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Finally, we can declare 
+a protected object, <SPAN Class="swiss">My_Rec_BQ</SPAN> which is the 
+actual queue, thus</div>
+<div class="SwissExamples">My_Rec_BQ:&nbsp;Bounded_Rec_Package.Queue;</div>
+<div class="Normal" style="margin-bottom: 0.4em">And then we can use 
+the queue as before. To place an object on the queue we can write</div>
+<div class="SwissExamples">My_Rec_BQ.Enqueue(Some_Rec);</div>
+<div class="Normal" style="margin-bottom: 0.4em">And to remove an item 
+from the queue we can write</div>
+<div class="SwissExamples">My_Rec_BQ.Dequeue(The_Rec);</div>
+<div class="Normal">The major difference is that if the queue becomes 
+full then calling <SPAN Class="swiss">Enqueue</SPAN> will block the calling 
+task until some other task calls <SPAN Class="swiss">Dequeue</SPAN>. 
+Thus, unlike the other containers, <SPAN Class="swiss">Capacity_Error</SPAN> 
+is never raised.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that having given 
+a value for <SPAN Class="swiss">Default_Capacity</SPAN>, it can be overridden 
+when the queue is declared, perhaps</div>
+<div class="SwissExamples">My_Rec_Giant_BQ:&nbsp;Bounded_Rec_Package.Queue(Capacity&nbsp;=&gt;&nbsp;100000);</div>
+<div class="Normal" style="margin-bottom: 0.4em">These packages also 
+provide control over the ceiling priority of the protected type. By default 
+it is <SPAN Class="swiss">Priority'Last</SPAN>. This default can be overridden 
+by our own default when the queue package is instantiated and can be 
+further specified as a discriminant when the actual queue object is declared. 
+So we might write</div>
+<div class="SwissExamples">My_Rec_Ceiling_BQ:&nbsp;Bounded_Rec_Package.Queue(Ceiling&nbsp;=&gt;&nbsp;10);</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the case of the 
+bounded queue, if we do not give an explicit capacity then the ceiling 
+has to be given using named notation. This does not apply to the unbounded 
+queue which only has one discriminant, so to give that a ceiling priority 
+we can just write</div>
+<div class="SwissExamples">My_Rec_Ceiling_UQ:&nbsp;Unbounded_Rec_Package.Queue(10);</div>
+<div class="Normal">But clearly the use of the named notation is advisable.</div>
+<div class="Normal">Being able to give default discriminants is very 
+convenient. In Ada 2005, this was not possible if the type was tagged. 
+However, in Ada 2012, it is permitted in the case of limited tagged types 
+and a protected type is considered to be limited. This was explained 
+in detail in Section <A HREF="Rat12-4-4.html">4.4</A> on discriminants.</div>
+<div class="Normal">If we wanted to make a queue of indefinite objects, 
+then as mentioned above, there is no special container for this because 
+<SPAN Class="swiss">Dequeue</SPAN> would be difficult to use since it 
+is a procedure and not a function. So the actual parameter would have 
+to be constrained which means knowing before the call the value of the 
+discriminant, tag, or bound of the object which is unlikely. However, 
+we can use the holder container to wrap the indefinite type so that it 
+looks definite.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So to create a queue 
+for strings, using the example of the previous section, we can write</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Strings&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Ada.Containers.Indefinite_Holders(String);</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Strings_Interface&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;A.C.Synchronized_Queue_Interfaces&nbsp;(Element_Type&nbsp;=&gt;&nbsp;Strings.Holder);</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Unbounded_Strings_Package&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;A.C.Unbounded_Synchronized_Queues&nbsp;(Queue_Interfaces&nbsp;=&gt;&nbsp;Strings_Interface);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then finally declare 
+the actual queue</div>
+<div class="SwissExamples">My_Strings_UQ:&nbsp;Unbounded_Strings_Package.Queue;</div>
+<div class="Normal" style="margin-bottom: 0.4em">To put some strings 
+on this queue, we write</div>
+<div class="SwissExamples">My_Strings_UQ.Enqueue(To_Holder(&quot;rabbit&quot;));</div>
+<div class="SwissExamples">My_Strings_UQ.Enqueue(To_Holder(&quot;horse&quot;));</div>
+<div class="Normal" style="margin-bottom: 0.4em">or even</div>
+<div class="SwissExamples">My_Strings_UQ.Enqueue(Element(Kennel));</div>
+<div class="Normal">We now turn to considering the two other forms of 
+queue which are the unbounded and bounded priority queues.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Here is the specification 
+of the unbounded priority queue</div>
+<div class="SwissExamples"><B>with</B>&nbsp;System;&nbsp;<B>use</B>&nbsp;System;<BR>
+<B>with</B>&nbsp;A.C.Synchronized_Queue_Interfaces;<BR>
+<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;<B>package</B>&nbsp;Queue_Interfaces&nbsp;<B>is&nbsp;new</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A.C.Synchronized_Queue_Interfaces(&lt;&gt;);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Queue_Priority&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Get_Priority<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Element&nbsp;:&nbsp;Queue_Interfaces.Element_Type)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Queue_Priority&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Before(Left,&nbsp;Right&nbsp;:&nbsp;Queue_Priority)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;Default_Ceiling:&nbsp;Any_Priority&nbsp;:=&nbsp;Priority'Last;<BR>
+<B>package</B>&nbsp;A.C.Unbounded_Priority_Queues&nbsp;<B>is</B><A NAME="I1661"></A><A NAME="I1662"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Unbounded_Priority_Queues);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;Implementation&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Implementation;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>protected&nbsp;type</B>&nbsp;Queue(Ceiling:&nbsp;Any_Priority&nbsp;:=&nbsp;Default_Ceiling)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Priority&nbsp;=&gt;&nbsp;Ceiling<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>is&nbsp;new</B>&nbsp;Queue_Interfaces.Queue&nbsp;<B>with</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;Enqueue(New_Item:&nbsp;<B>in</B>&nbsp;Queue_Interfaces.Element_Type);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;Dequeue(Element:&nbsp;<B>out</B>&nbsp;Queue_Interfaces.Element_Type);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>not&nbsp;overriding</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Dequeue_Only_High_Priority<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(At_Least:&nbsp;<B>in</B>&nbsp;Queue_Priority;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element:&nbsp;<B>in&nbsp;out</B>&nbsp;Queue_Interfaces.Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Success:&nbsp;<B>out</B>&nbsp;Boolean);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Current_Use&nbsp;<B>return</B>&nbsp;Count_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Peak_Use&nbsp;<B>return</B>&nbsp;Count_Type;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Queue;</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;A.C.Unbounded_Priority_Queues;</div>
+<div class="Normal">The differences from the synchronized bounded queue 
+are that there are several additional generic parameters, namely the 
+private type <SPAN Class="swiss">Queue_Priority</SPAN> and the two functions 
+<SPAN Class="swiss">Get_Priority</SPAN> and <SPAN Class="swiss">Before</SPAN> 
+which operate on objects of the type<SPAN Class="swiss">&nbsp;Queue_Priority</SPAN>, 
+and also that the protected type <SPAN Class="swiss">Queue</SPAN> has 
+an additional operation, the protected procedure <SPAN Class="swiss">Dequeue_Only_High_Priority</SPAN>.</div>
+<div class="Normal">The general idea is that elements have an associated 
+priority which can be ascertained by calling the function <SPAN Class="swiss">Get_Priority</SPAN>. 
+The meaning of this priority is given by the function <SPAN Class="swiss">Before</SPAN>.</div>
+<div class="Normal">When we call <SPAN Class="swiss">Enqueue</SPAN>, 
+the new item is placed in the queue taking due account of its priority 
+with respect to other elements already on the queue. So it will go before 
+all less important elements as defined by <SPAN Class="swiss">Before</SPAN>. 
+If existing elements already have the same priority then it goes after 
+them.</div>
+<div class="Normal">As expected <SPAN Class="swiss">Dequeue</SPAN> just 
+returns the first item on the queue and will block if the queue is empty.</div>
+<div class="Normal">The new procedure <SPAN Class="swiss">Dequeue_Only_High_Priority</SPAN> 
+(note that it is marked as <B>not overriding</B> unlike the other operations) 
+is designed to enable us to process items only if they are important 
+enough as defined by the parameter <SPAN Class="swiss">At_Least</SPAN>. 
+The priority of the first element <SPAN Class="swiss">E</SPAN> on the 
+queue is <SPAN Class="swiss">P</SPAN> as given by<SPAN Class="swiss">&nbsp;Get_Priority(E)</SPAN>. And so if <SPAN Class="swiss">Before(At_Least, 
+P)</SPAN> is false, then the item on the queue is indeed important enough 
+and so is removed from the queue and the <SPAN Class="swiss">Boolean</SPAN> 
+parameter <SPAN Class="swiss">Success</SPAN> is set to true. On the other 
+hand if <SPAN Class="swiss">Before(At_Least, P)</SPAN> is true then the 
+item is not removed and <SPAN Class="swiss">Success</SPAN> is set to 
+false. Note especially that <SPAN Class="swiss">Dequeue_Only_High_Priority</SPAN> 
+never blocks. If the queue is empty, then <SPAN Class="swiss">Success</SPAN> 
+is just set to false; it never waits for an item to be put on the queue.</div>
+<div class="Normal" style="margin-bottom: 0.4em">As an (unrealistic) 
+example, suppose we decide to make the queue of strings into a priority 
+queue and that the priority is given by their length so that <SPAN Class="swiss">&quot;rabbit&quot;</SPAN> 
+takes precedence over <SPAN Class="swiss">&quot;horse&quot;</SPAN>. Remember 
+that the type of the elements is <SPAN Class="swiss">Strings.Holder</SPAN>. 
+We can define the priority as given by the attribute <SPAN Class="swiss">Length</SPAN> 
+so we might as well make the actual type corresponding to <SPAN Class="swiss">Queue_Priority</SPAN> 
+as simply <SPAN Class="swiss">Natural</SPAN>. Then we define</div>
+<div class="SwissExamples"><B>function</B>&nbsp;S_Get_Priority(H:&nbsp;Strings.Holder)&nbsp;<B>return</B>&nbsp;Natural&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;(H.Element'Length);</div>
+<div class="SwissExamples"><B>function</B>&nbsp;S_Before(L,&nbsp;R:&nbsp;Natural)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;(L&nbsp;&gt;&nbsp;R);</div>
+<div class="Normal">Note the convenient use of expression functions for 
+this sort of thing.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The instantiation now 
+becomes</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Unbounded_Priority_Strings_Package&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;A.C.Unbounded_Priority_Queues<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Queue_Interfaces&nbsp;=&gt;&nbsp;Strings_Interface,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Queue_Priority&nbsp;=&gt;&nbsp;Natural,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Get_Priority&nbsp;=&gt;&nbsp;S_Get_Priority,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;=&gt;&nbsp;S_Before);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and we then declare 
+a queue thus</div>
+<div class="SwissExamples">My_Strings_UPQ:&nbsp;Unbounded_Priority_Strings_Package.Queue;</div>
+<div class="Normal" style="margin-bottom: 0.4em">To put some strings 
+on this queue, we write</div>
+<div class="SwissExamples">My_Strings_UPQ.Enqueue(To_Holder(&quot;rabbit&quot;));</div>
+<div class="SwissExamples">My_Strings_UPQ.Enqueue(To_Holder(&quot;horse&quot;));</div>
+<div class="SwissExamples">My_Strings_UPQ.Enqueue(To_Holder(&quot;donkey&quot;));</div>
+<div class="SwissExamples">My_Strings_UPQ.Enqueue(To_Holder(&quot;gorilla&quot;));</div>
+<div class="Normal">The result is that <SPAN Class="swiss">&quot;gorilla&quot;</SPAN> 
+will have jumped to the head of the queue despite having been put on 
+last. It will be followed by <SPAN Class="swiss">&quot;rabbit&quot;</SPAN> 
+and <SPAN Class="swiss">&quot;donkey&quot;</SPAN> and the <SPAN Class="swiss">&quot;horse&quot;</SPAN> 
+is last.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we do</div>
+<div class="SwissExamples">My_Strings_UPQ.Dequeue_Only_High_Priority(7,&nbsp;Kennel,&nbsp;OK);</div>
+<div class="Normal">then the <SPAN Class="swiss">&quot;gorilla&quot;</SPAN> 
+will be taken from the queue and placed in the <SPAN Class="swiss">Kennel</SPAN> 
+and <SPAN Class="swiss">OK</SPAN> will be true. But if we then do it 
+again, nothing will happen because the resulting head of the queue (the 
+<SPAN Class="swiss">&quot;rabbit&quot;</SPAN>) is not long enough.</div>
+<div class="Normal">Finally, we need to consider bounded priority queues. 
+They are exactly like the unbounded priority queues except that they 
+have the same additional features regarding capacity as found in the 
+synchronized queues. Thus the only differences (apart from the name) 
+are that there is an additional generic parameter <SPAN Class="swiss">Default_Capacity</SPAN> 
+and the protected type <SPAN Class="swiss">Queue</SPAN> has an additional 
+discriminant <SPAN Class="swiss">Capacity</SPAN>.<A NAME="I1663"></A><A NAME="I1664"></A></div>
+<div class="Normal">As a final example we will do a bounded priority 
+queue of records. Suppose the records concern requests for servicing 
+a dishwasher. They might include usual information such as the model 
+number, name and address of owner and so on. They might also have a component 
+indicating degree of urgency, such as</div>
+<div class="Indented1">Urgent &mdash; machine has vomited dirty water 
+all over floor; housewife/husband having a tantrum,</div>
+<div class="Indented1">Major &mdash; machine won't do anything; husband 
+refuses to help with washing up,</div>
+<div class="Indented1">Minor &mdash; machine leaves some dishes unclean, 
+mother-in-law is coming next week,</div>
+<div class="Indented1">Routine &mdash; machine needs annual service. 
+</div>
+<div class="Normal" style="margin-bottom: 0.4em">So we might have</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Degree&nbsp;<B>is</B>&nbsp;(Urgent,&nbsp;Major,&nbsp;Minor,&nbsp;Routine);</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Dish_Job&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Urgency:&nbsp;Degree;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name:&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">First we declare the 
+interface for this type</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Dish_Interface&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;A.C.Synchronized_Queue_Interfaces&nbsp;(Element_Type&nbsp;=&gt;&nbsp;Dish_Job);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then we declare 
+the two slave functions for the priority mechanism thus</div>
+<div class="SwissExamples"><B>function</B>&nbsp;W_Get_Priority(X:&nbsp;Dish_Job)&nbsp;<B>return</B>&nbsp;Degree&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;(X.Urgency);</div>
+<div class="SwissExamples"><B>function</B>&nbsp;W_Before(L,&nbsp;R:&nbsp;Degree)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;(Degree'Pos(L)&nbsp;&lt;&nbsp;Degree'Pos(R));</div>
+<div class="Normal" style="margin-bottom: 0.4em">The instantiation is 
+then</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Washer_Package&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;A.C.Bounded_Priority_Queues<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Queue_Interfaces&nbsp;=&gt;&nbsp;Dish_Interface,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Queue_Priority&nbsp;=&gt;&nbsp;Degree,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Get_Priority&nbsp;=&gt;&nbsp;W_Get_Priority,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before&nbsp;=&gt;&nbsp;W_Before,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default_Capacity&nbsp;=&gt;&nbsp;100);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and we declare the 
+queue of waiting calls thus</div>
+<div class="SwissExamples">Dish_Queue:&nbsp;Washer_Package.Queue;</div>
+<div class="Normal">which gives a queue with the default capacity of 
+100.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The staff taking requests 
+then place the calls on the queue by</div>
+<div class="SwissExamples">Dish_Queue.Enqueue(New_Job);</div>
+<div class="Normal">To cope with the possibility that the queue is full, 
+they can do a timed entry call; remember that this is possible because 
+the procedure <SPAN Class="swiss">Enqueue</SPAN> in the interface package 
+has <SPAN Class="swiss">Synchronization =&gt; By_Entry</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">And then general operatives 
+checking in and taking the next job do</div>
+<div class="SwissExamples">Dish_Queue.Dequeue(Next_Job);</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, at weekends 
+we can suppose that just one operative is on call and deals with only 
+<SPAN Class="swiss">Urgent</SPAN> and <SPAN Class="swiss">Major</SPAN> 
+calls. He might check the queue from time to time by calling</div>
+<div class="SwissExamples">Dish_Queue.Dequeue_Only_High_Priority(Major,&nbsp;My_Job,&nbsp;Got_Job);</div>
+<div class="Normal">and if <SPAN Class="swiss">Got_Job</SPAN> is false, 
+he can relax and go back to digging the garden or playing golf.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

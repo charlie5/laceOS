@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 14.1: External Files and File Objects</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="14.1">14.1</A>.  External Files and File Objects  </H2>
+<A HREF="lrm-14.html#14"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-14-02.html#14.2"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+Values input from the external environment of the program, or output to the
+environment, are considered to occupy external files.  An external file can
+be  anything external to the program that can produce a value to be read or
+receive a value to be written.  An external file is identified by a  string
+(the  name).   A  second  string  (the form) gives further system-dependent
+characteristics that may be associated with the file, such as the  physical
+organization   or   access   rights.    The   conventions   governing   the
+interpretation of such strings must be documented in <a href="lrm-F.html#F">Appendix F</a>. 
+<P>
+Input and output operations are expressed as operations on objects of  some
+file  type,  rather  than  directly in terms of the external files.  In the
+remainder of this chapter, the term file is always used to refer to a  file
+object;   the term external file is used otherwise.  The values transferred
+for a given file must all be of one type. 
+<P>
+Input-output for sequential files of values of a  single  element  type  is
+defined  by  means  of  the generic package SEQUENTIAL_IO.  The skeleton of
+this package is given below. 
+<pre>
+    with IO_EXCEPTIONS;
+    generic   
+       type ELEMENT_TYPE is private;
+    package SEQUENTIAL_IO is
+       type FILE_TYPE is limited private; 
+
+       type FILE_MODE is (IN_FILE, OUT_FILE);
+       ...
+       procedure OPEN (FILE : in out FILE_TYPE; ...);
+       ...  
+       procedure READ (FILE : in FILE_TYPE; ITEM : out ELEMENT_TYPE);
+       procedure WRITE(FILE : in FILE_TYPE; ITEM : in ELEMENT_TYPE);
+       ...
+    end SEQUENTIAL_IO; 
+</pre>
+<P>
+In order to define sequential input-output for a  given  element  type,  an
+instantiation  of  this  generic  unit,  with  the  given  type  as  actual
+parameter,  must  be  declared.   The  resulting   package   contains   the
+declaration  of  a file type (called FILE_TYPE) for files of such elements,
+as well as the operations applicable to these  files,  such  as  the  OPEN,
+READ, and WRITE procedures.                                                           
+<P>
+Input-output  for  direct  access  files  is  likewise defined by a generic
+package called DIRECT_IO.  Input-output in human-readable form  is  defined
+by the (nongeneric) package TEXT_IO. 
+<P>
+Before input or output operations can be performed on a file, the file must
+first be associated with an external file.  While such an association is in
+effect,  the  file is said to be open, and otherwise the file is said to be
+closed. 
+<P>
+The language does not define what  happens  to  external  files  after  the
+completion  of the main program (in particular, if corresponding files have
+not  been  closed).   The  effect  of  input-output  for  access  types  is
+implementation-dependent. 
+<P>
+An open file has a current mode, which is a value of one of the enumeration
+types   
+<pre>
+ type FILE_MODE is (IN_FILE, INOUT_FILE, OUT_FILE);  --  for DIRECT_IO
+ type FILE_MODE is (IN_FILE, OUT_FILE);    --  for SEQUENTIAL_IO and TEXT_IO
+</pre>
+<P>
+These  values correspond respectively to the cases where only reading, both
+reading and writing, or only writing are to be performed.  The  mode  of  a
+file can be changed. 
+<P>
+Several  file  management  operations  are common to the three input-output
+packages.  These operations are described in section <a href="lrm-14-02.html#14.2.1">14.2.1</a> for  sequential
+and  direct files.  Any additional effects concerning text input-output are
+described in section <a href="lrm-14-03.html#14.3.1">14.3.1</a>. 
+<P>
+The exceptions that can be raised by a call of an  input-output  subprogram
+are  all  defined  in  the  package IO_EXCEPTIONS;  the situations in which
+they can be raised are described, either following the description  of  the
+subprogram  (and  in  section  <a href="lrm-14-04.html#14.4">14.4</a>), or in <a href="lrm-F.html#F">Appendix F</a> in the case of error
+situations that are implementation-dependent. 
+<P>
+Notes: 
+<P>
+Each instantiation of the  generic  packages  SEQUENTIAL_IO  and  DIRECT_IO
+declares  a  different  type  FILE_TYPE;   in the case of TEXT_IO, the type
+FILE_TYPE is unique. 
+<P>
+A bidirectional device  can  often  be  modeled  as  two  sequential  files
+associated  with the device, one of mode IN_FILE, and one of mode OUT_FILE.
+An implementation may restrict the number of files that may  be  associated
+with a given external file.  The effect of sharing an external file in this
+way by several file objects is implementation-dependent. 
+<P>
+<b>References:</b>   <A HREF="lrm-14-02.html#14.2.1">create  procedure</A>,
+<A HREF="lrm-14-02.html#14.2">current  index</A>,
+<A HREF="lrm-14-02.html#14.2">current size</A>,
+<A HREF="lrm-14-02.html#14.2.1">delete procedure</A>,
+<A HREF="lrm-14-02.html#14.2">direct access</A>,
+<A HREF="lrm-14-02.html#14.2">direct  file  procedure</A>,
+<A HREF="#14.1">direct_io  package</A>,
+ and <A HREF="lrm-14-02.html#14.2">14.2</A>,
+<A HREF="lrm-03-05.html#3.5.1">enumeration type</A>,
+<A HREF="lrm-11.html#11">exception</A>,
+<A HREF="lrm-14-02.html#14.2.3">file mode</A>,
+<A HREF="lrm-12-03.html#12.3">generic  instantiation</A>,
+<A HREF="lrm-14-02.html#14.2">index</A>,
+<A HREF="lrm-14-02.html#14.2.2">input  file</A>,
+<A HREF="lrm-14-05.html#14.5">io_exceptions package</A>,
+<A HREF="#14.1">open file</A>,
+<A HREF="lrm-14-02.html#14.2.1">open procedure</A>,
+<A HREF="lrm-14-02.html#14.2.2">output  file</A>,
+<A HREF="lrm-14-02.html#14.2.4">read  procedure</A>,
+<A HREF="lrm-14-02.html#14.2">sequential  access</A>,
+<A HREF="lrm-14-02.html#14.2">sequential file</A>,
+<A HREF="lrm-14-02.html#14.2.2">sequential input-output</A>,
+<A HREF="lrm-14-02.html#14.2">sequential_io package</A>,
+ and <A HREF="lrm-14-02.html#14.2.2">14.2.2</A>,
+<A HREF="lrm-03-06.html#3.6.3">string</A>,
+<A HREF="lrm-14-03.html#14.3">text_io package</A>,
+<A HREF="lrm-14-02.html#14.2.4">write procedure</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-16.html">16&nbsp;Input-Output</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-16-01.html#16.1">16.1&nbsp;Introduction</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-16-02.html#16.2">16.2&nbsp;Basic Requirements</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-16-03.html#16.3">16.3&nbsp;Designation of Files</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

@@ -1,0 +1,166 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Example of Tasking and Synchronization</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    SPAN.insert2 {text-decoration: underline; color: rgb(0,102,0) }
+    SPAN.delete2 {text-decoration: line-through; color: rgb(0,102,0) }
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><B><SPAN Style="font-size:200%; color: rgb(0,51,153)">Annotated</SPAN><SPAN Style="font-size:200%; color: rgb(0,0,102)">&nbsp;Ada Reference Manual</SPAN></B> &mdash; <A HREF="AA-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-9-10.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-10.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>9.11 Example of Tasking and Synchronization</H1>
+
+<H4 Class="centered">Examples</H4>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The following example 
+defines a buffer protected object to smooth variations between the speed 
+of output of a producing task and the speed of input of some consuming 
+task. For instance, the producing task might have the following structure:</DIV>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Examples"><B>task</B>&nbsp;Producer;</DIV>
+<DIV Class="paranum">3/2</DIV>
+<DIV Class="Examples">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00433.TXT">AI95-00433-01</A></I>} 
+<B>task&nbsp;body</B>&nbsp;Producer&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<SPAN class="insert2">Person&nbsp;:&nbsp;Person_Name;&nbsp;--<SPAN Class="roman"><I>&nbsp;see&nbsp;<A HREF="AA-3-10-1.html">3.10.1</A></I></SPAN></SPAN><SPAN class="delete2">&nbsp;Char&nbsp;:&nbsp;Character;</SPAN><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;</I></SPAN><SPAN class="insert2"><SPAN Class="roman"><I>simulate&nbsp;arrival&nbsp;of&nbsp;the&nbsp;next&nbsp;customer</I></SPAN></SPAN><SPAN Class="roman"><I></I></SPAN><SPAN class="delete2"><SPAN Class="roman"><I>&nbsp;produce&nbsp;the&nbsp;next&nbsp;character&nbsp;Char</I></SPAN></SPAN><SPAN Class="roman"><I></I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Buffer.<SPAN class="insert2">Append_Wait(Person)</SPAN><SPAN class="delete2">&nbsp;Write(Char)</SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>exit</B>&nbsp;<B>when</B>&nbsp;<SPAN class="insert2">Person&nbsp;=&nbsp;<B>null</B></SPAN><SPAN class="delete2">&nbsp;Char&nbsp;=&nbsp;ASCII.EOT</SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;<B>loop</B>;<BR>
+<B>end</B>&nbsp;Producer;</DIV>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">and the consuming task 
+might have the following structure:</DIV>
+<DIV Class="paranum">5</DIV>
+<DIV Class="Examples"><B>task</B>&nbsp;Consumer;</DIV>
+<DIV Class="paranum">6/2</DIV>
+<DIV Class="Examples" Style="margin-bottom: 0.9em">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00433.TXT">AI95-00433-01</A></I>} 
+<B>task&nbsp;body</B>&nbsp;Consumer&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<SPAN class="insert2">Person&nbsp;:&nbsp;Person_Name;</SPAN><SPAN class="delete2">&nbsp;Char&nbsp;:&nbsp;Character;</SPAN><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Buffer.<SPAN class="insert2">Remove_First_Wait(Person)</SPAN><SPAN class="delete2">&nbsp;Read(Char)</SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>exit</B>&nbsp;<B>when</B>&nbsp;<SPAN class="insert2">Person&nbsp;=&nbsp;<B>null</B></SPAN><SPAN class="delete2">&nbsp;Char&nbsp;=&nbsp;ASCII.EOT</SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;--<SPAN Class="roman"><I>&nbsp;&nbsp;</I></SPAN><SPAN class="insert2"><SPAN Class="roman"><I>simulate&nbsp;serving&nbsp;a&nbsp;customer</I></SPAN></SPAN><SPAN Class="roman"><I></I></SPAN><SPAN class="delete2"><SPAN Class="roman"><I>&nbsp;consume&nbsp;the&nbsp;character&nbsp;Char</I></SPAN></SPAN><SPAN Class="roman"><I></I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;<B>loop</B>;<BR>
+<B>end</B>&nbsp;Consumer;</DIV>
+<DIV Class="paranum">7/2</DIV>
+<DIV Class="Normal">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00433.TXT">AI95-00433-01</A></I>} 
+The buffer object contains an internal <SPAN class="insert2">array</SPAN><SPAN class="delete2">&nbsp;pool</SPAN> 
+of <SPAN class="insert2">person names</SPAN><SPAN class="delete2">&nbsp;characters</SPAN> 
+managed in a round-robin fashion. The <SPAN class="insert2">array</SPAN><SPAN class="delete2">&nbsp;pool</SPAN> 
+has two indices, an In_Index denoting the <SPAN class="insert2">index</SPAN><SPAN class="delete2">&nbsp;space</SPAN> 
+for the next input <SPAN class="insert2">person name</SPAN><SPAN class="delete2">&nbsp;character</SPAN> 
+and an Out_Index denoting the <SPAN class="insert2">index</SPAN><SPAN class="delete2">&nbsp;space</SPAN> 
+for the next output <SPAN class="insert2">person name</SPAN><SPAN class="delete2">&nbsp;character</SPAN>.</DIV>
+<DIV Class="paranum">7.1/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00433.TXT">AI95-00433-01</A></I>} 
+<SPAN class="insert2">The Buffer is defined as an extension of the Synchronized_Queue 
+interface (see <A HREF="AA-3-9-4.html">3.9.4</A>), and as such promises 
+to implement the abstraction defined by that interface. By doing so, 
+the Buffer can be passed to the Transfer class-wide operation defined 
+for objects of a type covered by Queue'Class.</SPAN></DIV>
+<DIV Class="paranum">8/2</DIV>
+<DIV Class="Examples">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00433.TXT">AI95-00433-01</A></I>} 
+<B>protected</B>&nbsp;Buffer&nbsp;<B>is</B><SPAN class="insert2">&nbsp;<B>new</B>&nbsp;Synchronized_Queue&nbsp;<B>with</B>&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;see&nbsp;<A HREF="AA-3-9-4.html">3.9.4</A></I></SPAN></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;<SPAN class="insert2">Append_Wait(Person&nbsp;:&nbsp;<B>in</B>&nbsp;Person_Name);</SPAN><SPAN class="delete2">&nbsp;Read&nbsp;(C&nbsp;:&nbsp;<B>out</B>&nbsp;Character);</SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;<SPAN class="insert2">Remove_First_Wait(Person&nbsp;:&nbsp;<B>out</B>&nbsp;Person_Name);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Cur_Count&nbsp;<B>return</B>&nbsp;Natural;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Max_Count&nbsp;<B>return</B>&nbsp;Natural;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Append(Person&nbsp;:&nbsp;<B>in</B>&nbsp;Person_Name);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Remove_First(Person&nbsp;:&nbsp;<B>out</B>&nbsp;Person_Name);</SPAN><SPAN class="delete2">&nbsp;Write(C&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;Character);</SPAN><BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;Pool&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<SPAN class="insert2">Person_Name_Array</SPAN><SPAN class="delete2">&nbsp;String</SPAN>(1&nbsp;..&nbsp;100);<BR>
+&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Natural&nbsp;:=&nbsp;0;<BR>
+&nbsp;&nbsp;&nbsp;In_Index,&nbsp;Out_Index&nbsp;:&nbsp;Positive&nbsp;:=&nbsp;1;<BR>
+<B>end</B>&nbsp;Buffer;</DIV>
+<DIV Class="paranum">9/2</DIV>
+<DIV Class="Examples">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00433.TXT">AI95-00433-01</A></I>} 
+<B>protected&nbsp;body</B>&nbsp;Buffer&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;<SPAN class="insert2">Append_Wait(Person&nbsp;:&nbsp;<B>in</B>&nbsp;Person_Name)</SPAN><SPAN class="delete2">&nbsp;Write(C&nbsp;:&nbsp;<B>in</B>&nbsp;Character)</SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Count&nbsp;&lt;&nbsp;Pool'Length&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN class="insert2">Append(Person);</SPAN><SPAN class="delete2">&nbsp;Pool(In_Index)&nbsp;:=&nbsp;C;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In_Index&nbsp;:=&nbsp;(In_Index&nbsp;<B>mod</B>&nbsp;Pool'Length)&nbsp;+&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;Count&nbsp;+&nbsp;1;</SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;<SPAN class="insert2">Append_Wait</SPAN><SPAN class="delete2">&nbsp;Write</SPAN>;</DIV>
+<DIV Class="paranum">9.1/2</DIV>
+<DIV Class="Examples">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00433.TXT">AI95-00433-01</A></I>} 
+<SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Append(Person&nbsp;:&nbsp;<B>in</B>&nbsp;Person_Name)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Count&nbsp;=&nbsp;Pool'Length&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>raise</B>&nbsp;Queue_Error&nbsp;<B>with</B>&nbsp;&quot;Buffer&nbsp;Full&quot;;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;see&nbsp;<A HREF="AA-11-3.html">11.3</A></I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pool(In_Index)&nbsp;:=&nbsp;Person;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In_Index&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;(In_Index&nbsp;<B>mod</B>&nbsp;Pool'Length)&nbsp;+&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;Count&nbsp;+&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Append;</SPAN></DIV>
+<DIV Class="paranum">10/2</DIV>
+<DIV Class="Examples">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00433.TXT">AI95-00433-01</A></I>} 
+&nbsp;&nbsp;&nbsp;<B>entry</B>&nbsp;<SPAN class="insert2">Remove_First_Wait(Person&nbsp;:&nbsp;<B>out</B>&nbsp;Person_Name)</SPAN><SPAN class="delete2">&nbsp;Read(C&nbsp;:&nbsp;<B>out</B>&nbsp;Character)</SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Count&nbsp;&gt;&nbsp;0&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN class="insert2">Remove_First(Person);</SPAN><SPAN class="delete2">&nbsp;C&nbsp;:=&nbsp;Pool(Out_Index);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Out_Index&nbsp;:=&nbsp;(Out_Index&nbsp;<B>mod</B>&nbsp;Pool'Length)&nbsp;+&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;Count&nbsp;-&nbsp;1;</SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;<SPAN class="insert2">Remove_First_Wait</SPAN><SPAN class="delete2">&nbsp;Read;<BR>
+<B>end</B>&nbsp;Buffer</SPAN>;</DIV>
+<DIV Class="paranum">11/2</DIV>
+<DIV Class="Examples">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00433.TXT">AI95-00433-01</A></I>} 
+<SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Remove_First(Person&nbsp;:&nbsp;<B>out</B>&nbsp;Person_Name)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Count&nbsp;=&nbsp;0&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>raise</B>&nbsp;Queue_Error&nbsp;<B>with</B>&nbsp;&quot;Buffer&nbsp;Empty&quot;;&nbsp;--<SPAN Class="roman"><I>&nbsp;see&nbsp;<A HREF="AA-11-3.html">11.3</A></I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Person&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;Pool(Out_Index);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Out_Index&nbsp;:=&nbsp;(Out_Index&nbsp;<B>mod</B>&nbsp;Pool'Length)&nbsp;+&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;Count&nbsp;-&nbsp;1;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Remove_First;</SPAN></DIV>
+<DIV Class="paranum">12/2</DIV>
+<DIV Class="Examples">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00433.TXT">AI95-00433-01</A></I>} 
+<SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Cur_Count&nbsp;<B>return</B>&nbsp;Natural&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Buffer.Count;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Cur_Count;</SPAN></DIV>
+<DIV Class="paranum">13/2</DIV>
+<DIV Class="Examples">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00433.TXT">AI95-00433-01</A></I>} 
+<SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Max_Count&nbsp;<B>return</B>&nbsp;Natural&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Pool'Length;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Max_Count;<BR>
+<B>end</B>&nbsp;Buffer;</SPAN></DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-9-10.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-10.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="font-size: 125%">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

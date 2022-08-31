@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 14.7: Example of Input-Output</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="14.7">14.7</A>.  Example of Input-Output  </H2>
+<A HREF="lrm-14-06.html#14.6"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-14.html#14"><img src="lrm-up.gif" alt="[UP]"></A>
+<P>
+The following example shows the  use  of  some  of  the  text  input-output
+facilities  in  a dialogue with a user at a terminal.  The user is prompted
+to type a color, and the program responds by giving the number of items  of
+that  color  available  in  stock,  according to an inventory.  The default
+input and output  files  are  used.   For  simplicity,  all  the  requisite
+instantiations  are  given  within one subprogram;  in practice, a package,
+separate from the procedure, would be used. 
+<pre>
+    with TEXT_IO; use TEXT_IO;
+    procedure DIALOGUE is
+       type COLOR is (WHITE, RED, ORANGE, YELLOW, GREEN, BLUE, BROWN);
+       package COLOR_IO is new ENUMERATION_IO(ENUM =&gt; COLOR);
+       package NUMBER_IO is new INTEGER_IO(INTEGER);
+       use COLOR_IO, NUMBER_IO; 
+
+       INVENTORY : array (COLOR) of INTEGER := (20, 17, 43, 10, 28, 173, 87);
+       CHOICE : COLOR;
+
+       procedure ENTER_COLOR (SELECTION : out COLOR) is
+       begin
+          loop
+             begin
+                PUT("Color selected: ");  --  prompts user
+                GET(SELECTION);  --  accepts color typed, or raises exception
+                return;
+             exception
+                when DATA_ERROR =&gt;
+                   PUT("Invalid color, try again.  ");  --  user has typed
+                   NEW_LINE(2);                         --   new line
+                   --  completes execution of the block statement
+             end;
+          end loop;  --  repeats the block statement until color accepted
+       end;
+    begin --  statements of DIALOGUE; 
+
+       NUMBER_IO.DEFAULT_WIDTH := 5; 
+
+       loop 
+
+          ENTER_COLOR(CHOICE);  --  user types color and new line 
+
+          SET_COL(5);  PUT(CHOICE); PUT(" items available:");
+          SET_COL(40); PUT(INVENTORY(CHOICE));  --  default width is 5
+          NEW_LINE;
+       end loop;
+    end DIALOGUE; 
+</pre>
+<P>
+Example of an interaction (characters typed by the user are italicized): 
+<pre>
+    Color selected:  Black
+    Invalid color, try again.   
+
+    Color selected:  Blue
+        BLUE items available:         173
+    Color selected:  Yellow
+        YELLOW items available:        10
+</pre>
+<P>
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

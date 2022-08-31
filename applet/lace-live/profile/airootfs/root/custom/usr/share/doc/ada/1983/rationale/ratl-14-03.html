@@ -1,0 +1,352 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Rationale, Sec 14.3: Examples</TITLE>
+</HEAD>
+
+<BODY>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 14: Exception Handling</H2>
+
+<H3><a name="14.3">14.3 Examples</a></H3>
+
+Several examples  that show  typical uses  of exception  handling  are
+discussed in this section.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<br><br>
+<a href="#14.3.1">14.3.1 Matrix Inversion</a><BR>
+<a href="#14.3.2">14.3.2 Division</a><BR>
+<a href="#14.3.3">14.3.3 A File Example</a><BR>
+<a href="#14.3.4">14.3.4 A Package Example</a><BR>
+<a href="#14.3.5">14.3.5 Example of Last Wishes</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="14.3.1">14.3.1 Matrix Inversion</a></H3>
+
+The first  example is  adapted from <a href="ratl-BIB.html">[BFH 76]</a>. Each iteration of a loop
+is supposed  to read a matrix, invert it, and print the result. If the
+matrix is  singular, a  message is to be printed and the program is to
+proceed with the next matrix.
+<table border cellpadding=6><tr><td><pre>
+procedure MAIN is
+  procedure TREAT_MATRICES(N :  INTEGER) is
+    SINGULAR :  exception;
+    ...
+    procedure INVERT(M :  in out MATRIX) is
+    begin
+      -- compute inverse of determinant
+      -- note : this may implicitly raise NUMERIC_ERROR
+      -- complete inversion of the matrix.
+    exception
+      when NUMERIC_ERROR =&gt;  raise SINGULAR;
+    end INVERT;
+
+    procedure TREAT_ONE is
+      M :  MATRIX;
+    begin
+      READ(M);
+      INVERT(M);
+      PRINT(M);
+    exception
+      when SINGULAR =&gt;  PRINT("Matrix is singular");
+    end TREAT_ONE;
+
+  begin -- TREAT_MATRICES
+    for COUNT in 1 .. N loop
+      PRINT("ITERATION");  PRINT(COUNT);
+      TREAT_ONE;
+    end loop;
+  end TREAT_MATRICES;
+
+begin
+  TREAT_MATRICES(20);
+end MAIN;
+</pre></td></tr></table>
+<p>
+As this  example illustrates, the possible occurrence of NUMERIC_ERROR
+within INVERT is envisaged and consequently an appropriate handler has
+been provided.  On the  other hand,  an occurrence  of this  exception
+within READ or PRINT would cause termination of MAIN, since no handler
+has been provided within MAIN.
+<p>
+In order  to illustrate  the dynamic  behavior of this program, let us
+consider the  stack situation  (stacking downward)  during a  call  to
+INVERT:
+<table cellpadding=6><tr><td><pre>
+(1)  MAIN                  calling TREAT_MATRICES
+
+     TREAT_MATRICES        calling TREAT_ONE
+
+     TREAT_ONE             calling INVERT
+
+     INVERT                executing normal statements of INVERT
+</pre></td></tr></table>
+
+If NUMERIC_ERROR  occurs  during  the  inversions,  the  corresponding
+handler will be executed:
+<table cellpadding=6><tr><td><pre>
+(2)  MAIN                  calling TREAT_MATRICES
+
+     TREAT_MATRICES        calling TREAT_ONE
+
+     TREAT_ONE             calling INVERT
+
+     INVERT                executing the handler for NUMERIC_ERROR
+</pre></td></tr></table>
+
+Note that  during its  execution, the  handler has access to the local
+variables and  parameters of  INVERT. Here  the only  effect  of  this
+handler is  to raise  the exception  SINGULAR. As  a consequence,  the
+activation of  INVERT is  deleted (any  incompleted  result  in  M  is
+abandoned) and  the exception  SINGULAR is propagated within TREAT_ONE
+at the  point of call of INVERT. The handler of TREAT_ONE for SINGULAR
+is then executed:
+<table cellpadding=6><tr><td><pre>
+(3)  MAIN                  calling TREAT_MATRICES
+
+     TREAT_MATRICES        calling TREAT_ONE
+
+     TREAT_ONE             executing the handler for SINGULAR
+</pre></td></tr></table>
+
+In this  case the execution of the handler terminates the execution of
+TREAT_ONE without  propagating an  exception in  TREAT_MATRICES.  This
+leads to  the following stack configuration where another iteration of
+the loop statement can now be performed:
+<table cellpadding=6><tr><td><pre>
+(4)  MAIN                  calling TREAT_MATRICES
+
+     TREAT_MATRICES        executing the loop statement
+</pre></td></tr></table>
+
+The above example is characteristic of a family of problems in which a
+sequence of  items are  subjected to  a given  treatment. Should  this
+treatment fail  for one item of the sequence, it would be unreasonable
+to abort  the entire sequence. Rather, the exception handling facility
+provides the ability to do a partial termination - that of the current
+item.
+
+<H3><BR><a name="14.3.2">14.3.2 Division</a></H3>
+
+Consider the following definition of the function DIVISION:
+<table border cellpadding=6><tr><td><pre>
+function DIVISION(A, B :  REAL) return REAL is
+begin
+  return A/B;
+exception
+  when NUMERIC_ERROR =&gt;  return REAL'LAST;
+end;
+</pre></td></tr></table>
+<p>
+Should  NUMERIC_ERROR   occur  during  the  computation  of  A/B,  the
+execution of  the handler  will complete the execution of the function
+DIVISION.  Any   statement  that  is  valid  within  the  sequence  of
+statements of DIVISION is also valid in the handler. In particular the
+handler may provide the return statement
+<PRE>    return REAL'LAST;</PRE>
+<p>
+on behalf of the function.
+<p>
+This example  illustrates the  nature of handlers. They must be viewed
+as substitutes,  ready to  take charge  of the  operations in  case of
+error.
+
+<H3><BR><a name="14.3.3">14.3.3 A File Example</a></H3>
+
+This example shows a case where exception handling is used to treat an
+event that is certain to happen: reaching the end of a file. Naturally
+this example  could be  formulated with  an explicit  check  for  each
+iteration. Assuming  the file  to be quite large, however, the body of
+the  procedure   TRANSFER  may   be  efficiently   represented  as  an
+(apparently) infinite  loop, and  the final  actions of  the procedure
+performed by the exception handler for END_ERROR.
+<table border cellpadding=6><tr><td><pre>
+with TEXT_IO;
+use TEXT_IO;
+procedure TRANSFER is
+  INPUT   :  FILE_TYPE;
+  OUTPUT  :  FILE_TYPE;
+  C       :  CHARACTER;
+
+begin
+  OPEN(INPUT,  MODE =&gt;  IN_FILE, NAME =&gt;  "SOURCE");
+  OPEN(OUTPUT, MODE =&gt;  OUT_FILE,    NAME =&gt;  "DESTINATION");
+  loop
+    GET(INPUT, C);
+    PUT(OUTPUT, C);
+  end loop;
+exception
+  when END_ERROR =&gt;
+    CLOSE(INPUT);
+    CLOSE(OUTPUT);
+end;
+</pre></td></tr></table>
+<p>
+The procedure  TRANSFER transfers  the characters from the file SOURCE
+into the  file DESTINATION.  At each  iteration  GET  is  called,  and
+eventually an  END_ERROR exception  will occur. Then the corresponding
+handler  will  be  activated  and  its  execution  will  complete  the
+execution of TRANSFER.
+<p>
+This example  shows that although many exceptions will represent error
+conditions,  some   of  them   may  just   be  normal  conditions  for
+termination.
+
+<H3><BR><a name="14.3.4">14.3.4 A Package Example</a></H3>
+
+The example  below reproduces  a skeleton of the TABLE_MANAGER package
+that is described in the <a href="http://archive.adaic.com/standards/83lrm/html/lrm-07-05.html#7.5">Reference Manual section 7.5</a>.
+<table border cellpadding=6><tr><td><pre>
+package TABLE_MANAGER is
+  type ITEM is ...
+  ...
+  procedure INSERT    (NEW_ITEM   :  in   ITEM);
+  procedure RETRIEVE(FIRST_ITEM   :  out  ITEM);
+  TABLE_FULL :  exception;      -- raised by INSERT when table full
+end;
+
+package body TABLE_MANAGER is
+  ...
+  procedure INSERT(NEW_ITEM :  in ITEM) is
+  begin
+    if FREE_LIST_EMPTY then
+      raise TABLE_FULL;
+    end if;
+    -- remaining code for INSERT
+  end;
+  ...
+end TABLE_MANAGER;
+</pre></td></tr></table>
+<p>
+The interface  of the  table manager defines the operations INSERT and
+RETRIEVE, and  the exception  TABLE_FULL. Any  procedure that uses the
+package may provide a local handler for this exception; for example:
+<table border cellpadding=6><tr><td><pre>
+procedure APPLICATION is
+  use TABLE_MANAGER;
+  ...
+  procedure SAFE_INSERT(ELEMENT :  in ITEM) is
+    NEXT :  ITEM;
+  begin
+    INSERT(ELEMENT);
+  exception
+    when TABLE_FULL =&gt;
+      RETRIEVE(NEXT);
+      -- perform usual treatment of NEXT
+      INSERT(ELEMENT);
+  end SAFE_INSERT;
+begin
+  -- includes calls of SAFE_INSERT instead of INSERT
+end APPLICATION;
+</pre></td></tr></table>
+<p>
+Within procedure  APPLICATION, a  procedure SAFE_INSERT  with a  local
+handler for TABLE_FULL is provided. Should this exception be raised by
+the body of INSERT, the local handler for TABLE_FULL gains control and
+calls RETRIEVE  before reiterating  the  call  of  INSERT.  Should  an
+exception  occur   again  in   this  second  call,  the  execution  of
+SAFE_INSERT will  be abandoned and the exception will be propagated to
+the caller of SAFE_INSERT.
+<p>
+It is  worth mentioning  that the  body of  INSERT is  assumed  to  be
+programmed in  a robust manner: it does not modify any global variable
+if it  cannot accomplish  the insertion  normally. It is this property
+that permits  SAFE_INSERT to  reiterate the  call of  INSERT when  the
+first call fails.
+
+<H3><BR><a name="14.3.5">14.3.5 Example of Last Wishes</a></H3>
+
+The occurrence of an exception causes termination of the procedures in
+the dynamic  chain of  calls up  to  (and  not  including)  the  first
+procedure that  handles the  exception. Assume,  for example,  that  A
+handles a given exception, that B, C and D do not, and that:
+<center><PRE>A calls B,     B calls C,     C calls D</PRE></center>
+<p>
+Then if  the exception is raised while executing D, the execution of D
+is abandoned; then that of C and of B, in that order. (The propagation
+occurs in the reverse of the order of calls.)
+<p>
+One may  want to let these procedures express their last wishes before
+being abandoned  - for instance, to perform some cleanup actions. This
+can be  achieved by  providing a  handler for  others in each of these
+procedures. Each such handler will then issue the statement
+<PRE>    raise;</PRE>
+<p>
+which raises  the same  exception to  the  attention  of  the  calling
+procedure. (We  are thus  able to achieve an effect similar to that of
+the unwind  clause of  Mesa without  the need  for a  special language
+construct.) We  illustrate last wishes with the example of a procedure
+that performs operations on a file:
+<table border cellpadding=6><tr><td><pre>
+procedure OPERATE(NAME :  STRING) is
+  FILE :  FILE_TYPE;
+begin
+  -- initial actions
+  OPEN(FILE,  INOUT_FILE,  NAME);
+  -- perform work on the file
+  CLOSE(FILE);
+  -- final actions
+end;
+</pre></td></tr></table>
+<p>
+Should an  exception occur  during operations  on the  file, the  file
+would be  left in an open state when the body of OPERATE is left. This
+is avoided  by expressing  the  appropriate  corrective  action  in  a
+handler:
+<table border cellpadding=6><tr><td><pre>
+procedure SAFE_OPERATE(NAME :  STRING) is
+  FILE :  FILE_TYPE;
+begin
+  -- initial actions
+  OPEN(FILE,  INOUT_FILE,  NAME);
+  begin
+    -- perform work on the file
+  exception
+    when others =&gt;
+      CLOSE(FILE);
+      raise;
+  end;
+  CLOSE(FILE);
+  -- final actions
+end;
+</pre></td></tr></table>
+<p>
+Now if  any exception  occurs, either  during the initial or the final
+actions, it  will be propagated to the caller of SAFE_OPERATE, and the
+file will  at that  time be  closed. If  however the  exception occurs
+within the block, while performing work on the file, the inner handler
+will first close the file before propagating the exception.
+<p>
+Similar techniques  can be  used in  parallel processing  examples:  a
+given task  should not  be left  waiting forever  to receive  the stop
+signal from a task whose execution was abandoned after it sent a start
+signal.
+<center>
+<hr width=60%>
+&#164; <a href="ratl-14-04.html#14.4"><b>NEXT</b></a>
+&#164; <a href="ratl-14-02.html#14.2"><b>PREVIOUS</b></a>
+&#164; <a href="ratl-14.html#14"><b>UP</b></a>
+&#164; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#164; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#164;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+</BODY></HTML>
+

@@ -1,0 +1,621 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Generic units</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-6-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>6.5 Generic units</H1>
+<div class="Normal">There are a number of improvements in the area of 
+generics many of which have already been outlined in earlier chapters.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A first point concerns 
+access types. The introduction of types that exclude null means that 
+a formal access type parameter can take the form&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;A&nbsp;<B>is&nbsp;not&nbsp;null&nbsp;access</B>&nbsp;T;<BR>
+&nbsp;&nbsp;&nbsp;...</div>
+<div class="Normal">The actual type corresponding to <SPAN Class="swiss">A</SPAN> 
+must then itself be an access type that excludes null. A similar rule 
+applies in reverse &ndash; if the formal parameter includes null then 
+the actual parameter must also include null. If the two did not match 
+in this respect then all sorts of difficulties could arise.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Similarly if the formal 
+parameter is derived from an access type&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;FA&nbsp;<B>is&nbsp;new</B>&nbsp;A;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>A&nbsp;is&nbsp;an&nbsp;access&nbsp;type</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">then the actual type 
+corresponding to <SPAN Class="swiss">FA</SPAN> must exclude null if <SPAN Class="swiss">A</SPAN> 
+excludes null and vice versa. Half of this rule is automatically enforced 
+since a type derived from a type that excludes null will automatically 
+exclude null. But the reverse is not true as mentioned in Section <A HREF="Rat-3-2.html">3.2</A> 
+when discussing access types. If <SPAN Class="swiss">A</SPAN> has the 
+declaration&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;A&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Integer;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>does&nbsp;not&nbsp;exclude&nbsp;null</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">then we can declare 
+</div>
+<div class="SwissExamples"><B>type</B>&nbsp;NA&nbsp;<B>is&nbsp;new</B>&nbsp;A;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>does&nbsp;not&nbsp;exclude&nbsp;null</I></SPAN><BR>
+<B>type</B>&nbsp;NNA&nbsp;<B>is&nbsp;new&nbsp;not&nbsp;null</B>&nbsp;A;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>does&nbsp;exclude&nbsp;null</I></SPAN></div>
+<div class="Normal">and then <SPAN Class="swiss">NA</SPAN> matches the 
+formal parameter <SPAN Class="swiss">FA</SPAN> in the above generic but 
+<SPAN Class="swiss">NNA</SPAN> does not.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There is also a change 
+to formal derived types concerning limitedness. In line with the changes 
+described in the chapter on the object oriented model (see <A HREF="Rat-2-4.html">2.4</A>), 
+the syntax now permits <B>limited</B> to be stated explicitly thus&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;limited&nbsp;new</B>&nbsp;LT;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>untagged</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;TT&nbsp;<B>is&nbsp;limited&nbsp;new</B>&nbsp;TLT&nbsp;<B>with&nbsp;private</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>tagged</I></SPAN></div>
+<div class="Normal">However, this can be seen simply as a documentation 
+aid since the actual types corresponding to <SPAN Class="swiss">T</SPAN> 
+and <SPAN Class="swiss">TT</SPAN> must be derived from <SPAN Class="swiss">LT</SPAN> 
+and <SPAN Class="swiss">TLT</SPAN> and so will be limited if <SPAN Class="swiss">LT</SPAN> 
+and <SPAN Class="swiss">TLT</SPAN> are limited anyway.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Objects of anonymous 
+access types are now also allowed as generic formal parameters so we 
+can have&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;A:&nbsp;<B>access</B>&nbsp;T&nbsp;:=&nbsp;<B>null</B>;<BR>
+&nbsp;&nbsp;&nbsp;AN:&nbsp;<B>in&nbsp;out</B>&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;T;<BR>
+&nbsp;&nbsp;&nbsp;F:&nbsp;<B>access&nbsp;function&nbsp;</B>(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;FN:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;function</B>&nbsp;(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float;</div>
+<div class="Normal">If the subtype of the formal object excludes null 
+(as in <SPAN Class="swiss">AN</SPAN> and <SPAN Class="swiss">FN</SPAN>) 
+then the actual must also exclude null but not vice versa. This contrasts 
+with the rule for formal access types discussed above in which case both 
+the formal type and actual type have to exclude null or not. Note moreover 
+that object parameters of anonymous access types can have mode <B>in 
+out</B>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If the subprogram profile 
+itself has access parameters that exclude null as in&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;PN:&nbsp;<B>access&nbsp;procedure</B>&nbsp;(AN:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;T);</div>
+<div class="Normal" style="margin-bottom: 0.4em">then the actual subprogram 
+must also have access parameters that exclude null and so on. The same 
+rule applies to named formal subprogram parameters. If we have&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;procedure</B>&nbsp;P(AN:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;T);<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;procedure</B>&nbsp;Q(AN:&nbsp;<B>access</B>&nbsp;T);</div>
+<div class="Normal" style="margin-bottom: 0.4em">then the actual corresponding 
+to <SPAN Class="swiss">P</SPAN> must have a parameter that excludes null 
+but the actual corresponding to <SPAN Class="swiss">Q</SPAN> might or 
+might not. The rule is similar to renaming &ndash; &quot;not null must 
+never lie&quot;. Remember that the matching of object and subprogram 
+generic parameters is defined in terms of renaming. Here is an example 
+to illustrate why the asymmetry is important. Suppose we have&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;procedure</B>&nbsp;P(Z:&nbsp;<B>in</B>&nbsp;T);<BR>
+<B>package</B>&nbsp;G&nbsp;<B>is</B></div>
+<div class="Normal" style="margin-bottom: 0.4em">This can be matched 
+by&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;A&nbsp;<B>is&nbsp;access</B>&nbsp;...;<BR>
+<B>procedure</B>&nbsp;Q(Y:&nbsp;<B>in</B>&nbsp;<B>not&nbsp;null</B>&nbsp;A);<BR>
+...<BR>
+<B>package</B>&nbsp;NG&nbsp;<B>is&nbsp;new</B>&nbsp;G(T&nbsp;=&gt;&nbsp;A;&nbsp;P&nbsp;=&gt;&nbsp;Q);</div>
+<div class="Normal">Note that since the formal type <SPAN Class="swiss">T</SPAN> 
+is not known to be an access type in the generic declaration, there is 
+no mechanism for applying a null exclusion to it. Nevertheless there 
+is no reason why the instantiation should not be permitted.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There are some other 
+changes to existing named formal subprogram parameters. The reader will 
+recall from the discussion on interfaces in an earlier chapter (see <A HREF="Rat-2-4.html">2.4</A>) 
+that the concept of null procedures has been added in Ada 2005.<A NAME="I1260"></A> 
+A null procedure has no body but behaves as if it has a body comprising 
+a null statement. It is now possible to use a null procedure as a possible 
+form of default for a subprogram parameter. Thus there are now three 
+possible forms of default as follows&nbsp;</div>
+<div class="SwissExamples"><B>with&nbsp;procedure</B>&nbsp;P(&nbsp;...&nbsp;)&nbsp;<B>is</B>&nbsp;&lt;&gt;;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>OK&nbsp;in&nbsp;Ada&nbsp;95</I></SPAN><BR>
+<B>with&nbsp;procedure</B>&nbsp;Q(&nbsp;...&nbsp;)&nbsp;<B>is</B>&nbsp;Some_Proc;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>OK&nbsp;in&nbsp;Ada&nbsp;95</I></SPAN><BR>
+<B>with&nbsp;procedure</B>&nbsp;R(&nbsp;...&nbsp;)&nbsp;<B>is&nbsp;null</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>only&nbsp;in&nbsp;Ada&nbsp;2005</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">So if we have&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is</B>&nbsp;(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;procedure</B>&nbsp;R(X:&nbsp;<B>in</B>&nbsp;Integer;&nbsp;Y:&nbsp;<B>in&nbsp;out</B>&nbsp;T)&nbsp;<B>is&nbsp;null</B>;<BR>
+<B>package</B>&nbsp;PP&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">then an instantiation 
+omitting the parameter for <SPAN Class="swiss">R</SPAN> such as&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;NPP&nbsp;<B>is&nbsp;new</B>&nbsp;PP(T&nbsp;=&gt;&nbsp;Colour);</div>
+<div class="Normal" style="margin-bottom: 0.4em">is equivalent to providing 
+an actual procedure <SPAN Class="swiss">AR</SPAN> thus&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;AR(X:&nbsp;<B>in</B>&nbsp;Integer;&nbsp;Y:&nbsp;<B>in&nbsp;out</B>&nbsp;Colour)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>null</B>;<BR>
+<B>end</B>&nbsp;AR;</div>
+<div class="Normal">Note that the profile of the actual procedure is 
+conjured up to match the formal procedure.</div>
+<div class="Normal">Of course, there is no such thing as a null function 
+and so null is not permitted as the default for a formal function.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A new kind of subprogram 
+parameter was introduced in some detail when discussing object factory 
+functions in Section <A HREF="Rat-2-6.html">2.6</A> of the chapter on 
+the object oriented model. This is the abstract formal subprogram.<A NAME="I1261"></A><A NAME="I1262"></A> 
+The example given was the predefined generic function <SPAN Class="swiss">Generic_Dispatching_Constructor</SPAN> 
+thus&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;(&lt;&gt;)&nbsp;<B>is&nbsp;abstract&nbsp;tagged&nbsp;limited&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Parameters&nbsp;(&lt;&gt;)&nbsp;<B>is&nbsp;limited&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Constructor(Params:&nbsp;<B>not&nbsp;null</B>&nbsp;<B>access</B>&nbsp;Parameters)&nbsp;<B>return</B>&nbsp;T&nbsp;<B>is&nbsp;abstract</B>;<BR>
+<B>function</B>&nbsp;Ada.Tags.Generic_Dispatching_Constructor<BR>
+&nbsp;&nbsp;&nbsp;(The_Tag:&nbsp;Tag;&nbsp;Params:&nbsp;<B>not&nbsp;null</B>&nbsp;<B>access</B>&nbsp;Parameters)&nbsp;<B>return</B>&nbsp;T'Class;</div>
+<div class="Normal">The formal function <SPAN Class="swiss">Constructor</SPAN> 
+is an example of an abstract formal subprogram. Remember that the interpretation 
+is that the actual function must be a dispatching operation of a tagged 
+type uniquely identified by the profile of the formal function. The actual 
+operation can be concrete or abstract. Formal abstract subprograms can 
+of course be procedures as well as functions. It is important that there 
+is exactly one controlling type in the profile.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Formal abstract subprograms 
+can have defaults in much the same way that formal concrete subprograms 
+can have defaults. We write&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;<B>procedure</B>&nbsp;P(X:&nbsp;<B>in&nbsp;out</B>&nbsp;T)&nbsp;<B>is&nbsp;abstract</B>&nbsp;&lt;&gt;;<BR>
+<B>with&nbsp;function</B>&nbsp;F&nbsp;<B>return</B>&nbsp;T&nbsp;<B>is&nbsp;abstract</B>&nbsp;Unit;</div>
+<div class="Normal">The first means of course that the default has to 
+have identifier <SPAN Class="swiss">P</SPAN> and the second means that 
+the default is some function <SPAN Class="swiss">Unit</SPAN>. It is not 
+possible to give null as the default for an abstract parameter for various 
+reasons. Defaults will probably be rarely used for abstract parameters.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The introduction of 
+interfaces in Ada 2005 means that a new class of generic parameters is 
+possible. Thus we might have<A NAME="I1263"></A>&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;F&nbsp;<B>is&nbsp;interface</B>;</div>
+<div class="Normal">The actual type could then be any interface. This 
+is perhaps unlikely.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we wanted to ensure 
+that a formal interface had certain operations then we might first declare 
+an interface <SPAN Class="swiss">A</SPAN> with the required operations 
+</div>
+<div class="SwissExamples"><B>type</B>&nbsp;A&nbsp;<B>is&nbsp;interface</B>;<BR>
+<B>procedure</B>&nbsp;Op1(X:&nbsp;A;&nbsp;...&nbsp;)&nbsp;<B>is&nbsp;abstract</B>;<BR>
+<B>procedure</B>&nbsp;N1(X:&nbsp;A;&nbsp;...&nbsp;)&nbsp;<B>is&nbsp;null</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;F&nbsp;<B>is&nbsp;interface&nbsp;and&nbsp;</B>A;</div>
+<div class="Normal">and then the actual interface must be descended from 
+<SPAN Class="swiss">A</SPAN> and so have operations which match <SPAN Class="swiss">Op1</SPAN> 
+and <SPAN Class="swiss">N1</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A formal interface 
+might specify several ancestors&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;FAB&nbsp;<B>is&nbsp;interface&nbsp;and</B>&nbsp;A&nbsp;<B>and</B>&nbsp;B;</div>
+<div class="Normal" style="margin-bottom: 0.4em">where <SPAN Class="swiss">A</SPAN> 
+and <SPAN Class="swiss">B</SPAN> are themselves interfaces. And <SPAN Class="swiss">A</SPAN> 
+and <SPAN Class="swiss">B</SPAN> or just some of them might themselves 
+be further formal parameters as in&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;A&nbsp;<B>is&nbsp;interface</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;FAB&nbsp;<B>is&nbsp;interface&nbsp;and</B>&nbsp;A&nbsp;<B>and</B>&nbsp;B;</div>
+<div class="Normal">These means that <SPAN Class="swiss">FAB</SPAN> must 
+have both <SPAN Class="swiss">A</SPAN> and <SPAN Class="swiss">B</SPAN> 
+as ancestors; it could of course have other ancestors as well.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The syntax for formal 
+tagged types is also changed to take into account the possibility of 
+interfaces. Thus we might have&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;NT&nbsp;<B>is&nbsp;new</B>&nbsp;T&nbsp;<B>and</B>&nbsp;A&nbsp;<B>and</B>&nbsp;B&nbsp;<B>with&nbsp;private</B>;</div>
+<div class="Normal">in which case the actual type must be descended both 
+from the tagged type <SPAN Class="swiss">T</SPAN> and the interfaces 
+<SPAN Class="swiss">A</SPAN> and <SPAN Class="swiss">B</SPAN>. The parent 
+type <SPAN Class="swiss">T</SPAN> itself might be an interface or a normal 
+tagged type. Again some or all of <SPAN Class="swiss">T</SPAN>, <SPAN Class="swiss">A</SPAN>, 
+and <SPAN Class="swiss">B</SPAN> might be earlier formal parameters. 
+Also we can explicitly state <B>limited</B> in which case all of the 
+ancestor types must also be limited.</div>
+<div class="Normal" style="margin-bottom: 0.4em">An example of this 
+sort of structure occurred when discussing printable geometric objects 
+in Section <A HREF="Rat-2-4.html">2.4</A> of the chapter on the object 
+oriented model. We had&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;abstract&nbsp;tagged&nbsp;private</B>;<BR>
+<B>package</B>&nbsp;Make_Printable&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Printable_T&nbsp;<B>is</B>&nbsp;<B>abstract&nbsp;new</B>&nbsp;T&nbsp;<B>and</B>&nbsp;Printable&nbsp;<B>with&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">It might be that we 
+have various interfaces all derived from <SPAN Class="swiss">Printable</SPAN> 
+which serve different purposes (perhaps for different output devices, 
+laser printer, video display, historic card punch and so on). We would 
+then want the generic package to take any of these interfaces thus&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;abstract&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Any_Printable&nbsp;<B>is&nbsp;interface&nbsp;and</B>&nbsp;Printable;<BR>
+<B>package</B>&nbsp;Make_Printable&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Printable_T&nbsp;<B>is</B>&nbsp;<B>abstract&nbsp;new</B>&nbsp;T&nbsp;<B>and</B>&nbsp;Any_Printable&nbsp;<B>with&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>;</div>
+<div class="Normal">A formal interface can also be marked as limited 
+in which case the actual interface must also be limited and vice versa.</div>
+<div class="Normal" style="margin-bottom: 0.4em">As discussed in the 
+previous chapter (see <A HREF="Rat-5-3.html">5.3</A>), interfaces can 
+also be synchronized, task, or protected. Thus we might have&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;task&nbsp;interface</B>;</div>
+<div class="Normal">and then the actual interface must itself be a task 
+interface. The correspondence must be exact. A formal synchronized interface 
+can only be matched by an actual synchronized interface and so on. Remember 
+from the discussion in Section <A HREF="Rat-5-3.html">5.3</A> that a 
+task interface can be composed from a synchronized interface. This flexibility 
+does not extend to matching actual and formal generic parameters.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another small change 
+concerns object parameters of limited types. In Ada 95 the following 
+is illegal&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;LT&nbsp;<B>is&nbsp;limited</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;B:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>a&nbsp;limited&nbsp;type</I></SPAN></div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;X:&nbsp;<B>in</B>&nbsp;LT;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal&nbsp;in&nbsp;Ada&nbsp;95</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>procedure</B>&nbsp;P&nbsp;...</div>
+<div class="Normal">It is illegal in Ada 95 because it is not possible 
+to provide an actual parameter. This is because the parameter mechanism 
+is one of initialization of the formal object parameter by the actual 
+and this is treated as assignment and so is not permitted for limited 
+types.<A NAME="I1264"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">However, in Ada 2005, 
+initialization of a limited object by an aggregate is allowed since the 
+value is created <I>in situ</I> as discussed in Section <A HREF="Rat-4-5.html">4.5</A>. 
+So an instantiation is possible thus&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Q&nbsp;<B>is&nbsp;new</B>&nbsp;P(X&nbsp;=&gt;&nbsp;(A&nbsp;=&gt;&nbsp;1,&nbsp;B&nbsp;=&gt;&nbsp;2.0),&nbsp;...&nbsp;);</div>
+<div class="Normal">Remember that an initial value can also be provided 
+by a function call and so the actual parameter could also be a function 
+call returning a limited type.</div>
+<div class="Normal">The final improvement to the generic parameter mechanism 
+concerns package parameters.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 95 package parameters 
+take two forms. Given a generic package <SPAN Class="swiss">Q</SPAN> 
+with formal parameters <SPAN Class="swiss">F1</SPAN>, <SPAN Class="swiss">F2</SPAN>, 
+<SPAN Class="swiss">F3</SPAN>, then we can have&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;P&nbsp;<B>is&nbsp;new</B>&nbsp;Q(&lt;&gt;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then the actual 
+package corresponding to the formal <SPAN Class="swiss">P</SPAN> can 
+be any instantiation of <SPAN Class="swiss">Q</SPAN>. Alternatively&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;R&nbsp;<B>is&nbsp;new</B>&nbsp;Q(P1,&nbsp;P2,&nbsp;P3);</div>
+<div class="Normal">and then the actual package corresponding to <SPAN Class="swiss">R</SPAN> 
+must be an instantiation of <SPAN Class="swiss">Q</SPAN> with the specified 
+actual parameters <SPAN Class="swiss">P1</SPAN>, <SPAN Class="swiss">P2</SPAN>, 
+<SPAN Class="swiss">P3</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">As mentioned in the 
+Introduction, a simple example of the use of these two forms occurs with 
+the package <SPAN Class="swiss">Generic_Complex_Arrays</SPAN> which takes 
+instantiations of <SPAN Class="swiss">Generic_Real_Arrays</SPAN> and 
+<SPAN Class="swiss">Generic_Complex_Types</SPAN> which in turn both have 
+the underlying floating type as their single parameter. It is vital that 
+both packages use the same floating point type and this is assured by 
+writing&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;Real_Arrays&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;Generic_Real_Arrays(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;Complex_Types&nbsp;<B>is&nbsp;new</B>&nbsp;Generic_Complex_Types(Real_Arrays.Real);<BR>
+<B>package</B>&nbsp;Generic_Complex_Arrays&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal">However, the mechanism does not work very well when 
+several parameters are involved as will now be illustrated with some 
+examples.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The first example concerns 
+using the new container library which will be discussed in some detail 
+in Chapter <A HREF="Rat-8.html">8</A>. There are generic packages such 
+as&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Index_Type&nbsp;<B>is&nbsp;range</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type&nbsp;<B>is&nbsp;private</B>:<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type&nbsp;)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Ada.Containers.Vectors&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">and&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Key_Type&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type&nbsp;<B>is&nbsp;private</B>:<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Hash(Key:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Hash_Type;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Equivalent_Keys(Left,&nbsp;Right:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type&nbsp;)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Ada.Containers.Hashed_Maps&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal">We might wish to pass instantiations of both of these 
+to some other package with the proviso that both were instantiated with 
+the same <SPAN Class="swiss">Element_Type</SPAN>. Otherwise the parameters 
+can be unrelated.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It would be natural 
+to make the vector package the first parameter and give it the <SPAN Class="swiss">(&lt;&gt;)</SPAN> 
+form. But we then find that in Ada 95 we have to repeat all the parameters 
+other than <SPAN Class="swiss">Element_Type</SPAN> for the maps package. 
+So we have&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;...&nbsp;;&nbsp;<B>use</B>&nbsp;Ada.Containers;<BR>
+<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;V&nbsp;<B>is&nbsp;new</B>&nbsp;Vectors(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Key_Type&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Hash(Key:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Hash_Type;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Equivalent_Keys(Left,&nbsp;Right:&nbsp;Key_Type)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type&nbsp;)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;HM&nbsp;<B>is&nbsp;new</B>&nbsp;Hashed_Maps(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Key_Type&nbsp;=&gt;&nbsp;Key_Type,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Element_Type&nbsp;=&gt;&nbsp;V.Element_Type,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hash&nbsp;=&gt;&nbsp;Hash,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Equivalent_Keys&nbsp;=&gt;&nbsp;Equivalent_Keys,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;=&quot;&nbsp;=&gt;&nbsp;&quot;=&quot;);<BR>
+<B>package</B>&nbsp;HMV&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is a nuisance 
+since when we instantiate <SPAN Class="swiss">HMV</SPAN> we have to provide 
+all the parameters required by <SPAN Class="swiss">Hashed_Maps</SPAN> 
+even though we must already have instantiated it elsewhere in the program. 
+Suppose that instantiation was&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;My_Hashed_Map&nbsp;<B>is&nbsp;new</B>&nbsp;Hashed_Maps(My_Key,&nbsp;Integer,&nbsp;Hash_It,&nbsp;Equiv,&nbsp;&quot;=&quot;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and suppose also that 
+we have instantiated <SPAN Class="swiss">Vectors</SPAN>&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;My_Vectors&nbsp;<B>is&nbsp;new</B>&nbsp;Vectors(Index,&nbsp;Integer,&nbsp;&quot;=&quot;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now when we come to 
+instantiate <SPAN Class="swiss">HMV</SPAN> we have to write&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;My_HMV&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;HMV(My_Vectors,&nbsp;My_Key,&nbsp;Hash_It,&nbsp;Equiv,&nbsp;&quot;=&quot;,&nbsp;My_Hashed_Maps);</div>
+<div class="Normal">This is very annoying. Not only do we have to repeat 
+all the auxiliary parameters of <SPAN Class="swiss">Hashed_Maps</SPAN> 
+but the situation regarding <SPAN Class="swiss">Vectors</SPAN> and <SPAN Class="swiss">Hashed_Maps</SPAN> 
+is artificially made asymmetric. (Life would have been a bit easier if 
+we had made <SPAN Class="swiss">Hashed_Maps</SPAN> the first package 
+parameter but that just illustrates the asymmetry.) Of course we could 
+more or less overcome the asymmetry by passing all the parameters of 
+<SPAN Class="swiss">Vectors</SPAN> as well but then <SPAN Class="swiss">HMV</SPAN> 
+would have even more parameters. This rather defeats the point of package 
+parameters which were introduced into Ada 95 in order to avoid the huge 
+parameter lists that had occurred in Ada 83.<A NAME="I1265"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 2005 overcomes 
+this problem by permitting just some of the actual parameters to be specified. 
+Any omitted parameters are indicated using the <SPAN Class="swiss">&lt;&gt;</SPAN> 
+notation thus<A NAME="I1266"></A><A NAME="I1267"></A>&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;S&nbsp;<B>is&nbsp;new</B>&nbsp;Q(P1,&nbsp;F2&nbsp;=&gt;&nbsp;&lt;&gt;,&nbsp;F3&nbsp;=&gt;&nbsp;&lt;&gt;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">In this case the actual 
+package corresponding to <SPAN Class="swiss">S</SPAN> can be any package 
+which is an instantiation of <SPAN Class="swiss">Q</SPAN> where the first 
+actual parameter is <SPAN Class="swiss">P1</SPAN> but the other two parameters 
+are left unspecified. We can also abbreviate this to&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;S&nbsp;<B>is&nbsp;new</B>&nbsp;Q(P1,&nbsp;<B>others</B>&nbsp;=&gt;&nbsp;&lt;&gt;);</div>
+<div class="Normal">Note that the <SPAN Class="swiss">&lt;&gt;</SPAN> 
+notation can only be used with named parameters and also that <SPAN Class="swiss">(&lt;&gt;)</SPAN> 
+is now considered to be a shorthand for <SPAN Class="swiss">(</SPAN><B>others</B> 
+<SPAN Class="swiss">=&gt; &lt;&gt;)</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">As another example 
+</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;S&nbsp;<B>is&nbsp;new</B>&nbsp;Q(F1&nbsp;=&gt;&nbsp;&lt;&gt;,&nbsp;F2&nbsp;=&gt;&nbsp;P2,&nbsp;F3&nbsp;=&gt;&nbsp;&lt;&gt;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">means that the actual 
+package corresponding to <SPAN Class="swiss">S</SPAN> can be any package 
+which is an instantiation of <SPAN Class="swiss">Q</SPAN> where the second 
+actual parameter is <SPAN Class="swiss">P2</SPAN> but the other two parameters 
+are left unspecified. This can be abbreviated to&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;S&nbsp;<B>is&nbsp;new</B>&nbsp;Q(F2&nbsp;=&gt;&nbsp;P2,&nbsp;<B>others</B>&nbsp;=&gt;&nbsp;&lt;&gt;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Using this new notation, 
+the package <SPAN Class="swiss">HMV</SPAN> can now simply be written 
+as&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;...&nbsp;;&nbsp;<B>use</B>&nbsp;Ada.Containers;<BR>
+<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;V&nbsp;<B>is&nbsp;new</B>&nbsp;Vectors(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;HM&nbsp;<B>is&nbsp;new</B>&nbsp;Hashed_Maps<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Element_Type&nbsp;=&gt;&nbsp;V.Element_Type,&nbsp;<B>others</B>&nbsp;=&gt;&nbsp;&lt;&gt;);<BR>
+<B>package</B>&nbsp;HMV&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">and our instantiation 
+of <SPAN Class="swiss">HMV</SPAN> becomes simply&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;My_HMV&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;HMV(My_Vectors,&nbsp;My_Hashed_Maps);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Some variations on 
+this example are obviously possible. For example it is likely that the 
+instantiation of <SPAN Class="swiss">Hashed_Maps</SPAN> must use the 
+same definition of equality for the type <SPAN Class="swiss">Element_Type</SPAN> 
+as <SPAN Class="swiss">Vectors</SPAN>. We can ensure this by writing 
+</div>
+<div class="SwissExamples"><B>with</B>&nbsp;...&nbsp;;&nbsp;<B>use</B>&nbsp;Ada.Containers;<BR>
+<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;V&nbsp;<B>is&nbsp;new</B>&nbsp;Vectors(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;HM&nbsp;<B>is&nbsp;new</B>&nbsp;Hashed_Maps<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Element_Type&nbsp;=&gt;&nbsp;V.Element_Type,&nbsp;&quot;=&quot;&nbsp;=&gt;&nbsp;V.&quot;=&quot;,&nbsp;<B>others</B>&nbsp;=&gt;&nbsp;&lt;&gt;);<BR>
+<B>package</B>&nbsp;HMV&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">If this seems rather 
+too hypothetical, a more concrete example might be a generic function 
+which converts a vector into a list provided they have the same element 
+type and equality. Note first that the specification of the container 
+package for lists is&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type)&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Ada.Containers.Doubly_Linked_Lists&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">The specification of 
+a generic function <SPAN Class="swiss">Convert</SPAN> might be&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;DLL&nbsp;<B>is&nbsp;new</B>&nbsp;Doubly_Linked_Lists(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;V&nbsp;<B>is&nbsp;new</B>&nbsp;Vectors<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Index_Type&nbsp;=&gt;&nbsp;&lt;&gt;,&nbsp;Element_Type&nbsp;=&gt;&nbsp;DLL.Element_Type,&nbsp;&quot;=&quot;&nbsp;=&gt;&nbsp;DLL.&quot;=&quot;);<BR>
+<B>function</B>&nbsp;Convert(The_Vector:&nbsp;V.Vector)&nbsp;<B>return</B>&nbsp;DLL.List;</div>
+<div class="Normal" style="margin-bottom: 0.4em">On the other hand if 
+we only care about the element types matching and not about equality 
+then we could write&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;DLL&nbsp;<B>is&nbsp;new</B>&nbsp;Doubly_Linked_Lists(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;V&nbsp;<B>is&nbsp;new</B>&nbsp;Vectors(Element_Type&nbsp;=&gt;&nbsp;DLL.Element_Type,&nbsp;<B>others</B>&nbsp;=&gt;&nbsp;&lt;&gt;);<BR>
+<B>function</B>&nbsp;Convert(The_Vector:&nbsp;V.Vector)&nbsp;<B>return</B>&nbsp;DLL.List;</div>
+<div class="Normal">Note that if we had reversed the roles of the formal 
+packages then we would not need the new <SPAN Class="swiss">&lt;&gt;</SPAN> 
+notation if both equality and element type had to match but it would 
+be necessary for the case where only the element type had to match.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Other examples might 
+arise in the numerics area. Suppose we have two independently written 
+generic packages <SPAN Class="swiss">Do_This</SPAN> and <SPAN Class="swiss">Do_That</SPAN> 
+which both have a floating point type parameter and several other parameters 
+as well. For example&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Real&nbsp;<B>is&nbsp;digits</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;Accuracy:&nbsp;<B>in</B>&nbsp;Real;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Index&nbsp;<B>is&nbsp;range</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;Max_Trials:&nbsp;<B>in</B>&nbsp;Index;<BR>
+<B>package</B>&nbsp;Do_This&nbsp;<B>is</B>&nbsp;...</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Floating&nbsp;<B>is&nbsp;digits</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;Bounds:&nbsp;<B>in</B>&nbsp;Floating;<BR>
+&nbsp;&nbsp;&nbsp;Iterations:&nbsp;<B>in</B>&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;Repeat:&nbsp;<B>in</B>&nbsp;Boolean;<BR>
+<B>package</B>&nbsp;Do_That&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal">(This is typical of much numerical stuff. Authors 
+are cautious and unable to make firm decisions about many aspects of 
+their algorithms and therefore pass the buck back to the user in the 
+form of a turgid list of auxiliary parameters.)</div>
+<div class="Normal" style="margin-bottom: 0.4em">We now wish to write 
+a package <SPAN Class="swiss">Super_Solver</SPAN> which takes instantiations 
+of both <SPAN Class="swiss">Do_This</SPAN> and <SPAN Class="swiss">Do_That</SPAN> 
+with the requirement that the floating type used for the instantiation 
+is the same in each case but otherwise the parameters are unrelated. 
+In Ada 95 we are again forced to repeat one set of parameters thus<A NAME="I1268"></A> 
+</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;This&nbsp;<B>is&nbsp;new</B>&nbsp;Do_This(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;S_Bounds:&nbsp;<B>in</B>&nbsp;This.Real;<BR>
+&nbsp;&nbsp;&nbsp;S_Iterations:&nbsp;<B>in</B>&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;S_Repeat:&nbsp;<B>in</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;That&nbsp;<B>is&nbsp;new</B>&nbsp;Do_That(This.Real,&nbsp;S_Bounds,&nbsp;S_Iterations,&nbsp;S_Repeat);<BR>
+<B>package</B>&nbsp;Super_Solver&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">And when we come to 
+instantiate <SPAN Class="swiss">Super_Solver</SPAN> we have to provide 
+all the auxiliary parameters required by <SPAN Class="swiss">Do_That</SPAN> 
+even though we must already have instantiated it elsewhere in the program. 
+Suppose the instantiation was&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;That_One&nbsp;<B>is&nbsp;new</B>&nbsp;Do_That(Float,&nbsp;0.01,&nbsp;7,&nbsp;False);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and suppose also that 
+we have instantiated <SPAN Class="swiss">Do_This</SPAN>&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;This_One&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;Do_This(&nbsp;...&nbsp;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now when we instantiate 
+<SPAN Class="swiss">Super_Solver</SPAN> we have to write&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;SS&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;Super_Solver(This_One,&nbsp;0.01,&nbsp;7,&nbsp;False,&nbsp;That_One);</div>
+<div class="Normal">Just as with <SPAN Class="swiss">HMV</SPAN> we have 
+all these duplicated parameters and an artificial asymmetry between <SPAN Class="swiss">This</SPAN> 
+and <SPAN Class="swiss">That</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 2005 the package 
+<SPAN Class="swiss">Super_Solver</SPAN> can be written as&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;This&nbsp;<B>is&nbsp;new</B>&nbsp;Do_This(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;That&nbsp;<B>is&nbsp;new</B>&nbsp;Do_That(This.Real,&nbsp;<B>others</B>&nbsp;=&gt;&nbsp;&lt;&gt;);<BR>
+<B>package</B>&nbsp;Super_Solver&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">and the instantiation 
+of <SPAN Class="swiss">Super_Solver</SPAN> becomes simply</div>
+<div class="SwissExamples"><B>package</B>&nbsp;SS&nbsp;<B>is&nbsp;new</B>&nbsp;Super_Solver(This_One,&nbsp;That_One);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Other examples occur 
+with signature packages. Remember that a signature package is one without 
+a specification. It can be used to ensure that a group of entities are 
+related in the correct way and an instantiation can then be used to identify 
+the group as a whole. A trivial example might be<A NAME="I1269"></A> 
+</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Index&nbsp;<B>is</B>&nbsp;(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;item&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Vec&nbsp;<B>is&nbsp;array</B>&nbsp;(Index&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;<B>of</B>&nbsp;Item;<BR>
+<B>package</B>&nbsp;General_Vector&nbsp;<B>is&nbsp;end</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">An instantiation of 
+<SPAN Class="swiss">General_Vector</SPAN> just asserts that the three 
+types concerned have the appropriate relationship. Thus we might have 
+</div>
+<div class="SwissExamples"><B>type</B>&nbsp;My_Array&nbsp;<B>is&nbsp;array</B>&nbsp;(Integer&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;<B>of</B>&nbsp;Float;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Vector&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;General_Vector(Integer,&nbsp;Float,&nbsp;My_Array);</div>
+<div class="Normal">The package <SPAN Class="swiss">General_Vector</SPAN> 
+could then be used as a parameter of other packages thereby reducing 
+the number of parameters.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another example might 
+be the signature of a package for manipulating sets. Thus&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element&nbsp;i<B>s&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Set&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Empty&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Unit(E:&nbsp;Element)&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Union(S,&nbsp;T:&nbsp;Set)&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Intersection(S,&nbsp;T:&nbsp;Set)&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>package</B>&nbsp;Set_Signature&nbsp;<B>is&nbsp;end</B>;</div>
+<div class="Normal">We might then have some other generic package which 
+takes an instantiation of this set signature. However, it is likely that 
+we would need to specify the type of the elements but possibly not the 
+set type and certainly not all the operations. So typically we would 
+have&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;My_Element&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;Sets&nbsp;<B>is&nbsp;new</B>&nbsp;Set_Signature(Element&nbsp;=&gt;&nbsp;My_Element,&nbsp;<B>others</B>&nbsp;=&gt;&nbsp;&lt;&gt;);</div>
+<div class="Normal">An example of this technique occurred when considering 
+the possibility of including a system of units facility within Ada 2005. 
+Although it was considered not appropriate to include it, the use of 
+signature packages was almost essential to make the mechanism usable. 
+The interested reader should consult <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00324.TXT">AI-324</A>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We conclude by noting 
+a small change to the syntax of a subprogram instantiation in that an 
+overriding indicator can be supplied as mentioned in <A HREF="Rat-2-7.html">2.7</A>. 
+Thus (in appropriate circumstances) we can write<A NAME="I1270"></A> 
+</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>procedure</B>&nbsp;This&nbsp;<B>is&nbsp;new</B>&nbsp;That(&nbsp;...&nbsp;);</div>
+<div class="Normal">This means that the instantiation must be an overriding 
+operation for some type.&nbsp;</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-6-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

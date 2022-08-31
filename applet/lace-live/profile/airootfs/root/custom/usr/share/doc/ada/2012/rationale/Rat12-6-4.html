@@ -1,0 +1,547 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Access types and storage pools</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-6-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-6-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>6.4 Access types and storage pools</H1>
+<div class="Normal">A significant change in Ada 2005 was the introduction 
+of anonymous access types. It is believed that the motivation was to 
+remove the feeling that Ada 95 was unnecessarily pedantic in requiring 
+the introduction of lots of named access types whereas in languages such 
+as C one can just place a star on the identifier of the type being referenced 
+in order to introduce a pointer type.</div>
+<div class="Normal">However, anonymous access types raised more complex 
+accessibility check problems which did not arise with named access types. 
+Most of these problems were resolved in the definition of Ada 2005 but 
+one remained concerning stand-alone objects of anonymous access types. 
+Interestingly, such stand-alone objects were added to Ada 2005 late in 
+the development process; perhaps hastily as it turned out.<A NAME="I1478"></A><A NAME="I1479"></A></div>
+<div class="Normal">In Ada 2005, local stand-alone objects take the accessibility 
+level of the master in which they are declared.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Consider an attempt 
+to use a local stand-alone object in an algorithm to reverse a list. 
+We assume that the list comprises nodes of the following type</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Node&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next:&nbsp;<B>access</B>&nbsp;Node;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and we write</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Reverse_List(List:&nbsp;<B>access</B>&nbsp;Node)&nbsp;<B>return&nbsp;access</B>&nbsp;Node&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Result:&nbsp;<B>access</B>&nbsp;Node&nbsp;:=&nbsp;<B>null</B>;<BR>
+&nbsp;&nbsp;&nbsp;This_Node:&nbsp;<B>access</B>&nbsp;Node&nbsp;:=&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;Next_Node:&nbsp;<B>access</B>&nbsp;Node&nbsp;:=&nbsp;<B>null</B>;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>while</B>&nbsp;This_Node&nbsp;/=&nbsp;<B>null</B>&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next_Node&nbsp;:=&nbsp;This_Node.Next;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This_Node.Next&nbsp;:=&nbsp;Result;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>access&nbsp;failure&nbsp;in&nbsp;2005</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Result&nbsp;:=&nbsp;This_Node;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This_Node&nbsp;:=&nbsp;Next_Node;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;loop</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Result;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>access&nbsp;failure&nbsp;in&nbsp;2005</I></SPAN><BR>
+<B>end</B>&nbsp;Reverse_List;</div>
+<div class="Normal">This uses the obvious algorithm of working down the 
+list and rebuilding it. However, in Ada 2005 there are two accessibility 
+failures associated with the variable <SPAN Class="swiss">Result</SPAN>. 
+The assignment to <SPAN Class="swiss">This_Node.Next</SPAN> fails because 
+<SPAN Class="swiss">Result</SPAN> might be referring to something local 
+and we cannot assign that to a node of the list since the list itself 
+lies outside the scope of <SPAN Class="swiss">Reverse_List</SPAN>. Similarly, 
+attempting to return the value in <SPAN Class="swiss">Result</SPAN> fails.</div>
+<div class="Normal">The problem with returning a result can sometimes 
+be solved by using an extended return statement as illustrated in <A HREF="Rat12-0-3.html#R2">[2]</A>. 
+But this is not a general remedy. The problem is solved in Ada 2012 by 
+treating stand-alone access objects rather like access parameters so 
+that they carry the accessibility of the last value assigned to them 
+as part of their value.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another reason for 
+introducing anonymous access types in Ada 2005 was to reduce the need 
+for explicit type conversions (note that anonymous access types naturally 
+have no name to use in an explicit conversion). However, it turns out 
+that in practice it is convenient to use anonymous access types in some 
+contexts (such as the component <SPAN Class="swiss">Next</SPAN> of type 
+<SPAN Class="swiss">Node</SPAN>) but in other contexts we might find 
+it logical to use a named access type such as</div>
+<div class="SwissExamples"><B>type</B>&nbsp;List&nbsp;<B>is&nbsp;access</B>&nbsp;Node;</div>
+<div class="Normal">In Ada 2005, explicit conversions are often required 
+from anonymous access types to named general access types and this has 
+been considered to be irritating. Accordingly, the rule has been changed 
+in Ada 2012 to say that an explicit conversion is only required if the 
+conversion could fail.<A NAME="I1480"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">This relaxation covers 
+both accessibility checks and tag checks. For example we might have</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Class_Acc&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;T'Class;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>named&nbsp;general&nbsp;access&nbsp;type</I></SPAN><BR>
+<B>type</B>&nbsp;Rec&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Comp:&nbsp;<B>access</B>&nbsp;T'Class;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>anon&nbsp;type</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+R:&nbsp;Rec;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then some code 
+somewhere</div>
+<div class="SwissExamples">Z:&nbsp;Class_Acc;<BR>
+...<BR>
+Z&nbsp;:=&nbsp;R.Comp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>OK&nbsp;in&nbsp;Ada&nbsp;2012</I></SPAN></div>
+<div class="Normal">The conversion from the anonymous type of <SPAN Class="swiss">Comp</SPAN> 
+to the named type <SPAN Class="swiss">Class_Acc</SPAN> of <SPAN Class="swiss">Z</SPAN> 
+on the assignment to <SPAN Class="swiss">Z</SPAN> cannot fail and so 
+does not require an explicit conversion whereas it did in Ada 2005. However, 
+a conversion from a stand-alone access object or an access parameter 
+always requires an explicit conversion to check the accessibility level 
+carried as part of the value as explained above since such a check could 
+fail.</div>
+<div class="Normal">With regard to tag checks, if it is statically known 
+that the designated type of the anonymous access type is covered by the 
+designated type of the named access type then there is no need for a 
+tag check and so an explicit conversion is not required.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It will be recalled 
+that there is a fictitious type known as <SPAN Class="roman"><I>universal_access</I></SPAN> 
+(much as <SPAN Class="roman"><I>universal_integer</I></SPAN>, <SPAN Class="roman"><I>root_Integer</I></SPAN> 
+and so on). For example, the literal <B>null</B> is of this universal 
+type. Moreover, there is a function <SPAN Class="swiss">&quot;=&quot;</SPAN> 
+used to compare <SPAN Class="roman"><I>universal_access</I></SPAN> values. 
+Permitting implicit conversions requires the introduction of a preference 
+rule for the equality operator of the universal type. Suppose we have</div>
+<div class="SwissExamples"><B>type</B>&nbsp;A&nbsp;<B>is&nbsp;access</B>&nbsp;Integer;<BR>
+R,&nbsp;S:&nbsp;<B>access</B>&nbsp;Integer;<BR>
+...<BR>
+<B>if</B>&nbsp;R&nbsp;=&nbsp;S&nbsp;<B>then</B></div>
+<div class="Normal">Now since we can do an implicit conversion from the 
+anonymous access type of <SPAN Class="swiss">R</SPAN> and <SPAN Class="swiss">S</SPAN> 
+to the type <SPAN Class="swiss">A</SPAN>, there is confusion as to whether 
+the comparison uses the equality operator of the type <SPAN Class="roman"><I>universal_access</I></SPAN> 
+or that of the type <SPAN Class="swiss">A</SPAN>. Accordingly, there 
+is a preference rule that states that in the case of ambiguity there 
+is a preference for equality of the type <SPAN Class="roman"><I>universal_access</I></SPAN>. 
+Similar preference rules already apply to <SPAN Class="roman"><I>root_integer</I></SPAN> 
+and <SPAN Class="roman"><I>root_real</I></SPAN>.</div>
+<div class="Normal">A related topic concerns membership tests which were 
+described in Section <A HREF="Rat12-3-6.html">3.6</A> of the chapter 
+on Expressions.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we want to ensure 
+that a conversion from perhaps <SPAN Class="swiss">Integer</SPAN> to 
+<SPAN Class="swiss">Index</SPAN> will work and not raise <SPAN Class="swiss">Constraint_Error</SPAN> 
+we can write</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Index&nbsp;<B>is</B>&nbsp;Integer&nbsp;<B>range</B>&nbsp;1&nbsp;..&nbsp;20;<BR>
+I:&nbsp;Index;<BR>
+K:&nbsp;Integer;<BR>
+...<BR>
+<B>if</B>&nbsp;K&nbsp;<B>in</B>&nbsp;Index&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;I&nbsp;:=&nbsp;Index(K);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>bound&nbsp;to&nbsp;work</I></SPAN><BR>
+<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>remedial&nbsp;action</I></SPAN><BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal">This is much neater than attempting the conversion 
+and then handling <SPAN Class="swiss">Constraint_Error</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, in Ada 2005, 
+there is no similar facility for testing to see whether an access type 
+conversion would fail. So membership tests in Ada 2012 are extended to 
+permit such a test. So if we have<A NAME="I1481"></A></div>
+<div class="SwissExamples"><B>type</B>&nbsp;A&nbsp;<B>is&nbsp;access</B>&nbsp;T1;<BR>
+X:&nbsp;A;<BR>
+...<BR>
+<B>type</B>&nbsp;Rec&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Comp:&nbsp;<B>access</B>&nbsp;T2;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+R:&nbsp;Rec;<BR>
+Y:&nbsp;<B>access</B>&nbsp;T2;</div>
+<div class="Normal" style="margin-bottom: 0.4em">we can write</div>
+<div class="SwissExamples"><B>if</B>&nbsp;R.Comp&nbsp;<B>in</B>&nbsp;A&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;X&nbsp;:=&nbsp;A(R.Comp)&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;conversion&nbsp;bound&nbsp;to&nbsp;work</I></SPAN><BR>
+<B>else</B>&nbsp;<SPAN Class="swiss">...</SPAN></div>
+<div class="Normal">The membership test will return true if the type 
+<SPAN Class="swiss">T1</SPAN> covers <SPAN Class="swiss">T2</SPAN> and 
+the accessibility rules are satisfied so that the conversion is bound 
+to work. Note that the converted expression (<SPAN Class="swiss">R.Comp</SPAN> 
+in this case) can be an access parameter or a stand-alone access object 
+such as <SPAN Class="swiss">Y</SPAN>; in these cases a dynamic test may 
+be required.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another useful application 
+of membership tests is in preconditions where we might want to ensure 
+that an actual parameter meets some accessibility condition. Suppose 
+we have an access type declared at library level thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;General&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;T'Class;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and a primitive subprogram 
+of type T</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Do_It(D:&nbsp;<B>access</B>&nbsp;T);</div>
+<div class="Normal">Moreover, perhaps the body of Do_It needs to assign 
+D to an object of the type General. This could cause an accessibility 
+check to fail and raise Program_Error in the body which might surprise 
+the user. This can be guarded against by adding</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Pre&nbsp;=&gt;&nbsp;D&nbsp;<B>in</B>&nbsp;General;</div>
+<div class="Normal">to the specification of Do_It so that the user is 
+told of any accessibility problem at the point of call rather than in 
+the body.</div>
+<div class="Normal">We now turn to consider various features concerning 
+allocation and storage pools.<A NAME="I1482"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">It will be recalled 
+that if we write our own storage pools then we have to declare a pool 
+type derived from the type <SPAN Class="swiss">Root_Storage_Pool</SPAN> 
+in the package <SPAN Class="swiss">System.Storage_Pools</SPAN>. So we 
+might write</div>
+<div class="SwissExamples"><B>package</B>&nbsp;My_Pools&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Pond(Size:&nbsp;Storage_Count)&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;Root_Storage_Pool&nbsp;<B>with&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">where the discriminant 
+gives the size of the pool. We then have to provide procedures <SPAN Class="swiss">Allocate</SPAN> 
+and <SPAN Class="swiss">Deallocate</SPAN> for our own pool type <SPAN Class="swiss">Pond</SPAN> 
+corresponding to those for <SPAN Class="swiss">Root_Storage_Pool</SPAN>. 
+The procedures <SPAN Class="swiss">Allocate</SPAN> and <SPAN Class="swiss">Deallocate</SPAN> 
+both have four parameters. For example, the procedure <SPAN Class="swiss">Allocate</SPAN> 
+is</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Allocate&nbsp;&nbsp;&nbsp;&nbsp;(Pool:&nbsp;<B>in&nbsp;out</B>&nbsp;Root_Storage_Pool;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Storage_Address:&nbsp;<B>out</B>&nbsp;Address;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Size_In_Storage_Elements;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alignment:&nbsp;<B>in</B>&nbsp;Storage_Count)&nbsp;<B>is&nbsp;abstract</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">When we declare our 
+own <SPAN Class="swiss">Allocate</SPAN> we do not have to use the same 
+names for the formal parameters. So we might more simply write</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Allocate&nbsp;&nbsp;&nbsp;&nbsp;(Pool:&nbsp;<B>in&nbsp;out</B>&nbsp;Pond;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Addr:&nbsp;<B>out</B>&nbsp;Address;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SISE:&nbsp;<B>in</B>&nbsp;Storage_Count;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Align:&nbsp;<B>in</B>&nbsp;Storage_Count);}</div>
+<div class="Normal">As well as <SPAN Class="swiss">Allocate</SPAN> and 
+<SPAN Class="swiss">Deallocate</SPAN> we also have to write a function 
+<SPAN Class="swiss">Storage_Size</SPAN> and procedures <SPAN Class="swiss">Initialize</SPAN> 
+and <SPAN Class="swiss">Finalize</SPAN>. However, the key procedures 
+are <SPAN Class="swiss">Allocate</SPAN> and <SPAN Class="swiss">Deallocate</SPAN> 
+which give the algorithms for determining how the storage in the pool 
+is manipulated.</div>
+<div class="Normal">Two parameters of <SPAN Class="swiss">Allocate</SPAN> 
+give the size and alignment of the space to be allocated. However, it 
+is possible that the particular algorithm devised might need to know 
+the worst case values in determining an appropriate strategy. The attribute 
+<SPAN Class="swiss">Max_Size_In_Storage_Elements</SPAN> gives the worst 
+case for the storage size in Ada 2005 but there is no corresponding attribute 
+for the worst case alignment.<A NAME="I1483"></A> <A NAME="I1484"></A></div>
+<div class="Normal">This is overcome in Ada 2012 by the provision of 
+the attribute <SPAN Class="swiss">Max_Alignment_For_Allocation</SPAN>. 
+There are various reasons for possibly requiring a different alignment 
+to that expected. For example, the raw objects might simply be byte aligned 
+but the algorithm might decide to append dope or monitoring information 
+which is integer aligned.<A NAME="I1485"></A> <A NAME="I1486"></A></div>
+<div class="Normal">The collector of Ada curiosities might remember that 
+<SPAN Class="swiss">Max_Size_In_Storage_Elements</SPAN> is the attribute 
+with most characters in Ada 2005 (28 of which 4 are underlines). Curiously, 
+<SPAN Class="swiss">Max_Alignment_For_Allocation</SPAN> also has 28 characters 
+of which only 3 are underlines.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There are problems 
+with anonymous access types and allocation. Consider</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Proc(X:&nbsp;<B>access</B>&nbsp;Integer);<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;P;<BR>
+<B>procedure</B>&nbsp;Try_This&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;P.Proc(<B>new</B>&nbsp;Integer'(10));<BR>
+<B>end</B>&nbsp;Try_This;</div>
+<div class="Normal">The procedure <SPAN Class="swiss">Proc</SPAN> has 
+an access parameter <SPAN Class="swiss">X</SPAN> and the call of <SPAN Class="swiss">Proc</SPAN> 
+in <SPAN Class="swiss">Try_This</SPAN> does an allocation with the literal 
+<SPAN Class="swiss">10</SPAN>. Where does it go? Which pool? Can we do 
+<SPAN Class="swiss">Unchecked_Deallocation</SPAN>? There are special 
+rules for allocators of anonymous access types which aim to answer such 
+questions. The pool is &quot;created at the point of the allocator&quot; 
+and so on.</div>
+<div class="Normal">But various problems arise. An important one is that 
+it is not possible to do unchecked deallocation because the access type 
+has no name; this is particularly serious with library level anonymous 
+access types. An example of such a type might be that of the component 
+<SPAN Class="swiss">Next</SPAN> if the record type <SPAN Class="swiss">Node</SPAN> 
+discussed earlier had been declared at library level.</div>
+<div class="Normal">Consequently, it was concluded that it is best to 
+use named access types if allocation is to be performed. We can always 
+convert to an anonymous type if desired after the allocation has been 
+performed.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In order to avoid encountering 
+such problems a new restriction identifier is introduced. So writing</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Restrictions(No_Anonymous_Allocators);</div>
+<div class="Normal">prevents allocators of anonymous access types and 
+so makes the call of the procedure <SPAN Class="swiss">Proc</SPAN> in 
+the procedure <SPAN Class="swiss">Try_This</SPAN> illegal. <A NAME="I1487"></A><A NAME="I1488"></A></div>
+<div class="Normal">Many long-lived control programs have a start-up 
+phase in which various storage structures are established and which is 
+then followed by the production phase in which various restrictions may 
+be imposed. Ada 2012 has a number of features that enable this to be 
+organized and monitored.</div>
+<div class="Normal" style="margin-bottom: 0.4em">One such feature is 
+the new restriction</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Restrictions(No_Standard_Allocators_After_Elaboration);}</div>
+<div class="Normal">This specifies that an allocator using a standard 
+storage pool shall not occur within a parameterless library subprogram 
+or within the statements of a task body. In essence this means that all 
+such allocation must occur during library unit elaboration. <SPAN Class="swiss">Storage_Error</SPAN> 
+is raised if allocation occurs afterwards. <A NAME="I1489"></A><A NAME="I1490"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">However, it is expected 
+that systems will permit some use of user-defined storage pools. To enable 
+the writers of such pools to monitor their use some additional functions 
+are added to the package <SPAN Class="swiss">Task_Identification</SPAN> 
+so that it now takes the form <A NAME="I1491"></A><A NAME="I1492"></A><A NAME="I1493"></A></div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Task_Identification&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Task_Id&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Current_Task&nbsp;<B>return</B>&nbsp;Task_Id;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Environment_Task&nbsp;<B>return</B>&nbsp;Task_Id;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Abort_Task(T:&nbsp;<B>in</B>&nbsp;Task_Id);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Is_Terminated(T:&nbsp;Task_Id)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Is_Callable(T:&nbsp;Task_Id)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Activation_Is_Complete(T:&nbsp;Task_Id)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Ada.Task_Identification;</div>
+<div class="Normal">The new function <SPAN Class="swiss">Environment_Task</SPAN> 
+returns the identification of the environment task. The function <SPAN Class="swiss">Activation_Is_Complete</SPAN> 
+returns true if the task concerned has finished activation. Moreover, 
+if <SPAN Class="swiss">Activation_Is_Complete</SPAN> is applied to the 
+environment task then it indicates whether all library items of the partition 
+have been elaborated. <A NAME="I1494"></A><A NAME="I1495"></A><A NAME="I1496"></A><A NAME="I1497"></A></div>
+<div class="Normal">A major new facility is the introduction of subpools. 
+This is an extensive subject so we give only an overview. The general 
+idea is that one wants to manage heaps with different lifetimes. It is 
+often the case that an access type is declared at library level but various 
+groups of objects of the type are declared and so could be reclaimed 
+at a more nested level. This is done by splitting a pool into separately 
+reclaimable subpools. This is far safer and often cheaper than trying 
+to associate lifetimes with individual objects. <A NAME="I1498"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">A new child package 
+of <SPAN Class="swiss">System.Storage_Pools</SPAN> is declared thus <A NAME="I1499"></A><A NAME="I1500"></A></div>
+<div class="SwissExamples"><B>package</B>&nbsp;System.Storage_Pools.Subpools&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Subpools);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Root_Storage_Pool_With_Subpools&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>abstract&nbsp;new</B>&nbsp;Root_Storage_Pool&nbsp;<B>with&nbsp;private</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Root_Subpool&nbsp;<B>is&nbsp;abstract&nbsp;tagged&nbsp;limited&nbsp;private</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Subpool_Handle&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Root_Subpool'Class;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>for</B>&nbsp;Subpool_Handle'Storage_Size&nbsp;<B>use</B>&nbsp;0;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Create_Subpool<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Pool:<B>&nbsp;in&nbsp;out&nbsp;</B>Root_Storage_Pool_With_Subpools)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return&nbsp;not&nbsp;null</B>&nbsp;Subpool_Handle&nbsp;<B>is&nbsp;abstract</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Pool_of_Subpool<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Subpool:&nbsp;<B>not&nbsp;null</B>&nbsp;Subpool_Handle)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return&nbsp;access</B>&nbsp;Root_Storage_Pool_With_Subpools'Class;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Pool_of_Subpool<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Subpool:&nbsp;<B>not&nbsp;null</B>&nbsp;Subpool_Handle;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;To:&nbsp;<B>in&nbsp;out&nbsp;</B>Root_Storage_Pool_With_Subpools'Class);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Allocate_From_Subpool(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pool:&nbsp;<B>in&nbsp;out</B>&nbsp;Root_Storage_Pool_With_Subpools;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Storage_Address:&nbsp;<B>out</B>&nbsp;Address;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Size_In_Storage_Elements:&nbsp;<B>in</B>&nbsp;Storage_Count;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alignment:&nbsp;<B>in</B>&nbsp;Storage_Count;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Subpool:&nbsp;<B>in</B>&nbsp;<B>not&nbsp;null</B>&nbsp;Subpool_Handle)&nbsp;<B>is&nbsp;abstract</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre'Class&nbsp;=&gt;&nbsp;Pool_of_Subpool(Subpool)&nbsp;=&nbsp;Pool'Access;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Deallocate_Subpool(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pool:&nbsp;<B>in&nbsp;out</B>&nbsp;Root_Storage_Pool_With_Subpools;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Subpool:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Subpool_Handle)&nbsp;<B>is&nbsp;abstract</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre'Class&nbsp;=&gt;&nbsp;Pool_of_Subpool(Subpool)&nbsp;=&nbsp;Pool'Access;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Default_Subpool_for_Pool<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Pool:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;Root_Storage_Pool_With_Subpools)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return&nbsp;not&nbsp;null</B>&nbsp;Subpool_Handle;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Allocate(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pool:<B>&nbsp;in&nbsp;out</B>&nbsp;Root_Storage_Pool_With_Subpools;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Storage_Address:&nbsp;<B>out</B>&nbsp;Address;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Size_In_Storage_Elements:&nbsp;<B>in</B>&nbsp;Storage_Count;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alignment:&nbsp;<B>in</B>&nbsp;Storage_Count);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Deallocate(&nbsp;...&nbsp;)&nbsp;<B>is&nbsp;null</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>overriding</B><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Storage_Size&nbsp;(Pool&nbsp;:&nbsp;Root_Storage_Pool_With_Subpools)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Storage_Count&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Storage_Count'Last);</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;System.Storage_Pools.Subpools;}</div>
+<div class="Normal">If we wish to declare a storage pool that can have 
+subpools then rather than declare an object of the type <SPAN Class="swiss">Root_Storage_Pool</SPAN> 
+in the package <SPAN Class="swiss">System.Storage_Pools</SPAN> we have 
+to declare an object of the derived type <SPAN Class="swiss">Root_Storage_Pool_With_Subpools</SPAN> 
+declared in the child package.</div>
+<div class="Normal">The type <SPAN Class="swiss">Root_Storage_Pool_With_Subpools</SPAN> 
+inherits operations <SPAN Class="swiss">Allocate</SPAN>, <SPAN Class="swiss">Deallocate</SPAN> 
+and <SPAN Class="swiss">Storage_Size</SPAN> from the parent type. Remember 
+that <SPAN Class="swiss">Allocate</SPAN> and <SPAN Class="swiss">Deallocate</SPAN> 
+are automatically called by the compiled code when items are allocated 
+and deallocated. In the case of subpools we don't need <SPAN Class="swiss">Deallocate</SPAN> 
+to do anything so it is null. The function <SPAN Class="swiss">Storage_Size</SPAN> 
+determines the value of the attribute <SPAN Class="swiss">Storage_Size</SPAN> 
+and is given by a function expression.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Subpools are separately 
+reclaimable parts of a storage pool and are identified and manipulated 
+by objects of the type <SPAN Class="swiss">Subpool_Handle</SPAN> (these 
+are access values). We can create a subpool by a call of <SPAN Class="swiss">Create_Subpool</SPAN>. 
+So we might have (assuming appropriate with and use clauses)</div>
+<div class="SwissExamples"><B>package</B>&nbsp;My_Pools&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Pond(Size:&nbsp;Storage_Count)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Root_Storage_Pool_With_Subpools&nbsp;<B>with&nbsp;private</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;My_Handle&nbsp;<B>is</B>&nbsp;Subpool_Handle;<BR>
+&nbsp;&nbsp;&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then</div>
+<div class="SwissExamples">My_Pool:&nbsp;Pond(Size&nbsp;=&gt;&nbsp;1000);</div>
+<div class="SwissExamples">Puddle:&nbsp;My_Handle&nbsp;:=&nbsp;Create_Subpool(My_Pool);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The implementation 
+of <SPAN Class="swiss">Create_Subpool</SPAN> should call</div>
+<div class="SwissExamples">Set_Pool_Of_Subpool(Puddle,&nbsp;My_Pool);</div>
+<div class="Normal">before returning the handle. This enables various 
+checks to be made.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In order to allocate 
+an object of type <SPAN Class="swiss">T</SPAN> from a subpool, we have 
+to use a new form of allocator. But first we must ensure that <SPAN Class="swiss">T</SPAN> 
+is associated with the pool itself. So we might write</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T_Ptr&nbsp;<B>is&nbsp;access</B>&nbsp;T;<BR>
+<B>for</B>&nbsp;T_Ptr'Storage_Pool&nbsp;<B>use</B>&nbsp;My_Pool;</div>
+<div class="Normal" style="margin-bottom: 0.4em">And then to allocate 
+an object from the subpool identified by the handle <SPAN Class="swiss">Puddle</SPAN> 
+we write</div>
+<div class="SwissExamples">X&nbsp;:=&nbsp;<B>new</B>&nbsp;(Puddle)&nbsp;T'(&nbsp;...&nbsp;);</div>
+<div class="Normal">where the subpool handle is given in parentheses 
+following <B>new</B>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Of course we don't 
+have to allocate all such objects from a specified subpool since we can 
+still write</div>
+<div class="SwissExamples">Y&nbsp;:=&nbsp;<B>new</B>&nbsp;T'(&nbsp;...&nbsp;);</div>
+<div class="Normal">and the object will be allocated from the parent 
+pool <SPAN Class="swiss">My_Pool</SPAN>. It is actually allocated from 
+a default subpool in the parent pool and this is determined by writing 
+a suitable body for the function <SPAN Class="swiss">Default_Subpool_for_Pool</SPAN> 
+and this is called automatically by the allocation mechanism. Note that 
+in effect the whole of the pool is divided into subpools one of which 
+may be the default subpool. If we don't provide an overriding body for 
+<SPAN Class="swiss">Default_Subpool_for_Pool</SPAN> then <SPAN Class="swiss">Program_Error</SPAN> 
+is raised. (Note that this function has a parameter of mode <B>in out</B> 
+for reasons that need not bother us.)</div>
+<div class="Normal">The implementation carries out various checks. For 
+example, it will check that a handle refers to a subpool of the correct 
+pool by calling the function <SPAN Class="swiss">Pool_Of_Subpool</SPAN>. 
+Both this function and <SPAN Class="swiss">Set_Pool_Of_Subpool</SPAN> 
+are provided by the Ada implementation and typically do not need to be 
+overridden by the implementer of a particular type derived from <SPAN Class="swiss">Root_Storage_Pool_With_Subpools</SPAN>.</div>
+<div class="Normal">In the case of allocation from a subpool, the procedure 
+<SPAN Class="swiss">Allocate_From_Subpool</SPAN> rather than <SPAN Class="swiss">Allocate</SPAN> 
+is automatically called. Note the precondition to check that all is well.</div>
+<div class="Normal">It will be recalled that for normal storage pools, 
+<SPAN Class="swiss">Deallocate</SPAN> is automatically called from an 
+instance of <SPAN Class="swiss">Unchecked_Deallocation</SPAN>. In the 
+case of subpools the general idea is that we get rid of the whole subpool 
+rather than individual items in it. Accordingly, <SPAN Class="swiss">Deallocate</SPAN> 
+does nothing as mentioned earlier and there is no <SPAN Class="swiss">Deallocate_From_Subpool</SPAN>. 
+Instead we have to write a suitable implementation of <SPAN Class="swiss">Deallocate_Subpool</SPAN>. 
+Note again the precondition to check that the subpool belongs to the 
+pool.</div>
+<div class="Normal" style="margin-bottom: 0.4em"><SPAN Class="swiss">Deallocate_Subpool</SPAN> 
+is called automatically as a consequence of calling the following library 
+procedure <A NAME="I1501"></A><A NAME="I1502"></A></div>
+<div class="SwissExamples"><B>with</B>&nbsp;System.Storage_Pools.Subpools;<BR>
+<B>use</B>&nbsp;System.Storage_Pools.Subpools;<BR>
+<B>procedure</B>&nbsp;Ada.Unchecked_Deallocate_Subpool(Subpool:<B>&nbsp;in&nbsp;out</B>&nbsp;Subpool_Handle);</div>
+<div class="Normal" style="margin-bottom: 0.4em">So when we have finished 
+with the subpool <SPAN Class="swiss">Puddle</SPAN> we can write</div>
+<div class="SwissExamples">Unchecked_Dellocate_Subpool(Puddle);</div>
+<div class="Normal">and the handle becomes null. Appropriate finalization 
+also takes place.</div>
+<div class="Normal">In summary, the writer of a subpool implementation 
+typically only has to provide <SPAN Class="swiss">Create_Subpool</SPAN>, 
+<SPAN Class="swiss">Allocate_From_Subpool</SPAN> and <SPAN Class="swiss">Deallocate_Subpool</SPAN> 
+since the other subprograms are provided by the Ada implementation of 
+the package <SPAN Class="swiss">System.Storage_Pools.Subpools</SPAN> 
+and can be inherited unchanged.</div>
+<div class="Normal">An example of an implementation will be found in 
+subclause <A HREF="http://www.ada-auth.org/standards/12rm/html/RM-13-11-6.html">RM 
+(13.11.6)</A> of the RM. This shows an implementation of a Mark/Release 
+pool in a package <SPAN Class="swiss">MR_Pool</SPAN>. Readers are invited 
+to create variants called perhaps <SPAN Class="swiss">Miss_Pool</SPAN> 
+and <SPAN Class="swiss">Dr_Pool</SPAN>!</div>
+<div class="Normal" style="margin-bottom: 0.4em">Further control over 
+the use of storage pools (nothing to do with subpools) is provided by 
+the ability to define our own default storage pool as mentioned in the 
+Introduction (see <A HREF="Rat12-1-3-5.html">1.3.5</A>). Thus we can 
+write (and completing our Happy Family of Pools)<A NAME="I1503"></A> 
+<A NAME="I1504"></A><A NAME="I1505"></A><A NAME="I1506"></A></div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Default_Storage_Pool(Master_Pool);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then all allocation 
+within the scope of the pragma will be from <SPAN Class="swiss">Master_Pool</SPAN> 
+unless a different specific pool is given for a type. This could be done 
+by using an attribute definition clause thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Cell_Ptr&nbsp;<B>is&nbsp;access</B>&nbsp;Cell;<BR>
+<B>for</B>&nbsp;Cell_Ptr'Storage_Pool&nbsp;<B>use</B>&nbsp;Cell_Ptr_Pool;</div>
+<div class="Normal" style="margin-bottom: 0.4em">or by using an aspect 
+specification thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Cell_Ptr&nbsp;<B>is&nbsp;access</B>&nbsp;Cell<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Storage_Pool&nbsp;=&gt;&nbsp;Cell_Ptr_Pool;</div>
+<div class="Normal">A pragma <SPAN Class="swiss">Default_Storage_Pool</SPAN> 
+can be overridden by another one so that for example all allocation in 
+a package (and its children) is from another pool.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The default pool can 
+be specified as <B>null</B> thus</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Default_Storage_Pool(<B>null</B>);</div>
+<div class="Normal">and this prevents any allocation from standard pools.</div>
+<div class="Normal">Allocation normally occurs from the default pool 
+unless a specific pool has been given for a type. But there are two exceptions, 
+one concerns access parameter allocation and the other concerns coextensions; 
+in these cases allocation uses a pool that depends upon the context.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Thus in the case of 
+the procedure <SPAN Class="swiss">Proc</SPAN> discussed above, a call 
+such as</div>
+<div class="SwissExamples">P.Proc(<B>new</B>&nbsp;Integer'(10));</div>
+<div class="Normal">might allocate the space in a secret pool created 
+on the fly and that secret pool might be placed on the stack.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Such allocation can 
+be prevented by two more specific restrictions. They are</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Restriction(No_Access_Parameter_Allocators);}</div>
+<div class="Normal" style="margin-bottom: 0.4em">and</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Restriction(No_Coextensions);</div>
+<div class="Normal">These two pragmas plus using the restriction <SPAN Class="swiss">Default_Storage_Pool</SPAN> 
+with <B>null</B> ensure that all allocation is from user-defined pools. 
+<A NAME="I1507"></A><A NAME="I1508"></A><A NAME="I1509"></A><A NAME="I1510"></A></div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-6-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-6-5.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

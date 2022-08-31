@@ -1,0 +1,230 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 9.5: Entries, Entry Calls, and Accept Statements</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="9.5">9.5</A>.  Entries, Entry Calls, and Accept Statements  </H2>
+<A HREF="lrm-09-04.html#9.4"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-09.html#9"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-09-06.html#9.6"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+Entry calls and accept statements are the primary means of  synchronization
+of  tasks, and of communicating values between tasks.  An entry declaration
+is similar to a subprogram declaration  and  is  only  allowed  in  a  task
+specification.   The  actions  to  be performed when an entry is called are
+specified by corresponding accept statements. 
+<pre>
+    entry_declaration ::=
+       entry identifier [(discrete_range)] [formal_part]; 
+
+    entry_call_statement ::= entry_name [actual_parameter_part]; 
+
+    accept_statement ::=
+       accept entry_simple_name [(entry_index)] [formal_part] [do
+          sequence_of_statements
+       end [entry_simple_name]]; 
+    entry_index ::= expression 
+</pre>
+<P>
+An entry declaration that includes a discrete range (see <a href="lrm-03-06.html#3.6.1">3.6.1</a>) declares  a
+family  of distinct entries having the same formal part (if any);  that is,
+one such entry for each value of the discrete range.  The term single entry
+is used in the definition of any rule that applies to any entry other  than
+one  of  a family.  The task designated by an object of a task type has (or
+owns) the entries declared in the specification of the task type.  
+<P>
+Within the body of a task, each of its single entries or entry families can
+be named by the corresponding simple name.  The  name  of  an  entry  of  a
+family takes the form of an indexed component, the family simple name being
+followed  by  the index in parentheses;  the type of this index must be the
+same as that of the  discrete  range  in  the  corresponding  entry  family
+declaration.   Outside  the  body of a task an entry name has the form of a
+selected component,  whose  prefix  denotes  the  task  object,  and  whose
+selector is the simple name of one of its single entries or entry families. 
+<P>
+A  single  entry overloads a subprogram, an enumeration literal, or another
+single entry if they have the same identifier.  Overloading is not  defined  
+for  entry  families.  A single entry or an entry of an entry family can be
+renamed as a procedure as explained in section <a href="lrm-08-05.html#8.5">8.5</a>. 
+<P>
+The parameter modes defined for parameters of the formal part of  an  entry
+declaration  are the same as for a subprogram declaration and have the same
+meaning (see <a href="lrm-06-02.html#6.2">6.2</a>).  The syntax of an entry call  statement  is  similar  to
+that   of   a  procedure  call  statement,  and  the  rules  for  parameter
+associations are the same as for subprogram calls (see <a href="lrm-06-04.html#6.4.1">6.4.1</a> and <a href="lrm-06-04.html#6.4.2">6.4.2</a>).                                                 
+<P>
+An accept statement specifies the actions to be performed at a  call  of  a
+named entry (it can be an entry of a family).  The formal part of an accept
+statement  must  conform to the formal part given in the declaration of the
+single entry or entry family named by the  accept  statement  (see  section
+<a href="lrm-06-03.html#6.3.1">6.3.1</a>  for  the conformance rules).  If a simple name appears at the end of
+an accept statement, it must repeat that given at the start. 
+<P>
+An accept statement for an entry of a given task is only allowed within the
+corresponding task body;  excluding within the body  of  any  program  unit
+that  is,  itself,  inner  to  the task body;  and excluding within another
+accept statement for either the same single entry or an entry of  the  same
+family.   (One  consequence  of this rule is that a task can execute accept
+statements only for its own entries.)  A task body can  contain  more  than
+one accept statement for the same entry. 
+<P>
+For the elaboration of an entry declaration, the discrete range, if any, is
+evaluated  and  the  formal  part,  if  any,  is  then  elaborated as for a
+subprogram declaration. 
+<P>
+Execution of an accept statement starts with the evaluation  of  the  entry
+index  (in  the  case of an entry of a family).  Execution of an entry call
+statement starts with the evaluation of the entry name;  this  is  followed
+by any evaluations required for actual parameters in the same manner as for
+a  subprogram call (see <a href="lrm-06-04.html#6.4">6.4</a>).  Further execution of an accept statement and
+of a corresponding entry call statement are synchronized. 
+<P>
+If a given entry is called by only one task, there are  two  possibilities: 
+<ul>
+<li>If  the  calling  task  issues  an  entry  call  statement  before   a
+corresponding  accept  statement  is  reached  by  the task owning the
+entry, the execution of the calling task is suspended.<br><br> 
+<li>If a task reaches an accept statement prior to any call of that entry,
+the execution of the task is suspended until such a call is  received. 
+</ul>
+<P>
+When an entry has been called and a corresponding accept statement has been
+reached,  the  sequence  of  statements, if any, of the accept statement is
+executed by the called task (while the  calling  task  remains  suspended).   
+This  interaction is called a rendezvous.  Thereafter, the calling task and
+the task owning the entry continue their execution in parallel. 
+<P>
+If several  tasks  call  the  same  entry  before  a  corresponding  accept
+statement  is reached, the calls are queued;  there is one queue associated
+with each entry.  Each execution of an accept statement  removes  one  call
+from the queue.  The calls are processed in the order of arrival. 
+<P>
+An  attempt  to  call  an  entry of a task that has completed its execution
+raises the exception TASKING_ERROR at the point of the call, in the calling
+task;  similarly, this exception is raised at the point of the call if  the
+called  task  completes  its  execution before accepting the call (see also
+<a href="lrm-09-10.html#9.10">9.10</a> for the case when the called task becomes  abnormal).   The  exception
+CONSTRAINT_ERROR  is  raised  if  the  index of an entry of a family is not
+within the specified discrete range.   
+<P>
+Examples of entry declarations: 
+<pre>
+    entry READ(V : out ITEM);
+    entry SEIZE;
+    entry REQUEST(LEVEL)(D : ITEM);  --  a family of entries 
+</pre>
+<P>
+Examples of entry calls: 
+<pre>
+    CONTROL.RELEASE;                      --  see <a href="lrm-09-02.html#9.2">9.2</a> and <a href="lrm-09-01.html#9.1">9.1</a>
+    PRODUCER_CONSUMER.WRITE(E);           --  see <a href="lrm-09-01.html#9.1">9.1</a>
+    POOL(5).READ(NEXT_CHAR);              --  see <a href="lrm-09-02.html#9.2">9.2</a> and <a href="lrm-09-01.html#9.1">9.1</a>
+    CONTROLLER.REQUEST(LOW)(SOME_ITEM);   --  see <a href="lrm-09-01.html#9.1">9.1</a>                                             
+</pre>
+<P>
+Examples of accept statements: 
+<pre>
+    accept SEIZE; 
+
+    accept READ(V : out ITEM) do
+       V := LOCAL_ITEM;
+    end READ; 
+
+    accept REQUEST(LOW)(D : ITEM) do
+       ...
+    end REQUEST; 
+</pre>
+<P>
+Notes:    
+<P>
+The formal part given in an accept statement is not elaborated; it is  only
+used to identify the corresponding entry. 
+<P>
+An  accept  statement   can  call  subprograms  that issue entry calls.  An
+accept statement need not  have  a  sequence  of  statements  even  if  the
+corresponding  entry  has  parameters.   Equally, it can have a sequence of
+statements even if the corresponding entry has no parameters.  The sequence
+of statements of an accept statement can include return statements.  A task
+can call its own entries but it will, of course,  deadlock.   The  language
+permits  conditional  and  timed  entry  calls  (see <a href="lrm-09-07.html#9.7.2">9.7.2</a> and <a href="lrm-09-07.html#9.7.3">9.7.3</a>).  The
+language rules ensure that a task can only be in one entry queue at a given
+time. 
+<P>
+If the bounds of  the  discrete  range  of  an  entry  family  are  integer
+literals,  the  index (in an entry name or accept statement) must be of the
+predefined type INTEGER (see <a href="lrm-03-06.html#3.6.1">3.6.1</a>). 
+<P>
+<b>References:</b>  <A HREF="lrm-09-10.html#9.10">abnormal task</A>,
+<A HREF="lrm-06-04.html#6.4">actual parameter part</A>,
+<A HREF="lrm-09-04.html#9.4">completed  task</A>,
+<A HREF="lrm-09-07.html#9.7.2">conditional    entry   call</A>,
+<A HREF="lrm-06-03.html#6.3.1">conformance   rules</A>,
+<A HREF="lrm-11-01.html#11.1">constraint_error exception</A>,
+<A HREF="lrm-09-01.html#9.1">designate</A>,
+<A HREF="lrm-03-06.html#3.6.1">discrete  range</A>,
+<A HREF="lrm-03-01.html#3.1">elaboration</A>,
+ and <A HREF="lrm-03-09.html#3.9">3.9</A>,
+<A HREF="lrm-03-05.html#3.5.1">enumeration literal</A>,
+<A HREF="lrm-04-05.html#4.5">evaluation</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="lrm-06-01.html#6.1">formal part</A>,
+<A HREF="lrm-02-03.html#2.3">identifier</A>,
+<A HREF="lrm-04-01.html#4.1.1">indexed component</A>,
+<A HREF="lrm-03-05.html#3.5.4">integer type</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-03-02.html#3.2">object</A>,
+<A HREF="lrm-06-06.html#6.6">overloading</A>,
+ and <A HREF="lrm-08-07.html#8.7">8.7</A>,
+<A HREF="lrm-09.html#9">parallel  execution</A>,
+<A HREF="lrm-04-01.html#4.1">prefix</A>,
+<A HREF="lrm-06.html#6">procedure</A>,
+<A HREF="lrm-06-04.html#6.4">procedure  call</A>,
+<A HREF="lrm-08-05.html#8.5">renaming declaration</A>,
+<A HREF="lrm-05-08.html#5.8">return statement</A>,
+<A HREF="lrm-08-02.html#8.2">scope</A>,
+<A HREF="lrm-04-01.html#4.1.3">selected component</A>,
+<A HREF="lrm-04-01.html#4.1.3">selector</A>,
+<A HREF="lrm-05-01.html#5.1">sequence  of  statements</A>,
+<A HREF="lrm-04-04.html#4.4">simple  expression</A>,
+<A HREF="lrm-04-01.html#4.1">simple  name</A>,
+<A HREF="lrm-06.html#6">subprogram</A>,
+<A HREF="lrm-06-03.html#6.3">subprogram body</A>,
+<A HREF="lrm-06-01.html#6.1">subprogram declaration</A>,
+<A HREF="lrm-09.html#9">task</A>,
+<A HREF="lrm-09-01.html#9.1">task body</A>,
+<A HREF="lrm-09-01.html#9.1">task specification</A>,
+<A HREF="lrm-11-01.html#11.1">tasking_error exception</A>,
+<A HREF="lrm-09-07.html#9.7.3">timed entry call</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-13-02.html#13.2.4">13.2.4&nbsp;Entries and the Accept Statement</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-13-02.html#13.2.11">13.2.11&nbsp;Families, Entries and Scheduling</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-13-03.html#13.3.2">13.3.2&nbsp;The Rendezvous Concept</a>
+<p>
+
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-03-02.html#3.2.4">3.2.4&nbsp;Program Unit Names</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-04-03.html#4.3.1">4.3.1&nbsp;Using Exceptions to Help Define an Abstraction</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-01.html#5.1.4">5.1.4&nbsp;Naming End Statements</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-02.html#5.2.1">5.2.1&nbsp;Formal Parameters</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-02.html#5.2.4">5.2.4&nbsp;Mode Indication</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-06.html#5.6.1">5.6.1&nbsp;Nesting</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-09.html#5.9.4">5.9.4&nbsp;Multiple Address Clauses</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-01.html#6.1.4">6.1.4&nbsp;Priorities</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-02.html#6.2">6.2&nbsp;Communication</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-03.html#6.3.1">6.3.1&nbsp;Avoiding Termination</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-03.html#6.3.2">6.3.2&nbsp;Normal Termination</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-04.html#7.4.5">7.4.5&nbsp;Task Scheduling Algorithm</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-04.html#7.4.7">7.4.7&nbsp;Shared Variables and Pragma Shared</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

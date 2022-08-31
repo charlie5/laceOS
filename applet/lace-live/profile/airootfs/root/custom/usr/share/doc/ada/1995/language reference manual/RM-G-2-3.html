@@ -1,0 +1,222 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Model of Fixed Point Arithmetic</TITLE>
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    DIV.paranum {position: absolute; font-family: Arial, Helvetica, sans-serif; left: 0.5em; top: auto}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; margin-bottom: 0.6em}
+    DIV.Wide {font-family: "Times New Roman", Times, serif; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.WideAnnotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Index {font-family: "Times New Roman", Times, serif}
+    DIV.SyntaxSummary {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; margin-left: 2.0em}
+    DIV.SyntaxIndented {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Indented {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-bottom: 0.6em}
+    DIV.CodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.SmallIndented {font-family: "Times New Roman", Times, serif; margin-left:  10.0em; margin-bottom: 0.6em}
+    DIV.SmallCodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SmallExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left: 7.5em; margin-bottom: 0.6em}
+    DIV.IndentedExamples {font-family: "Courier New", monospace; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.SmallIndentedExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left:  15.0em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.IndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SyntaxIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.Hanging {font-family: "Times New Roman", Times, serif; margin-top: 0em; margin-bottom: 0.6em}
+    DD.Hanging {margin-left: 6.0em}
+    DL.IndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.IndentedHanging {margin-left: 2.0em}
+    DL.HangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.HangingInBulleted {margin-left: 4.0em}
+    DL.SmallHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallHanging {margin-left: 7.5em}
+    DL.SmallIndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallIndentedHanging {margin-left: 2.0em}
+    DL.SmallHangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallHangingInBulleted {margin-left: 5.0em}
+    DL.Enumerated {font-family: "Times New Roman", Times, serif; margin-right: 0.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.Enumerated {margin-left: 2.0em}
+    DL.SmallEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallEnumerated {margin-left: 2.5em}
+    DL.NestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.SmallNestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<P><A HREF="RM-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-G-2-2.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-G-2-4.html">Next</A></P>
+<HR>
+<H1> G.2.3 Model of Fixed Point Arithmetic</H1>
+<DIV Class="Paranum"><FONT SIZE=-2>1</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;In the strict mode, the predefined arithmetic
+operations of a fixed point type shall satisfy the accuracy requirements
+specified here and shall avoid or signal overflow in the situations described.
+</DIV>
+
+<H4 ALIGN=CENTER>Implementation Requirements</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>2</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The accuracy requirements for the predefined fixed
+point arithmetic operations and conversions, and the results of relations
+on fixed point operands, are given below. </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>3</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The operands of the fixed point adding operators,
+absolute value, and comparisons have the same type. These operations
+are required to yield exact results, unless they overflow.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>4</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;Multiplications and divisions are allowed between
+operands of any two fixed point types; the result has to be (implicitly
+or explicitly) converted to some other numeric type. For purposes of
+defining the accuracy rules, the multiplication or division and the conversion
+are treated as a single operation whose accuracy depends on three types
+(those of the operands and the result). For decimal fixed point types,
+the attribute T'Round may be used to imply explicit conversion with rounding
+(see <A HREF="RM-3-5-10.html">3.5.10</A>).</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>5</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;When the result type is a floating point type,
+the accuracy is as given in <A HREF="RM-G-2-1.html">G.2.1</A>. <A NAME="I7019"></A>For
+some combinations of the operand and result types in the remaining cases,
+the result is required to belong to a small set of values called the
+<I>perfect result set</I>; <A NAME="I7020"></A>for other combinations,
+it is required merely to belong to a generally larger and implementation-defined
+set of values called the <I>close result set</I>. When the result type
+is a decimal fixed point type, the perfect result set contains a single
+value; thus, operations on decimal types are always fully specified.
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>6</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;When one operand of a fixed-fixed multiplication
+or division is of type <I>universal_real</I>, that operand is not implicitly
+converted in the usual sense, since the context does not determine a
+unique target type, but the accuracy of the result of the multiplication
+or division (i.e., whether the result has to belong to the perfect result
+set or merely the close result set) depends on the value of the operand
+of type <I>universal_real</I> and on the types of the other operand and
+of the result. </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>7</FONT></DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;For a fixed point
+multiplication or division whose (exact) mathematical result is <I>v</I>,
+and for the conversion of a value <I>v</I> to a fixed point type, the
+perfect result set and close result set are defined as follows: </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>8</FONT></DIV>
+<UL Class="Bulleted" Style="margin-bottom: 0.3em"><LI TYPE=DISC>If the
+result type is an ordinary fixed point type with a <I>small</I> of <I>s</I>,
+</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>9</FONT></DIV>
+<UL Class="NestedBulleted"><LI TYPE=DISC>if <I>v</I> is an integer multiple
+of <I>s</I>, then the perfect result set contains only the value <I>v</I>;</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>10</FONT></DIV>
+<UL Class="NestedBulleted"><LI TYPE=DISC>otherwise, it contains the integer
+multiple of <I>s</I> just below <I>v</I> and the integer multiple of
+<I>s</I> just above <I>v</I>. </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>11</FONT></DIV>
+<UL Class="Bulleted">The close result set is an implementation-defined
+set of consecutive integer multiples of <I>s</I> containing the perfect
+result set as a subset.</UL>
+<DIV Class="Paranum"><FONT SIZE=-2>12</FONT></DIV>
+<UL Class="Bulleted" Style="margin-bottom: 0.3em"><LI TYPE=DISC>If the
+result type is a decimal type with a <I>small</I> of <I>s</I>, </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>13</FONT></DIV>
+<UL Class="NestedBulleted"><LI TYPE=DISC>if <I>v</I> is an integer multiple
+of <I>s</I>, then the perfect result set contains only the value <I>v</I>;</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>14</FONT></DIV>
+<UL Class="NestedBulleted"><LI TYPE=DISC>otherwise, if truncation applies
+then it contains only the integer multiple of <I>s</I> in the direction
+toward zero, whereas if rounding applies then it contains only the nearest
+integer multiple of <I>s</I> (with ties broken by rounding away from
+zero). </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>15</FONT></DIV>
+<UL Class="Bulleted">The close result set is an implementation-defined
+set of consecutive integer multiples of <I>s</I> containing the perfect
+result set as a subset. </UL>
+<DIV Class="Paranum"><FONT SIZE=-2>16</FONT></DIV>
+<UL Class="Bulleted" Style="margin-bottom: 0.3em"><LI TYPE=DISC>If the
+result type is an integer type, </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>17</FONT></DIV>
+<UL Class="NestedBulleted"><LI TYPE=DISC>if <I>v</I> is an integer, then
+the perfect result set contains only the value <I>v</I>;</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>18</FONT></DIV>
+<UL Class="NestedBulleted"><LI TYPE=DISC>otherwise, it contains the integer
+nearest to the value <I>v</I> (if <I>v</I> lies equally distant from
+two consecutive integers, the perfect result set contains the one that
+is further from zero). </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>19</FONT></DIV>
+<UL Class="Bulleted">The close result set is an implementation-defined
+set of consecutive integers containing the perfect result set as a subset.
+</UL>
+<DIV Class="Paranum"><FONT SIZE=-2>20</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;The result of a fixed point multiplication or
+division shall belong either to the perfect result set or to the close
+result set, as described below, if overflow does not occur. In the following
+cases, if the result type is a fixed point type, let <I>s</I> be its
+<I>small</I>; otherwise, i.e. when the result type is an integer type,
+let <I>s</I> be 1.0. </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>21</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>For a multiplication or division neither
+of whose operands is of type <I>universal_real</I>, let <I>l</I> and
+<I>r</I> be the <I>smalls</I> of the left and right operands. For a multiplication,
+if (<I>l</I> &middot; <I>r</I>) / <I>s</I> is an integer or the reciprocal
+of an integer (the <I>smalls</I> are said to be ``compatible'' in this
+case), the result shall belong to the perfect result set; otherwise,
+it belongs to the close result set. For a division, if <I>l</I> / (<I>r</I>
+&middot; <I>s</I>) is an integer or the reciprocal of an integer (i.e.,
+the <I>smalls</I> are compatible), the result shall belong to the perfect
+result set; otherwise, it belongs to the close result set. </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>22</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>For a multiplication or division having
+one <I>universal_real</I> operand with a value of <I>v</I>, note that
+it is always possible to factor <I>v</I> as an integer multiple of a
+``compatible'' <I>small</I>, but the integer multiple may be ``too big.''
+If there exists a factorization in which that multiple is less than some
+implementation-defined limit, the result shall belong to the perfect
+result set; otherwise, it belongs to the close result set. </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>23</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;A multiplication P * Q of an operand of a fixed
+point type F by an operand of an integer type I, or vice-versa, and a
+division P / Q of an operand of a fixed point type F by an operand of
+an integer type I, are also allowed. In these cases, the result has a
+type of F; explicit conversion of the result is never required. The accuracy
+required in these cases is the same as that required for a multiplication
+F(P * Q) or a division F(P / Q) obtained by interpreting the operand
+of the integer type to have a fixed point type with a <I>small</I> of
+1.0.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>24</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;The accuracy of the result of a conversion from
+an integer or fixed point type to a fixed point type, or from a fixed
+point type to an integer type, is the same as that of a fixed point multiplication
+of the source value by a fixed point operand having a <I>small</I> of
+1.0 and a value of 1.0, as given by the foregoing rules. The result of
+a conversion from a floating point type to a fixed point type shall belong
+to the close result set. The result of a conversion of a <I>universal_real</I>
+operand to a fixed point type shall belong to the perfect result set.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>25</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;The possibility of overflow in the result of
+a predefined arithmetic operation or conversion yielding a result of
+a fixed point type T is analogous to that for floating point types, except
+for being related to the base range instead of the safe range. <A NAME="I7021"></A><A NAME="I7022"></A>If
+all of the permitted results belong to the base range of T, then the
+implementation shall deliver one of the permitted results; otherwise,
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>26</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I7023"></A>if T'Machine_Overflows
+is True, the implementation shall either deliver one of the permitted
+results or raise Constraint_Error;</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>27</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>if T'Machine_Overflows is False, the
+result is implementation defined. </LI></UL>
+
+<HR>
+<P><A HREF="RM-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-G-2-2.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-G-2-4.html">Next</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-TTL.html">Legal</A></P>
+</BODY>
+</HTML>

@@ -1,0 +1,2318 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Two - Chapter 3
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-2.html> Previous </a> |
+<a href=rat95-p2-4.html> Next </a>
+<hr>
+
+<h1>
+3   Types and Expressions
+</h1>
+
+<p>
+This chapter covers a number of changes.  Some are essentially functional
+changes in their own right such as the addition of modular types, but
+many of the changes are more to provide a better framework for the
+establishment of the object oriented programming facilities which are
+described in the next chapter.  The main changes are
+</p>
+
+<ul>
+<li>
+    The foundation concepts and terminology are improved.  The idea of a
+     view is formalized.  The concepts of a type and class are clarified.
+     The concept of an object is generalized.
+<li>
+    The rules for derived types and their operations are changed to
+     accommodate type extension.
+<li>
+    Character types are changed to conform to the requirements for 8-bit
+     and wider character sets.
+<li>
+    The numeric model is revised to provide a closer mapping to actual
+     machine architectures; the types root_integer and root_real are
+     added to aid the description.
+<li>
+    Modular (unsigned integer) and decimal fixed point types are added.
+<li>
+    Discriminants are generalized and the concepts of definite and
+     indefinite subtypes introduced.  This is particularly relevant to
+     generic parameter matching.
+<li>
+    The rules for implicit array subtype conversion are liberalized to
+     allow sliding in all contexts except qualification (and, of course,
+     membership tests).
+<li>
+    Array aggregates with others are allowed in more contexts.
+<li>
+    Access types are greatly generalized to provide general access types
+     and access to subprogram types.
+<li>
+    The rules for type conversion are extended to cover the new features
+     in the language.
+<li>
+    The rules for staticness are more liberal thereby allowing more
+     expressions to be considered static.
+<li>
+    There are a number of minor improvements such as the removal of the
+     irritating rule regarding the order of declarations.
+</ul>
+<p>
+It be should be noted that the enhanced forms of access types constitute
+a major extension to the language in their own right.  They provide the
+more flexible interfacing which was highlighted as one of the four main
+areas of User Need in I.3.
+</p>
+<p>
+Type extension, class-wide types and polymorphism are discussed in the
+next chapter.
+</p>
+
+<h2>
+<a name=1>
+3.1  Types, Classes, Objects and Views
+</a>
+</h2>
+
+<p>
+The term view is widely used in the description to make it easier to
+separate properties associated with an entity from properties associated
+with a particular reference to an entity.  For example, a type may have
+two views, one in places where its full declaration is visible, and one
+where the type is private.  Another example occurs in renaming where two
+subprogram names may denote the same subprogram, but with different
+formal parameter names associated with these two different views.
+</p>
+<p>
+   We have generalized the term class to include user-defined classes
+defined by a type and all its direct and indirect derivatives; we call
+these derivation classes.  The concept of language-defined type classes
+(such as the discrete class or the real class) allowed the description of
+Ada 83 to be more economical, and easier to understand.  This same
+economy of definition and understanding is valuable for a user-defined
+type hierarchy forming a class.
+</p>
+<p>
+   There is a strong distinction between specific types and class-wide
+types.  Specific types are those declared by type declarations, and
+correspond to Ada 83 types.  Each specific tagged type T has an
+associated class-wide type, T'Class.  Class-wide types enable class-wide
+(polymorphic) programming, because a subprogram with a formal parameter
+of a class-wide type like T'Class accepts actual parameters for any type
+covered by the class-wide type (that is, T or any of its derivatives).
+In the implementation of such a subprogram, the operations of the root
+type (T in this case) are available.  It is also possible to write
+dispatching operations, which automatically dispatch to the appropriate
+implementation based on the type tag of the actual parameter.  A class-
+wide operation of a tagged class-wide type usually calls one or more
+dispatching operations of the specific type.
+</p>
+<p>
+  The universal types which existed in Ada 83 remain and act much as
+class-wide types for the numeric classes.  However, there are important
+differences which are discussed in 3.3.
+</p>
+<p>
+   To simplify and unify the description of the Ada 95 type model, we
+have adopted the terms elementary and composite for describing the two
+major categories of Ada types.  Elementary types have no internal
+structure, and are used to represent simple values.  Composite types are
+made up of components and other internal state, and are used to represent
+more complex values and objects.  There are a number of existing Ada 83
+rules, and new Ada 95 rules, that are made simpler by expressing them
+only in terms of elementary and composite types, rather than by
+enumerating more specific type classes.
+</p>
+<p>
+   There was much confusion in Ada 83 regarding the distinction between
+types and subtypes.  In Ada 95, only subtypes have names.  A type
+declaration such as
+<pre>
+   type A is array (Integer range <>) of Float;
+</pre>
+introduces a first subtype named A.  The underlying type has no name.  In
+this case the first subtype is unconstrained.  (We now say first subtype
+rather than first named subtype.)  On the other hand a declaration such
+as
+<pre>
+   type B is array (Integer range 1 .. 10) of Float;
+</pre>
+introduces a first subtype named B which is constrained.  Another point
+is that in Ada 83 a type was also a subtype; this is not the case in Ada
+95.
+</p>
+<p>
+   This change of nomenclature has no semantic effect; it is designed to
+simplify later description.  In particular, the term type mark is now
+replaced by subtype mark since it is always the name of a subtype, and
+one need never say "type or subtype".
+</p>
+<p>
+   The idea of an object is generalized.  The result of a function and of
+evaluating an aggregate are now considered to be (anonymous) constant
+objects.  One consequence of this is that the result of a function call
+can be renamed; this is particularly useful for limited types, see 7.3.
+Some things are not objects, for example named numbers are not objects.
+</p>
+
+<h3>
+<a name=1-1>
+3.1.1  Classification of Operations
+</a>
+</h3>
+
+<p>
+We have introduced the term primitive operations to encompass that set of
+operations that are "tightly bound" to a type, being either explicitly or
+implicitly declared at the point of the type declaration, and inherited
+by derivatives of the type.  These operations are the closed set that
+effectively define the semantics of the type.  The more general term
+"operation" of a type is no longer formally used.
+</p>
+<p>
+   Ada 83 used "implicit conversion" to explain how integer literals were
+usable with any integer type, and how real literals were usable with any
+real type.  For Ada 95, we have adopted a similar mechanism as the basis
+for class-wide programming.  However, rather than using the concept of
+implicit conversion, the static semantic rules are defined in terms of
+type resolution between actual parameters and formal parameters.  (The
+implicit conversions still happen but are not part of overload
+resolution.)
+</p>
+<p>
+   As in Ada 83, if the actual parameter and the formal parameter are of
+the same type, then the actual matches the formal.  However, the type
+resolution rules also allow certain other combinations.  In particular,
+if a formal parameter is of a class-wide type, then the actual parameter
+may be of any type in the class.  This allows the definition of class-
+wide operations.
+</p>
+<p>
+   A similar approach is taken with universal types.  A formal parameter
+of a universal type is matched by any type of the corresponding numeric
+class.  Thus the Val attribute (which accepts an operand of type
+universal_integer) can be matched by any integer type.  There is a change
+to the rules for fixed point multiplication and division which now take
+universal_fixed operands as explained in 3.3.1 and can thus be matched by
+any fixed point type.
+</p>
+<p>
+   In addition to class-wide matching, the type resolution rules cover
+the use of access parameters (not to be confused with parameters of an
+access type, see 3.7.1).  When a formal is an access parameter, only the
+designated type of the actual parameter is considered for matching
+purposes. The actual matches the formal if their designated types are the
+same, or, in the case of tagged types, one is T while the other is
+T'Class.  In addition, for tagged types, changes of representation are
+not permitted for derived types, so an actual also matches a formal
+access parameter if the designated type of the actual is covered by the
+designated type of the formal.
+</p>
+<p>
+   Access parameters allow operations to be defined that take access
+values rather than designated objects, while still keeping the operation
+a primitive operation of the designated type.  With tagged types, this
+allows "dispatching on access types" without requiring the access value
+to be dereferenced first.
+</p>
+<p>
+   Another important change is that the attribute S'Base may be used as a
+subtype mark generally, rather than strictly as a prefix for other
+attributes.  S'Base denotes an unconstrained subtype of the type of S and
+is only allowed for elementary types.  It is particularly useful within a
+generic package that might be instantiated with a constrained numeric
+subtype, since the temporary variables used to perform a calculation
+might need to be unconstrained, even if the parameters and final result
+of an operation must satisfy the constraints of the actual constrained
+subtype.
+</p>
+<p>
+   For example consider the implementation of
+Generic_Elementary_Functions.  We need to allow the user to instantiate
+the package with a constrained subtype corresponding to Float_Type, but
+do not wish the calculations to be constrained.  Accordingly the
+parameters and results of the various functions are of the subtype
+Float_Type'Base.
+</p>
+<p>
+   One potential problem with allowing the declaration of objects of
+subtype S'Base is that the first subtype (for example S) may have a size
+clause that takes advantage of the constraints on S.  Objects of subtype
+S'Base cannot generally be limited by the size specified for S.  There
+are several reasons why this problem is not serious in practice:
+</p>
+<ul>
+<li>
+     Many compilers already use different sizes for different subtypes of
+     the same type;
+<li>
+    The construct for B in S'Base'First .. S'Base'Last loop ...  is
+     already legal in Ada-83 (presuming S is discrete), and is an
+     existing way to effectively create an object (B) of subtype S'Base;
+</ul>
+
+<h3>
+<a name=1-2>
+3.1.2  Derived Types
+</a>
+</h3>
+
+<p>
+For Ada 95, we have chosen to build upon the Ada 83 derived type
+mechanism to provide for type extension (single inheritance) and run-time
+polymorphism, two fundamental features of object-oriented programming.
+(Derived types were the existing type inheritance mechanism in Ada 83.)
+If a new inheritance mechanism had been introduced, perhaps based on
+"package types" or an explicit "class" construct, inheritance based on
+derived types would still remain as an almost redundant and complicating
+alternative inheritance mechanism.  Choosing to enhance the basic derived
+type mechanism provides a single robust inheritance mechanism rather than
+two potentially conflicting and weaker ones.
+</p>
+<p>
+   Rather than introducing an explicit class construct, we have instead
+chosen to support user-defined classes via a hierarchy of derived types.
+The (derivation) class rooted at a type T consists of T and all of its
+direct and indirect derivatives.  The existing Ada 83 rules for derived
+types ensure that all of the types in the class rooted at T have at least
+the same set of primitive operations as T, because a derivative may
+override and add operations, but it cannot eliminate an operation
+inherited from the parent type.
+</p>
+<p>
+   Having a set of operations that are well defined for all types in a
+class rooted at some type T makes it meaningful to construct class-wide
+operations that take advantage of this commonality.  Much of the power
+and economy of object-oriented programming comes from the ability to
+write such class-wide operations easily.
+</p>
+<p>
+   If an operation is explicitly defined on a class-wide type, then it is
+a class-wide operation via the type resolution rules.
+</p>
+<p>
+   The existing universal types behave very much as class-wide numeric
+types.  In fact we introduce types root_integer and root_real as the
+numeric types from which all other numeric types are descended and then
+the universal types can be considered to be the class-wide types
+corresponding to these root types.
+</p>
+<p>
+   Ada 83 already had existing operations such as the Val attribute that
+took an operand of any integer type; in Ada 95 this is described by
+saying that Val takes an operand of the universal_integer type.  These
+are therefore like class-wide operations.
+</p>
+
+<h2>
+<a name=2>
+3.2  Character Types
+</a>
+</h2>
+
+<p>
+We mentioned in Chapter 2 that the text of an Ada 95 program can be
+written using more liberal character sets.  In this section we consider
+the support for character types in the executing program.
+</p>
+<p>
+   As part of providing better support for international character sets,
+the fundamental character set of Ada 95 is changed from the seven-bit ISO
+646 standard, to the eight-bit ISO 8859 standard (which includes Latin-
+1).  This means that the type Character in package Standard is now an
+enumeration type with 256 positions, rather than just 128.
+</p>
+<p>
+   This change is not upward compatible for programs that have arrays
+indexed by Character, or case statements over Character.  However, the
+benefits of accommodating international character sets were felt to
+outweigh the costs of this upward incompatibility.  See X.2.
+</p>
+<p>
+   To facilitate direct use of character literals and string literals
+from all languages in the international community, a type Wide_Character
+is declared in package Standard.  The type Wide_Character has 2**16
+positions, and starts with the 256 enumeration literals of the type
+Character.
+</p>
+<p>
+   The predefined library package Ada.Characters has a child package
+Characters.Handling containing useful classification and conversion
+functions (such as Is_Letter and To_Lower) and a child package
+Characters.Latin_1 containing constants for the Latin-1 symbol set.
+</p>
+<p>
+   There is also a string type Wide_String indexed by subtype Positive,
+with component subtype Wide_Character.
+</p>
+
+<h2>
+<a name=3>
+3.3  Numeric Types
+</a>
+</h2>
+
+<p>
+The model of numeric types is somewhat different in Ada 95.  The overall
+goal of the change is to give the implementation more freedom for
+optimizations such as keeping intermediate results and local variables in
+registers.  Most of the change is fine detail that need not concern the
+normal user and is addressed in the Numerics annex.  However, one area
+that is important in the core language is the somewhat different
+treatment of universal types and the introduction of the anonymous types
+root_integer and root_real.
+</p>
+<p>
+   The essence of the root types is that they can be considered as the
+types from which all other integer and real types are derived.  The base
+range of root_integer is thus System.Min_Int .. System.Max_Int.  We will
+first discuss the integer types and then indicate where the floating
+types differ.
+</p>
+<p>
+   We have introduced the term base range for the implemented range of a
+type whereas range refers to the requested range of a particular subtype.
+Range checks only apply to constrained subtypes; overflow checks always
+apply.  An important consequence is that we either get the mathematically
+correct answer or Constraint_Error is raised.
+</p>
+<p>
+   Thus if we write
+<pre>
+   type My_Integer is range -20_000 .. +20_000;
+   MI: My_Integer;
+   MIB: My_Integer'Base;
+</pre>
+then My_Integer'Range will be -20_000 .. +20_000 and all assignments to
+variables of the subtype My_Integer such as MI will be checked to ensure
+that the range is not violated; Constraint_Error is raised if the check
+fails.
+</p>
+<p>
+   On the other hand, the base range of My_Integer is the range of
+My_Integer'Base and this will be that of the implemented range which
+might reflect that of a 16-bit word and thus be -2**15 .. +2**15-1.  No
+range checks apply to assignments to the variable MIB.  However, as an
+optimization, it might be the case that a particular variable of the
+subtype My_Integer'Base is held in a register and this could have a wider
+range than the base range of the subtype.  The base range is thus the
+guaranteed minimum implemented range.  Nevertheless overflow checks will
+always apply and MIB will never have a mathematically incorrect value
+although the value could be outside the base range.  For example,
+consider
+<pre>
+   X: My_Integer := 18_000;
+   Y: My_Integer := 15_000;
+   ...
+   MIB := X + Y;
+</pre>
+where we will assume that the computation is not all optimized away by a
+smart compiler!
+</p>
+<p>
+   (Note that no explicit conversion is needed because My_Integer and
+My_Integer'Base are both subtypes of the same (unnamed) type.  Remember
+that all types are unnamed.)
+</p>
+<p>
+   If MIB is implemented with its base range then an overflow will occur
+and result in Constraint_Error because the result is outside the base
+range.  If, however, MIB is held in a 32-bit register, then no overflow
+will occur and MIB will have the mathematically correct result.  On the
+other hand
+<pre>
+   MI := X + Y;
+</pre>
+will always result in Constraint_Error being raised because of the range
+check upon the assignment.
+</p>
+<p>
+   In the case of the predefined types such as Integer the same rules
+apply; the subtype Integer is constrained whereas Integer'Base is not.
+The base range and range happen to be the same.  So the declarations
+<pre>
+   I: Integer;
+   IB: Integer'Base;
+</pre>
+have a different effect.  Checks will apply to assignments to I but not
+to assignments to IB (but remember that an implementation is always free
+to add checks if convenient; they may be automatic).
+</p>
+<p>
+   Another possibility for optimization is that an intermediate
+expression might be computed with a larger range.  This is why the
+predefined operators such as "+" on the predefined types such as Integer
+have parameters and result of Integer'Base rather than Integer.  There
+are no range checks on these operations (just overflow checks).  Now
+consider
+<pre>
+   MI := X * Y / 30_000;
+</pre>
+in which we will assume that the computation is done with the operations
+of type Integer which has a 16-bit base range on this implementation.  If
+the operations are done from left to right and the operations are
+performed in 16-bit registers then overflow will occur and
+Constraint_Error will be raised.  On the other hand, the operations might
+be performed in 32-bit registers in which case overflow will not occur
+and the correct result will be assigned to MI after successfully
+performing a range check on the result.
+</p>
+<p>
+   The universal types are types which can be matched by any specific
+numeric type of their class.  We see therefore that the universal types
+are rather like class-wide types of the respective classes.  So
+universal_integer is thus effectively root_integer'Class.
+</p>
+<p>
+   The integer literals are, of course, of the type universal_integer and
+so, as in Ada 83, can be implicitly converted to any integer type
+including the anonymous root_integer.  An important distinction between
+universal and tagged class-wide types is that the latter carry a tag and
+explicit conversion to a specific type is required which is checked at
+runtime to ensure that the tag is appropriate, see 3.8.
+</p>
+<p>
+   One consequence of treating universal_integer as matching any integer
+type is that the rules for the initial expression in a number declaration
+are more liberal than they were in Ada 83.  The initial expression can be
+of any integer type whereas in Ada 83 it had to be universal; it still of
+course has to be static.
+</p>
+<p>
+   Similar remarks apply to real types.  In the case of floating point
+types a range check is only applied if the definition contains a range
+(this is the same rule as for integer type definitions but they always
+have range anyway).  So given
+<pre>
+   type My_Float is digits 7;
+   type Your_Float is digits 7 range -1.0E-20 .. +1.0E+20;
+</pre>
+then My_Float is an unconstrained subtype whereas Your_Float is
+constrained.  Range checks will apply on assignments to Your_Float but
+not to My_Float.  The predefined types such as Float are unconstrained;
+it is considered that their notional definition does not include a range.
+</p>
+<p>
+   Overflow checks apply to floating point computations only if the
+attribute Machine_Overflows is true as in Ada 83.
+</p>
+<p>
+   By introducing root numeric types, the special Ada 83 rules regarding
+convertible universal operands are eliminated (only certain simple
+expressions could be automatically converted in Ada 83).  Instead, the
+distinction between convertible and non-convertible universal operands
+corresponds directly to the distinction between the universal and
+specific root numeric types.  The operators of the root numeric types
+return specific root numeric types, and hence their result is not
+universal (not "implicitly convertible" using Ada 83 terminology).  The
+type resolution rules ensure that these operators accept operands of the
+universal types, so they may be used on literals and named numbers.
+</p>
+<p>
+   There is an important change to the visibility rules concerning a
+preference for the root types in the case of an ambiguity.  This is
+discussed in 8.4.
+</p>
+<p>
+   In order to promote precise use of specific hardware the library
+package Interfaces defines signed integer types corresponding to the
+hardware supported types with names such as Integer_32 and Integer_16
+plus corresponding modular types (see 3.3.2).  This package also
+predefines similar floating types corresponding to the hardware although
+no names are prescribed.
+</p>
+<p>
+   The description of the real numbers is greatly simplified.  The model
+and safe numbers of Ada 83 have been abandoned because they were not well
+understood, did not truly provide the portability they sought and
+obscured the real machine from the specialist.  Accordingly the
+definition of floating point is now in terms of model numbers which
+roughly correspond to the old safe numbers and are close to the
+represented numbers.  In the case of fixed point the definition is
+entirely in terms of small and the notion of model numbers no longer
+applies.
+</p>
+<p>
+   To avoid confusion and to improve the correspondence between the real
+type attributes and the machine attributes, the attributes are completely
+redefined so that they more closely correspond to the capabilities of the
+machine.
+</p>
+<p>
+   The description of model numbers is moved to the Numerics annex
+because of its specialist nature.  For more details consult Part Three of
+this rationale.
+</p>
+<p>
+   We considered removing floating point and fixed point accuracy
+constraints from the syntax so that delta and digits would only be
+specified as part of a real type definition.  Indeed, AI-571 concluded
+that reduced accuracy real subtypes should not be represented with
+reduced accuracy, making their usefulness in the language questionable.
+However, they are retained (although considered obsolete) for
+compatibility because of the different format obtained with Text_IO.
+</p>
+
+<h3>
+<a name=3-1>
+3.3.1  Operations
+</a>
+</h3>
+
+<p>
+The mixed multiplying operators of the Ada 83 universal numeric types are
+redefined in Ada 95 in terms of the root numeric types.
+</p>
+<p>
+   There were some essentially unnecessary restrictions on the use of
+literals in fixed point multiplication and division in Ada 83.  These
+operations now take universal_fixed as their operands and return
+universal_fixed as the result.  However the result must be in a context
+which provides a specific expected type.  As a consequence literals may
+now be used more freely in fixed point operations and a multiplication or
+division need not be followed by conversion to a specific type if the
+context supplies such a type.
+</p>
+<p>
+   So given two fixed point types Fixed1 and Fixed2, we can now write
+sequences such as
+<preee>
+   X, Y: Fixed1;
+   Z: Fixed2;
+   ...
+   X := 2.0 * X;
+   X := Y * Z;
+</pre>
+which were forbidden in Ada 83.  Note that multiple operations as in
+<pre>
+   X := X * Y / Z;
+</pre>
+remain forbidden since the context does not provide a type (and therefore
+an accuracy and range) for the intermediate result.
+</p>
+
+<h3>
+<a name=3-2>
+3.3.2  Modular Types
+</a>
+</h3>
+
+<p>
+In Ada 95 the integer types are subdivided into signed integer types and
+modular types.  The signed integer types are those with which we are
+already familiar from Ada 83 such as Integer and so on.  The modular
+types are new to Ada 95.
+</p>
+<p>
+   The modular types are unsigned integer types which exhibit cyclic
+arithmetic.  (They thus correspond to the unsigned types of some other
+languages such as C.)  A strong need has been felt for some form of
+unsigned integer types in Ada and most compiler vendors have provided
+their own distinct implementations.  This of course has caused an
+unnecessary lack of portability which the introduction of modular types
+in Ada 95 will overcome.
+</p>
+<p>
+   As an example consider unsigned 8-bit arithmetic (that is byte
+arithmetic).  We can declare
+<pre>
+   type Unsigned_Byte is mod 256;  -- or mod 2**8;
+</pre>
+and then the range of values supported by Unsigned_Byte is 0 .. 255.  The
+normal arithmetic operations apply but all arithmetic is performed modulo
+256 and overflow cannot occur.
+</p>
+<p>
+   The modulus of a modular type need not be a power of two although it
+often will be.  It might, however, be convenient to use some obscure
+prime number as the modulus perhaps in the implementation of hash tables.
+</p>
+<p>
+   The logical operations and, or, xor and not are also available on
+modular types; the binary operations naturally treat the values as bit
+patterns; the not operation subtracts the value from its maximum.  No
+problems arise with mixing these logical operations with arithmetic
+operations because negative values are not involved.
+</p>
+<p>
+   The logical operations will be most useful if the modulus is a power
+of two; they are well defined for other moduli but there are some
+surprising effects.  For example DeMorgan's theorem that
+<pre>
+   not(A and B) = not A or not B
+</pre>
+does not hold if the modulus is not a power of two.
+</p>
+<p>
+   The package Interfaces defines modular types corresponding to each
+predefined signed integer type with names such as Unsigned_16 and
+Unsigned_32.  For these modular types (which inevitably have a modulus
+which is a power of two) a number of shift and rotate operations are also
+provided.
+</p>
+<p>
+   It is an important principle that conversion between numeric types
+should not change the value (other than rounding).  Conversion from
+modular to signed integer types and vice versa is thus allowed provided
+the value is in the range of the destination; if it is not then
+Constraint_Error is raised.
+</p>
+<p>
+   Thus suppose we had
+<pre>
+   type Signed_Byte is range -128 .. +127;
+   U: Unsigned_Byte := 150;
+   S: Signed_Byte := Signed_Byte(U);
+</pre>
+then Constraint_Error will be raised.
+</p>
+<p>
+   Unchecked conversion can be used to convert patterns out of range.  We
+could neatly write
+<pre>
+   function Convert_Byte is
+      new Unchecked_Conversion(Signed_Byte, Unsigned_Byte);
+   function Convert_Byte is
+      new Unchecked_Conversion(Unsigned_Byte, Signed_Byte);
+</pre>
+providing conversions in both directions and then
+<pre>
+   S := Convert_Byte(U);
+</pre>
+would result in S having the value -106.
+</p>
+<p>
+   The modular types form a distinct class of types to the signed integer
+types.  There is thus a distinct form for a generic formal parameter of a
+modular type namely
+<pre>
+   type T is mod <>;
+</pre>
+and this cannot be matched by a type such as Integer.  Nor indeed can the
+signed integer form with range <> be matched by a modular type such as
+Unsigned_32.
+</p>
+<p>
+   The new attribute Modulus applies to a modular type and returns its
+modulus.  This is of particular value with generic parameters.
+
+<h3>
+<a name=3-3>
+3.3.3  Decimal Types
+</a>
+</h3>
+
+<p>
+Decimal types are used in specialized commercial applications and are
+dealt with in depth in the Information Systems annex.  However, the basic
+syntax of decimal types is in the core language.
+</p>
+<p>
+   A decimal type is a form of fixed point type.  The declaration
+provides a value of delta as for an ordinary fixed point type (except
+that in this case it must be a power of 10) and also prescribes the
+number of significant decimal digits.  So we can write
+<pre>
+   type Money is delta 0.01 digits 18;
+</pre>
+which will cope with values of a typical decimal currency.  This allows 2
+digits for the cents and 16 for the dollars so that the maximum allowed
+value is
+<pre>
+     9,999,999,999,999,999.99
+</pre>
+</p>
+<p>
+   The usual operations apply to decimal types as to other fixed point
+types.  Furthermore the Information Systems annex describes a number of
+special packages for decimal types including conversion to human readable
+output using picture strings.
+</p>
+<p>
+   Much as with modular types there is also a special form for a generic
+parameter of a decimal type which is
+<pre>
+   type T is delta <> digits <>;
+</pre>
+</p>
+<p>
+This cannot be matched by an ordinary fixed point type and similarly the
+form with just delta <> cannot be matched by a decimal type such as
+Money.
+</p>
+
+<h2>
+<a name=4>
+3.4  Composite Types
+</a>
+</h2>
+
+<p>
+In Ada 95, the concept of composite types is broadened to include task
+and protected types.  This is partly a presentation issue and partly
+reflects the generalization of the semantics to allow discriminants on
+task and protected types as well as on records.
+</p>
+<p>
+   The terms definite and indefinite subtypes are introduced as explained
+in II.11 when we discussed the generic parameter mechanism.  Recall that
+a definite subtype is one for which an uninitialized object can be
+declared such as Integer or a constrained array subtype or a record
+subtype with discriminants with defaults.  An indefinite subtype is an
+unconstrained array subtype or an unconstrained record, protected or task
+subtype which does not have defaults for the discriminants, or a class-
+wide subtype or a subtype with unknown discriminants.
+</p>
+<p>
+   As a simple generalization to Ada 83, we have allowed both variables
+and constants of an indefinite subtype to be declared, so long as an
+initial value is specified; the object then takes its bounds or
+discriminants from the initial value.  In Ada 83, only initialized
+constants of such a subtype could be declared.  However, the
+implementation considerations are essentially identical for constants and
+variables, so eliminating the restriction against variables imposes no
+extra implementation burden, and simplifies the model.
+</p>
+<p>
+   Here is an example of use
+<pre>
+   if Answer /= Correct_Answer then
+      declare
+         Image: String := Answer_Enum'Image(Correct_Answer);
+      begin
+         Set_To_Lower_Case(Image);
+         Put_Line("The correct answer is " & Image & '.');
+      end;
+   end if;
+</pre>
+</p>
+<p>
+   Allowing composite variables without a specified constraint to be
+declared, if initialized, is particularly important for class-wide types
+and (formal) private types with discriminant part (<>) since such types
+have an unknown set of discriminants and thus cannot be constrained.  For
+example, in the case of class-wide types, it would otherwise be hard if
+not impossible to write the procedure Convert in 4.4.3 since we would not
+be able to declare the temporary variable Temp.
+</p>
+
+<h3>
+<a name=4-1>
+3.4.1  Discriminants
+</a>
+</h3>
+
+<p>
+A private type can now be marked as having an unknown number of
+discriminants thus
+<pre>
+   type T(<>) is private;
+</pre>
+</p>
+<p>
+The main impact of this is that the partial view does not allow
+uninitialized objects to be declared.  If the partial view is also
+limited then objects cannot be declared at all (since they cannot be
+initialized).  The gives the writer of an abstraction rather more control
+over the use of the abstraction.
+</p>
+<p>
+   As we have already noted, discriminants are also allowed on task and
+protected types in Ada 95.  (An early draft of Ada 9X also permitted
+discriminants on arrays and discriminants to be of any nonlimited type.
+This was, however, felt to be too much of a burden for existing
+implementations.)
+</p>
+<p>
+   Discriminants are the primary means of parameterizing a type in Ada,
+and therefore we have tried to make them as general as possible within
+transition constraints.  Task and protected types in particular benefit
+from discriminants acting as more general type parameters.
+</p>
+<p>
+   In Ada 83, an instance of a task type had to go through an initial
+rendezvous to get parameters to control its execution.  In Ada 95, the
+parameters may be supplied as discriminant values at the task object
+declaration, eliminating the need for the extra rendezvous.  Variables
+introduced in the declarative part of the task body can also depend on
+the task type discriminants, as can the expression defining the initial
+priority of the task via a Priority pragma.  See 9.6 for some detailed
+examples.
+</p>
+<p>
+   In addition to allowing discrete types as discriminants as in Ada 83,
+we now also permit discriminants to be of an access type.  There are two
+quite distinct situations.  A discriminant can be of a named access type
+or it can be an access discriminant in which case the type is anonymous.
+Thus we can declare
+<pre>
+   type R1(D: access T) is ...
+   type AT is access T;
+   type R2(D: AT) is ...
+</pre>
+and then the discriminant of R1 is an access discriminant whereas the
+discriminant of R2 is a discriminant of a named access type.  A similar
+nomenclature applies to subprogram parameters which can be access
+parameters (without a type name) or simply parameters of a named access
+type (which was allowed in Ada 83).
+</p>
+<p>
+   Access discriminants provide several important capabilities.  Because
+they impose minimal accessibility checking restrictions, an access
+discriminant may be initialized to refer to an enclosing object, or to
+refer to another object of at least the same lifetime as the object
+containing the discriminant.  Access discriminants can only be applied to
+limited types.  Note also that a task and a protected object can have
+access discriminants.
+</p>
+<p>
+   When an object might be on multiple linked lists, it is typical that
+one link points to the next link.  However, it is also essential to be
+able to gain access to the object enclosing the link as well.  With
+access discriminants, this reference from a component that is a link on a
+chain, to the enclosing object, can be initialized as part of the default
+initialization of the link component.  This is discussed further in
+4.6.3.  For a fuller discussion on how access discriminants avoid
+accessibility problems see 3.7.1.  Further examples of the use of access
+discriminants will be found in 7.4 and 9.6.
+</p>
+<p>
+   Finally, a derived type may specify a new set of discriminants.  For
+untagged types, these new discriminants are not considered an extension
+of the original type, but rather act as renamings or constraints on the
+original discriminants.  As such, these discriminants must be used to
+specify the value of one of the original discriminants of the parent
+type.  The new discriminant is tightly linked to the parent's
+discriminant it specifies, since on conversion from the parent type, the
+new discriminant takes its value from that discriminant (presuming
+Constraint_Error is not raised).  The implementation model is that the
+new discriminants occupy the space of the old.  The new type could
+actually have less discriminants than the old.  The following are
+possible
+<pre>
+   type S1(I: Integer) is ...;
+   type S2(I: Integer; J: Integer) is ...;
+
+   type T1(N: Integer) is new S1(N);
+   type T2(N: Integer) is new S2(N, 37);
+   type T3(N: Integer) is new S2(N, N);
+</pre>
+</p>
+<p>
+   The last case is interesting because the new discriminant is mapped
+onto both the old ones.  A conversion from type S2 to T3 checks that both
+discriminants of the S2 value are the same.  A practical use of new
+discriminants for non-tagged types is so that we can make use of an
+existing type for the full type corresponding to a private type with
+discriminants.
+<pre>
+      type T(D: DT) is private;
+   private
+      type T(D: DT) is new S(D);
+</pre>
+</p>
+<p>
+   In the case of a tagged type, we can either inherit all the
+discriminants or provide a completely new set.  In the latter case the
+parent must be constrained and the new discriminants can (but need not)
+be used to supply the constraints.
+</p>
+<p>
+   Thus a type extension can have more discriminants than its parent,
+which is not true in the untagged case.
+</p>
+
+<h2>
+<a name=5>
+3.5  Array Types
+</a>
+</h2>
+
+<p>
+A very minor change is that an index specification of an anonymous array
+type in an initialized declaration can also take the unconstrained form
+<pre>
+   V: array (Integer range <>) of Float :=
+                                      (3 .. 5 => 1.0, 6 | 7 => 2.0);
+</pre>
+in which case the bounds are deduced from the initial expression.
+</p>
+
+<h3>
+<a name=5-1>
+3.5.1  Array Aggregates
+</a>
+</h3>
+
+<p>
+Ada 83 had a rule that determined where a named array aggregate with an
+others choice was permitted; see [RM83 4.3.2(6)].  There were a related
+set of rules that governed where implicit array subtype conversion
+("sliding") was permitted for an array value; see [RM83 3.2.1(16) and
+5.2.1(1)].  These rules were constructed to ensure that named array
+aggregates with others and array sliding were not both permitted in the
+same context.  However, the lack of array sliding in certain contexts
+could result in the unanticipated raising of Constraint_Error because the
+bounds did not match the applicable constraint.
+</p>
+<p>
+   For Ada 95, we have relaxed the restrictions on both array sliding and
+named array aggregates with others, so that both are permitted in all
+contexts where an array aggregate with just an others choice was legal in
+Ada 83.  This corresponds to all situations where an expression of the
+array type was permitted, and there was an applicable index constraint;
+see [RM83 4.3.2(4-8)]. This ensures that sliding takes place as necessary
+to avoid Constraint_Error, and simplifies the rules on array aggregates
+with an others choice.
+</p>
+<p>
+   The original Ada 83 restrictions were related to the possible
+ambiguity between determining the bounds of an aggregate and sliding.  In
+Ada 95, this ambiguity is resolved by stipulating that sliding never
+takes place on an array aggregate with an others choice.  The applicable
+index constraint determines the bounds of the aggregate.
+</p>
+<p>
+   As an example consider
+<pre>
+   type Vector is array (Integer range <>) of Float;
+   V: Vector(1 .. 5) := (3 .. 5 => 1.0, 6 | 7 => 2.0);
+</pre>
+which shows a named aggregate being assigned to V.  The bounds of the
+named aggregate are 3 and 7 and the assignment causes the aggregate to
+slide with the net result that the components V(1) .. V(3) have the value
+1.0 and V(4) and V(5) have the value 2.0.
+</p>
+<p>
+   On the other hand writing
+<pre>
+   V := (3 .. 5 => 1.0, others => 2.0);
+</pre>
+has a rather different effect.  It was not allowed in Ada 83 but in Ada
+95 has the effect of setting V(3) .. V(5) to 1.0 and V(1) and V(2) to
+2.0.  The point is that the bounds of the aggregate are taken from the
+context and there is no sliding.  Aggregates with others never slide.
+</p>
+<p>
+   Similarly no sliding occurs in
+<pre>
+   V := (1.0, 1.0, 1.0, others => 2.0);
+</pre>
+and this results in setting V(1) .. V(3) to 1.0 and V(4) and V(5) to 2.0.
+</p>
+
+<h3>
+<a name=5-2>
+3.5.2  Concatenation
+</a>
+</h3>
+
+<p>
+The rules for concatenate (we now use this more familiar term rather than
+catenate) are changed so that it works usefully in the case of arrays
+with a constrained first subtype.
+</p>
+<p>
+   In Ada 83 the following raised Constraint_Error, while in Ada 95 it
+produces the desired result
+<pre>
+      X: array (1..10) of Integer;
+   begin
+      X := X(6..10) & X(1..5);
+</pre>
+</p>
+<p>
+   In Ada 83, the bounds of the result of the concatenate were 6 .. 15,
+which caused Constraint_Error to be raised since 15 is greater than the
+upper bound of the index subtype.  In Ada 95, the lower bound of the
+result (in this constrained case) is the lower bound of the index subtype
+so the bounds of the result are 1 .. 10, as required.
+</p>
+
+<h2>
+<a name=6>
+3.6  Record Types
+</a>
+</h2>
+
+<p>
+   A record type may be specified as tagged or limited (or both) in its
+definition.  This makes record types consistent with private types, and
+allows a tagged record type to be declared limited even if none of its
+components are limited.  This is important because only limited types can
+be extended with components that are limited.
+</p>
+<p>
+   A derived type is a record extension if it includes a record extension
+part, which has the same syntax as a normal record type definition
+preceded by the reserved word with.  For example
+<pre>
+   type Labelled_Window(Length : Natural) is new Window with
+      record
+        Label: String(1..Length);
+      end record;
+</pre>
+</p>
+<p>
+   Record extension is the fundamental type extension (type inheritance)
+mechanism in Ada 95.  A private extension must be defined in terms of a
+record extension.  The new discriminants in a discriminant extension are
+normally used to control the new components defined in the record
+extension part (as illustrated in the above example).
+</p>
+<p>
+   Record extension is a natural evolution of the Ada 83 concept of
+derived types.  From an implementation perspective, it is relatively
+straightforward, since the new components may all be simply added at the
+end of the record, after the components inherited from the parent type.
+</p>
+<p>
+   We considered having other kinds of type extension, including
+enumeration type extension, task type extension, and protected type
+extension.  However, none of these seemed clearly as useful as record
+extension, and all introduced additional implementation complexities.  In
+any case, the automatic assignment of tags to type extensions lessens the
+need for enumeration types, and the added flexibility associated with
+access to subprogram and dispatching operations makes it less critical to
+allow task types to be extended.
+</p>
+<p>
+   Type extension of protected objects was another interesting
+possibility.  However, certain implementation approaches do not easily
+support extension of the set of protected operations, or the changing of
+the barrier expressions.  With some regret therefore it was decided that
+the benefit of extending protected types was not worth the considerable
+implementation burden.  This is an obvious topic for review at the next
+revision of Ada.
+</p>
+<p>
+   Type extension is only permitted if the parent type is tagged.
+Originally we considered allowing any record or private type to be
+extended, but this introduced additional complexity, particularly inside
+generics.  Furthermore, extending an untagged type breaks the general
+model that a class-wide type can faithfully represent any value in the
+class.  An object of an untagged class-wide type would not have any
+provision for holding a value of a type extension, since it would lack a
+run-time type tag to describe the value.
+</p>
+
+<h3>
+<a name=6-1>
+3.6.1  Record Aggregates
+</a>
+</h3>
+
+<p>
+Record aggregates are only permitted for a type extension if both the
+extension part and the parent part are fully visible.  This corresponds
+to the principle that if part of a type is private, then it must be
+assumed to have an unknown set of components in that part.  In other
+words we can only use an aggregate where we can view all the components.
+</p>
+<p>
+   However, extension aggregates can be used provided only that the
+components in the extension part are visible; we do not need a full view
+of the type of the ancestor expression.  Typically we can provide an
+expression for the ancestor part.  Thus suppose we have
+<pre>
+   type T is tagged private;
+   ...
+   T_Obj: T := ...;
+   type NT is new T with
+      record
+         I, J: Integer;
+      end record;
+</pre>
+then we can write an extension aggregate such as
+<pre>
+   (T_Obj with I => 10, J => 20)
+</pre>
+</p>
+<p>
+   A variation is that we can also simply give the subtype name as the
+ancestor part thus
+<pre>
+   (T with I => 10, J => 20)
+</pre>
+which is essentially equivalent to declaring a temporary default
+initialized object of the type and then using it as the ancestor
+expression (this includes calling Initialize in the case of a controlled
+type, see 7.4).  This is allowed even if the ancestor type is abstract
+and thereby permits the creation of aggregates for types derived from
+abstract types.
+</p>
+
+<h3>
+<a name=6-2>
+3.6.2  Abstract Types and Subprograms
+</a>
+</h3>
+
+<p>
+As we have already discussed in II.3, a tagged type may be declared as
+abstract by the appearance of abstract in its declaration.  A subprogram
+which is a primitive operation of an abstract tagged type may be
+specified as abstract.  An abstract subprogram has no body, and cannot be
+called directly or indirectly.  A dispatching call will always call some
+subprogram body that overrides the abstract one because it is not
+possible to create an object of an abstract type.
+</p>
+<p>
+   If a type is derived from an abstract type and not declared as
+abstract then any inherited abstract subprograms must be overridden with
+proper subprograms.  Note, of course, that an abstract type need not have
+any abstract subprograms.
+</p>
+<p>
+   The interaction between abstract types and private types is
+interesting.  It will usually be the case that both views are abstract or
+not abstract.  However, it is possible for a partial view to be abstract
+and the full view not to be abstract thus
+<pre>
+   package P is
+      type T is abstract tagged private;
+   private
+      type T is tagged ...;
+   end P;
+</pre>
+</p>
+<p>
+In this case, objects of the type can only be declared for the full view
+and abstract primitive operations cannot be declared at all.  This is
+because an abstract operation in the visible part would still apply in
+the private part and would thus be abstract for the nonabstract view.
+</p>
+<p>
+   It is of course not possible for the full view to be abstract and the
+partial view not to be abstract.  This is quite similar to the rules for
+limitedness.  A partial view can be limited and a full view not limited
+but not vice versa; the key point is that the partial view cannot promise
+more properties than the full view (the truth) actually has.
+</p>
+<p>
+   Of more interest is private extension where again the partial view
+could be declared abstract and the full view not abstract.  An inherited
+abstract subprogram would need to be overridden.  If this were done in
+the private part then the partial view of the subprogram would still be
+abstract although the full view would be of the overriding subprogram and
+thus not abstract.  Thus
+<pre>
+   package P is
+      type T is abstract tagged null record;
+      procedure Op(X: T) is abstract;
+   end P;
+
+   with P;
+   package NP is
+      type NT is abstract new P.T with private;
+   private
+      type NT is new T with ...;
+      procedure Op(X: T);   -- overrides
+   end NP;
+</pre>
+</p>
+<p>
+The overriding is essential since otherwise we might dispatch to an
+abstract operation.
+</p>
+<p>
+   Another point is that an abstract type is not allowed to have an
+invisible abstract operation since otherwise it could not be overridden.
+The following difficulty is thus avoided.
+<pre>
+   package P is
+      type T is abstract ...;
+      procedure Nasty(X: T'Class);
+   private
+      procedure Op(X: T) is abstract;  -- illegal
+   end P;
+
+   package body P is
+      procedure Nasty(X: T'Class) is
+      begin
+         Op(X);
+      end Nasty;
+   end P;
+
+   with P;
+   package Q is
+      type NT is new P.T with ...;   -- not abstract
+      -- cannot see Op in order to override it
+   end Q;
+</pre>
+</p>
+<p>
+The problem is that we must override Op since by declaring an object of
+type NT we can then dispatch to Op by calling the procedure Nasty.
+</p>
+<p>
+   The overall motivation for the rules is to ensure that it is never
+possible to dispatch to a non-existent subprogram body.
+</p>
+<p>
+   A rather different problem arises when we extend a type which is not
+abstract but which has a function with a controlling result.  The old
+function cannot be used as the inherited version because it cannot
+provide values for the type extension when returning the result
+(parameters are not a problem because they only involve conversion
+towards the root).  As a consequence the type must be declared as
+abstract unless we provide a new function.
+</p>
+<p>
+   A related restriction is that a function with a controlling result
+cannot be declared as a private operation since otherwise a similar
+difficulty to that discussed above would arise on type extension.  If
+extension were performed using the partial view then the function would
+become abstract for the extended type and yet, being private, could not
+be overridden.
+</p>
+<p>
+   Observe also that since we do not require every abstract subprogram to
+be explicit, it is possible for a generic package specification to define
+an abstract record extension of a formal tagged type without knowing
+exactly which functions with controlling results exist for the actual
+type.
+</p>
+<p>
+   Finally, note that it is possible to have an abstract operation of a
+nontagged type.  This is fairly useless since dispatching is not possible
+and static calls are illegal.  However, it would be harder to formulate
+the rules to avoid this largely because an operation can be primitive of
+both a tagged and nontagged type (although not of two tagged types, see
+4.5).
+</pre>
+
+<h2>
+<a name=7>
+3.7  Access Types
+</a>
+</h2>
+
+<p>
+As we have already seen in II.5 and II.6, access types in Ada 95 have
+been generalized so that they may be used to designate subprograms and
+also declared objects.
+</p>
+<p>
+   A new attribute designator, Access, has been defined for creating an
+access value designating a subprogram or object specified in the prefix.
+For example:
+<pre>
+   A := Object'Access;     -- point to a declared object
+   B := Subprogram'Access; -- point to a subprogram
+</pre>
+</p>
+<p>
+   Full type checking is performed as part of interpreting the Access
+attribute.  An additional accessibility check is performed to ensure that
+the lifetime of the designated subprogram or object will not end before
+that of the access type, eliminating the possibility of dangling
+references.
+</p>
+<p>
+   Although these two extensions to access types share some common
+terminology and concepts the details are rather different and so we will
+now discuss them separately in the following sections.
+</p>
+
+<h3>
+<a name=7-1>
+3.7.1  Access to General Objects
+</a>
+</h3>
+
+<p>
+Access types that may designate declared objects are called general
+access types, as distinguished from pool-specific access types, which
+correspond to those which were provided by Ada 83.
+</p>
+<p>
+   There are two steps to the use of general access types
+</p>
+<ul>
+<li>
+    Objects that are to be designated by access values must be aliased.
+     This can be done by using the reserved word aliased in their
+     declaration.  This serves various purposes.  It documents the fact
+     that an object is to be designated by an access value.  It forces
+     the object to be properly aligned in memory and informs the compiler
+     that the representation of the object should correspond to that used
+     for objects created by an allocator.  In addition, the optimizer is
+     informed that this object is likely to be accessible via one or more
+     access values, and therefore its value might change as a result of
+     an update via an access value.
+<li>
+    The attributes Access and Unchecked_Access, when applied to an
+     object, return an access value that designates the object.  Unless
+     the subtype is tagged or has unconstrained discriminants, the
+     subtype of the object must statically match the designated subtype
+     of the access type.  The access values which are formed by the
+     Access attribute must obey certain accessibility restrictions, which
+     are generally checked at compile time (at runtime in the case of
+     access parameters).  They cannot be used to create access values of
+     a type whose lifetime is longer than the lifetime of the designated
+     object; this prevents an access value from being stored in a global
+     and then leaving the region where the designated object is declared.
+     The access values that are formed by the Unchecked_Access attribute
+     are not subject to such restrictions.  It is the responsibility of
+     the programmer who uses such unchecked access values to avoid
+     dangling references.
+</ul>
+<p>
+   General access types have the reserved word all or constant in their
+definition.  We originally considered allowing any (object) access type
+to designate a declared object (as opposed to an allocated object), but
+this would have forced all access types to be represented as full
+addresses.  By distinguishing general access types from pool-specific
+access types, we preserve the possibility of optimizing the
+representation of a pool-specific access type, by taking advantage of its
+limited storage-pool size.
+</p>
+<p>
+   A value of a general access type declared with the reserved word all
+can only designate variables (not constants), and may be used to read and
+update the designated object.  If the reserved word constant is used,
+then access values may designate constants, as well as variables.  An
+object designated by an access-to-constant value may not be updated via
+the access value.  An allocator for an access-to-constant type requires
+an initial value and might generally reserve storage in a read-only part
+of the address space.
+</p>
+<p>
+   There are two important cases where a view is deemed to be aliased
+(and thus Access can be applied) even though the word aliased does not
+appear.  One is that a parameter of a tagged type is considered to be
+aliased (see 6.1.2) and the other is where an inner component refers to
+the current instance of an outer limited type (see 4.6.3).
+</p>
+<p>
+   There is a restriction concerning discriminated records which ensures
+that we cannot apply the Access attribute to a component that might
+disappear.  This is similar to the rule for renaming which prevents the
+renaming of a component of an unconstrained variable whose existence
+depends upon a discriminant.
+</p>
+<p>
+   Indirect access to declared objects is useful for avoiding dynamic
+allocation, while still allowing objects to be inserted into linked data
+structures.  This is particularly useful for systems requiring link-time
+elaboration of large tables, which may use levels of indirection in their
+representation.  Such access types are also convenient for returning a
+reference to a large global object from a function, allowing the object
+to be updated through the returned reference if desired.
+</p>
+<p>
+   Finally, rather than relying on allocators, it is sometimes
+appropriate to use a statically allocated array of objects, managed
+explicitly by the application. However, it may still be more convenient
+to reference components of the array using access values.  By declaring
+the array components as aliased, the Access attribute may be used to
+produce an access value designating a particular component.
+</p>
+<p>
+   An interesting example is provided by the following which illustrates
+the static creation of ragged arrays
+<pre>
+   package Message_Services is
+      type Message_Code_Type is range 0..100;
+
+      subtype Message is String;
+
+      function Get_Message(Message_Code: Message_Code_Type)
+         return Message;
+
+      pragma Inline(Get_Message);
+   end Message_Services;
+
+   package body Message_Services is
+      type Message_Handle is access constant Message;
+
+      Message_0: aliased constant Message := "OK";
+      Message_1: aliased constant Message := "Up";
+      Message_2: aliased constant Message := "Shutdown";
+      Message_3: aliased constant Message := "Shutup";
+      ...
+
+      Message_Table: array (Message_Code_Type) of
+         Message_Handle :=
+           (0 => Message_0'Access,
+            1 => Message_1'Access,
+            2 => Message_2'Access,
+            3 => Message_3'Access,
+            -- etc.
+           );
+
+      function Get_Message(Message_Code: Message_Code_Type)
+         return Message is
+      begin
+         return Message_Table(Message_Code).all;
+      end Get_Message;
+   end Message_Services;
+</pre>
+</p>
+<p>
+   This example is based on Revision Request 018 and  declares a static
+ragged array.  The elements of the array point to strings, the lengths of
+which may differ.  The access values are generated by the Access
+attribute; no dynamic allocation is needed to create the values.
+</p>
+<p>
+   Access types are used extensively in object-oriented applications.  To
+enable the use of access types with the run-time dispatching provided for
+the primitive operations of tagged types, Ada 95 includes a new kind of
+in parameter, called an access parameter.  We can thus write
+<pre>
+   procedure P(A: access T);
+</pre>
+</p>
+<p>
+This is to be distinguished from a parameter of a named access type which
+already existed in Ada 83.  A similar distinction arises with access
+discriminants as we saw in 3.4.1.
+</p>
+<p>
+   An access parameter is matched by an actual operand of any access type
+with the same designated type.  Furthermore, if a subprogram has an
+access parameter with designated type T, and the subprogram is defined in
+the same package specification as the type T, then the subprogram is a
+primitive operation of T, and dispatches on the tag of the object
+designated by the access parameter.  Inside the subprogram, an access
+parameter is of an anonymous general access type, and must either be
+dereferenced or explicitly converted on each use, or passed to another
+operation as an access parameter.
+</p>
+<p>
+   An important property of access parameters is that they can never have
+a null value.  It is not permitted to pass null as an actual parameter
+(this is checked on the call) and of course being of an anonymous type
+another such object cannot be declared inside the subprogram.  As a
+consequence within the subprogram there is no need to check for a null
+value of the type (neither in the program text nor in the compiled code).
+Note also that since other objects of the type cannot be declared,
+assignment and equality do not apply to access parameters.
+</p>
+<p>
+   For a tagged type T and an aliased object X of type T, X'Access and
+new T are overloaded on all access to T, on all access to T'Class, and on
+all other access to class-wide types that cover T.  These overloadings on
+access to class-wide types allow allocators and the Access attribute to
+be used conveniently when calling class-wide operations, or building
+heterogeneous linked data structures.
+</p>
+<p>
+   Access parameters and access discriminants are important with respect
+to accessibility which we will now discuss in more detail.  The
+accessibility rules ensure that a dangling reference can never arise; in
+general this is determined statically.  Suppose we have a library package
+P containing a globally declared access type and a global variable
+<pre>
+   package P is
+      type T is ...;
+      type T_Ptr is access all T;
+      Global: T_Ptr;
+   end P;
+</pre>
+then we must ensure that the variable Global is never assigned an access
+to a variable that is local.  So consider
+<pre>
+   procedure Q is
+      X: aliased T;
+      Local: T_Ptr := X'Access;   -- illegal
+   begin
+      Global := X'Access;         -- illegal
+      ...
+      Global := Local;
+      ...
+   end Q;
+</pre>
+in which we have declared a local variable X and a local access variable.
+The assignment of X'Access to Global is clearly illegal since on leaving
+the procedure Q, this would result in Global referring to a non-existent
+variable.  However, because we can freely assign access values, we must
+not assign X'Access to Local either since although that would be safe in
+the short term, nevertheless we could later assign Local to Global as
+shown.
+</p>
+<p>
+   Since we do not wish to impose accessibility checks at run-time on
+normal access assignment (this would be a heavy burden), we have to
+impose the restriction that the Access attribute can only be applied to
+objects with at least the lifetime of the access type.  The rules that
+ensure this are phrased in terms of accessibility levels and the basic
+rule is that the access attribute can only be applied to an object at a
+level which is not deeper than that of the access type; this is, of
+course, known at compile time and so this basic accessibility rule is
+static.  This may seem rather surprising since the concept of lifetime is
+dynamic and so one might expect the rules to be dynamic.  However, it can
+be shown that in the case of named access types, the static rule is
+precisely equivalent to the intuitive dynamic rule.  The reason for this
+is that the access attribute can only be applied at places where both the
+object and the access type are in scope; see [Barnes 95] for a detailed
+analysis.  As discussed below, the situation is quite different for
+access parameters where the type has no name and the checks then have to
+be dynamic.  (In the case of generic bodies, the rule is also dynamic as
+discussed in 12.3.)
+</p>
+<p>
+   Similar problems arise with discriminants and parameters of named
+access types.  Thus we could not declare a local record with a component
+of the type T_Ptr.  However, access discriminants and access parameters
+behave differently.
+</p>
+<ul>
+<li>
+    The anonymous type is essentially declared inside the object or
+     subprogram itself.
+<li>
+    It is not possible to have other components or objects of the same
+     type (since it is anonymous) and they are treated as constants.
+<li>
+    Records with access discriminants have to be limited.
+</ul>
+<p>
+The net result is that the accessibility problems we encountered above do
+not arise.  Revisiting the above example we can write
+<pre>
+   package P is
+      type T is ...;
+      type T_Ptr is access all T;
+      type Rec(D: access T) is limited
+         record
+            ...
+         end record;
+      Global: T_Ptr;
+      Global_Rec: Rec(...);
+   end P;
+</pre>
+where we have added the record type Rec with an access discriminant D
+plus a global record variable of that type.  Now consider
+<pre>
+   procedure Q is
+      X: aliased T;
+      Local_Rec: Rec(D => X'Access);     -- OK
+   begin
+      Global := Local_Rec.D;        -- illegal, type mismatch
+      Global := T_Ptr(Local_Rec.D); -- illegal, accessibility check
+      Global_Rec := Local_Rec;      -- illegal, assignment limited type
+      ...
+   end Q;
+</pre>
+in which we have declared a local record variable with its access
+discriminant initialized to access the local variable X.  This is now
+legal and the various attempts to assign the reference to X to a more
+global variable or component are thwarted for the various reasons shown.
+The straight assignment of the discriminant fails because of a type
+mismatch.  The attempt to circumvent this problem by converting the
+access type also fails because of an accessibility check on conversions
+between access types [RM95 4.6].  And the attempt to assign the whole
+record fails because it is limited.
+</p>
+<p>
+   Access parameters are particularly important since they are the one
+case where an accessibility check is dynamic (other than in generic
+bodies).  An access parameter carries with it an indication of the
+accessibility level of the actual parameter.  Dynamic checks can then be
+made when necessary as for example when converting to an external named
+access type.  Consider
+<pre>
+   procedure Main is
+      type T is ...;
+      type A is access all T;
+      Ptr: A := null;
+      procedure P(XP: access T) is
+      begin
+         Ptr := A(XP);     -- conversion with dynamic check
+      end P;
+      X: aliased T;
+   begin
+      P(X'Access);
+   end Main;
+</pre>
+</p>
+<p>
+The conversion compares the accessibility level of the object X passed as
+parameter with that of the destination type A; they are both the same and
+so the check passes.  Observe that if the destination type A were
+declared inside P then the check can be (and is) performed statically.
+So not all conversions of access parameters require dynamic checks.
+</p>
+<p>
+   Another possibility is where one access parameter is passed on as an
+actual parameter to another access parameter.  There are a number of
+different situations that can arise acording to the relative positions of
+the subprograms concerned; the various possibilities are analysed in
+detail in [Barnes 95] where it is shown that the implementation technique
+given in [AARM 3.10.2(22)] precisely meets the requirements of the rules.
+The rules themselves are in [RM95 3.10.2 and 4.6].
+</p>
+<p>
+   Without access parameters, the manipulation of access discriminants
+would be difficult.  Given
+<pre>
+   procedure P(A: access T);
+</pre>
+then we can satisfactorily make calls such as
+<pre>
+   P(Local_Rec.D);
+</pre>
+in order to manipulate the data referenced by the discriminant.  On the
+other hand declaring
+<pre>
+   procedure P(A: T_Ptr);
+</pre>
+would be useless for the manipulation of the discriminant because the
+necessary type conversion on the call would inevitably be illegal for
+reasons of accessibility mentioned above.
+</p>
+<p>
+   As a first example of the use of access discriminants we will consider
+the case of an iterator over a set.  This is typical of a situation where
+we want a reference from one object to another.  The iterator contains a
+means of referring to the set in question and the element within it to be
+operated upon next.  Consider
+<pre>
+   generic
+      type Element is private;
+   package Sets is
+      type Set is limited private;
+      ... -- various set operations
+      type Iterator(S: access Set) is limited private;
+      procedure Start(I: Iterator);
+      function Done(I: Iterator) return Boolean;
+      procedure Next(I: in out Iterator);
+      function Get_Element(I: Iterator) return Element;
+      procedure Set_Element(I: in out Iterator; E: Element);
+   private
+      type Node;
+      type Ptr is access Node;
+      type Node is
+         record
+            E: Element;
+            Next: Ptr;
+         end record;
+      type Set is new Ptr;   -- implement as singly-linked list
+
+      type Iterator(S: access Set) is
+         record
+            This: Ptr;
+         end record;
+
+   end Sets;
+
+   package body Sets is
+      ... -- bodies of the various set operations
+
+      procedure Start(I: in out Iterator) is
+      begin
+         I.This := Ptr(I.S.all);
+      end Start;
+
+      function Done(I: Iterator) return Boolean is
+      begin
+         return I.This = null;
+      end Done;
+
+      procedure Next(I: in out Iterator) is
+      begin
+         I.This := I.This.Next;
+      end Next;
+
+      function Get_Element(I: Iterator) return Element is
+      begin
+         return I.This.E;
+      end Get_Element;
+
+      procedure Set_Element(I: in out Iterator; E: Element) is
+      begin
+         I.This.E := E;
+      end Set_Element;
+
+   end Sets;
+</pre>
+</p>
+<p>
+   The subprograms Start, Next and Done enable us to iterate over the
+elements of the set with the component This of the iterator object
+accessing the current element; the subprograms Get_Element and
+Set_Element provide access to the current element.  The iterator could
+then be used to perform any operation on the values of the elements of
+the set.
+</p>
+<p>
+   As a trivial example the following child function Sets.Count simply
+counts the number of elements in the set.  (Incidentally note that the
+child has to be generic because its parent is generic.)
+<pre>
+   generic
+   function Sets.Count(S: access Set) return Natural;
+      -- Return the number of elements of S.
+
+   function Sets.Count(S: access Set) return Natural is
+
+      I: Iterator(S);
+      Result: Natural := 0;
+   begin
+      Start(I);
+      while not Done(I) loop
+         Result := Result + 1;
+         Next(I);
+      end loop;
+      return Result;
+   end Sets.Count;
+
+   In the more general case the loop might be
+
+      Start(I);
+      while not Done(I) loop
+         declare
+            E: Element := Get_Element(I);  -- get old value
+         begin
+            ...                            -- do something with it
+            Set_Element(I, E);             -- put new value back
+            Next(I);
+         end;
+      end loop;
+</pre>
+</p>
+<p>
+   Note that if Iterator.S were a normal component rather than an access
+discriminant then we would not be able to initialize it at its point of
+declaration and moreover we could not make it point to Sets.Count.S
+without using Unchecked_Access.
+</p>
+<p>
+   Finally note that the procedure Start could be eliminated by declaring
+the type Iterator as
+<pre>
+   type Iterator(S: access Set) is
+      record
+         This: Ptr := Ptr(S.all);
+      end record;
+</pre>
+and this would have the advantage of preventing errors caused by
+forgetting to call Start.
+</p>
+
+<h3>
+<a name=7-2>
+3.7.2  Access to Subprograms
+</a>
+</h3>
+
+<p>
+Ada 95 provides access-to-subprogram types.  A value of such a type can
+designate any subprogram matching the profile in the type declaration,
+whose lifetime does not end before that of the access type.  By providing
+access-to-subprogram types, Ada 95 provides efficient means to
+</p>
+<ul>
+<li>
+  dynamically select and invoke a subprogram with appropriate
+     arguments,
+<li>
+    store references to subprograms in data structures,
+<li>
+    parameterize subprograms with other subprograms (at run-time).
+</ul>
+<p>
+   Access-to-subprogram values are created by the Access attribute.
+Compile-time accessibility  rules ensure that a subprogram designated by
+an access value cannot be called after its enclosing scope has exited.
+This ensures that up-level references from within the subprogram will be
+meaningful when the subprogram is ultimately called via the access value.
+It also allows implementations to create and dereference these access-to-
+subprogram values very efficiently, since they can be a single address,
+or an address plus a "static link".
+</p>
+<p>
+   For Subprogram'Access, the designated subprogram must have formal
+parameter and result subtypes and a calling convention that statically
+match those of the access type.  This allows the compiler to emit the
+correct constraint checks, and use the correct parameter passing
+conventions when calling via an access-to-subprogram value, without
+knowing statically which subprogram is being called.  We call this
+subtype conformance.
+</p>
+<p>
+   Overload resolution of the Access attribute applied to an overloaded
+subprogram name represents a new situation in Ada.  In Ada 83, the prefix
+of an attribute was required to be resolvable without context.  However,
+for the Access attribute to be useful on overloaded subprograms, it was
+necessary to allow the Access attribute to use context to resolve the
+prefix.  Therefore, if the prefix of Access is overloaded, then context
+is used to determine the specific access-to-subprogram type, and then the
+parameter and result type profile associated with that access type is
+used to resolve the prefix.
+</p>
+<p>
+   Indirect access to a subprogram is extremely useful for table-driven
+programming, using, for example, a state machine model.  It is also
+useful for installing call-backs in a separate subsystem (like the X
+window system).  Finally, it often provides an alternative to generic
+instantiation, allowing a non-generic parameter to be a pointer to a
+subprogram, such as for applying an operation to every element of a list,
+or integrating a function using a numerical integration algorithm.
+</p>
+<p>
+   A number of examples of the use of access to subprogram types will be
+found in II.5.  However a very important use is to provide much better
+ways of interfacing to programs written in other languages.  This is done
+in conjunction with the pragma Import (essentially replacing Interface)
+and new pragmas Export and Convention.  For details see Part Three.
+</p>
+<p>
+   It should be noted that there is no equivalent to access discriminants
+or access parameters for access to subprogram types.  Apart from any
+aesthetic consideration of writing such an in situ definition, the key
+reason concerns the implementation problems associated with keeping track
+of the environment of such a "subprogram value".  As a consequence we
+cannot, for example, use the access to a local procedure as a parameter
+of a more globally declared procedure.  Such values would in any case not
+be safely assignable into a global.
+</p>
+<p>
+   The accessibility restrictions mean that access to subprogram values
+do not provide a mechanism to solve the general iterator problem where
+the essence is usually to apply some inner procedure over every element
+of a set with the inner procedure having access to more global variables.
+One alternative approach is to use access discriminants as discussed in
+3.7.1; another, perhaps better, approach is to use type extension as
+illustrated in 4.4.4.
+</p>
+<p>
+   Generic formal subprograms remain the most general means of
+parameterizing an algorithm by an arbitrary externally specified
+subprogram.  Moreover they are often necessary anyway.  For example,
+consider a typical mathematical problem such as integration briefly
+mentioned in II.5.  In practice the integration function would inevitably
+be generic with respect to the floating point type.  So a more realistic
+specification would be
+<pre>
+   generic
+      type Float_Type is digits <>;
+   package Generic_Integration is
+      type Integrand is
+                       access function(X: Float_Type) return Float_Type;
+
+      function Integrate(F: Integrand; From, To: Float_Type;
+                  Accuracy: Float_Type := 10.0*Float_Type'Model_Epsilon)
+                                                      return Float_Type;
+   end Generic_Integration;
+</pre>
+</p>
+<p>
+   Suppose now that we wish to integrate a function whose value depends
+upon non-local variables and that therefore has to be declared at an
+inner level.  All that has to be done is to instantiate the generic at
+the same inner level and then no accessibility problems arise.  So
+<pre>
+   with Generic_Integration;
+   procedure Try_Estimate(External_Data: Data_Type;
+                           Lower, Upper: Float;
+                                 Answer: out Float) is
+      -- external data set by other means
+
+      function Residue(X: Float) return Float is
+         Result: Float;
+      begin
+         -- compute function value dependent upon external data
+         return Result;
+      end Residue;
+
+      package Float_Integration is
+            new Generic_Integration(Float_Type => Float);
+      use Float_Integration;
+
+   begin
+      ...
+      Answer := Integrate(Residue'Access, Lower, Upper);
+
+   end Try_Estimate;
+</pre>
+</p>
+<p>
+   The key point is that the instantiated access type Integrand is at the
+same level as the local function Residue and therefore the Access
+attribute can be applied.  This technique can of course be used even when
+there are no generic parameters.
+</p>
+
+<h2>
+<a name=8>
+3.8  Type Conversion
+</a>
+</h2>
+
+<p>
+Because Ada 95 supports type extension and has more flexible access
+types, the possibilities and needs for type conversion become much more
+extensive than in Ada 83.  In Ada 83, type conversion involved only a
+possible representation change and a possible constraint check.  If the
+conversion succeeded, no components were lost or added, and the
+conversion was always reversible.  There were only three kinds of
+conversions, between derived types, between numeric types and between
+array types.  Note in particular that there were no conversions between
+access types (except for the case where the type itself was derived from
+another access type).
+</p>
+<p>
+   Conversions in Ada 95 are classified as view conversions and value
+conversions.  The general idea is that a view conversion doesn't really
+perform a conversion but just provides a different view of the object.
+</p>
+<p>
+   View conversions arise in two situations, where the operand is an
+object of a tagged type, and where the conversion is used as an actual
+parameter corresponding to a formal in out or out parameter.  Other
+conversions are value conversions.  Another way of looking at the
+difference is that view conversions are for situations where an object is
+being converted whereas a value conversion can apply to an expression.
+</p>
+<p>
+   The use of a view conversion as a parameter existed in Ada 83; for
+example where a conversion of an object of say type Integer was used as
+an actual parameter corresponding to a formal in out parameter of type
+Float.  Such view conversions cause a real change of representation in
+both directions and indeed view conversions of nontagged types are always
+reversible.
+</p>
+<p>
+   View conversions of tagged types are different; no change of
+representation ever occurs; we merely get a different view seeing
+different properties of the same object.  And view conversions of tagged
+types are generally not reversible because of the possibility of type
+extension.
+</p>
+<p>
+   For tagged specific types there is an important rule that conversion
+can only be towards the root type.  Conversion of a specific type away
+from the root type is not possible because additional components will
+generally be required.  Such additional components can be provided by an
+extension aggregate.  As we saw in the example of type Object and its
+extension Circle from II.1 we can write
+<pre>
+   Object(C)
+</pre>
+as an acceptable conversion towards the root but must write
+<pre>
+   C: Circle;
+   O: Object;
+   ...
+   C := (O with Radius => 12.0);
+</pre>
+to perform the operation away from the root.  (In an early draft of Ada
+9X a form of conversion was used for such an extension but it was felt to
+be confusing and overcomplicate the rules for conversion; it also had
+generic contract problems.)  Note that we have used the named notation
+for the additional components (in this case only one).  Another important
+point is that the ancestor expression (before with) need not be the
+immediate ancestor of the target type but can be any ancestor.  See also
+3.6.1.
+</p>
+<p>
+   The same principle applies in the case of conversions from a tagged
+class-wide type to a specific type; conversion is only allowed if the tag
+of the current value of the class-wide object is such that conversion is
+not away from the root.  This is not known statically and so a tag check
+verifies that the type identified by the tag of the operand matches that
+of the target type, or is a derivative of it.  Constraint_Error is raised
+if this check fails.
+</p>
+<p>
+   Conversion from a specific type to a class wide type is always allowed
+implicitly (that is no conversion need be explicitly stated); of course
+the specific type must be in the class concerned.  We could not convert a
+Low_Alert to Medium_Alert'Class; any attempt would be detected at compile
+time.
+</p>
+<p>
+   Conversion from one class-wide type to another is also possible. The
+classes obviously have to have a common ancestor and it may be necessary
+to check the tag at runtime.  If the source class is the same as or a
+subclass of the target class then clearly no check is necessary.
+</p>
+<p>
+   We will consider the conversion of tagged types in more detail when we
+discuss redispatching in the next chapter (see 4.5).
+</p>
+<p>
+   Conversion between access types was not possible in Ada 83 (unless one
+was derived from another); each access type was considered unrelated
+(even if the accessed types were the same).  Another issue was that
+access values need not necessarily be held as addresses but could be
+indexes into the relevant pool.
+</p>
+<p>
+   However, the introduction of general access types and access
+parameters means that the conversion between access types is very
+necessary.
+</p>
+<p>
+   Conversion from pool specific types to general access types and
+between general access types is therefore permitted provided the accessed
+types are the same or are suitably related.  But we cannot convert from
+an access to constant type to an access to variable type because we might
+thereby obtain write access to a constant.  In general a conversion may
+involve constraint and accessibility checks.
+</p>
+<p>
+   Conversions are particularly useful for programming with access types
+designating tagged types.  Essentially, an access type conversion is
+permitted if access values of the target type may "safely" designate the
+object designated by the operand access value; or in other words
+providing the new view is acceptable for the designated object.  Thus a
+conversion from an access to class-wide type to an access to specific
+type will require a dynamic check to ensure that the designated object is
+of the specific type (or derived from it).  Generally, conversions
+between access types to tagged types follow exactly the same rules and
+involve the same checks as conversions between the designated types.
+Both conversions effectively give new views of the object concerned.
+</p>
+<p>
+   Conversions between access types (in general) may require
+accessibility checks to ensure that the new value could not give rise to
+a dangling reference.  It is possible to convert between any general
+access types (including anonymous access types used as access parameters
+and discriminants) provided the designated types are the same.  An
+example of access type conversion where an accessibility check is
+required occurs in 3.7.1.  Conversions between access types may also
+require constraint checks to ensure that any constraints on the accessed
+subtype are satisfied.
+</p>
+<p>
+   As explained above we have generalized implicit subtype conversions on
+arrays ("sliding") to apply in more circumstances.  These new rules
+should minimize the times when an unexpected Constraint_Error arises when
+the length of the array value is appropriate, but the upper and lower
+bounds do not match the applicable index constraint.  In effect, we are
+treating the bounds as properties of array objects rather than of array
+values.  Array values have a length for each dimension, but the bounds
+may be freely readjusted to fit the context.
+</p>
+<p>
+   Note also that array conversions require that the component subtypes
+statically match in Ada 95 whereas the check was dynamic in Ada 83.  This
+is a minor incompatibility but avoids unnecessary runtime checks.
+</p>
+
+<h2>
+<a name=9>
+3.9  Staticness
+</a>
+</h2>
+
+<p>
+In Ada 83, static expressions were limited to predefined operators
+applied to static operands, to static attributes or to static qualified
+expressions.  For Ada 95, we have extended the rules so that a static
+expression can also include items such as membership tests and attributes
+with static constituents.  See [RM95 4.9] for details.
+</p>
+<p>
+   By allowing more constructs in static expressions, the programmer has
+more freedom in contexts where static values are required.  In addition,
+we ensure more uniformity in what expressions are evaluated at compile-
+time.  Some Ada 83 compilers were aggressive in evaluating compile-time
+known expressions, while others only evaluated those expressions that
+were "officially" static.  By shifting the definition of static to more
+closely correspond to compile-time-known, uniformity of efficiency is
+enhanced.
+</p>
+<p>
+   In addition to generalizing the rules for static expressions, we also
+require that all static evaluation be performed exactly.  Although many
+compilers already perform all compile-time arithmetic with arbitrary
+precision, this rule will provide more predictability for the value of a
+static expression.  Note that the exact static value must still be
+converted to a machine manipulable representation when combined in an
+expression with non-static values.
+</p>
+<p>
+   Static strings are also introduced for use as parameters of pragmas.
+There are no other contexts in the standard which require static strings.
+</p>
+<p>
+   Staticness is also relevant in other situations such as subtype
+conformance (see 6.2).  This kind of conformance is required between the
+parameter and result specifications given in an access to subprogram type
+definition, and the specification of a potential designated subprogram.
+Subtype conformance is based on a static match between the subtypes of
+corresponding parameters and the result, if any.  This is necessary
+because when calling a subprogram via an access to subprogram type, the
+actual parameters must be prepared and the call must be performed given
+only the address (and perhaps a static link) for the target subprogram.
+The way parameters are passed, the constraints that need to be checked,
+the way the result is returned, and any other calling conventions must be
+determined completely knowing only the definition of the access-to-
+subprogram type.
+</p>
+<p>
+   A static subtype match is required for access-to-subprogram matching
+so that no additional checks on the actual parameters are required when
+calling indirectly through an access to subprogram type.
+</p>
+<p>
+   There is a general philosophy that static matching is required when
+two subtypes are involved whereas when only one subtype and a value are
+involved (as in assignment) then dynamic matching (possibly resulting in
+Constraint_Error) is applied as it was in Ada 83.  Thus static matching
+is also required in matching the component subtypes in array conversions
+and matching the subtype indication in deferred constants.  This change
+of philosophy eliminates a number of run-time checks and makes for the
+earlier detection of errors in such situations.
+</p>
+
+<h2>
+<a name=10>
+3.10  Other Improvements
+</a>
+</h2>
+
+<p>
+Ada 83 had a restriction that type, subtype, and object declarations were
+not permitted after bodies (including body stubs) within a declarative
+part.  This restriction has been removed in Ada 95.  The original
+restriction reflected Ada's Pascal heritage, where the ordering
+restrictions between declarations are even more restrictive.  However, in
+retrospect, the restriction seems somewhat arbitrary, and forces the
+separation of declarative items that might more naturally be grouped
+together, particularly in a package body declarative part.
+</p>
+<p>
+   By removing this restriction, it becomes legal to move local variable
+declarations of a subprogram body to the end of its declarative part.
+This ensures that such variables are not accessible for up-level
+references from nested subprograms declared in the same declarative part.
+By so doing, it makes it easier for a compiler to allocate such variables
+to hardware registers, rather than having to keep them in memory
+locations to support possible up-level references.
+</p>
+<p>
+   Having removed this restriction, it is necessary to rely more heavily
+on the Ada 83 rule [RM83 13.1(5-7)] that the representation for a type is
+"frozen" by the appearance of a body (including a body stub).  This rule
+precludes the separation of a representation clause from its associated
+declaration by a body.  In Ada 83, this requirement was a ramification of
+the syntax, since representation clauses were not allowed to follow
+bodies syntactically.  In Ada 95, the requirement becomes more relevant,
+since representation clauses are syntactically allowed to appear anywhere
+in a declarative part.
+</p>
+
+<h2>
+<a name=11>
+3.11  Requirements Summary
+</a>
+</h2>
+
+<p>
+The requirements for international users
+<pre>
+     R3.1-A(1) - Base Character Set
+
+     R3.1-A(2) - Extended Graphic Literals
+
+     R3.1-A(3) - Extended Character Set Support
+</pre>
+are met by the changes to the type Character and the introduction of
+Wide_Character and associated packages as discussed in 3.2.
+</p>
+<p>
+   The study topic and two requirements regarding subprograms
+<pre>
+     S4.1-A(1) - Subprograms as Objects
+
+     R4.1-B(1) - Passing Subprograms as Parameters
+
+     R4.1-B(2) - Pragma Interface
+</pre>
+are met by access to subprogram types and the pragmas Import, Export and
+Convention as discussed in 3.7.2.
+</p>
+<p>
+   The requirement
+<pre>
+     R6.1-A(1) - Unsigned Integer Operations
+</pre>
+is met by the modular types described in 3.3.2.
+</p>
+<p>
+   The requirement
+<pre>
+     R6.4-A(1) - Access Values Designating Global Objects
+</pre>
+is met by general access types and the study topic
+<pre>
+     S6.4-B(1) - Low-Level Pointer Operations
+</pre>
+is also addressed by general access types and the attribute
+Unchecked_Access.
+</p>
+<p>
+   The requirement
+<pre>
+R10.1-A(1) - Decimal-Based Types
+</pre>
+is met by the decimal types mentioned in 3.3.3.  Full support for decimal
+types is provided by the Information Systems annex to which the reader is
+referred for further details.
+</p>
+<p>
+   The requirement
+<pre>
+     S2.3-A(1) - Improve Early Detection of Errors
+</pre>
+is addressed by the introduction of static subtype matching.
+</p>
+<p>
+   The requirement
+<pre>
+     R2.2-A(1) - Reduce Deterrents to Efficiency
+</pre>
+is addressed by the introduction of the concept of base range for numeric
+types as discussed in 3.3 and by the removal of the restriction on the
+order of declarations mentioned in 3.10.
+</p>
+<p>
+   The requirement
+<pre>
+     R2.4-A(1) - Minimize Implementation Dependencies
+</pre>
+is addressed by the stipulation that all static expressions are evaluated
+exactly and that rounding of odd halves is always away from zero; see 3.9
+and II.12.
+</p>
+<p>
+   Finally we have mentioned one of the items listed under the general
+requirement
+<pre>
+     R2.2-B(1) - Understandability
+</pre>
+which is that the restriction on order of declarations is now removed.
+</p>
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-2.html> Previous </a> |
+<a href=rat95-p2-4.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

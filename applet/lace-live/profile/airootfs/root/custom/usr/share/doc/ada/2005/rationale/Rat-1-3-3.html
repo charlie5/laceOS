@@ -1,0 +1,324 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Overview: Structure, visibility, and limited types</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>1.3.3 Overview: Structure, visibility, and limited types</H1>
+<div class="Normal">Structure is vital for controlling visibility and 
+thus abstraction. There were huge changes in Ada 95. The whole of the 
+hierarchical child unit mechanism was introduced with both public and 
+private children. It was hoped that this would provide sufficient flexibility 
+for the future.</div>
+<div class="Normal" style="margin-bottom: 0.4em">But one problem has 
+remained. Suppose we have two types where each wishes to refer to the 
+other. Both need to come first! Basically we solve the difficulty by 
+using incomplete types. We might have a drawing package concerning points 
+and lines in a symmetric way. Each line contains a list or array of the 
+points on it and similarly each point contains a list or array of the 
+lines through it. We can imagine that they are both derived from some 
+root type containing printing information such as color. In Ada 95 we 
+might write<A NAME="I1015"></A>&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Object&nbsp;<B>is&nbsp;abstract&nbsp;tagged</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Its_Color:&nbsp;Color;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Point;<BR>
+<B>type</B>&nbsp;Line;<BR>
+<B>type</B>&nbsp;Acc_Point&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Point;<BR>
+<B>type</B>&nbsp;Acc_Line&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Line;</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Index&nbsp;<B>is</B>&nbsp;Integer&nbsp;<B>range</B>&nbsp;0&nbsp;..&nbsp;Max;<BR>
+<B>type</B>&nbsp;Acc_Line_Array&nbsp;<B>is&nbsp;array</B>&nbsp;(1&nbsp;..&nbsp;Max)&nbsp;<B>of</B>&nbsp;Acc_Line;<BR>
+<B>type</B>&nbsp;Acc_Point_Array&nbsp;<B>is&nbsp;array</B>&nbsp;(1&nbsp;..&nbsp;Max)&nbsp;<B>of</B>&nbsp;Acc_Point;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Point&nbsp;<B>is&nbsp;new</B>&nbsp;Object&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Of_Lines:&nbsp;Index;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LL:&nbsp;Acc_Line_Array;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Line&nbsp;<B>is&nbsp;new</B>&nbsp;Object&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Of_Points:&nbsp;Index;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PP:&nbsp;Acc_Point_Array;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal">This is very crude since it assumes a maximum number 
+<SPAN Class="swiss">Max</SPAN> of points on a line and vice versa and 
+declares the arrays accordingly. The reader can flesh it out more flexibly. 
+Well this is all very well but if the individual types get elaborate 
+and each has a series of operations, we might want to declare them in 
+distinct packages (perhaps child packages of that containing the root 
+type). In Ada 95 we cannot do this because both the incomplete declaration 
+and its completion have to be in the same package.</div>
+<div class="Normal">The net outcome is that we end up with giant cumbersome 
+packages.</div>
+<div class="Normal">What we need therefore is some way of logically enabling 
+the<A NAME="I1016"></A> incomplete view and the completion to be in different 
+packages. The elderly might remember that in the 1980 version of Ada 
+the situation was even worse &ndash; the completion had to be in the 
+same list of declarations as the incomplete declaration. Ada 83 relaxed 
+this (the so-called Taft Amendment) and permits the private part and 
+body to be treated as one list &ndash; the same rule applies in Ada 95. 
+We now go one step further.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 2005 solves the 
+problem by introducing a variation on the with clause &ndash; the limited 
+with clause.<A NAME="I1017"></A><A NAME="I1018"></A> The idea is that 
+a library package (and subprogram) can refer to another library package 
+that has not yet been declared and can refer to the types in that package 
+but only as if they were incomplete types. Thus we might have a root 
+package <SPAN Class="swiss">Geometry</SPAN> containing the declarations 
+of <SPAN Class="swiss">Object</SPAN>, <SPAN Class="swiss">Max</SPAN>, 
+<SPAN Class="swiss">Index</SPAN>, and so on and then&nbsp;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;Geometry.Lines;<BR>
+<B>package</B>&nbsp;Geometry.Points&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Acc_Line_Array&nbsp;<B>is&nbsp;array</B>&nbsp;(1&nbsp;..&nbsp;Max)&nbsp;<B>of&nbsp;access</B>&nbsp;Lines.Line;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Point&nbsp;<B>is&nbsp;new</B>&nbsp;Object&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No_Of_Lines:&nbsp;Index;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LL:&nbsp;Acc_Line_Array;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Geometry.Points;</div>
+<div class="Normal">The package <SPAN Class="swiss">Geometry.Lines</SPAN> 
+is declared in a similar way. Note especially that we are using the anonymous 
+access type facility discussed in Section <A HREF="Rat-1-3-2.html">1.3.2</A> 
+and so we do not even have to declare named access types such as <SPAN Class="swiss">Acc_Line</SPAN> 
+in order to declare <SPAN Class="swiss">Acc_Line_Array</SPAN>.</div>
+<div class="Normal">By writing <B>limited with</B> <SPAN Class="swiss">Geometry.Lines;</SPAN> 
+we get access to all the types visible in the specification of <SPAN Class="swiss">Geometry.Lines</SPAN> 
+but as if they were declared as incomplete. In other words we get an 
+incomplete view of the types. We can then do all the things we can normally 
+do with incomplete types such as use them to declare access types. (Of 
+course the implementation checks later that <SPAN Class="swiss">Geometry.Lines</SPAN> 
+does actually have a type <SPAN Class="swiss">Line</SPAN>.)</div>
+<div class="Normal">Not only is the absence of the need for a named type 
+<SPAN Class="swiss">Acc_Line</SPAN> a handy shorthand, it also prevents 
+the proliferation of named access types. If we did want to use a named 
+type <SPAN Class="swiss">Acc_Line</SPAN> in both packages then we would 
+have to declare a distinct type in each package. This is because from 
+the point of view of the package <SPAN Class="swiss">Points</SPAN>, the 
+<SPAN Class="swiss">Acc_Line</SPAN> in <SPAN Class="swiss">Lines</SPAN> 
+would only be an incomplete type (remember each package only has a limited 
+view of the other) and thus would be essentially unusable. The net result 
+would be many named access types and wretched type conversions all over 
+the place.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There are also some 
+related changes to the notation for incomplete types. We can now write 
+</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is&nbsp;tagged</B>;</div>
+<div class="Normal">and we are then guaranteed that the full declaration 
+will reveal <SPAN Class="swiss">T</SPAN> to be a tagged type. The advantage 
+is that we also know that, being tagged, objects of the type <SPAN Class="swiss">T</SPAN> 
+will be passed by reference. Consequently we can use the type <SPAN Class="swiss">T</SPAN> 
+for parameters before seeing its full declaration. In the example of 
+points and lines above, since <SPAN Class="swiss">Line</SPAN> is visibly 
+tagged in the package <SPAN Class="swiss">Geometry.Lines</SPAN> we will 
+thus get an incomplete tagged view of Lines.<A NAME="I1019"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">The introduction of 
+tagged incomplete types clarifies the ability to write&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T_Ptr&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;T'Class;</div>
+<div class="Normal">This was allowed in Ada 95 even though we had not 
+declared T as tagged at this point. Of course it implied that T would 
+be tagged. In Ada 2005 this is frowned upon since we should now declare 
+that T is tagged incomplete if we wish to declare a class wide access 
+type. For compatibility the old feature has been retained but banished 
+to <A HREF="http://www.adaic.org/resources/add_content/standards/05rm/html/RM-J-11.html">Annex 
+J</A> for obsolescent features.</div>
+<div class="Normal">Further examples of the use of limited with clauses 
+will be found in Section <A HREF="Rat-4-2.html">4.2</A>.</div>
+<div class="Normal">Another enhancement in this area is the introduction 
+of private with clauses which overcome a problem with private child packages.<A NAME="I1020"></A><A NAME="I1021"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Private child packages 
+were introduced to enable the details of the implementation of part of 
+a system to be decomposed and yet not be visible to the external world. 
+However, it is often convenient to have public packages that use these 
+details but do not make them visible to the user. In Ada 95 a parent 
+or sibling body can have a with clause for a private child. But the specifications 
+cannot. These rules are designed to ensure that information does not 
+leak out via the visible part of a specification. But there is no logical 
+reason why the private part of a package should not have access to a 
+private child. Ada 2005 overcomes this by introducing private with clauses. 
+We can write&nbsp;</div>
+<div class="SwissExamples"><B>private&nbsp;package</B>&nbsp;App.Secret_Details&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Inner&nbsp;<B>is</B>&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>various&nbsp;operations&nbsp;on&nbsp;Inner&nbsp;etc</I></SPAN><BR>
+<B>end</B>&nbsp;App.Secret_Details;</div>
+<div class="SwissExamples"><B>private&nbsp;with</B>&nbsp;App.Secret_Details;<BR>
+<B>package</B>&nbsp;App.User_View&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Outer&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>various&nbsp;operations&nbsp;on&nbsp;Outer&nbsp;visible&nbsp;to&nbsp;the&nbsp;user</I></SPAN></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>type&nbsp;Inner&nbsp;is&nbsp;not&nbsp;visible&nbsp;here</I></SPAN><BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>type&nbsp;Inner&nbsp;is&nbsp;visible&nbsp;here</I></SPAN></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Outer&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X:&nbsp;Secret_Details.Inner;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;App.User_View;</div>
+<div class="Normal" style="margin-bottom: 0.4em">thus the private part 
+of the public child has access to the type <SPAN Class="swiss">Inner</SPAN> 
+but it is still hidden from the external user. Note that the public child 
+and private child might have mutually declared types as well in which 
+case they might also wish to use the limited with facility. In this case 
+the public child would have a limited private with clause for the private 
+child written thus<A NAME="I1022"></A><A NAME="I1023"></A>&nbsp;</div>
+<div class="SwissExamples"><B>limited&nbsp;private&nbsp;with</B>&nbsp;App.Secret_Details;<BR>
+<B>package</B>&nbsp;App.User_View&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">In the case of a parent 
+package, its specification cannot have a with clause for a child &ndash; 
+logically the specification cannot know about the child because the parent 
+must be declared (that is put into the program library) first. Similarly 
+a parent cannot have a private with clause for a private child. But it 
+can have a limited with clause for any child (thereby breaking the circularity) 
+and in particular it can have a limited private with clause for a private 
+child. So we might also have&nbsp;</div>
+<div class="SwissExamples"><B>limited&nbsp;private&nbsp;with</B>&nbsp;App.Secret_Details;<BR>
+<B>package</B>&nbsp;App&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal">The final topic in this section is limited types. 
+The reader will recall that the general idea of a limited type is to 
+restrict the operations that the user can perform on a type to just those 
+provided by the developer of the type and in particular to prevent the 
+user from doing assignment and thus making copies of an object of the 
+type.</div>
+<div class="Normal">However, limited types have never quite come up to 
+expectation both in Ada 83 and Ada 95. Ada 95 brought significant improvements 
+by disentangling the concept of a limited type from a private type but 
+problems have remained.</div>
+<div class="Normal">The key problem is that Ada 95 does not allow the 
+initialization of limited types because of the view that initialization 
+requires assignment and thus copying. A consequence is that we cannot 
+declare constants of a limited type either. Ada 2005 overcomes this problem 
+by allowing initialization by aggregates.<A NAME="I1024"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">As a simple example, 
+consider&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is&nbsp;limited</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;B:&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">in which the type as 
+a whole is limited but the components are not. If we declare an object 
+of type <SPAN Class="swiss">T</SPAN> in Ada 95 then we have to initialize 
+the components (by assigning to them) individually thus&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;X:&nbsp;T;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;X.A&nbsp;:=&nbsp;10;&nbsp;&nbsp;X.B&nbsp;:=&nbsp;True;&nbsp;&nbsp;X.C&nbsp;:=&nbsp;45.7;</div>
+<div class="Normal">Not only is this annoying but it is prone to errors 
+as well. If we add a further component <SPAN Class="swiss">D</SPAN> to 
+the record type <SPAN Class="swiss">T</SPAN> then we might forget to 
+initialize it. One of the advantages of aggregates is that we have to 
+supply all the components (allowing automatic so-called full coverage 
+analysis, a key benefit of Ada).<A NAME="I1025"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 2005 allows the 
+initialization with aggregates thus</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;X:&nbsp;T&nbsp;:=&nbsp;(A&nbsp;=&gt;&nbsp;10,&nbsp;&nbsp;B&nbsp;=&gt;&nbsp;True,&nbsp;&nbsp;C&nbsp;=&gt;&nbsp;45.7);</div>
+<div class="Normal">Technically, Ada 2005 just recognizes properly that 
+initialization is not assignment. Thus we should think of the individual 
+components as being initialized individually <I>in situ</I> &ndash; an 
+actual aggregated value is not created and then assigned. (Much the same 
+happens when initializing controlled types with an aggregate.)<A NAME="I1026"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Sometimes a limited 
+type has components where an initial value cannot be given. This happens 
+with task and protected types. For example&nbsp;</div>
+<div class="SwissExamples"><B>protected&nbsp;type</B>&nbsp;Semaphore&nbsp;<B>is</B>&nbsp;...&nbsp;;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;PT&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Guard:&nbsp;Semaphore;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Finished:&nbsp;Boolean&nbsp;:=&nbsp;False;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Remember that a protected 
+type is inherently limited. This means that the type <SPAN Class="swiss">PT</SPAN> 
+is limited because a type with a limited component is itself limited. 
+It is good practice to explicitly put <B>limited</B> on the type <SPAN Class="swiss">PT</SPAN> 
+in such cases but it has been omitted here for illustration. Now we cannot 
+give an explicit initial value for a <SPAN Class="swiss">Semaphore</SPAN> 
+ but we would still like to use an aggregate to get the coverage check. 
+In such cases we can use the box symbol <SPAN Class="swiss">&lt;&gt;</SPAN> 
+to mean use the default value for the type (if any). So we can write<A NAME="I1027"></A><A NAME="I1028"></A> 
+</div>
+<div class="SwissExamples">X:&nbsp;PT&nbsp;:=&nbsp;(Guard&nbsp;=&gt;&nbsp;&lt;&gt;,&nbsp;Count&nbsp;=&gt;&nbsp;0,&nbsp;Finished&nbsp;=&gt;&nbsp;&lt;&gt;);</div>
+<div class="Normal">Note that the ability to use <SPAN Class="swiss">&lt;&gt;</SPAN> 
+in an aggregate for a default value is not restricted to the initialization 
+of limited types. It is a new feature applicable to aggregates in general. 
+But, in order to avoid confusion, it is only permitted with named notation.</div>
+<div class="Normal">Limited aggregates are also allowed in other similar 
+contexts where copying is not involved including as actual parameters 
+of mode <B>in</B>.</div>
+<div class="Normal">There are also problems with returning results of 
+a limited type from a function. This is overcome in Ada 2005 by the introduction 
+of an extended form of return statement. This is described in detail 
+in Section <A HREF="Rat-4-5.html">4.5</A>.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

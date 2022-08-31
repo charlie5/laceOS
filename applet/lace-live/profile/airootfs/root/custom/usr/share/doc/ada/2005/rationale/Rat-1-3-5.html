@@ -1,0 +1,309 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Overview: Exceptions, numerics, generics etc</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>1.3.5 Overview: Exceptions, numerics, generics etc</H1>
+<div class="Normal">As well as the major features discussed above there 
+are also a number of improvements in various other areas.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There are two small 
+changes concerning exceptions. One is that we can give a message with 
+a raise statement, thus<A NAME="I1036"></A>&nbsp;</div>
+<div class="SwissExamples"><B>raise</B>&nbsp;Some_Error&nbsp;<B>with</B>&nbsp;&quot;A&nbsp;message&quot;;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is a lot neater 
+than having to write (as in Ada 95)&nbsp;</div>
+<div class="SwissExamples">Ada.Exceptions.Raise_Exception(Some_Error'Identity,&nbsp;&quot;A&nbsp;message&quot;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The other change concerns 
+the detection of a null exception occurrence which might be useful in 
+a package analysing a log of exceptions. The problem is that exception 
+occurrences are of a limited private type and so we cannot compare an 
+occurrence with <SPAN Class="swiss">Null_Occurrence</SPAN> to see if 
+they are equal. In Ada 95 applying the function <SPAN Class="swiss">Exception_Identity</SPAN> 
+to a null occurrence unhelpfully raises <SPAN Class="swiss">Constraint_Error</SPAN>. 
+This has been changed in Ada 2005 to return <SPAN Class="swiss">Null_Id</SPAN> 
+so that we can now write<A NAME="I1037"></A>&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Process_Ex(X:&nbsp;Exception_Occurrence)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Exception_Identity(X)&nbsp;=&nbsp;Null_Id&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>process&nbsp;the&nbsp;case&nbsp;of&nbsp;a&nbsp;Null_Occurrence</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Process_Ex;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 95 introduced modular 
+types which are of course unsigned integers. However it has in certain 
+cases proved very difficult to get unsigned integers and signed integers 
+to work together. This is a trivial matter in fragile languages such 
+as C but in Ada the type model has proved obstructive. The basic problem 
+is converting a value of a signed type which happens to be negative to 
+an unsigned type. Thus suppose we want to add a signed offset to an unsigned 
+address value, we might have&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Offset_Type&nbsp;<B>is&nbsp;range</B>&nbsp;&ndash;(2**31)&nbsp;..&nbsp;2**31&ndash;1;<BR>
+<B>type</B>&nbsp;Address_Type&nbsp;<B>is&nbsp;mod</B>&nbsp;2**32;</div>
+<div class="SwissExamples">Offset:&nbsp;Offset_Type;<BR>
+Address:&nbsp;Address_Type;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We cannot just add 
+<SPAN Class="swiss">Offset</SPAN> to <SPAN Class="swiss">Address</SPAN> 
+because they are of different types. If we convert the <SPAN Class="swiss">Offset</SPAN> 
+to the address type then we might get <SPAN Class="swiss">Constraint_Error</SPAN> 
+and so on. The solution in Ada 2005 is to use a new functional attribute 
+<SPAN Class="swiss">S'Mod</SPAN> which applies to any modular subtype 
+<SPAN Class="swiss">S</SPAN> and converts a universal integer value to 
+the modular type using the corresponding mathematical mod operation. 
+So we can now write<A NAME="I1038"></A><A NAME="I1039"></A>&nbsp;</div>
+<div class="SwissExamples">Address&nbsp;:=&nbsp;Address&nbsp;+&nbsp;Address_Type'Mod(Offset);</div>
+<div class="Normal">Another new attribute is <SPAN Class="swiss">Machine_Rounding</SPAN>. 
+This enables high-performance conversions from floating point types to 
+integer types when the exact rounding does not matter.<A NAME="I1040"></A><A NAME="I1041"></A></div>
+<div class="Normal">The third numeric change concerns fixed point types. 
+It was common practice for some Ada 83 programs to define their own multiply 
+and divide operations, perhaps to obtain saturation arithmetic. These 
+programs ran afoul of the Ada 95 rules that introduced universal fixed 
+operations and resulted in ambiguities. Without going into details, this 
+problem has been fixed in Ada 2005 so that user-defined operations can 
+now be used.<A NAME="I1042"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 2005 has several 
+new pragmas. The first is&nbsp;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Unsuppress(Identifier);</div>
+<div class="Normal" style="margin-bottom: 0.4em">where the identifier 
+is that of a check such as <SPAN Class="swiss">Range_Check</SPAN>.<A NAME="I1043"></A><A NAME="I1044"></A> 
+The general idea is to ensure that checks are performed in a declarative 
+region irrespective of the use of a corresponding pragma <SPAN Class="swiss">Suppress</SPAN>. 
+Thus we might have a type <SPAN Class="swiss">My_Int</SPAN> that behaves 
+as a saturated type. Writing&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;*&quot;&nbsp;(Left,&nbsp;Right:&nbsp;My_Int)&nbsp;<B>return</B>&nbsp;My_Int&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Unsuppress(Overflow_Check);<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Integer(Left)&nbsp;*&nbsp;Integer(Right);<BR>
+<B>exception</B><BR>
+&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Constraint_Error&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;(Left&gt;0&nbsp;<B>and</B>&nbsp;Right&gt;0)&nbsp;<B>or</B>&nbsp;(Left&lt;0&nbsp;<B>and</B>&nbsp;Right&lt;0)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;My_Int'Last;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;My_Int'First;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end</B>&nbsp;&quot;*&quot;;</div>
+<div class="Normal">ensures that the code always works as intended even 
+if checks are suppressed in the program as a whole. Incidentally the 
+<SPAN Class="swiss">On</SPAN> parameter of pragma <SPAN Class="swiss">Suppress</SPAN> 
+which never worked well has been banished to Annex J.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Many implementations 
+of Ada 95 support a pragma <SPAN Class="swiss">Assert</SPAN> and this 
+is now consolidated into Ada 2005. The general idea is that we can write 
+pragmas such as<A NAME="I1045"></A><A NAME="I1046"></A>&nbsp;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Assert(X&nbsp;&gt;50);</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Assert(<B>not</B>&nbsp;Buffer_Full,&nbsp;&quot;buffer&nbsp;is&nbsp;full&quot;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The first parameter 
+is a Boolean expression and the second (and optional) parameter is a 
+string. If at the point of the pragma at execution time, the expression 
+is <SPAN Class="swiss">False</SPAN> then action can be taken. The action 
+is controlled by another pragma <SPAN Class="swiss">Assertion_Policy</SPAN> 
+which can switch the assertion mechanism on and off by one of<A NAME="I1047"></A><A NAME="I1048"></A> 
+</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Assertion_Policy(Check);</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Assertion_Policy(Ignore);</div>
+<div class="Normal">If the policy is to check then the exception <SPAN Class="swiss">Assertion_Error</SPAN> 
+is raised with the message, if any. This exception is declared in the 
+predefined package <SPAN Class="swiss">Ada.Assertions</SPAN>. There are 
+some other facilities as well.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The pragma <SPAN Class="swiss">No_Return</SPAN> 
+also concerns exceptions. It can be applied to a procedure (not to a 
+function) and indicates that the procedure never returns normally but 
+only by propagating an exception (it might also loop for ever). Thus<A NAME="I1049"></A><A NAME="I1050"></A> 
+</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Fatal_Error(Message:&nbsp;<B>in</B>&nbsp;String);<BR>
+<B>pragma</B>&nbsp;No_Return(Fatal_Error);</div>
+<div class="Normal">And now whenever we call <SPAN Class="swiss">Fatal_Error</SPAN> 
+the compiler is assured that control is not returned and this might enable 
+some optimization or better diagnostic messages.</div>
+<div class="Normal">Note that this pragma applies to the predefined procedure 
+<SPAN Class="swiss">Ada.Exceptions.Raise_Exception</SPAN>.</div>
+<div class="Normal">Another new pragma is <SPAN Class="swiss">Preelaborable_Initialization</SPAN>. 
+This is used with private types and indicates that the full type will 
+have preelaborable initialization. A number of examples occur with the 
+predefined packages such as<A NAME="I1051"></A><A NAME="I1052"></A>&nbsp;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Preelaborable_Initialization(Controlled);</div>
+<div class="Normal">in <SPAN Class="swiss">Ada.Finalization</SPAN>.</div>
+<div class="Normal">Finally, there is the pragma <SPAN Class="swiss">Unchecked_Union</SPAN>.<A NAME="I1053"></A><A NAME="I1054"></A><A NAME="I1055"></A> 
+This is useful for interfacing to programs written in C that use the 
+concept of unions. Unions in C correspond to variant types in Ada but 
+do not store any discriminant which is entirely in the mind of the C 
+programmer. The pragma enables a C union to be mapped to an Ada variant 
+record type by omitting the storage for the discriminant.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If the C program has 
+</div>
+<div class="SwissExamples">union&nbsp;{<BR>
+&nbsp;&nbsp;&nbsp;double&nbsp;spvalue;<BR>
+&nbsp;&nbsp;&nbsp;struct&nbsp;{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;length;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;double*&nbsp;first;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;mpvalue;<BR>
+}&nbsp;number;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then this can be mapped 
+in the Ada program by&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Number(Kind:&nbsp;Precision)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>case</B>&nbsp;Kind&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Single_Precision&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SP_Value:&nbsp;Long_Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Multiple_Precision&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MP_Value_Length:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MP_Value_First:&nbsp;<B>access</B>&nbsp;Long_Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;case</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+<B>pragma</B>&nbsp;Unchecked_Union(Number);</div>
+<div class="Normal">One problem with pragmas (and attributes) is that 
+many implementations have added implementation defined ones (as they 
+are indeed permitted to do). However, this can impede portability from 
+one implementation to another. To overcome this there are further <SPAN Class="swiss">Restrictions</SPAN> 
+identifiers so we can write<A NAME="I1056"></A>&nbsp;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Restrictions(No_Implementation_Pragmas,&nbsp;No_Implementation_Attributes);</div>
+<div class="Normal">Observe that one of the goals of Ada 2005 has been 
+to standardize as many of the implementation defined attributes and pragmas 
+as possible.</div>
+<div class="Normal">Readers might care to consider the paradox that GNAT 
+has an (implementation-defined) restrictions identifier <SPAN Class="swiss">No_Implementation_Restrictions</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another new restrictions 
+identifier prevents us from inadvertently using features in Annex J thus 
+</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Restrictions(No_Obsolescent_Features);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Similarly we can use 
+the restrictions identifier <SPAN Class="swiss">No_Dependence</SPAN> 
+to state that a program does not depend on a given library unit. Thus 
+we might write&nbsp;</div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Restrictions(No_Dependence&nbsp;=&gt;&nbsp;Ada.Command_Line);</div>
+<div class="Normal">Note that the unit mentioned might be a predefined 
+library unit as in the above example but it can also be used with any 
+library unit.</div>
+<div class="Normal">The final new general feature concerns formal generic 
+package parameters. Ada 95 introduced the ability to have formal packages 
+as parameters of generic units. This greatly reduced the need for long 
+generic parameter lists since the formal package encapsulated them.<A NAME="I1057"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Sometimes it is necessary 
+for a generic unit to have two (or more) formal packages. When this happens 
+it is often the case that some of the actual parameters of one formal 
+package must be identical to those of the other. In order to permit this 
+there are two forms of generic parameters. One possibility is</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;P&nbsp;<B>is&nbsp;new</B>&nbsp;Q(&lt;&gt;);<BR>
+<B>package</B>&nbsp;Gen&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then the package 
+<SPAN Class="swiss">Gen</SPAN> can be instantiated with any package that 
+is an instantiation of <SPAN Class="swiss">Q</SPAN>. On the other hand 
+we can have&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;R&nbsp;<B>is&nbsp;new</B>&nbsp;S(P1,&nbsp;P2,&nbsp;...&nbsp;);<BR>
+<B>package</B>&nbsp;Gen&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal">and then the package <SPAN Class="swiss">Gen</SPAN> 
+can only be instantiated with a package that is an instantiation of <SPAN Class="swiss">S</SPAN> 
+with the given actual parameters <SPAN Class="swiss">P1</SPAN>, <SPAN Class="swiss">P2</SPAN> 
+etc.</div>
+<div class="Normal" style="margin-bottom: 0.4em">These mechanisms are 
+often used together as in&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;P&nbsp;<B>is&nbsp;new</B>&nbsp;Q(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;R&nbsp;<B>is&nbsp;new</B>&nbsp;S(P.F1);<BR>
+<B>package</B>&nbsp;Gen&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal">This ensures that the instantiation of <SPAN Class="swiss">S</SPAN> 
+has the same actual parameter (assumed only one in this example) as the 
+parameter <SPAN Class="swiss">F1</SPAN> of <SPAN Class="swiss">Q</SPAN> 
+used in the instantiation of <SPAN Class="swiss">Q</SPAN> to create the 
+actual package corresponding to <SPAN Class="swiss">P</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There is an example 
+of this in one of the packages for vectors and matrices in ISO/IEC 13813 
+which is now incorporated into Ada 2005 (see Section <A HREF="Rat-1-3-6.html">1.3.6</A>). 
+The generic package for complex arrays has two package parameters. One 
+is the corresponding package for real arrays and the other is the package 
+<SPAN Class="swiss">Generic_Complex_Types</SPAN> from the existing Numerics 
+annex. Both of these packages have a floating type as their single formal 
+parameter and it is important that both instantiations use the same floating 
+type (eg both <SPAN Class="swiss">Float</SPAN> and not one <SPAN Class="swiss">Float</SPAN> 
+and one <SPAN Class="swiss">Long_Float</SPAN>) otherwise a terrible mess 
+will occur. This is assured by writing (using some abbreviations)&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;...&nbsp;;<BR>
+<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;Real_Arrays&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;Generic_Real_Arrays(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;Complex_Types&nbsp;<B>is&nbsp;new</B>&nbsp;Generic_Complex_Types(Real_Arrays.Real);<BR>
+<B>package</B>&nbsp;Generic_Complex_Arrays&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal">Well this works fine in simple cases (the reader 
+may wonder whether this example is simple anyway) but in more elaborate 
+situations it is a pain. The trouble is that we have to give all the 
+parameters for the formal package or none at all in Ada 95.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 2005 permits only 
+some of the parameters to be specified, and any not specified can be 
+indicated using the box. So we can write any of&nbsp;</div>
+<div class="SwissExamples"><B>with&nbsp;package</B>&nbsp;Q&nbsp;<B>is&nbsp;new</B>&nbsp;R(P1,&nbsp;P2,&nbsp;F3&nbsp;=&gt;&nbsp;&lt;&gt;);<BR>
+<B>with&nbsp;package</B>&nbsp;Q&nbsp;<B>is&nbsp;new</B>&nbsp;R(P1,&nbsp;<B>others</B>&nbsp;=&gt;&nbsp;&lt;&gt;);<BR>
+<B>with&nbsp;package</B>&nbsp;Q&nbsp;<B>is&nbsp;new</B>&nbsp;R(F1&nbsp;=&gt;&nbsp;&lt;&gt;,&nbsp;F2&nbsp;=&gt;&nbsp;P2,&nbsp;F3&nbsp;=&gt;&nbsp;P3);</div>
+<div class="Normal">Note that the existing form <SPAN Class="swiss">(&lt;&gt;)</SPAN> 
+is now deemed to be a shorthand for<SPAN Class="swiss">&nbsp;(</SPAN><B>others</B><SPAN Class="swiss">&nbsp;=&gt; &lt;&gt;)</SPAN>. As with aggregates, the form <SPAN Class="swiss">&lt;&gt;</SPAN> 
+is only permitted with named notation.</div>
+<div class="Normal">Examples using this new facility will be given in 
+a later chapter (see <A HREF="Rat-6-5.html">6.5</A>).</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-1-3-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

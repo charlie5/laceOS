@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Requeue Statements</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.SyntaxIndented {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-bottom: 0.4em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-5-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>9.5.4 Requeue Statements</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal">A <SPAN Class="swiss"><A HREF="RM-9-5-4.html#S0208">requeue_statement</A></SPAN> 
+can be used to complete an <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0201">accept_statement</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0203">entry_body</A></SPAN>, 
+while redirecting the corresponding entry call to a new (or the same) 
+entry queue. <A NAME="I3713"></A>Such a <I>requeue</I> can be performed 
+with or without allowing an intermediate cancellation of the call, due 
+to an abort or the expiration of a delay. <A NAME="I3714"></A><A NAME="I3715"></A></DIV>
+
+<H4 Class="centered">Syntax</H4>
+<DIV Class="paranum">2</DIV>
+<DIV Class="SyntaxIndented"><SPAN Class="swiss">requeue_statement</SPAN><A NAME="I3716"></A><A NAME="S0208"></A><SPAN Class="swiss">&nbsp;::=&nbsp;</SPAN><B>requeue</B>&nbsp;<I>entry_</I><A NAME="I3717"></A><SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN>&nbsp;[<B>with</B>&nbsp;<B>abort</B>];</DIV>
+
+<H4 Class="centered">Name Resolution Rules</H4>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Normal"><A NAME="I3718"></A>The <I>entry_</I><SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+of a <SPAN Class="swiss"><A HREF="RM-9-5-4.html#S0208">requeue_statement</A></SPAN> 
+shall resolve to denote an entry (the <I>target entry</I>) that either 
+has no parameters, or that has a profile that is type conformant (see 
+<A HREF="RM-6-3-1.html">6.3.1</A>) with the profile of the innermost 
+enclosing <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0203">entry_body</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0201">accept_statement</A></SPAN>. 
+<A NAME="I3719"></A></DIV>
+
+<H4 Class="centered">Legality Rules</H4>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Normal">A <SPAN Class="swiss"><A HREF="RM-9-5-4.html#S0208">requeue_statement</A></SPAN> 
+shall be within a callable construct that is either an <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0203">entry_body</A></SPAN> 
+or an <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0201">accept_statement</A></SPAN>, 
+and this construct shall be the innermost enclosing body or callable 
+construct.</DIV>
+<DIV Class="paranum">5</DIV>
+<DIV Class="Normal">If the target entry has parameters, then its profile 
+shall be subtype conformant with the profile of the innermost enclosing 
+callable construct. <A NAME="I3720"></A></DIV>
+<DIV Class="paranum">6</DIV>
+<DIV Class="Normal"><A NAME="I3721"></A>In a <SPAN Class="swiss"><A HREF="RM-9-5-4.html#S0208">requeue_statement</A></SPAN> 
+of an <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0201">accept_statement</A></SPAN> 
+of some task unit, either the target object shall be a part of a formal 
+parameter of the <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0201">accept_statement</A></SPAN>, 
+or the accessibility level of the target object shall not be equal to 
+or statically deeper than any enclosing <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0201">accept_statement</A></SPAN> 
+of the task unit. In a <SPAN Class="swiss"><A HREF="RM-9-5-4.html#S0208">requeue_statement</A></SPAN> 
+of an <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0203">entry_body</A></SPAN> 
+of some protected unit, either the target object shall be a part of a 
+formal parameter of the <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0203">entry_body</A></SPAN>, 
+or the accessibility level of the target object shall not be statically 
+deeper than that of the <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0200">entry_declaration</A></SPAN>.</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">7</DIV>
+<DIV Class="Normal"><A NAME="I3722"></A>The execution of a <SPAN Class="swiss"><A HREF="RM-9-5-4.html#S0208">requeue_statement</A></SPAN> 
+proceeds by first evaluating the <I>entry_</I><SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN>, 
+including the <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+identifying the target task or protected object and the <SPAN Class="swiss"><A HREF="RM-4-4.html#S0115">expression</A></SPAN> 
+identifying the entry within an entry family, if any. The <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0203">entry_body</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0201">accept_statement</A></SPAN> 
+enclosing the <SPAN Class="swiss"><A HREF="RM-9-5-4.html#S0208">requeue_statement</A></SPAN> 
+is then completed, finalized, and left (see <A HREF="RM-7-6-1.html">7.6.1</A>).</DIV>
+<DIV Class="paranum">8</DIV>
+<DIV Class="Normal"><A NAME="I3723"></A>For the execution of a requeue 
+on an entry of a target task, after leaving the enclosing callable construct, 
+the named entry is checked to see if it is open and the requeued call 
+is either selected immediately or queued, as for a normal entry call 
+(see <A HREF="RM-9-5-3.html">9.5.3</A>).</DIV>
+<DIV Class="paranum">9</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><A NAME="I3724"></A>For 
+the execution of a requeue on an entry of a target protected object, 
+after leaving the enclosing callable construct:&nbsp;</DIV>
+<DIV Class="paranum">10</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>if the requeue is an internal requeue 
+(that is, the requeue is back on an entry of the same protected object 
+&mdash; see <A HREF="RM-9-5.html">9.5</A>), the call is added to the 
+queue of the named entry and the ongoing protected action continues (see 
+<A HREF="RM-9-5-1.html">9.5.1</A>);&nbsp;</LI></UL>
+<DIV Class="paranum">11</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>if the requeue is an external requeue 
+(that is, the target protected object is not implicitly the same as the 
+current object &mdash; see <A HREF="RM-9-5.html">9.5</A>), a protected 
+action is started on the target object and proceeds as for a normal entry 
+call (see <A HREF="RM-9-5-3.html">9.5.3</A>).&nbsp;</LI></UL>
+<DIV Class="paranum">12</DIV>
+<DIV Class="Normal">If the new entry named in the <SPAN Class="swiss"><A HREF="RM-9-5-4.html#S0208">requeue_statement</A></SPAN> 
+has formal parameters, then during the execution of the <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0201">accept_statement</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0203">entry_body</A></SPAN> 
+corresponding to the new entry, the formal parameters denote the same 
+objects as did the corresponding formal parameters of the callable construct 
+completed by the requeue. In any case, no parameters are specified in 
+a <SPAN Class="swiss"><A HREF="RM-9-5-4.html#S0208">requeue_statement</A></SPAN>; 
+any parameter passing is implicit.</DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><A NAME="I3725"></A>If 
+the <SPAN Class="swiss"><A HREF="RM-9-5-4.html#S0208">requeue_statement</A></SPAN> 
+includes the reserved words <B>with abort</B> (it is a <I>requeue-with-abort</I>), 
+then:&nbsp;</DIV>
+<DIV Class="paranum">14</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>if the original entry call has been 
+aborted (see <A HREF="RM-9-8.html">9.8</A>), then the requeue acts as 
+an abort completion point for the call, and the call is cancelled and 
+no requeue is performed;</LI></UL>
+<DIV Class="paranum">15</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>if the original entry call was timed 
+(or conditional), then the original expiration time is the expiration 
+time for the requeued call.&nbsp;</LI></UL>
+<DIV Class="paranum">16</DIV>
+<DIV Class="Normal">If the reserved words <B>with abort</B> do not appear, 
+then the call remains protected against cancellation while queued as 
+the result of the <SPAN Class="swiss"><A HREF="RM-9-5-4.html#S0208">requeue_statement</A></SPAN>. 
+</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">17</DIV>
+<DIV Class="Notes">31&nbsp;&nbsp;A requeue is permitted from a single 
+entry to an entry of an entry family, or vice-versa. The entry index, 
+if any, plays no part in the subtype conformance check between the profiles 
+of the two entries; an entry index is part of the <I>entry_</I><SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+for an entry of a family. <A NAME="I3726"></A></DIV>
+
+<H4 Class="centered">Examples</H4>
+<DIV Class="paranum">18</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><I>Examples of requeue 
+statements:</I>&nbsp;</DIV>
+<DIV Class="paranum">19</DIV>
+<DIV Class="Examples"><B>requeue</B>&nbsp;Request(Medium)&nbsp;<B>with&nbsp;abort</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;requeue&nbsp;on&nbsp;a&nbsp;member&nbsp;of&nbsp;an&nbsp;entry&nbsp;family&nbsp;of&nbsp;the&nbsp;current&nbsp;task,&nbsp;see&nbsp;<A HREF="RM-9-1.html">9.1</A></I></SPAN></DIV>
+<DIV Class="paranum">20</DIV>
+<DIV Class="Examples"><B>requeue</B>&nbsp;Flags(I).Seize;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;requeue&nbsp;on&nbsp;an&nbsp;entry&nbsp;of&nbsp;an&nbsp;array&nbsp;component,&nbsp;see&nbsp;<A HREF="RM-9-4.html">9.4</A></I></SPAN></DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-5-3.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

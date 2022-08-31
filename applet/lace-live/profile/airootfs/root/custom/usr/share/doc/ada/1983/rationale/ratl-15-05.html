@@ -1,0 +1,176 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 15.5: Enumeration Types with Noncontiguous Representations</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 15: Representation Clauses and Machine Dependences</H2>
+
+<H3><a name="15.5">15.5 Enumeration Types with Noncontiguous Representations</a></H3>
+
+The specified  internal codes  of an  enumeration type  need not  have
+contiguous values.  This degree of generality is required if character
+types are to be represented by enumeration types, since many character
+sets have noncontiguous internal values.
+<p>
+We next  discuss the  implications of noncontiguous representations on
+assignment and comparison, indexing and case selection, and finally on
+iteration.
+
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#15.5.1">15.5.1 Assignment and Comparison with Noncontiguous Enumeration Types</a><BR>
+<a href="#15.5.2">15.5.2 Indexing and Case Statements with Noncontiguous Enumeration Types</a><BR>
+<a href="#15.5.3">15.5.3 Iteration Over Noncontiguous Enumeration Types</a><BR>
+<a href="#15.5.4">15.5.4 Character Types</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="15.5.1">15.5.1 Assignment and Comparison with Noncontiguous Enumeration Types</a></H3>
+
+An assignment  only results  in moving  a value  from one  location to
+another, and  thus  is  not  influenced  by  the  noncontiguity  of  a
+representation. Similarly, noncontiguity has no impact on comparison.
+
+<H3><BR><a name="15.5.2">15.5.2 Indexing and Case Statements with Noncontiguous Enumeration
+Types</a></H3>
+
+The simplest way to treat an array indexed by an enumeration type that
+has a  noncontiguous representation  is to  implement it  as a  normal
+array, but  leaving holes  (that is,  unused positions) in the storage
+used. No  conversion is  then needed between the internal code and the
+actual index  to storage, since they have the same value. In a similar
+way, the  internal jump  table used  for a  case statement  could have
+holes.
+<p>
+Note that  no problem arises when such arrays are passed as parameters
+to subprograms  since the index type is part of the array type and the
+same mapping will be used inside and outside the subprogram.
+<p>
+The user  should be  aware of the hidden storage costs involved: these
+costs are  certainly preferable  to prohibiting  the use of types with
+noncontiguous representations  for indexing and in case statements. If
+we consider  character sets,  for instance,  the proportion  of  holes
+remains at an acceptable level.
+
+<H3><BR><a name="15.5.3">15.5.3 Iteration Over Noncontiguous Enumeration Types</a></H3>
+
+We are  faced with  a more severe problem when a loop parameter ranges
+over  the   values  of   a  noncontiguous   enumeration  type:  simply
+incrementing the  value of  the loop  parameter by  a constant at each
+iteration will  not work!  To keep  the same underlying mechanism, the
+compiler may use a characteristic vector, that provides information on
+holes. For  every  such  loop,  the  compiler  will  include  code  to
+interrogate the characteristic vector.
+<p>
+This mechanism  is illustrated  by the following example. Consider the
+type MIX_CODE,  for which  a  noncontiguous  representation  has  been
+specified.
+<p>
+<table border cellpadding=6><tr><td><pre>
+type MIX_CODE is (ADD, SUB, MUL, LDA, STA, STZ);
+for MIX_CODE use
+  (ADD =&gt;  1, SUB =&gt;  2, MUL = &gt; 3, LDA =&gt;  8, STA =&gt;  24, STZ =&gt; 33);
+</pre></td></tr></table>
+<p>
+A loop  statement that  iterates over  the values of the MIX_CODE type
+can be written as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+for N in MIX_CODE loop
+  DISPLAY(N);
+end loop;
+</pre></td></tr></table>
+<p>
+The compiler  could produce  object code  equivalent to  the following
+text (apart from typing rules):
+<p>
+<table border cellpadding=6><tr><td><pre>
+PRESENT :  constant array (1 .. 33) of BOOLEAN :=
+            (1 | 2 | 3 | 8 | 24 | 33 =&gt;  TRUE,  others =&gt;  FALSE);
+
+for J in PRESENT'RANGE loop
+  if PRESENT(J) then
+    DISPLAY(J);
+  end if;
+end loop;
+</pre></td></tr></table>
+<p>
+As illustrated above, the compilation involves a characteristic vector
+(PRESENT) which  is used  to generate the integer values corresponding
+to the enumeration type MIX_CODE. Thus we see that iterating over such
+types is possible, but involves extra cost.
+<p>
+Another technique  is to  use a  representation vector  that maps  the
+ordinals into the enumeration values:
+<p>
+<table border cellpadding=6><tr><td><pre>
+REPRESENTATION  :     constant   array  (0  ..  5)  of  INTEGER  := (1,2,3,8,24,33);
+for J in REPRESENTATION'RANGE loop
+  DISPLAY(REPRESENTATION(J));
+end loop;
+</pre></td></tr></table>
+<p>
+Similar techniques are used to implement 'SUCC, 'PRED, 'POS and 'VAL.
+
+<H3><BR><a name="15.4.4">15.5.4 Character Types</a></H3>
+
+Character types  are a  typical example  of enumeration types with not
+necessarily contiguous  representations. The predefined character type
+CHARACTER that  denotes the full ASCII character set of 128 characters
+is contiguous,  but the  same  is  not  true  for  other  widely  used
+character sets  such as  EBCDIC. Such character sets will generally be
+defined in library modules, which will include both the character type
+declaration and the associated representation specification. It may be
+convenient to provide such a definition in two steps. For example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type CHAR is (enumeration of all EBCDIC characters);
+
+type EBCDIC is new CHAR; -- same characters as CHAR
+
+for EBCDIC use (codes corresponding to EBCDIC characters);
+</pre></td></tr></table>
+<p>
+A user  to whom  the internal  code is relevant (perhaps because he is
+performing input-output)  will declare  objects of  type  EBCDIC.  For
+other uses,  especially if  such characters are to be used as indices,
+in case statements and in iterations, the user might prefer to use the
+type CHAR.  Since no  representation specification  is given  for this
+type, the  translator will  adopt a  default  representation  that  is
+convenient for indexing and iteration. Explicit conversion between the
+two types can be performed.
+<p>
+Note however  that CHAR  and EBCDIC will have their values in the same
+order, so  the user  cannot be relieved of all the problems associated
+with this wretched data type.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-15-06.html#15.6"><b>NEXT</b></a>
+&#128; <a href="ratl-15-04.html#15.4"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-15.html#15"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>

@@ -1,0 +1,821 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 5.1: The Real Types</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 5: Numeric Types</H2>
+
+<H3><a name="5.3">5.3 The Real Types</a></H3>
+
+The real  types form two classes: floating point types and fixed point
+types. Both  are approximate  and are different forms of approximation
+to the  real numbers  of mathematics.  With floating  point types, the
+error in  representing a mathematical value is roughly proportional to
+its absolute  value over  a large range. In contrast, the error with a
+fixed point  value has  an absolute bound, so that small values have a
+correspondingly large relative error.
+<p>
+The real  type definition  specifies bounds  on the permitted error in
+the representation of values: the precision for floating point and the
+delta for fixed point. A floating point type declaration of the form
+<p>
+<PRE>    type T is digits D;</PRE>
+<p>
+specifies D  significant decimal  digits precision.  It would  perhaps
+have been  more consistent  to specify  a bound  on the relative error
+directly, but  giving the number of significant decimal digits is more
+natural for  the user.  The use of a range constraint, in the extended
+form of declaration
+<p>
+<PRE>    type T is digits D range L .. R;</PRE>
+<p>
+signifies the  construction of a subtype. The check that the values of
+L and  R lie within the range of the base type is therefore a run-time
+check, and CONSTRAINT_ERROR is raised if it fails.
+<p>
+A fixed point type declaration of the form
+<p>
+<PRE>    type T is delta D range L .. R;</PRE>
+<p>
+specifies the  delta D,  which is  an absolute  bound on the permitted
+error. Here  a bound  specified in  decimal  digits  would  have  been
+inappropriate, and  too coarse, for a binary machine. In this case the
+range constraint  is not optional since an unbounded range would imply
+an infinite  number of  values;  the  declaration  is  illegal  if  no
+predefined base type exists that accommodates the range and delta.
+<p>
+The predefined operations provided for floating and fixed types differ
+in detail  in order  to reflect correctly the handling of error bounds
+within a computation. The accuracy constraints determine parameters to
+a semantic  model for  the real types which is used to bound errors on
+the predefined operations. This is described below in <a href="#5.3.3">section 5.3.3</a>.
+<p>
+<H4>Attributes</H4>
+
+Ada provides three classes of predefined attributes for real types:
+<ol>
+<li>those also  associated with  other scalar types (such
+   as 'FIRST and 'LAST),
+<p>
+<li>those specific to the guaranteed properties of a real
+   type (such as 'DIGITS), and
+<p>
+<li>those associated  with  machine-dependent  properties
+   (such as 'MACHINE_RADIX).
+</ol>
+
+There are  several predefined attributes that apply to both classes of
+real types.  For each  such type  R, R'FIRST  and R'LAST are values of
+type R  that bound  all the  values of R. The integer value R'MANTISSA
+gives the number of binary places for the mantissa (floating point) or
+magnitude (fixed  point) in  the abstract representation for the type.
+R'SMALL and  R'LARGE are  values  of  type  universal_real  which  are
+respectively the  smallest positive  nonzero  value  and  the  largest
+positive value in the abstract representation.
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#5.3.1">5.3.1  Floating Point Types</a><BR>
+<a href="#5.3.2">5.3.2  Fixed Point Types</a><BR>
+<a href="#5.3.3">5.3.3  A Semantic Model for Approximate Computation</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="5.3.1">5.3.1 Floating Point Types</a></H3>
+
+The following  operators are defined for the predefined floating point
+type FLOAT:
+<p>
+<center><table border cellpadding=6><tr><th align=left>Operator</th><th align=left>Meaning</th><th align=left>Result Type</th></tr>
+<tr><td>
+<table><tr><td><pre>+  -
++  -
+&#42;
+/
+&#42;&#42;
+=  /=
+&lt;  &lt;=  &gt;  &gt;=
+</pre></td></tr></table>
+</td><td>
+<table><tr><td>
+<pre>identity and negation
+addition and subtraction
+multiplication
+division
+exponentiation by an integer
+equality and inequality
+ordering</pre></td></tr></table>
+</td><td>
+<table><tr><td>
+<pre>operand type
+operand type
+operand type
+operand type
+type of left operand
+BOOLEAN
+BOOLEAN</pre></td></tr></table></tr></table></center>
+
+<p>
+Both operands of the binary operators +, -, &#42;, / and of the relational
+operators must  have the  same type.  If system-defined floating point
+types such  as LONG_FLOAT  are implemented,  then overloadings  of the
+arithmetic and  relational operators are defined for these types in an
+analogous manner.
+<p>
+The operators  =  and  /=  could  have  been  excluded  because  their
+semantics  is  of  doubtful  validity,  since  the  representation  is
+approximate. Given a precision of 6 digits, then equality could either
+mean equality  of representation  (which would  typically be of higher
+precision) or  equality only to 6 digits. If the former semantics were
+chosen then  equality would  be  implementation  dependent.  Moreover,
+since some  implementations may  use a  higher precision for temporary
+values than  for declared  objects, it  would be  possible  after  the
+assignment
+<p>
+<PRE>    X :=  (Y + Z);</PRE>
+<p>
+to have
+<p>
+<PRE>    X /= (Y + Z)</PRE>
+<p>
+If the  latter semantics  were chosen, then equality would be computed
+as approximately  equal. This  would lead to the anomaly that equality
+would no longer be transitive, that is, it would be possible that
+<p>
+<PRE>    X = Y and Y = Z and X /= Z</PRE>
+<p>
+The decision  has been  to allow  equality since it is defined for all
+other types.  The user must be aware that the implemented precision is
+used,  that   is,  the  values  X  and  Y  are  equal  only  if  their
+representations are identical, and that in consequence code may not be
+portable. (The situation is no better with other languages.)
+<p>
+The exponentiation operation for floating point operands is defined by
+repeated multiplication  in the  same way  as  with  integers.  For  a
+negative exponent,  the value  is the reciprocal of the value with the
+positive exponent. The exponent is of type INTEGER.
+<p>
+The  predefined   attribute  R'DIGITS   yields  the   value  (of  type
+universal_integer) that  appears as the accuracy constraint that gives
+the precision of the type or subtype R.
+<p>
+As explained  earlier, the  precision of  the predefined  types FLOAT,
+LONG_FLOAT, and  so on, is defined by the implementation. The user may
+define other floating point types directly in terms of their precision
+and range, in which case an appropriate one of the predefined types is
+selected by  the compiler  and the user-defined type is a subtype of a
+type derived  from this  predefined type.  Alternatively, the user may
+define types  derived  from  the  predefined  types  by  reducing  the
+precision requirement and constraining the range. Thus in practice, at
+the  machine  level,  there  will  be  only  one  or  two  implemented
+precisions. As  for other  constraints, the  range constraints and the
+precision reductions are checked by the compiler.
+<p>
+Defining floating point types directly in terms of their precision and
+range is preferable for portability. In this case the types are mapped
+on the nearest applicable machine implemented precision. As an example
+consider the type declarations
+<p>
+<table border cellpadding=6><tr><td><pre>
+type MY_SHORT_FLOAT is digits 6;
+type MY_FLOAT       is digits 8;
+type MY_LONG_FLOAT  is digits 10;
+</pre></td></tr></table>
+<p>
+On a machine for which the implemented precision provides 7 digits for
+FLOAT and 14 for LONG_FLOAT these declarations have the same effect as
+<p>
+<table border cellpadding=6><tr><td><pre>
+type MY_SHORT_FLOAT is new FLOAT digits 6;
+type MY_FLOAT       is new LONG_FLOAT digits 8;
+type MY_LONG_FLOAT  is new LONG_FLOAT digits 10;
+</pre></td></tr></table>
+<p>
+On another  machine, for  which the  implemented precisions  provide 8
+digits for  FLOAT and  16 for  LONG_FLOAT, these declarations have the
+same effect as
+<p>
+<table border cellpadding=6><tr><td><pre>
+type MY_SHORT_FLOAT is new FLOAT digits 6;
+type MY_FLOAT       is new FLOAT digits 8;
+type MY_LONG_FLOAT  is new LONG_FLOAT digits 10;
+</pre></td></tr></table>
+<p>
+If a  range constraint  is included  in the  type declaration,  then a
+check is  made that the range inherited from the implemented type will
+cover the range specified. If the check fails then CONSTRAINT_ERROR is
+raised.
+<p>
+To summarize,  the language provides a direct and simple mechanism for
+achieving efficient  use of  the available  precisions predefined by a
+given implementation.
+<p>
+<H4>Example:</H4>
+
+As an illustration of the direct use of the predefined types FLOAT and
+LONG_FLOAT, consider the following typical library function:
+<p>
+<table border cellpadding=6><tr><td><pre>
+function DOT_PRODUCT(X,Y :  FLOAT_VECTOR) return FLOAT is
+  SUM :  LONG_FLOAT :=  0.0;
+begin
+  for I in X'RANGE loop
+    SUM :=  SUM + LONG_FLOAT(X(I)) &#42; LONG_FLOAT(Y(I));
+  end loop;
+  return FLOAT (SUM);
+end DOT_PRODUCT;
+</pre></td></tr></table>
+<p>
+If the machine has an instruction that forms the double length product
+from two  single length  operands, it  is fairly simple for a peephole
+optimizer to  use this  instruction in  the inner  loop  (rather  than
+expand each operand and multiply).
+<p>
+<H4>Multiple precisions</H4>
+<p>
+If an  application requires  floating point  computation with multiple
+precisions, then  two means  can be  used to  achieve this: the use of
+subtypes, and the use of types.
+<DL>
+<DT><b>(1) Use of Subtypes</b>
+<p>
+<DD>To use  subtypes, a type must be declared with the largest required
+   precision, for example
+<p>
+<PRE>    type MY_REAL is digits 20;</PRE>
+<p>
+   Then variables or subtypes can be declared:
+<p>
+<table border cellpadding=6><tr><td><pre>
+X :  MY_REAL;        -- digits 20
+Y :  MY_REAL digits 15;
+subtype SHORT_REAL is MY_REAL digits 10;
+Z1, Z2, Z3 :  SHORT_REAL;
+</pre></td></tr></table>
+<p>
+   The operations  on MY_REAL  are defined for all variables with that
+   base type  (X, Y,  Z1, Z2, Z3). Hence it is not possible to provide
+   an overloaded  SQRT function  just for  SHORT_REAL. Similarly,  the
+   error analysis is dependent on the operators for the type MY_REAL.
+<p>
+   An optimizing  compiler may  be able  to  use  single  length  data
+   representation for each variable, but this depends on the variables
+   being invisible  to other  compilation units  and on the ability of
+   the compiler to establish that the semantics will be preserved.
+<p>
+   Note that  the declaration  of Y is also an implicit assertion that
+   the precision  of MY_REAL  is at  least 15  digits. This  could  be
+   useful for  defensive programming in large systems. For example, if
+   in a  later revision  of the  program the  precision  of  the  type
+   MY_REAL is  reduced by  more than  5, then the compiler will give a
+   warning message  upon recompilation  of the declaration of Y (or at
+   least cause CONSTRAINT_ERROR to be raised).
+<p>
+<DT><b>(2) Use of Types</b>
+<p>
+<DD>
+   To use types, each distinct class of numbers would have a different
+   type, with  a precision  appropriate to  the task  being performed.
+   Security  is  better  than  with  the  use  of  subtypes,  but  all
+   conversions must  be explicit.  On the  other hand,  converting the
+   program for use on another target computer is simple and efficient.
+   This is  because each  type is mapped separately using only as much
+   precision as  necessary. Of course, the efficiency is also high for
+   the  initial   application  computer   as  well,   since   even   a
+   nonoptimizing compiler  will map  each type  onto  the  appropriate
+   hardware type.
+</DL>
+<p>
+
+Both cases above assume that the programs have been written well using
+named types or subtypes. Direct use of FLOAT and LONG_FLOAT is absent,
+so that  no assumption  has been  made about  the precisions  of these
+types. For  a discussion of the construction of mathematical libraries
+in Ada,  and of  how one  can parameterize  with respect  to different
+precisions, see <a href="ratl-BIB.html">[SWKW]</a>.
+
+<H3><BR><a name="5.3.2">5.3.2 Fixed Point Types</a></H3>
+<p>
+
+The definition of the fixed point types is more difficult, for several
+reasons. First, the representation cannot be determined until both the
+range and  delta are  known. These  two parameters determine the width
+required in  bits and  the position  of the  decimal  (binary)  point.
+Having  determined   these,  the   representation  is  fixed  and  the
+operations can  be defined.  The  second  problem  is  that  the  type
+resulting from  multiplication and  division is universal_fixed. Since
+no operations  are available on the type universal_fixed, a product or
+a quotient  must be  explicitly converted  to the  required  type  (or
+subtype).
+<p>
+In a  fixed point type declaration, the value following delta, and the
+two range  bounds (which  must be  provided) are  of any real type but
+must have  a value determined at compilation time, that is, given by a
+static expression.  In a subtype declaration, the delta value must not
+be less than that of the type, and the range constraint values must be
+within the values of the type.
+<p>
+To illustrate  the representation  of fixed point values, consider for
+example the type declaration
+<p>
+<PRE>    type F is delta 0.01 range -100.0 .. 100.0;</PRE>
+<p>
+We assume  the target machine to be a 16-bit minicomputer using two's-
+complement arithmetic.  Assuming that  no length clause has been given
+for F'SMALL,  the implemented  range would  use the  next power of two
+above 100  to encompass  the stated range, and would be (-128 .. 127),
+which needs  7 bits  of magnitude  (and 1  sign bit) above the decimal
+point. Similarly  7 bits  are required below the decimal point to give
+error bound  &lt; 0.01. Hence 15 bits are required (sign, 7 above decimal
+point, 7  below decimal  point),  leaving  one  spare  bit  which  can
+conveniently be  at the  bottom of  the word to provide a (fortuitous)
+guard bit (that is, precision beyond what is needed).
+<p>
+This representation  is clearly  the most efficient in terms of space,
+since F'SMALL  is a power of 2. A different representation is obtained
+by specifying  an arbitrary  real number  S for  F'SMALL in  a  length
+clause
+<p>
+<PRE>    for F'SMALL use S;</PRE>
+<p>
+In this case each value of the type is an exact integer multiple of S,
+and the  predefined attribute  F'SIZE will  tell how  many bits are in
+fact used to store it. S must not exceed F'DELTA.
+<p>
+The predefined  attribute R'DELTA  for a fixed point type or subtype R
+has a value of type universal_real which is that given in the accuracy
+constraint of the type or subtype.
+<p>
+Given two  fixed point  types F  and G (and using I to denote INTEGER)
+then we have the following operations:
+<p>
+<center><table border cellpadding=6><tr><th align=left>Operator</th><th align=left>Meaning</th><th align=center>Operand Types<BR>Left&nbsp;&nbsp;Right</th><th align=left>Result Type</th></tr>
+<tr><td>
+
+<table><tr><td><pre>+&nbsp;&nbsp;-
++&nbsp;&nbsp;-
+&#42;
+&#42;
+&#42;
+/
+/
+=&nbsp;&nbsp;/=
+&lt;&nbsp;&nbsp;&lt;=&nbsp;&nbsp;&gt;&nbsp;&nbsp;&gt;=</pre></td></tr></table>
+
+</td><td>
+
+<table><tr><td><pre>identity and negation
+addition and subtraction
+integer multiplication
+integer multiplication
+fixed multiplication
+fixed division
+fixed division by integer
+equality and inequality
+ordering</pre></td></tr></table>
+
+</td><td>
+
+<table><tr><td align=left><pre>&nbsp;&nbsp;F&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;F&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;F&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;I&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;F&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;F&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;F&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;F&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;F&nbsp;&nbsp;&nbsp;</pre></td><td><pre>
+&nbsp;F
+&nbsp;F
+&nbsp;I
+&nbsp;F
+&nbsp;G
+&nbsp;G
+&nbsp;I
+&nbsp;F
+&nbsp;F</pre></td></tr></table>
+
+</td><td>
+
+<table><tr><td align=left><pre>&nbsp;
+F
+F
+F
+universal_fixed
+universal_fixed
+F
+BOOLEAN
+BOOLEAN</pre></td></tr></table>
+</td></tr></table></center>
+<p>
+Fixed point  operators =  and /=  are permitted for the same reason as
+for floating point.
+<p>
+Defining the  semantics of  these operations in terms of the permitted
+rounding error  requires care.  The  basic  source  of  error  is  the
+representation of  constants and  intermediate results.  If EPSILON is
+half the  delta of F (that is, EPSILON = F'DELTA/2), then a constant C
+is represented by a machine value C1 such that
+<p>
+<PRE>    C - EPSILON  &lt;  C1  &lt;  C + EPSILON</PRE>
+<p>
+The operations  above that  yield a result type universal_fixed obey a
+similar inequality:
+<p>
+<table border cellpadding=6><tr><td><pre>
+X, Y :  F;
+
+X&#42;Y  - EPSILON  &lt;  F(X&#42;Y)   &lt;  X&#42;Y   + EPSILON
+X/Y  - EPSILON  &lt;  F(X/Y)   &lt;  X/Y   + EPSILON
+</pre></td></tr></table>
+<p>
+where the  upper and  lower limits  are calculated mathematically (and
+the result  is assumed  to lie  within the  range of  F). A value C is
+representable without  error if  C1 = C. Computations with such values
+are exact,  except for  division and  fixed point multiplication. Note
+that integer  multiplication is  essentially repeated addition, it can
+overflow  but   cannot  lose   accuracy.  Note   also   that   integer
+multiplication by  a floating point value is not permitted, since this
+is not  equivalent to  repeated addition.  In this  case  the  integer
+operand must  be  explicitly  floated.  The  user  could  define  this
+operation if required.
+<p>
+The operations of fixed multiplication and division are essentially in
+two parts. First, the accurate product or quotient is formed (that is,
+a result  of the type universal_fixed is obtained). Second, the result
+must be  converted before being assigned to any variable or being used
+in further  computation. This  conversion may imply a loss of accuracy
+due to  the representation  in the  destination type:  since the fixed
+point operands  are essentially  just scaled  integers,  the  accurate
+product will  in fact  be another  scaled integer,  but  the  accurate
+quotient must  be treated  as a  ratio of  integers. The  operation of
+fixed division  by an  integer operates  in an  analogous way  and  is
+merely provided  to avoid  excessive explicit type conversions. A real
+literal is  not allowed  as an  operand  of  fixed  multiplication  or
+division, since  there is  not a  unique fixed  point type to which to
+convert it;  this situation can be resolved by an explicit conversion,
+or better,  by using  a declared  constant -  which simplifies program
+maintenance.
+<p>
+To understand  the computational  aspects it is simplest to consider a
+decimal machine  and model.  Take a  word as  being a  sign and  three
+digits (SDDD), and consider the following declaration
+<p>
+<PRE>    type NORMAL is delta 0.001 range -0.999 .. 0.999;</PRE>
+<p>
+This type requires all of the word with the representation S.DDD (that
+is, the point next to the far left of the word). Consider also
+<p>
+<PRE>    type LARGE is delta 10.0 range -800.0 .. 800.0;</PRE>
+<p>
+This would ordinarily be implemented as (SDDD.), with one guard digit.
+Finally, consider
+<p>
+<PRE>    type MEDIUM is delta 0.1 range -9.0 .. 9.0;</PRE>
+<p>
+This would  have the  representation (SD.DD)  with one guard digit. We
+can illustrate the use of these types as follows
+<p>
+<table border cellpadding=6><tr><td><pre>
+X     :  NORMAL;
+L1, L2 :  LARGE;
+C :  constant MEDIUM :=  2.3;
+
+X :=  0.3333;         -- last digit lost on conversion to NORMAL
+                      -- Now |X - 0.3333| &lt; NORMAL'DELTA,
+                      -- (mathematically)
+
+X :=  X + 0.1;        -- 0.1 needs no qualification as the left
+operand
+                      -- specifies the type (NORMAL) of 0.1
+
+X :=  2&#42;X;            -- Now X = 0.866
+
+X :=  X/2;            -- equivalent to X := NORMAL(X/2.0), that is,
+                      -- integer division avoids qualification
+
+X :=  NORMAL(C&#42;X);    -- the constant is represented as 2.30
+                      -- The machine evaluates
+                      -- 2.30&#42;0.433 = 0.99590 (six-digit answer)
+and then
+                      -- rounds the result to 0.996, which is
+stored in X.
+                      -- Note that rounding is needed (no guard
+digit for
+                      -- NORMAL).
+
+L1 :=  700.0;         -- the .0 is necessary: no implicit
+conversion
+                      -- of an integer literal to a fixed point
+type
+
+L1 :=  LARGE(X&#42;L1);   -- calculates 700.0&#42;0.996 = 697.20, rounds to
+697.0
+                      -- (assuming the guard digit for LARGE)
+
+...
+
+L1 :=  LARGE(X&#42;L1) + L1;   -- conversion is necessary, and serves
+                      -- to emphasize rounding before addition
+
+L2 :=  LARGE(X&#42;L1) + 100.0;     -- conversion is necessary
+
+if L1 &gt; X then        -- not legal: L1 and X must have the same
+type
+
+if L1 &gt; LARGE(L2 &#42; X) then -- legal: explicit conversion
+</pre></td></tr></table>
+<p>
+The user can perform accurate computation with fixed point by ensuring
+that only  exactly representable  values are  used. In  fact, the only
+source of  error is  the implied  rounding of constants and conversion
+(which is necessary for multiplication and division).
+<p>
+<H4>Example:</H4>
+<p>
+A frequent calculation in some numerical applications is the smoothing
+of an input sequence by means of a running average:
+<p>
+<table border cellpadding=6><tr><td><pre>
+OLD_VAL, NEW_VAL :  F;
+...
+OLD_VAL :=  0.9 &#42; OLD_VAL   +   0.1 &#42; NEW_VAL;
+</pre></td></tr></table>
+<p>
+To program  this in  Ada using  fixed point, the types of the products
+and constants on the right hand side must be specified, that is:
+<p>
+<table border cellpadding=6><tr><td><pre>
+K1 :  constant FRACTION :=  0.9;
+K2 :  constant FRACTION :=  0.1;
+
+OLD_VAL :=  F(K1 &#42; OLD_VAL) + F(K2 &#42; NEW_VAL);
+</pre></td></tr></table>
+<p>
+An error  analysis reveals  that a small error in the constant K1 will
+cause a much larger error in OLD_VAL after successive iterations (thus
+a constant value of 10.0 as input converges to 9.09 if 0.9 is replaced
+by 0.89 for K1). This increase in error occurs when the sum of the two
+constants is not exactly 1.0. To avoid this cumulative effect, one can
+omit the larger constant and write the following:
+<p>
+<PRE>    OLD_VAL :=  OLD_VAL + F(K2 &#42; (NEW_VAL - OLD_VAL));</PRE>
+<p>
+<H4>Example:</H4>
+<p>
+As another  illustration of  the use  of  fixed  point,  consider  the
+following  function   for  computing   the  average  of  an  array  of
+components:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type F is   ...                -- some fixed point type
+type INDEX is range 1 .. 100;
+type FIXED_VECTOR is array (INDEX) of F;
+
+function AVERAGE(A :  FIXED_VECTOR) return F is
+  NUM_ITEMS :  constant INTEGER :=  INDEX'LAST;
+  type SUMF is delta F'DELTA
+    range NUM_ITEMS&#42;F'FIRST  ..  NUM_ITEMS&#42;F'LAST;
+  SUM :  SUMF :=  0.0;
+begin
+  for I in A'RANGE loop
+    SUM :=  SUM + SUMF(A(I));
+  end loop;
+  return F(SUM/NUM_ITEMS);
+end;
+</pre></td></tr></table>
+<p>
+Here, the  type SUMF  has a  greater range  than F  to accommodate the
+larger potential  range of  values. The explicit conversion inside the
+loop does  not lose  accuracy, but the final division potentially will
+lose accuracy.  If type  F requires  nearly a full word, then the type
+SUMF will be double length. It is very difficult to write an algorithm
+to obtain  the average  which avoids  double length. Since the size of
+the array  is involved  in the  type SUMF,  this size must be known at
+compilation time.
+
+<H3><BR><a name="5.3.3">5.3.3 A Semantic Model for Approximate Computation</a></H3>
+<p>
+
+Programming languages  do not  conventionally define  the semantics of
+floating  point   arithmetic.  However,   in  Ada,  with  declarations
+controlling the  accuracy of  data types, it is highly desirable to do
+so. A  proposal of W. S. Brown <a href="ratl-BIB.html">[Br 78]</a> makes it possible to describe a
+model which  is both  clean in  structure and  realistic (that  is, it
+describes the  actual behavior of floating point arithmetic units). In
+this section,  a brief overview is given of the model as needed by the
+language.
+<p>
+For each  type, an  abstract representation  is defined.  The abstract
+representation of  each nonzero  number x  takes the form of a sign, a
+mantissa, and  an integer exponent. Thus for the binary representation
+we have
+<p>
+<PRE>    x =  þ m &#42; 2&#42;&#42;n</PRE>
+<p>
+where
+<p>
+<PRE>    1/2  &lt;  m  &lt;  1</PRE>
+<p>
+that is,  the number  is normalized: the most significant binary digit
+is always 1. For example, a mantissa of length 3 allows representation
+of only  the following  mantissa values  (using the notation for based
+literals):
+<p>
+<PRE>    2#0.100#,  2#0.101#,  2#0.110#,  2#0.111#</PRE>
+<p>
+The relative  precision here varies from 1 in 4 to 1 in 7; in general,
+mantissa length B guarantees precision of only 1 in 2&#42;&#42;(B-1), although
+near to  1 the  precision is  nearly 1  in 2&#42;&#42;B.  Hence to guarantee D
+decimal digits  precision requires  B to  be one  more than  the least
+integer greater than D&#42;log(10)/log(2). If for example we declare
+<p>
+<PRE>    type F is digits 6;</PRE>
+<p>
+then the  mantissa will  have 21  binary digits, that is, F'MANTISSA =
+21. If the smallest value of the exponent is -84 and the largest is 84
+(the values required by Ada in this case - see below) then
+<p>
+<table border cellpadding=6><tr><td><pre>
+F'SMALL  = 2#0.1#e-84
+F'LARGE  = 2#0.11111_11111_11111_11111_1#e84.
+</pre></td></tr></table>
+<p>
+We do  not assume that numbers are represented in this fashion, merely
+that numbers  having the  numeric values given above are representable
+in the  machine. Brown  now  develops  axioms  for  the  representable
+numbers and  the behavior  of a  machine number  that is bounded by an
+interval whose endpoints are representable numbers. These axioms allow
+the use  of higher  precision than specified in the declaration, which
+is essential in Ada, since the implemented precision will typically be
+greater than the declared precision.
+<p>
+The Ada  version of  the Brown  model  for  floating  point  works  as
+follows:
+<ol>
+<li>From the  decimal precision  specified (F'DIGITS) the
+   corresponding  number   of  binary   places  is  determined,  being
+   F'MANTISSA.
+<p>
+<li>The model  numbers are  those with  F'MANTISSA binary
+   places and an exponent in the range
+<p>
+<PRE>    -4&#42;F'MANTISSA .. 4&#42;F'MANTISSA.</PRE>
+<p>
+<li>The safe  numbers are  those with  F'MANTISSA  binary
+   places and  a potentially  larger exponent  range  limited  by  the
+   hardware.
+</ol>
+
+The model numbers guarantee workable properties including a reasonable
+range of  values -  their definition is machine-independent: hence the
+term model.  The safe numbers allow one to exploit the larger exponent
+range  that   many  machines  provide.  Safe  numbers  have  the  same
+properties as  model numbers  and include  the model numbers but their
+range is machine-dependent.
+<p>
+For fixed  point types,  a similar representation is chosen without an
+exponent. In  this case  for the binary representation of each nonzero
+number x we use:
+<p>
+<PRE>    x =  þ M &#42; small</PRE>
+<p>
+where M  is now  an integer,  whose length  B defines  its range  1 ..
+2&#42;&#42;(B-1), and  small is  the  smallest  positive  representable  value
+(corresponding to M=1). Axioms (not treated by Brown) can now be given
+which reflect  the exact nature of some operations and the approximate
+nature of  others. In  addition, because of the obvious correspondence
+between  the   abstract  representations  of  all  approximate  types,
+conversions can be defined.
+<p>
+These conversions  and some use of subtypes can result in weaker error
+bounds than those of the type. Consider:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type F is digits 6;                             -- 21 bits
+X :  F;
+Y :  F digits 5;                                    -- 18 bits
+</pre></td></tr></table>
+<p>
+The accuracy  constraint in  the declaration  of  Y  implies  loss  of
+precision in  the subtype.  Thus the  statement  Y  :=  X;  allows  an
+implementation to  lose the  three least  significant binary digits on
+the assignment.  A subsequent  assignment X  := Y; will then mean that
+the last  three bits  of X  are undefined  (that is, the interval that
+bounds the value of X is larger than that given by the type).
+<p>
+<H4>Example:</H4>
+<p>
+Consider the fixed point type:
+<p>
+<PRE>    type F is delta 0.01 range -100.0 .. 100.0;</PRE>
+<p>
+To discuss  the semantics, we again write model numbers in the form of
+based numbers, thus:
+<p>
+<PRE>    64 = 2#100_0000.0000_000#</PRE>
+<p>
+Then
+<p>
+<table border cellpadding=6><tr><td><pre>
+F'FIRST     = -2#110_0100.0000_000#        = -100.0
+F'LAST      = 2#110_0100.0000_000#         = 100.0
+F'MANTISSA  = 14
+F'SMALL     = 1/128 = 2#000_0000.0000_001# = 0.0078125(&lt;0.01)
+F'LARGE     = 255 + 127/128 = 2#111_1111.1111_111#  = 255.9921875
+-- F'DELTA is not a model number
+-- F'FIRST and F'LAST are model numbers in this
+-- example but this need not always be the case.
+</pre></td></tr></table>
+<p>
+Now consider the representation of 2.1, as in the declaration:
+<p>
+<PRE>    Z :  F :=  2.1;</PRE>
+<p>
+The value is bounded by the two consecutive model numbers
+<p>
+<table border cellpadding=6><tr><td><pre>
+2 + 12/128 = 2#000_0010.0001_100# = 2.09375
+2 + 13/128 = 2#000_0010.0001_101# = 2.1015625
+</pre></td></tr></table>
+<p>
+of the type F, which therefore define the smallest model interval that
+bounds Z.  On a  20-bit machine,  Z is likely to be represented by the
+machine value (using the same notation) of
+<p>
+<PRE>    2.10009765625 = 8602/4096 = 2#000_0010.0001_1001_1010#</PRE>
+<p>
+The error analysis of ordinary computation proceeds similarly. Take:
+<p>
+<PRE>    Z :=  Z + 2.0;</PRE>
+<p>
+Here 2.0 is a model number (and hence is represented exactly). So as a
+result, the  bounds for  Z are  now  4.09375  and  4.1015625.  If  the
+operands are  not model numbers, then the bounds for the result of the
+operation  are   computed  as  the  closest  model  numbers  that  are
+guaranteed to enclose all possible results, for all possible values in
+the model intervals associated with the operands. Thus after
+<p>
+<PRE>    Z :=  Z + Z;</PRE>
+<p>
+we shall  get new  bounds 8.1875  and 8.203125  for Z,  so  the  model
+interval associated with Z has doubled in size.
+<p>
+The logic  with fixed  point multiplication  and division  is slightly
+different. Take
+<p>
+<PRE>    Z :=  F(X &#42; Y);</PRE>
+<p>
+Here X and Y are of any fixed point types, not necessarily type F, but
+of  course  Z  must  be  of  type  F  for  the  rules  for  assignment
+compatibility.  The   logic  of  multiplication  (and  similarly  with
+division) is as follows. X and Y are computed in the ordinary way, and
+associated with  each of their values will be a corresponding bounding
+model interval.  The multiplication is then performed with essentially
+arbitrarily high precision. One can think of this intuitively in terms
+of giving  a double length result. This arbitrarily accurate result is
+then converted  to type  F; in  consequence some  accuracy may well be
+lost, and in any case a bounding model interval will be dependent upon
+the characteristics  of the  fixed point  type F.  This result is then
+assigned, of course, to the variable Z in this case.
+<p>
+The reason  why multiplication  and division  work  in  this  way,  is
+because the  resulting values  cannot be constrained to lie within the
+same range  and delta  as of  the type  of the  operands. Hence  it is
+essential that  these operations allow the result to be rescaled. This
+is done  in two  stages: by  calculating a  result with an essentially
+arbitrarily high precision, and then by explicit conversion to a fixed
+point type.
+
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-05-04.html#5.4"><b>NEXT</b></a>
+&#128; <a href="ratl-05-02.html#5.2"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-05.html#5"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

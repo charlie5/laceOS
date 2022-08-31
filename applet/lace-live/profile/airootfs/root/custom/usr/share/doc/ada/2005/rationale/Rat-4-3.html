@@ -1,0 +1,349 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Visibility from private parts</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-4-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-4-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>4.3 Visibility from private parts</H1>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 95 introduced public 
+and private child packages in order to enable subsystems to be decomposed 
+in a structured manner. The general idea is that&nbsp;</div>
+<div class="Bulleted">public children enable the decomposition of the 
+view of a subsystem to the user of the subsystem,</div>
+<div class="Bulleted">private children enable the decomposition of the 
+implementation of a subsystem.&nbsp;</div>
+<div class="Normal">In turn both public and private children can themselves 
+have children of both kinds. This has proved to work well in most cases 
+but a difficulty has arisen regarding private parts.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Recall that the private 
+part of a package really concerns the implementation of the package rather 
+than specifying the facilities to the external user. Although it does 
+not concern algorithmic aspects of the implementation it does concern 
+the implementation of data abstraction. During the original design of 
+Ada some thought was given to the idea that a package should truly be 
+written and compiled as three distinct parts. Perhaps like this&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;...<BR>
+<B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>visible&nbsp;specification</I></SPAN><BR>
+<B>end</B>;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;...<BR>
+<B>package&nbsp;private</B>&nbsp;P&nbsp;<B>is</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>just&nbsp;dreaming</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>private&nbsp;part</I></SPAN><BR>
+<B>end</B>;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;...<BR>
+<B>package&nbsp;body</B>&nbsp;P&nbsp;is<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>body</I></SPAN><BR>
+<B>end</B>;</div>
+<div class="Normal">Each part could even have had its own context clause 
+as shown.</div>
+<div class="Normal">However, it was clear that this would be an administrative 
+nightmare in many situations and so the two-part specification and body 
+emerged with the private part lurking at the end of the visible part 
+of the specification (and sharing its context clause).</div>
+<div class="Normal">This was undoubtedly the right decision in general. 
+The division into just two parts supports separate compilation well and 
+although the private part is not part of the logical interface to the 
+user it does provide information about the physical interface and that 
+is needed by the compiler.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The problem that has 
+emerged is that the private part of a public package cannot access the 
+information in private child packages.<A NAME="I1130"></A> Private children 
+are of course not visible to the user but there is no reason why they 
+should not be visible to the private part of a public package provided 
+that somehow the information does not leak out. Thus consider a hierarchy 
+</div>
+<div class="SwissExamples"><B>package</B>&nbsp;App&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;App;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;App.Pub&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;App.Pub;</div>
+<div class="SwissExamples"><B>private&nbsp;package</B>&nbsp;App.Priv&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;App.Priv;</div>
+<div class="Normal">There is no reason why the private parts of <SPAN Class="swiss">App</SPAN> 
+and <SPAN Class="swiss">App.Pub</SPAN> and the visible part of the specification 
+of <SPAN Class="swiss">App.Priv</SPAN> should not share visibility (the 
+private part of <SPAN Class="swiss">App.Priv</SPAN> logically belongs 
+to the next layer of secrecy downwards). But this sharing is not possible 
+in Ada 95.</div>
+<div class="Normal">The public package <SPAN Class="swiss">App.Pub</SPAN> 
+is not permitted to have a with clause for the child package <SPAN Class="swiss">App.Priv</SPAN> 
+since this would mean that the visible part of <SPAN Class="swiss">App.Pub</SPAN> 
+would also have visibility of this information and by mechanisms such 
+as renaming could pass it on to the external user.</div>
+<div class="Normal">The specification of the parent package <SPAN Class="swiss">App</SPAN> 
+is also not permitted to have a with clause for <SPAN Class="swiss">App.Priv</SPAN> 
+since this would break the dependence rules anyway. Any child has a dependence 
+on its parent and so the parent specification has to be compiled or entered 
+into the program library first.</div>
+<div class="Normal">Note that the private part of the public child <SPAN Class="swiss">App.Pub</SPAN> 
+does automatically have visibility of the private part of the parent 
+<SPAN Class="swiss">App</SPAN>. But the reverse cannot be true again 
+because of the dependence rules.</div>
+<div class="Normal">Finally note that the private child <SPAN Class="swiss">App.Priv</SPAN> 
+can have a with clause for its public sibling <SPAN Class="swiss">App.Pub</SPAN> 
+(it creates a dependence of course) but that only gives the private child 
+visibility of the visible part of the public child.</div>
+<div class="Normal">So the only visibility sharing among the three regions 
+in Ada 95 is that the private part of the public child and the visible 
+part of the private child can see the private part of the parent.</div>
+<div class="Normal">The practical consequence of this is that in large 
+systems, information which should really be lower down the hierarchy 
+has to be placed in the private part of the ultimate parent. This tends 
+to mean that the parent package becomes very large thereby making maintenance 
+more difficult and forcing frequent recompilations of the parent and 
+thus the whole hierarchy of packages.</div>
+<div class="Normal">The situation is much alleviated in Ada 2005 by the 
+introduction of private with clauses.<A NAME="I1131"></A><A NAME="I1132"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">If a package <SPAN Class="swiss">P</SPAN> 
+has a private with clause for a package <SPAN Class="swiss">Q</SPAN> 
+thus&nbsp;</div>
+<div class="SwissExamples"><B>private&nbsp;with</B>&nbsp;Q;<BR>
+<B>package</B>&nbsp;P&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">then the private part 
+of <SPAN Class="swiss">P</SPAN> has visibility of the visible part of 
+the package <SPAN Class="swiss">Q</SPAN>, whereas the visible part of 
+<SPAN Class="swiss">P</SPAN> does not have visibility of <SPAN Class="swiss">Q</SPAN> 
+and so visibility cannot be transmitted to a user of <SPAN Class="swiss">P</SPAN>. 
+It is rather as if the with clause were attached to just the private 
+part of <SPAN Class="swiss">P</SPAN> thus&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>with</B>&nbsp;Q;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>we&nbsp;cannot&nbsp;write&nbsp;this</I></SPAN><BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal">This echoes the three-part decomposition of a package 
+discussed above.</div>
+<div class="Normal">A private with clause can be placed wherever a normal 
+with clause for the units mentioned can be placed and in addition a private 
+with clause which mentions a private unit can be placed on any of its 
+parent's descendants.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So we can put a private 
+with clause for <SPAN Class="swiss">App.Priv</SPAN> on <SPAN Class="swiss">App.Pub</SPAN> 
+thereby permitting visibility of the private child from the private part 
+of its public sibling. Thus&nbsp;</div>
+<div class="SwissExamples"><B>private&nbsp;with</B>&nbsp;App.Priv;<BR>
+<B>package</B>&nbsp;App.Pub&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>App.Priv&nbsp;not&nbsp;visible&nbsp;here</I></SPAN><BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>App.Priv&nbsp;visible&nbsp;here</I></SPAN><BR>
+<B>end</B>&nbsp;App.Pub;</div>
+<div class="Normal">This works provided we don't run afoul of the dependence 
+rules. The private with clause means that the public child has a dependence 
+on the private child and therefore the private child must be compiled 
+or entered into the program library first.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We might get a situation 
+where there exists a mutual dependence between the public and private 
+sibling in that each has a type that the other wants to access. In such 
+a case we can use a limited private with clause thus<A NAME="I1133"></A><A NAME="I1134"></A></div>
+<div class="SwissExamples"><B>limited&nbsp;private&nbsp;with</B>&nbsp;App.Priv;<BR>
+<B>package</B>&nbsp;App.Pub&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>App.Priv&nbsp;not&nbsp;visible&nbsp;here</I></SPAN><BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>limited&nbsp;view&nbsp;of&nbsp;App.Priv&nbsp;here</I></SPAN><BR>
+<B>end</B>&nbsp;App.Pub;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The child packages 
+are both dependent on the parent package and so the parent cannot have 
+with clauses for them. But a parent can have a limited with clause for 
+a public child and a limited private with clause for a private child 
+thus&nbsp;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;App.Pub;&nbsp;<B>limited&nbsp;private&nbsp;with</B>&nbsp;App.Priv;<BR>
+<B>package</B>&nbsp;App&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>limited&nbsp;view&nbsp;of&nbsp;App.Pub&nbsp;here</I></SPAN><BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>limited&nbsp;view&nbsp;of&nbsp;App.Priv&nbsp;here</I></SPAN><BR>
+<B>end</B>&nbsp;App;</div>
+<div class="Normal" style="margin-bottom: 0.4em">A simple example of 
+the use of private with clauses was given in the Introduction. Here it 
+is somewhat extended&nbsp;</div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;App.User_View;&nbsp;<B>limited&nbsp;private&nbsp;with</B>&nbsp;App.Secret_Details;<BR>
+<B>package</B>&nbsp;App&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>limited&nbsp;view&nbsp;of&nbsp;type&nbsp;Outer&nbsp;visible&nbsp;here</I></SPAN><BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>limited&nbsp;view&nbsp;of&nbsp;type&nbsp;Inner&nbsp;visible&nbsp;here</I></SPAN><BR>
+<B>end</B>&nbsp;App;</div>
+<div class="SwissExamples"><B>private&nbsp;package&nbsp;</B>App.Secret_Details&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Inner&nbsp;<B>is</B>&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>various&nbsp;operations&nbsp;on&nbsp;Inner&nbsp;etc</I></SPAN><BR>
+<B>end</B>&nbsp;App.Secret_Details;</div>
+<div class="SwissExamples"><B>private&nbsp;with</B>&nbsp;App.Secret_Details;<BR>
+<B>package</B>&nbsp;App.User_View&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Outer&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>various&nbsp;operations&nbsp;on&nbsp;Outer&nbsp;visible&nbsp;to&nbsp;the&nbsp;user</I></SPAN></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>type&nbsp;Inner&nbsp;is&nbsp;not&nbsp;visible&nbsp;here</I></SPAN><BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>type&nbsp;Inner&nbsp;is&nbsp;visible&nbsp;here</I></SPAN></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Outer&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X:&nbsp;Secret_Details.Inner;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;App.User_View;</div>
+<div class="Normal">In the previous section we observed that there were 
+problems with interactions between use clauses, nonlimited with clauses, 
+and limited with clauses. Those rules also apply to private with clauses 
+where a private with clause is treated as a nonlimited with clause and 
+a limited private with clause is treated as a limited with clause. In 
+other words private is ignored for the purpose of those rules.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Moreover, we cannot 
+place a package use clause in the same context clause as a private with 
+clause (limited or not). This is because we would then expect it to apply 
+to the visible part as well which would be wrong. However, we can always 
+put a use clause in the private part thus&nbsp;</div>
+<div class="SwissExamples"><B>private&nbsp;with</B>&nbsp;Q;<BR>
+<B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Q&nbsp;not&nbsp;visible&nbsp;here</I></SPAN><BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>use</B>&nbsp;Q;<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>use&nbsp;visibility&nbsp;of&nbsp;Q&nbsp;here</I></SPAN><BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal" style="margin-bottom: 0.4em">At the risk of confusing 
+the reader it might be worth pointing out that strictly speaking the 
+rules regarding private with are treated as legality rules rather than 
+visibility rules. Here is an example which illustrates this subtlety 
+and the dangers it avoids&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;F&nbsp;<B>return</B>&nbsp;Integer;<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;F&nbsp;<B>return</B>&nbsp;Integer;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;P;<BR>
+<B>private&nbsp;with</B>&nbsp;F;<BR>
+<B>package</B>&nbsp;Q&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>use</B>&nbsp;P;<BR>
+&nbsp;&nbsp;&nbsp;X:&nbsp;Integer&nbsp;:=&nbsp;F;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;Y:&nbsp;Integer&nbsp;:=&nbsp;P.F;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal</I></SPAN><BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;Z:&nbsp;Integer&nbsp;:=&nbsp;F;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal,&nbsp;calls&nbsp;the&nbsp;library&nbsp;F</I></SPAN><BR>
+<B>end</B>&nbsp;Q;</div>
+<div class="Normal">If we treated the rules regarding private with as 
+pure visibility rules then the call of <SPAN Class="swiss">F</SPAN> in 
+the declaration of <SPAN Class="swiss">X</SPAN> in the visible part would 
+be a call of <SPAN Class="swiss">P.F</SPAN>. So moving the declaration 
+of <SPAN Class="swiss">X</SPAN> to the private part would silently change 
+the <SPAN Class="swiss">F</SPAN> being called &ndash; this would be nasty. 
+We can always write the call of <SPAN Class="swiss">F</SPAN> as <SPAN Class="swiss">P.F</SPAN> 
+as shown in the declaration of <SPAN Class="swiss">Y</SPAN>.</div>
+<div class="Normal">So the rules regarding private with are written to 
+make entities visible but unmentionable in the visible part. In practice 
+programmers can just treat them as visibility rules so that the entities 
+are not visible at all which is how we have described them above.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A useful consequence 
+of the unmentionable rather than invisible approach is that we can use 
+the name of a package mentioned in a private with clause in a pragma 
+in the context clause thus&nbsp;</div>
+<div class="SwissExamples"><B>private&nbsp;with</B>&nbsp;P;&nbsp;&nbsp;<B>pragma</B>&nbsp;Elaborate(P);<BR>
+<B>package</B>&nbsp;Q&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">Private with clauses 
+are in fact allowed on bodies as well, in which case they just behave 
+as a normal with clause. Another minor point is that Ada has always permitted 
+several with clauses for the same unit in one context clause thus&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;P;&nbsp;&nbsp;<B>with</B>&nbsp;P;&nbsp;&nbsp;<B>with</B>&nbsp;P,&nbsp;P;<BR>
+<B>package</B>&nbsp;Q&nbsp;is&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">To avoid complexity 
+we similarly allow&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;P;&nbsp;&nbsp;<B>private&nbsp;with</B>&nbsp;P;<BR>
+<B>package</B>&nbsp;Q&nbsp;<B>is</B></div>
+<div class="Normal">and then the private with is ignored.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We have introduced 
+private with clauses in this section as the solution to the problem of 
+access to private children from the private part of the parent or public 
+sibling. But they have other important uses. If we have&nbsp;</div>
+<div class="SwissExamples"><B>private&nbsp;with</B>&nbsp;P;<BR>
+<B>package</B>&nbsp;Q&nbsp;<B>is</B>&nbsp;...</div>
+<div class="Normal">then we are assured that the package <SPAN Class="swiss">Q</SPAN> 
+cannot inadvertently access <SPAN Class="swiss">P</SPAN> in the visible 
+part and, in particular, pass on access to entities in <SPAN Class="swiss">P</SPAN> 
+by renamings and so on. Thus writing <B>private with</B> provides additional 
+documentation information which can be useful to both human reviewers 
+and program analysis tools. So if we have a situation where a private 
+with clause is all that is needed then we should use it rather than a 
+normal with clause.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In summary, whereas 
+in Ada 95 there is just one form of with clause, Ada 2005 provides four 
+forms&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;P;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>full&nbsp;view</I></SPAN></div>
+<div class="SwissExamples"><B>limited&nbsp;with</B>&nbsp;P;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>limited&nbsp;view</I></SPAN></div>
+<div class="SwissExamples"><B>private&nbsp;with</B>&nbsp;P;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>full&nbsp;view&nbsp;from&nbsp;private&nbsp;part</I></SPAN></div>
+<div class="SwissExamples"><B>limited&nbsp;private&nbsp;with</B>&nbsp;P;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>limited&nbsp;view&nbsp;from&nbsp;private&nbsp;part</I></SPAN></div>
+<div class="Normal">Finally, note that if a private with clause is given 
+on a specification then it applies to the body as well as to the private 
+part.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-4-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-4-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

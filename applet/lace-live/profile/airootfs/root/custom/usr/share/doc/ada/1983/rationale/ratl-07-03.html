@@ -1,0 +1,507 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 7.3: Simple Strong Typing</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 7: Derived Types</H2>
+
+<H3><a name="7.3">7.3 Simple Strong Typing</a></H3>
+
+Given some  useful type,  the derivation mechanism offers a simple way
+of creating  other types  that are  distinct copies  of this type. The
+usual motivation  for such  type replication  is to keep the two value
+spaces well  separated and,  thus, to  achieve a simple form of strong
+typing.  We   illustrate  this  idea  by  an  example  due  to  Erhard
+Ploedereder and  Helmut Hummel.  Consider a  useful type  for counting
+currency:
+<p>
+<PRE>    type CURRENCY is delta 0.01 range 0.0 .. 1.0E6;</PRE>
+<p>
+and assume  that we  have forced  an exact  representation of  decimal
+values by means of the representation clause:
+<p>
+<PRE>    for CURRENCY'SMALL use CURRENCY'DELTA;</PRE>
+<p>
+From this type we can derive the usual types:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type DOLLAR is new CURRENCY;  -- three
+type FRANC  is new CURRENCY;  -- distinct
+type MARK   is new CURRENCY;  -- types
+</pre></td></tr></table>
+<p>
+The motivation  for having these distinct types is well-known to every
+traveller, namely not to mix the different currencies. So we could now
+declare
+<p>
+<table border cellpadding=6><tr><td><pre>
+MY_MONEY, YOUR_MONEY :  DOLLAR;
+ARGENT        :  FRANC;
+TASCHENGELD   :  MARK;
+</pre></td></tr></table>
+<p>
+and the usual constants
+<p>
+<table border cellpadding=6><tr><td><pre>
+CENT     :  constant DOLLAR     :=  0.01;
+CENTIME  :  constant FRANC :=  0.01;
+PFENNIG  :  constant MARK  :=  0.01;
+</pre></td></tr></table>
+<p>
+By virtue of these declarations, we can write assignments such as
+<p>
+<table border cellpadding=6><tr><td><pre>
+YOUR_MONEY   :=  1&#42;CENT;
+TASCHENGELD  :=  50&#42;PFENNIG;
+MY_MONEY     :=  YOUR_MONEY;
+</pre></td></tr></table>
+<p>
+All are  legal  and  this  can  be  checked  by  an  Ada  compiler  at
+compilation time. Similarly an Ada compiler will detect at compilation
+time any of the following misuses:
+<p>
+<table border cellpadding=6><tr><td><pre>
+ARGENT     :=  YOUR_MONEY;      -- Illegal!
+MY_MONEY   :=  TASCHENGELD;     -- Illegal!</pre></td></tr></table>
+<p>
+What  this   example  illustrates   is  that  we  have  provided  type
+declarations that  reflect  the  common-sense  view  that  having  one
+"centime" is  not the  same as  having one  "pfennig".  Although  both
+correspond to  an abstract  value of  "0.01", we  consider  that  they
+belong to different value spaces. Note that this would not be achieved
+if we had declared our variables as
+<p>
+<PRE>    MY_MONEY,  YOUR_MONEY,  ARGENT,  TASCHENGELD :  CURRENCY;</PRE>
+<p>
+since this  would allow mixing different currencies in an uncontrolled
+manner. Distinguishing  the value  spaces was also the main reason for
+having typed  constants for  CENT, CENTIME, and PFENNIG. Using a named
+number such as
+<p>
+<PRE>    ONE_UNIT :  constant  :=  0.01;</PRE>
+<p>
+would indeed be misleading in this case: After the assignments
+<p>
+<table border cellpadding=6><tr><td><pre>
+ARGENT     :=  ONE_UNIT;
+MY_MONEY   :=  ONE_UNIT;
+</pre></td></tr></table>
+<p>
+it would  be wrong  to believe  that these two variables have the same
+value since  an implicit  conversion of  the universal_real value 0.01
+has taken  place for each assignment: to the type FRANC in the case of
+ARGENT and to the type DOLLAR in the case of MY_MONEY.
+<p>
+So we  have different currencies but we can exchange them. For example
+we can assume a range of conversion rates:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type CONV_RATE is delta 0.0001 range 1.0 .. 2000.0;
+   -- for converting from the stronger currency
+for CONV_RATE'SMALL use CONV_RATE'DELTA;
+</pre></td></tr></table>
+<p>
+and define the function
+<p>
+<table border cellpadding=6><tr><td><pre>
+function EXCHANGE(A :  MARK) return FRANC is
+  MARK_TO_FRANC :  constant CONV_RATE  :=  3.20;
+begin
+  return FRANC(MARK_TO_FRANC &#42; CURRENCY(A));
+end;
+</pre></td></tr></table>
+<p>
+and thereafter write
+<p>
+<PRE>    ARGENT :=  EXCHANGE(TASCHENGELD);</PRE>
+<p>
+which has  exactly the  intended effect of converting TASCHENGELD from
+marks to francs before assigning the result to ARGENT.
+<p>
+Note that  the return  statement of the function EXCHANGE includes two
+successive explicit conversions. First
+<p>
+<PRE>    CURRENCY(A)</PRE>
+<p>
+yields the number of currency units that correspond to the value of A.
+Then, after  multiplication by  the mark to franc rate, this number is
+converted to the type FRANC:
+<p>
+<PRE>    FRANC(MARK_TO_FRANC&#42;CURRENCY(A))</PRE>
+<p>
+Thus if  the value  of A  is equal to 2.0, this means that we have 2.0
+marks; the  conversion CURRENCY(A)  yields 2.0  units of currency; the
+multiplication by  MARK_TO_FRANC yields 6.40_0000 units - conceptually
+units of  currency; and  the final  conversion converts them into 6.40
+francs. We could have written it - equivalently - as
+<p>
+<PRE>    FRANC(MARK_TO_FRANC&#42;A)</PRE>
+<p>
+but this  would fail to show the conversion into the more neutral type
+CURRENCY as  an important  conceptual intermediate  step. Each  of the
+above conversions  is purely on the conceptual level - helping to make
+the intent  more explicit  - but  will  not  result  in  any  run-time
+executable code.
+<p>
+Note that  we could  write this  example - without derivation - in the
+following manner:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type DOLLAR is delta 0.01 range 0.0 .. 1.0E6;
+type FRANC is delta 0.01 range 0.0 .. 1.0E6;
+type MARK  is delta 0.01 range 0.0 .. 1.0E6;
+</pre></td></tr></table>
+<p>
+But this  formulation would  hide the  fact that these three types are
+currencies with  the same  delta and  range,  and  for  which  certain
+currency-specific functions could be declared, such as interest:
+<p>
+<table border cellpadding=6><tr><td><pre>
+package FINANCIAL is
+  type CURRENCY is delta 0.01 range 0.0 .. 1.0E6;
+  for CURRENCY'SMALL use CURRENCY'DELTA;
+  type RATE is delta 0.01 range 0.0 .. 10.0;
+  for RATE'SMALL use RATE'DELTA;
+
+  function INTEREST(A :  CURRENCY; R :  RATE) return CURRENCY;
+  ...
+end;
+
+package body FINANCIAL is
+  ...
+  function INTEREST(A :  CURRENCY; R :  RATE) return CURRENCY is
+  begin
+    return CURRENCY(A&#42;R);
+  end;
+  ...
+end FINANCIAL;
+</pre></td></tr></table>
+<p>
+With this  variation, and assuming the derived types to be declared as
+follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type DOLLAR is new FINANCIAL.CURRENCY;
+type FRANC is new FINANCIAL.CURRENCY;
+type MARK  is new FINANCIAL.CURRENCY;
+</pre></td></tr></table>
+<p>
+we can  now use the functions INTEREST derived for each of these types
+from the corresponding function defined for the common parent type:
+<p>
+<table border cellpadding=6><tr><td><pre>
+MY_MONEY   := MY_MONEY + INTEREST(MY_MONEY, 0.10);
+ARGENT     := ARGENT + INTEREST(MONNAIE, 0.15);
+</pre></td></tr></table>
+<p>
+To conclude  on this first example, it shows that derived types can be
+used to  achieve program reliability and readability in quite a simple
+manner -  hence the  name simple  strong typing.  We will see later in
+this chapter (and in <a href="ratl-13.html#13">chapter 13</a>) that generic units can often (but not
+always) be  used to  achieve similar  goals. However generic solutions
+will usually involve much more machinery and, in consequence, are less
+likely to be used in simple situations such as the currency example.
+<p>
+Note also  that derivation  will allow the construction of hierarchies
+of derived types. Thus having the predefined type
+<p>
+<PRE>    type STRING is array(POSITIVE range &lt;&gt;) of CHARACTER;</PRE>
+<p>
+we can derive the types
+<p>
+<table border cellpadding=6><tr><td><pre>
+type LINE is new STRING(1 .. 140);
+type CARD is new STRING(1 .. 80);
+</pre></td></tr></table>
+<p>
+Moreover we can further derive the following types
+<p>
+<table border cellpadding=6><tr><td><pre>
+type CONTROL_CARD  is new CARD;
+type PROGRAM_CARD  is new CARD;
+type DATA_CARD     is new CARD;
+</pre></td></tr></table>
+<p>
+These  definitions   ensure  that   objects  of   type  LINE  are  not
+accidentally mixed  with objects  of type CARD. However, they can both
+be converted  to the  type STRING by means of appropriate conversions.
+Also we have defined three distinct types, derived from the type CARD,
+and we  can define  distinct operations  for them.  For example we may
+want to  define certain  subprograms that  are applicable  to  control
+cards but not to program cards, or vice versa.
+<p>
+From a  purist point  of view  one could argue that the use of derived
+types in  many of  these examples  does not achieve total reliability.
+For example, with the derivations of SCALAR in
+<p>
+<table border cellpadding=6><tr><td><pre>
+type LENGTH is new SCALAR;
+type AREA   is new SCALAR;
+</pre></td></tr></table>
+<p>
+the multiplication  that  is  derived  for  LENGTH  is  the  following
+multiplication, which is not useful:
+<p>
+<PRE>    function "&#42;" (LEFT, RIGHT :  LENGTH) return LENGTH;</PRE>
+<p>
+However, we can always define - explicitly - the function
+<p>
+<table border cellpadding=6><tr><td><pre>
+function "&#42;" (LEFT, RIGHT :  LENGTH) return AREA is
+begin
+  return AREA(SCALAR(LEFT)&#42;SCALAR(RIGHT));
+end;
+</pre></td></tr></table>
+<p>
+Furthermore,  should   we   fear   the   misuse   of   the   inherited
+multiplication, we can always hide it by the following declaration:
+<p>
+<table border cellpadding=6><tr><td><pre>
+function "&#42;" (LEFT, RIGHT :  LENGTH) return LENGTH is
+begin
+  raise DIMENSION_ERROR;
+end;
+</pre></td></tr></table>
+<p>
+But in  many  cases,  we  will  not  even  bother  to  introduce  such
+additional definitions:  There are many ways in which we are trying to
+improve program  reliability, and  types are but one of them. The fact
+that any  specific mechanism  does not  achieve  one  hundred  percent
+safety does  not mean that this mechanism should be neglected. Thus by
+declaring the derived type
+<p>
+<PRE>    type MASS is new SCALAR;</PRE>
+<p>
+we have  ensured that  masses are not assigned to lengths by accident.
+However we will leave it to the programmer to avoid improper uses such
+as multiplication of masses. Actually, having written
+<p>
+<table border cellpadding=6><tr><td><pre>
+KILO :  constant MASS :=  1.0;
+...
+LOAD :  MASS :=  3.0&#42;KILO;
+</pre></td></tr></table>
+<p>
+a programmer is not likely to write
+<p>
+<PRE>    LOAD :=  LOAD&#42;LOAD;</PRE>
+<p>
+which (although  legal in  Ada) would not make much sense: the careful
+choice of  names makes such errors unlikely - and easily detectable by
+code inspection, whether by the same or by another programmer.
+<p>
+We have already seen examples in which we were quite willing to have a
+type declaration be no more than a first order characterization of the
+data. Thus  when defining dates we did not bother to take into account
+short and  long months  - not  to mention  leap years: Although such a
+formulation would  be possible,  we felt that the added complexity was
+not justified.  The same  reasoning will  often apply  to the  use  of
+derived types:  they provide  a simple mechanism for achieving a first
+level of  safety. Being  simple, this  mechanism is  more likely to be
+used than  heavier mechanisms.  Thus derived  types will encourage the
+use of types for logical structuring.
+<p>
+We next consider other examples of the use of derived types for simple
+strong typing.  Let us  first review  possible derivations of the type
+COORDINATE defined in the package METRIC in section 7.2:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type BASE_COORD  is new METRIC.COORDINATE;
+type LOCAL_COORD is new METRIC.COORDINATE;
+</pre></td></tr></table>
+<p>
+By this  we achieve some security since coordinates of the two systems
+cannot be  mixed inadvertently.  When changing  coordinate systems, an
+important property  of derived  types can be used, namely, the ability
+to perform  explicit conversions. Thus, using the "+" operator defined
+on coordinates, we can program a change of base as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+declare
+  B, D :  BASE_COORD;
+  L    :  LOCAL_COORD;
+begin
+  ...
+  B :=  D + BASE_COORD(L);
+end;
+</pre></td></tr></table>
+<p>
+Another example (due to Etienne Morel) comes from the design of an Ada
+compiler, using a software managed virtual memory. A single package is
+in charge of this management of virtual addresses:
+<p>
+<table border cellpadding=6><tr><td><pre>
+package VIRTUAL_ADDRESS_MANAGER is
+  type VIRTUAL_ADDRESS is private;
+  function ADDRESS(LOCATION : MEMORY_ADDRESS)
+                return VIRTUAL_ADDRESS;
+  function ADDRESS(LOCATION : VIRTUAL_ADDRESS)
+                return MEMORY_ADDRESS;
+  ...
+private
+  type VIRTUAL_ADDRESS is
+    record
+      BASE    :  SEGMENT;
+      OFFSET :  DISPLACEMENT;
+    end record;
+end VIRTUAL_ADDRESS_MANAGER;
+</pre></td></tr></table>
+<p>
+In various  parts of  the compiler,  data structures  are accessed  by
+means of virtual addresses. Type derivation is used as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type SYMBOL_VA is
+      new VIRTUAL_ADDRESS_MANAGER.VIRTUAL_ADDRESS;
+type NODE_VA is
+      new VIRTUAL_ADDRESS_MANAGER.VIRTUAL_ADDRESS;
+</pre></td></tr></table>
+<p>
+With derivation, the ADDRESS functions are inherited by these types so
+that the same functions, defined in a single package, are used for all
+these types  - this  single package  remains the single interface with
+the virtual  memory system.  But the  most important  property of this
+solution is  the security  that is  achieved: it  is not  possible  to
+assign (by  mistake) a  SYMBOL_VA value  to a  variable whose  type is
+NODE_VA: Although  these two  types are  conceptually  similar  (being
+derived from the same parent), they are nevertheless distinct types.
+<p>
+Our last  example of  simple  strong  typing  (due  to  Robert  Firth)
+illustrates  an  ability  similar  to  the  <a href="ratl-BIB.html#languages">Simula</a>  hierarchical  type
+composition (although it is admittedly less powerful).
+<p>
+Let us  assume that we have defined a private type CREDIT_CARD and the
+corresponding basic operations. We can then derive the types
+<p>
+<table border cellpadding=6><tr><td><pre>
+type PERSONAL_CARD is new CREDIT_CARD;
+type BUSINESS_CARD is new CREDIT_CARD;
+</pre></td></tr></table>
+<p>
+and then  define certain  operations  on  personal_cards  but  not  on
+business_cards and vice versa. This enables the definition of a system
+that has some security against inadvertent misuse. Clearly it does not
+cover the  case of  intentional forgery since explicit conversions are
+possible.
+<p>
+The above  comment is characteristic of many uses of derived types for
+simple strong typing:
+<ul>
+<li>The mechanism is very simple to use.
+<p>
+<li>The protection  offered is  against inadvertent  misuse  -  heavier
+   mechanisms would be required against intentional forgery.
+</ul>
+
+The previous  forms of strong typing can almost be obtained by the use
+of generic instantiation instead of derivation:
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+package METRIC is
+  type COORDINATE is
+    record
+      X :  SCALAR;
+      Y :  SCALAR;
+      Z :  SCALAR;
+    end record;
+  ...
+end;
+
+package BASE is new METRIC; use BASE;
+package LOCAL    is new METRIC; use LOCAL;
+
+subtype BASE_COORD is BASE.COORDINATE;
+subtype LOCAL_COORD   is LOCAL.COORDINATE;
+</pre></td></tr></table>
+<p>
+Generic instantiation  almost achieves  what is  needed  but  one  may
+regret the  need to  use a  more elaborate  feature of  the  language:
+generic program  units. In many teaching strategies this feature would
+only be  encountered at  the advanced  level. Hence  it is  not really
+satisfactory that  the user  should be  confronted with this degree of
+difficulty (on top of verbosity) for such a simple situation.
+<p>
+Moreover,  the   major  drawback  of  the  generic  solution  is  that
+conversions between  BASE_COORD  and  LOCAL_COORD  are  not  possible,
+whether explicitly  or implicitly,  in  the  generic  formulation.  To
+achieve such  conversion would  require writing  functions such as the
+following:
+<p>
+<table border cellpadding=6><tr><td><pre>
+function TO_BASE(A :  LOCAL_COORD) return BASE_COORD is
+begin
+  return BASE_COORD'(X =&gt;  A.X,  Y =&gt;  A.Y,  Z =&gt;  A.Z);
+end;
+</pre></td></tr></table>
+<p>
+This solution  is far  from satisfactory  from a  maintenance point of
+view, since  the conversion  has to be expressed by duplication of the
+structure within  the aggregate.  In particular, it has to express the
+structural  correspondence  on  a  component-by-component  basis.  Any
+change in  the definition  of  the  type  COORDINATE  would  therefore
+require revision of the text of these conversion functions.
+<p>
+The approach  taken for  conversions is  far simpler  in the  case  of
+derivation: if  a type  is  derived  from  another  one,  then  it  is
+immediately known  that the  two types  have the  same structure  - by
+construction. Hence there is no need to detect structural similarity.
+<p>
+Another approach  in the  case of the type SCALAR would be to copy the
+type definition. Thus assuming a range constraint for illustration:
+<p>
+<table border cellpadding=6><tr><td><pre>
+D  :  constant  :=  8;
+L  :  constant  :=  0.0;
+U  :  constant  :=  1.0E6;
+
+type SCALAR is digits D range L .. U;
+</pre></td></tr></table>
+<p>
+we may just provide identical type definitions:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type MASS   is digits D range L .. U;
+type LENGTH is digits D range L .. U;
+</pre></td></tr></table>
+<p>
+This copying  technique  works  in  the  case  of  numeric  types,  in
+particular for  explicit conversions. However there are methodological
+objections to  the fact  that the  sameness is  hidden.  In  order  to
+understand that the two types are similar we have to compare D, L, and
+U. But  the  intention  does  not  appear.  Actually  there  could  be
+situations where  these same constants D, L, and U are used in a third
+type by  accident. Conversely,  there are situations where we want two
+types to be similar although their range need not be the same.
+<p>
+The superiority  of the derivation approach for copying comes from the
+fact that  the intention  is made  explicit by naming the parent type,
+even if the derived type has a different range:
+<p>
+<PRE>    type VELOCITY is new SCALAR range   ...   ;</PRE>
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-07-04.html#7.4"><b>NEXT</b></a>
+&#128; <a href="ratl-07-02.html#7.2"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-07.html#7"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

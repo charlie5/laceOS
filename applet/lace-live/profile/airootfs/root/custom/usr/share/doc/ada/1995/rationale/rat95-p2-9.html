@@ -1,0 +1,2642 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Two - Chapter 9
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-8.html> Previous </a> |
+<a href=rat95-p2-10.html> Next </a>
+<hr>
+
+<h1>
+9   Tasking
+</h1>
+
+<p>
+As explained in Part One, experience with Ada 83 showed that although the
+innovative rendezvous provided a good overall model for task
+communication, nevertheless it had not proved adequate for problems of
+shared data access.
+</p>
+<p>
+   Accordingly, as outlined in Chapter II, this part of the language is
+considerably enhanced with the major additions being the introduction of
+protected types, the requeue statement and asynchronous transfer of
+control.  In this chapter we add further examples and discussion to that
+already given.  The main changes to the core language are
+</p>
+<ul>
+<li>
+    The protected type is introduced as a new form of program unit with
+     distinct specification and body in a similar style to packages and
+     tasks.
+<li>
+    The requeue statement is added to provide preference control and
+     thereby overcome various race conditions which could arise in Ada
+     83.
+<li>
+    There is a new form of delay statement which allows waiting for an
+     absolute rather than a relative time.  This overcomes problems of
+     poor timing which in essence are caused by a race condition with the
+     clock.
+<li>
+    There is a new form of the select statement which gives asynchronous
+     transfer of control.  This can be used to program mode changes.
+<li>
+    The description of the rules regarding the abort statement is
+     improved.
+<li>
+    A task (like a protected type) may now have discriminants and a
+     private part.
+<li>
+    A minor improvement is that entries and representation clauses may
+     now occur in any order in a task specification.
+</ul>
+<p>
+In addition to the above changes there are further packages, pragmas
+and attributes plus requirements on implementations described in the
+Systems Programming and Real-Time Systems annexes.  These relate to
+matters such as scheduling and priorities, task identification, shared
+variable access, accuracy of timing, interrupt handling and the immediacy
+of the abort statement.  For further details on these topics the reader
+is referred to Part Three.
+</p>
+
+<h2>
+<a name=1>
+9.1  Protected Types
+</a>
+</h2>
+
+<p>
+In Ada 83, the rendezvous was used for both inter-task communication and
+for synchronizing access to shared data structures.  However, the very
+generality of the rendezvous means that it has a relatively high
+overhead.  Ada 95 overcomes this problem by introducing a low overhead,
+data-oriented synchronization mechanism based on the concept of protected
+objects.
+</p>
+<p>
+   From the client perspective, operating on a protected object is
+similar to operating on a task object.  The operations on a protected
+object allow two or more tasks to synchronize their manipulations of
+shared data structures.
+</p>
+<p>
+   From the implementation perspective, a protected object is designed to
+be a very efficient conditional critical region (see 9.1.3).  The
+protected operations are automatically synchronized to allow only one
+writer or multiple readers.  The protected operations are defined using a
+syntax similar to a normal subprogram body, with the mutual exclusion of
+the critical region happening automatically on entry, and being released
+automatically on exit.
+</p>
+<p>
+   We considered many different approaches to satisfying the needs for
+fast mutual exclusion, interrupt handling, asynchronous communication,
+and various other common real-time paradigms.  We settled on the
+protected object construct because it seems to provide a very efficient
+building block, which is flexible enough to implement essentially any
+higher-level synchronization mechanism of interest.
+</p>
+<p>
+   Some of the features that make protected objects attractive as a
+building block are:
+</p>
+<ul>
+<li>
+Scalability.  Protected objects enable the implementation of a
+     synchronization mechanism that scales smoothly from a single
+     processor to a multiprocessor.  There is no built-in bias to a
+     monoprocessor or to a multiprocessor.
+<li>
+Adaptability.  Additional protected operations may be added to a
+     protected type without the need to modify the existing operations.
+     Approaches that use explicit signals and conditions rather than the
+     conditional barrier approach generally need each operation to be
+     aware of every state of interest, and explicitly signal all possible
+     waiting tasks.
+<li>
+Modularity.  All of the operations of a given critical region are
+     identified in the specification of the protected type, and their
+     implementations are encapsulated within the body of the protected
+     type.  The directly protected data components are encapsulated
+     within the private part of the protected type, and all of the
+     interesting states are identified explicitly via entry barrier
+     conditions within the body of the protected type.
+<li>
+Efficiency.  The size and initialization requirements of a protected
+     object are known at compile time of the client, because all entries
+     and data components are declared in the specification.  This enables
+     protected objects to be allocated statically or directly on the
+     stack, rather than via dynamic allocation, and to be initialized in-
+     line.  No extra context switches are required to service waiting
+     clients, since the task changing the state may directly execute the
+     entry bodies whose barriers become true.  Non-queued locking may be
+     used to implement the mutual exclusion of a protected object because
+     no blocking is permitted during the execution of a protected
+     operation.
+<li>
+Expressiveness.  The specification of a protected type makes explicit
+     distinctions between read-only operations (functions), read-write
+     operations (procedures), and possibly blocking operations (entries).
+     This distinction is vital in analyzing a real-time program for
+     correctness, including freedom from deadlock.
+<li>
+Compatibility.  The entry call remains the primary mechanism for blocking
+     a task until some condition is satisfied.  An entry call on another
+     task is blocked until the corresponding entry in the task is open.
+     An entry call on a protected object is blocked until the
+     corresponding entry barrier is true.  An entry call on a task is
+     completed when the rendezvous finishes and an entry call on a
+     protected object is completed when the entry body finishes; possibly
+     with intermediate blockings as part of a requeue in both cases.
+
+     From the caller's perspective, an entry call involves a possible
+     initial blocking, one or more intermediate blockings, and then a
+     return.  During the entry call, data may be transferred via the
+     parameters.  By using the entry call interface for both protected
+     objects and tasks, the existing conditional and timed entry call
+     mechanisms are applicable.
+
+<li>
+Interrupt Handling.  A protected procedure is very well suited to act as
+     an interrupt handler for a number of reasons; they both typically
+     have a short bounded execution time, do not arbitrarily block, have
+     a limited context and finally they both have to integrate with the
+     priority model.  The nonblocking critical region matches the needs
+     of an interrupt handler, as well as the needs of non-interrupt-level
+     code to synchronize with an interrupt handler.  The entry barrier
+     construct allows an interrupt handler to signal a normal task by
+     changing the state of a component of the protected object and
+     thereby making a barrier true.
+</ul>
+<p>
+Of the many other approaches we considered for supporting data-
+oriented synchronization, none could match this set of desirable
+features.
+</p>
+<p>
+   Like task types, protected types are limited types.  Because protected
+objects are specifically designed for synchronizing access from
+concurrent tasks, a formal parameter must always denote the same
+protected object as the corresponding actual parameter and so pass by
+reference is required (a copy would not preserve the required atomicity).
+</p>
+<p>
+   A protected type may have discriminants, to minimize the need for an
+explicit initialization operation, and to control composite components of
+the protected objects including setting the size of an entry family.  A
+discriminant can also be used to set the priority and identify an
+interrupt.
+</p>
+<p>
+   The other data components of a protected object must be declared in
+the specification of the type to ensure that the size is known to the
+compiler when the type is used by a caller.  However these components are
+only accessible from protected operations defined in the body of the
+protected type and thus are declared in the private part of the protected
+type.
+</p>
+<p>
+   The protected operations may be functions, procedures, or entries.
+All the entries must be declared in the protected type specification to
+ensure that space needed for entry queues is included when allocating the
+protected object.  Entries which are not required to be visible to
+external clients can be declared in the private part.  Additional
+functions and procedures may be declared in the private part or body of
+the protected unit, for modularizing the implementation of the operations
+declared in the specification.
+</p>
+<p>
+   An example of a counting semaphore implemented as a protected type is
+given in II.9.  This example illustrates the three kinds of protected
+operations: functions, procedures, and entries.  Functions provide read-
+only access (which may be shared) to the components of the protected
+object.  Procedures provide exclusive read-write access to the
+components.  Entries have an entry barrier that determines when the
+operation may be performed.  The entry body is performed with exclusive
+read-write access to the components, once the barrier becomes true due to
+the execution of some other protected operation.  It is important to
+observe that the evaluation of barrier expressions is also performed with
+exclusive access to the protected object.
+</p>
+<p>
+   The counting semaphore might be used as follows
+<pre>
+   Max_Users: constant := 10;
+   -- limit number of simultaneous users of service
+   User_Semaphore: Counting_Semaphore(Max_Users);
+
+   procedure Use_Service(P: Param) is
+   begin
+      -- wait if too many simultaneous users
+      User_Semaphore.Acquire;
+      begin
+          Perform_Service(P);
+      exception
+         when others =>
+            -- always release the semaphore for next user.
+            User_Semaphore.Release;
+            raise;
+      end;
+      -- release the semaphore for others
+      User_Semaphore.Release;
+   end Use_Service;
+</pre>
+</p>
+<p>
+This example illustrates that a semaphore can be implemented as a
+protected object.  However, in essence this often constitutes abstraction
+inversion since it leaves the responsibility for releasing the semaphore
+in the hands of the user (unless we use a controlled type as illustrated
+in 7.4).  It is precisely to avoid such possibilities that protected
+types are provided as an intrinsic syntactic form inherent in the
+language.  Semaphores (like the goto statement) are very prone to misuse
+and should be avoided where possible.  However, there are occasions when
+they are useful and this example shows an implementation.
+</p>
+<p>
+   As mentioned, some of the protected operations declared in the
+specification may be declared after the reserved word private.  This
+makes these operations callable only from within the protected unit.
+Task types may similarly have a private part, so that certain task
+entries may be hidden from a direct call from outside the task (they can
+be called by its sub-tasks or via a requeue statement).
+</p>
+<p>
+   (Alternative structures were also considered and rejected.  One was
+that the private part of a protected unit be visible to the enclosing
+package.  However, this was considered confusing, and felt to be
+inconsistent with the visibility of the private part of a subpackage.  We
+also considered splitting the protected type (and task) specification
+into two separate parts, with the private operations and data components
+declared in a second part included inside the private part of the
+enclosing package. However, this seemed like an unnecessary extra
+syntactic complexity, so we finally adopted the simpler suggestion from
+two Revision Requests (RR-0487, RR-0628) of using private within the
+specification to demarcate the private operations.)
+</p>
+<p>
+   Each entry declared in the specification of a protected type must have
+an entry body.  An entry body includes a barrier condition following the
+reserved word when; the barrier condition must be true before the
+remainder of the entry body is executed.
+</p>
+<p>
+   The entry body for an entry family must specify a name for the entry
+family index, using an iterator notation (for I in
+discrete_subtype_definition).  We considered a simpler syntax (I:
+discrete_subtype_definition) but opted for the iterator notation to avoid
+ambiguity with the formal parameter part.
+</p>
+<p>
+   An entry barrier is not allowed to depend on parameters of the entry,
+but it may depend on the entry family index, or any other data visible to
+the entry body.  This rule ensures that all callers of the same entry see
+the same barrier condition, allowing the barrier to be checked without
+examining individual callers.  Without this rule, each caller of a given
+entry would have to be treated separately, since each might have a
+different effective barrier value.  Rather than entry "queues" one would
+essentially have a single large "bag" of callers, all of which would have
+to be checked on each protected object state change.
+</p>
+<p>
+   For flexibility, entry barriers may depend on data global to the
+protected object.  This allows part of the data managed by the protected
+object to be outside it, if this is necessary due to some other program
+structure requirements.  However, the barriers are only rechecked after
+completing a protected procedure or entry body, so asynchronous changes
+to global data have no immediate effect on the eligibility of a caller
+waiting on an entry queue.  For efficiency, implementations may assume
+that the only meaningful changes to data referenced in an entry barrier
+of some protected object take place within a protected operation of that
+protected object.
+</p>
+<p>
+   We considered disallowing references to globals in a barrier
+expression.  However, that would also have disallowed the use of
+functions (which might reference globals) or the dereferencing of access
+values.  Such a rule was felt to be too complex to implement, and too
+restrictive when dealing with data types implemented with access types,
+such as a linked list.
+</p>
+<p>
+   The semantics for protected types are described in terms of mutual
+exclusion (except that protected functions may execute concurrently).  In
+addition, as the final step of a protected action, the entry queues are
+serviced before allowing new calls from the outside to be executed.  In
+this context, a protected "action" is the whole sequence of actions from
+locking to unlocking and thus comprises a series of one or more of:
+</p>
+<ul>
+<li>
+    a call on a protected subprogram from outside the protected unit,
+<li>
+    the execution of an entry body,
+<li>
+    the addition or removal of a call from an entry queue.
+</ul>
+<p>
+Servicing the entry queues is required if any change has been made
+that might affect the value of a barrier expression.  First, the barriers
+for the non-empty entry queues must be reevaluated.  If at least one such
+barrier evaluates to true, some eligible caller must be selected, and the
+corresponding entry body must be executed.  The barriers are then
+reevaluated once more, and this process continues until all non-empty
+entry queues have a false barrier.  The barriers may be evaluated, and
+the entry bodies executed, by any convenient thread of control. It need
+not be the thread of the original caller.  This flexibility allows for
+the most efficient implementation, minimizing unnecessary context
+switches.  (For details on how the choice of caller is made see the Real-
+Time Systems annex.)
+</p>
+<p>
+   While executing a protected operation of some protected object, a task
+cannot call a potentially blocking operation for any reason, though it
+may release the mutual exclusive access to the protected object by being
+requeued. Disallowing blocking while executing a protected operation
+allows a nonqueued locking mechanism to be used to implement the mutual
+exclusion.  If blocking were allowed, then a queued locking mechanism
+would be required, since potential callers might attempt to get the lock
+while the current holder of the lock is blocked.  Another advantage is
+that conditional calls are more meaningful.
+</p>
+<p>
+   In the simplest monoprocessor environment, protected object mutual
+exclusion can be implemented by simply inhibiting all task preemption.
+If multiple priorities are supported, then rather than inhibiting all
+preemption, a ceiling priority may be established for the protected
+object (see the Ceiling Priorities section of the Real-Time Systems
+annex).  Only tasks at this ceiling priority or below may use the
+protected object, meaning that tasks at priorities higher than the
+ceiling may be allowed to preempt the task performing the protected
+operation while still avoiding the need for a queued lock.
+</p>
+<p>
+   In a multiprocessor environment, spin waiting may be used in
+conjunction with the ceiling priority mechanism to implement a non-queued
+protected object lock.
+</p>
+<p>
+   By disallowing blocking within a protected operation and by also using
+the ceiling priority mechanism, unbounded priority inversion can be
+avoided.  The generality that might be gained by allowing blocking would
+inevitably result in an increase in implementation complexity, run-time
+overhead, and unbounded priority inversion.
+</p>
+<p>
+   To simplify composability, protected operations may call other non-
+blocking protected operations (protected procedures and functions).  A
+direct call on a protected subprogram within the same protected type does
+not start a new protected action, but is rather considered to be part of
+the current action.  It is considered an error if, through a chain of
+calls going outside the protected object, a call is made back to the same
+protected object.  The effect is implementation-defined, but will
+generally result in a deadlock.  We considered disallowing all subprogram
+calls from a protected operation to a subprogram defined outside the
+protected type, but this seemed unnecessarily constraining, and to
+severely limit composability.
+</p>
+
+<h3>
+<a name=1-1>
+9.1.1  Summary of Mechanism
+</a>
+</h3>
+
+<p>
+Protected types provide a low-level, lightweight, data-oriented
+synchronization mechanism whose key features are
+</p>
+<ul>
+<li>
+    A protected object has hidden components; these components are
+     intended to be shared among multiple tasks.  The protected
+     operations of the protected object provide synchronized access to
+     the components.
+<li>
+    Protected types have three kinds of protected operations: protected
+     functions, protected procedures, and entries.  Protected functions
+     and protected procedures are known as protected subprograms.
+<li>
+    Protected procedures provide exclusive read-write access to the
+     components. Protected functions, since they cannot change the
+     components of the protected object, may be optimized to use a shared
+     read-only lock.
+<li>
+    Protected entries also provide exclusive read-write access to the
+     components, but in addition, they specify a barrier, which is a
+     Boolean expression that generally depends on the components of the
+     protected object.  The Run-Time System ensures that the barrier is
+     true before allowing a protected entry call to proceed.
+<li>
+    Each protected object has a conceptual lock associated with it.
+     (This lock may sometimes be an actual one, or can instead be
+     implemented using the ceiling priorities model, see the Real-Time
+     Systems annex).  At the start of a protected operation, the calling
+     task seizes the lock.  Evaluation of barriers, execution of
+     protected operation bodies, and manipulation of entry queues (see
+     below) are all done while the lock is held.  On a multiprocessor,
+     the intended implementation of locks uses busy waiting.  (Other,
+     more specialized algorithms, are allowed).
+<li>
+    There is a queue associated with each protected entry.  Tasks wait
+     in the queue until the entry's barrier becomes True.  If the barrier
+     is already True when the entry call first seizes the lock, then it
+     is executed immediately; the queue is not used.  While waiting in
+     the queue, a task does not hold the lock.
+<li>
+    A requeue statement is allowed in an entry body (and an accept
+     statement).  The effect of this statement is to return the current
+     caller back to the queue, or to place it on another, compatible,
+     entry queue.
+<li>
+    Ceiling priorities may be associated with protected objects as
+     described in the Real-Time Systems annex.  The ceiling rules prevent
+     the priority-inversion phenomenon, and ensure freedom from deadlocks
+     on single-processor systems.  For further details see Part Three of
+     this rationale.
+</ul>
+
+
+<h3>
+<a name=1-2>
+9.1.2  Examples of Use
+</a>
+</h3>
+
+<p>
+Protected types combine high efficiency with generality and can be used
+as building blocks to support various common real-time paradigms.  In
+this section we discuss three examples
+</p>
+<ul>
+<li>
+    An implementation of indivisible counters showing how protected
+     subprograms are used.
+<li>
+    An implementation of persistent signals showing how protected
+     entries are used.
+<li>
+    A generic bounded buffer showing how protected types can be used
+     within a generic package.
+</ul>
+<p>
+A non-generic form of the bounded buffer and an implementation of
+transient (broadcast) signals will be found in II.9.  Examples of the use
+of the requeue mechanism are shown in 9.2.
+</p>
+<p>
+   We observe that protected types allow Ada 95 to support these and
+other real-time paradigms with a smaller overall change to the language
+than the alternative approach where each problem is solved with its own
+distinct feature.
+</p>
+<p>
+   In the following examples, we refer to the lock as an actual object
+with lock and release operations.  This, of course, is not required, and
+is simply used for ease of presentation.
+</p>
+<p>
+   The first very simple example shows a counter that is shared among
+multiple tasks
+<pre>
+   protected Counter is
+      procedure Increment(New_Value: out Positive);
+   private
+      Data: Integer := 0;
+   end Counter;
+
+   protected body Counter is
+      procedure Increment(New_Value: out Positive) is
+      begin
+         Data := Data + 1;
+         New_Value := Data;
+      end Increment;
+   end Counter;
+</pre>
+</p>
+<p>
+   The counter is initialized to zero.  A task may increment it by
+calling the Increment procedure
+<pre>
+   Counter.Increment(New_Value => X);
+</pre>
+</p>
+<p>
+   If N tasks do this, each exactly once, they will each get a unique
+value in the range 1 to N.  Note that without the synchronization
+provided by the protected type, multiple simultaneous executions of
+Increment might cause unpredictable results.  With the protected type, a
+task that calls Increment will first seize the lock, thus preventing such
+simultaneous executions.
+</p>
+<p>
+   Since there are no entries in this example, there are no queues.  The
+protected type consists, in essence, of a lock and the component Data.
+</p>
+<p>
+   If we want to define many Counter objects, we would change the above
+example to declare a protected type instead of a single protected object
+as follows
+<pre>
+   protected type Counter_Type is
+      ... -- same as before
+   end Counter_Type;
+
+   Counter_1, Counter_2: Counter_Type; -- declare two counters
+
+   type Many is array (1 .. 1000) of Counter_Type;
+
+   X: Many;                            -- declare many counters
+</pre>
+</p>
+<p>
+   It is important to note that a lock is associated with each protected
+object and not with the type as a whole.  Thus, each of the objects in
+the above example has its own lock, and the data in each is protected
+independently of the others.
+</p>
+<p>
+   This simple example has a short, bounded-time algorithm; all it does
+is increment the value and assign it to the out parameter.  This is
+typical of the intended use of protected types.  Because the locks might
+be implemented as busy-waits (at least on multiprocessors), it is unwise
+to write an algorithm that might hold a lock for a long or unknown amount
+of time.  A common approach where extensive processing is required would
+be to just record the new state, under the protection of the lock, and do
+the actual processing outside the protected body.
+</p>
+<p>
+   The next example shows a persistent signal.  In this example, tasks
+may wait for an event to occur.  When the event occurs, some task whose
+job it is to notice the event will "signal" that the event has occurred.
+The signal causes exactly one waiting task to proceed.  The signal is
+persistent in the sense that if there are no tasks waiting when the
+signal occurs, the signal persists until a task invokes a wait, which
+then consumes the signal and proceeds immediately.  Multiple signals when
+no tasks are waiting are equivalent to just one signal.
+</p>
+<p>
+   It is interesting to note that persistent signals are isomorphic to
+binary semaphores; the wait operation corresponds to P, and the signal
+operation corresponds to V.
+<pre>
+   protected Event is
+      entry Wait;        -- wait for the event to occur
+      procedure Signal;  -- signal that the event has occurred.
+   private
+      Occurred: Boolean := False;
+   end Event;
+
+   protected body Event is
+
+      entry Wait when Occurred is
+      begin
+         Occurred := False; -- consume the signal
+      end Wait;
+
+      procedure Signal is
+      begin
+         Occurred := True;  -- set Wait barrier True
+      end Signal;
+
+   end Event;
+</pre>
+</p>
+<p>
+A task waits for the event by calling
+<pre>
+   Event.Wait;
+</pre>
+and the signalling task notifies the happening of the event by
+<pre>
+   Event.Signal;
+</pre>
+whereupon the waiting task will proceed.
+</p>
+<p>
+   There are two possibilities to be considered according to whether the
+call of Wait or the call of Signal occurs first.
+</p>
+<p>
+   If a call of Wait occurs first, the task will seize the lock, check
+the barrier, and find it to be False.  Therefore, the task will add
+itself to the entry queue, and release the lock.  A subsequent Signal
+will seize the lock and set the Occurred flag to True.  Before releasing
+the lock, the signalling task will check the Wait entry queue.  There is
+a task in it, and the barrier is now True, so the body of Wait will now
+be executed, setting the flag to False, and the waiting task released.
+Before releasing the lock, the process of checking entry queues and
+barriers is repeated.  This time, the Wait barrier is False, so nothing
+happens; the lock is released, and the signalling task goes on its way.
+</p>
+<p>
+   If, on the other hand, a call of Signal occurs first, then the task
+will seize the lock, set the flag to True, find nothing in the entry
+queues, and release the lock.  A subsequent Wait will seize the lock,
+find the barrier to be True already, and proceed immediately with its
+body.  The barrier is now False, so the waiting task will simply release
+the lock and proceed.
+</p>
+<p>
+   Important things to note are
+</p>
+<ul>
+<li>
+  Protected subprograms do not have barriers.  Protected entries
+     always have barriers.  Signal is a protected procedure, because it
+     never needs to block while waiting for the state of the protected
+     type to change; that is, it needs no barrier.  Wait is an entry,
+     because it needs to block until the flag is set before proceeding.
+<li>
+    The protected entry queues are not used for tasks waiting for access
+     to the protected data.  They are used for tasks waiting for an entry
+     barrier to become true; that is, they are waiting for the state of
+     the protected type to change in order to satisfy some user-specified
+     condition.  The lock associated with the protected object
+     synchronizes access to the shared data.  The same lock also protects
+     the entry queues themselves; the queues may be considered as part of
+     the shared data.
+<li>
+    Barriers are associated with entry queues, not with individual tasks
+     calling the entries.  Therefore, the number of barriers to be
+     evaluated can never be more than the number of entries of the
+     protected object.  (Note that the size of an entry family can depend
+     on a discriminant, so the number of entries can vary from object to
+     object of the type.)
+<li>
+    Entry barriers are reevaluated only at well-defined points:  in
+     particular, when a call is first made and when a protected procedure
+     or entry associated with that protected object has just finished,
+     but before it has released the lock.
+<li>
+    Protected functions do not change the state of the protected type,
+     and so should not change barrier values.  Therefore, entry barriers
+     are not reevaluated when a protected function has just finished.
+<li>
+    The lock stays locked during the actions that happen at the end of a
+     protected procedure or entry (that is, checking the queues for non-
+     empty status, evaluating barriers, removing a task from a queue, and
+     executing the entry body).  This means that tasks already on the
+     queues get preference over tasks that are trying to seize the lock.
+<li>
+         Barriers, like protected operation bodies, should contain only
+     short, bounded-time expressions.  In typical examples, the barrier
+     simply tests a Boolean flag, or checks the number of elements in an
+     entry queue.  The programmer has complete control over worst-case
+     waiting times; this worst-case analysis can be done by inspecting
+     the algorithms in the protected bodies, the barriers, and the
+     maximum number of tasks that can be expected to be waiting on each
+     barrier.
+<li>
+    The language does not specify which task executes a particular
+     barrier or entry body.  One can think of barriers and entry bodies
+     as being executed by the Run-Time System, not by any particular
+     task.  Certain restrictions on what may appear in a barrier or an
+     entry body imply that it does not matter which task does the work.
+     (For example, Current_Task cannot be called, see Systems Programming
+     annex.)  This is done to ensure that no context switches are
+     required; when one task finishes executing an operation, the task
+     can immediately execute any others that have become ready, without
+     having to switch to the context of the "correct" task.
+</ul>
+</p>
+<p>
+   Our next example is a generic form of a bounded buffer.  In this
+example a protected object provides conditional critical regions, which
+allow the abstraction to be used safely by multiple tasks.
+<pre>
+   generic
+      type Item is private;
+      Mbox_Size: in Natural;
+   package Mailbox_Pkg is
+
+      type Item_Count is range 0 .. Mbox_Size;
+      type Item_Index is range 1 .. Mbox_Size;
+      type Item_Array is array (Item_Index) of Item;
+
+      protected type Mailbox is
+         -- put a data element into the buffer
+         entry Send(Elem: Item);
+         -- retrieve a data element from the buffer
+         entry Receive(Elem: out Item);
+      private
+         Count    : Item_Count := 0;
+         Out_Index: Item_Index := 1;
+         In_Index : Item_Index := 1;
+         Data     : Item_Array;
+      end Mailbox;
+
+   end Mailbox_Pkg;
+</pre>
+</p>
+<p>
+   This example illustrates a generic mailbox abstraction.  The protected
+type has two entries, which insert and retrieve items to and from the
+mailbox buffer.  Like a private type, the data components of the
+protected type are of no concern outside the body.  They are declared in
+the specification so that a compiler can statically allocate all the
+space required for an instance of the protected type.
+</p>
+<p>
+   The body of the mailbox package is as follows
+<pre>
+   package body Mailbox_Pkg is
+      protected body Mailbox is
+         entry Send(Elem: Item) when Count < Mbox_Size is
+              -- block until there is room in the mailbox
+         begin
+            Data(In_Index) := Elem;
+            In_Index := In_Index mod Mbox_Size + 1;
+            Count := Count + 1;
+         end Send;
+
+         entry Receive(Elem: out Item) when Count > 0 is
+              -- block until there is something in the mailbox
+         begin
+            Elem := Data(Out_Index);
+            Out_Index := Out_Index mod Mbox_Size + 1;
+            Count := Count - 1;
+         end Receive;
+      end Mailbox;
+   end Mailbox_Pkg;
+</pre>
+</p>
+<p>
+   As we saw in the non-generic example in II.9, Send waits until there
+is room for a new Item in the mailbox buffer.  Receive waits until there
+is at least one Item in the buffer.  The semantics of protected records
+guarantee that multiple tasks cannot modify the contents of the mailbox
+simultaneously.
+</p>
+<p>
+   A minor point is that the type Item_Array has to be declared outside
+the protected type.  This is because type declarations are not allowed
+inside a protected type which generally follows the same rules as
+records.  Allowing types within types would have introduced additional
+complexity with little benefit.  For elegance we have also declared the
+types Item_Count and Item_Index.
+</p>
+
+<h3>
+<a name=1-3>
+9.1.3  Efficiency of Protected Types
+</a>
+</h3>
+
+<p>
+Protected types provide an extremely efficient mechanism; the ability to
+use the thread of control of one task to execute a protected operation on
+behalf of another task reduces the overhead of context switching compared
+with other paradigms.  Protected types are thus not only much more
+efficient than the use of an agent task and associated rendezvous, they
+are also more efficient than traditional monitors or semaphores in many
+circumstances.
+</p>
+<p>
+   As an example consider the following very simple protected object
+which implements a single buffer between a producer and a consumer task.
+<pre>
+   protected Buffer is
+      entry Put(X: in Item);
+      entry Get(X: out Item);
+   private
+      Data: Item;
+      Full: Boolean := False;
+   end;
+
+   protected body Buffer is
+      entry Put(X: in Item) when not Full is
+      begin
+         Data := X;  Full := True;
+      end Put;
+
+      entry Get(X: out Item) when Full is
+      begin
+         X := Data;  Full := False;
+      end Get;
+   end Buffer;
+</pre>
+</p>
+<p>
+This object can contain just a single buffered value of the type Item in
+the variable Data; the boolean Full indicates whether or not the buffer
+contains a value.  The barriers ensure that reading and writing of the
+variable is interleaved so that each value is only used once.  The buffer
+is initially empty so that the first call that will be processed will be
+of Put.
+</p>
+<p>
+   A producer and consumer task might be
+<pre>
+   task body Producer is
+   begin
+      loop
+         ... -- generate a value
+         Buffer.Put(New_Item);
+      end loop;
+   end Producer;
+
+   task body Consumer is
+   begin
+      loop
+         Buffer.Get(An_Item);
+         ... -- use a value
+      end loop;
+   end Consumer;
+</pre>
+</p>
+<p>
+   In order to focus the discussion we will assume that both tasks have
+the same priority and that a run until blocked scheduling algorithm is
+used on a single processor.  We will also start by giving the processor
+to the task Consumer.
+</p>
+<p>
+   The task Consumer will issue a call of Get, acquire the lock and then
+find that the barrier is false thereby causing it to be queued and to
+release the lock.  The Consumer is thus blocked and so a context switch
+occurs and control passes to the task Producer.  This sequence of actions
+can be symbolically described by
+<pre>
+   Get(An_Item);
+      lock
+         queue
+      unlock
+   switch context
+</pre>
+</p>
+<p>
+   The task  Producer issues  a first  call of  Put, acquires  the  lock,
+successfully executes  the body  of Put  thereby filling  the buffer  and
+setting Full  to False.   Before  releasing the  lock, it reevaluates the
+barriers and  checks the  queues to see whether a suspended operation can
+now be  performed.   It finds  that it  can and  executes the body of the
+entry Get thereby emptying the buffer and causing the task Consumer to be
+marked as  no longer blocked and thus eligible for processing.  Note that
+the thread  of control of the producer has effectively performed the call
+of Get  on behalf  of the  consumer task;  the overhead for doing this is
+essentially that  of a  subprogram call  and a full context switch is not
+required.   This completes the sequence of protected actions and the lock
+is released.
+</p>
+<p>
+   However, the task Producer still has the processor and so it cycles
+around its loop and issues a second call of Put.  It acquires the lock
+again, executes the body of Put thereby filling the buffer again.  Before
+releasing the lock it checks the barriers but of course no task is queued
+and so nothing else can be done; it therefore releases the lock.
+</p>
+<p>
+   The task Producer still has the processor and so it cycles around its
+loop and issues yet a third call of Put.  It acquires the lock but this
+time it finds the barrier is false since the buffer is already full.  It
+is therefore queued and releases the lock.  The producer task is now
+blocked and so a context switch occurs and control at last passes to the
+consumer task.  The full sequence of actions performed by the producer
+while it had the processor are
+<pre>
+   Put(New_Item);
+      lock
+         Data := New_Item;  Full := True;
+         scan: and then on behalf of Consumer
+         An_Item := Data;  Full := False;
+         set Consumer ready
+      unlock
+   Put(New_Item);
+      lock
+         Data := New_Item:  Full := True;
+         scan: nothing to do
+      unlock
+   Put(New_Item);
+      lock
+         queue
+      unlock
+   switch context
+</pre>
+</p>
+<p>
+   The consumer task now performs a similar cycle of actions before
+control passes back to the producer and the whole pattern then repeats.
+The net result is that three calls of Put or Get are performed between
+each full context switch and that each call of Put or Get involves just
+one lock operation.
+</p>
+<p>
+   This should be contrasted with the sequence required by the
+corresponding program using primitive operations such as binary
+semaphores (mutexes).  This could be represented by
+<pre>
+   package Buffer is
+      procedure Put(X: in Item);
+      procedure Get(X: out Item);
+   private
+      Data: Item;
+      Full: Semaphore := busy;
+      Empty: Semaphore := free;
+   end;
+
+   package body Buffer is
+      procedure Put(X: in Item) is
+      begin
+         P(Empty);
+         Data := X;
+         V(Full);
+      end Put;
+
+      procedure Get(X: out Item) is
+      begin
+         P(Full);
+         X := Data;
+         V(Empty);
+      end Get;
+   end Buffer;
+</pre>
+</p>
+<p>
+In this case there are two lock operations for each call of Put and Get,
+one for each associated semaphore action.  The behavior is now as follows
+(assuming once more that the consumer has the processor initially).  The
+first call of Get by the consumer results in the consumer being suspended
+by P(Full) and a context switch to the producer occurs.
+</p>
+<p>
+   The first call of Put by the producer is successful, the buffer is
+filled and the operation V(Full) clears the semaphore upon which the
+consumer is waiting.  The second call of Put is however blocked by
+P(Empty) and so a context switch to the consumer occurs.  The consumer is
+now free to proceed and empties the buffer and performs V(Empty) to clear
+the semaphore upon which the producer is waiting.  The next call of Get
+by the consumer is blocked by P(Full) and so a context switch back to the
+producer occurs.
+</p>
+<p>
+   The net result is that a context switch occurs for each call of Put or
+Get.  This contrasts markedly with the behavior of the protected object
+where a context switch occurs for every three calls of Put or Get.
+</p>
+<p>
+   In conclusion we see that the protected object is much more efficient
+than a semaphore approach.  In this example it as a factor of three
+better regarding context switches and a factor of two better regarding
+locks.
+</p>
+<p>
+   Observe that the saving in context switching overhead depends to some
+degree on the run-until-blocked scheduling and on the producer and
+consumer being of the same priority.  However, the saving on lock and
+unlock overheads is largely independent of scheduling issues.
+</p>
+<p>
+   The interested reader should also consult [Hilzer 92] which considers
+the more general bounded buffer and shows that monitors are even worse
+than semaphores with regard to potential context switches.
+</pre>
+
+<h3>
+<a name=1-4>
+9.1.4  Relationship with Previous Work
+</a>
+</h3>
+
+<p>
+Protected types are related to two other synchronization primitives: the
+conditional critical region and the monitor.  The protected type has been
+incorporated in a way that is compatible with Ada's existing task types,
+entries, procedures and functions.
+</p>
+<p>
+   In 1973, Hoare proposed a synchronization primitive called a
+conditional critical region [Hoare 73] with the following syntax
+<pre>
+   region V when barrier do
+      statements
+   end;
+</pre>
+where the barrier is a Boolean expression, and V is a variable.  The
+semantics of the construction may be described as follows [Brinch-Hansen
+73]:
+<pre>
+     When the sender enters this conditional critical region, the
+     [barrier expression] is evaluated.  If the expression is true
+     the sender completes the execution of the critical region ...
+     But if the expression is false, the sender leaves the critical
+     region temporarily and enters an anonymous queue associated
+     with the shared variable V.
+</pre>
+</p>
+<p>
+   However, Brinch-Hansen pointed out a disadvantage with conditional
+critical regions  [Brinch-Hansen 73]:
+<pre>
+     Although [conditional critical regions] are simple and well-
+     structured, they do not seem to be adequate for the design of
+     large multiprogramming systems (such as operating systems).
+     The main problem is that the use of critical regions scattered
+     throughout a program makes it difficult to keep track of how a
+     shared variable is used by concurrent processes.  It has
+     therefore been recently suggested that one should combine a
+     shared variable and the possible operations on it in a single,
+     syntactic construct called a monitor.
+</pre>
+</p>
+<p>
+   This thus led to the monitor which has a collection of data and
+subprogram declarations.  In Ada terms, the subprograms declared in the
+visible part of a monitor, and which are therefore visible outside the
+monitor, are guaranteed to have exclusive access to the data internal to
+the monitor.  The monitor may also have some variables known as condition
+variables.  These condition variables are like semaphores, in that they
+have Wait and Signal operations.  A Wait operation waits for a matching
+Signal operation.  Hoare introduces monitors with somewhat different
+syntax, but with equivalent semantics [Hoare 74].
+</p>
+<p>
+   The problem with monitors as discussed in [IBFW 86] is that the Signal
+and Wait operations suffer from the usual difficulties of using
+semaphores; they can easily be misused and the underlying conditions are
+not easy to prove correct.
+</p>
+<p>
+   The Ada 83 rendezvous followed CSP [Hoare 78] by providing a dynamic
+approach to the problem and one which clarified the guarding conditions.
+However, as we have discussed, the rendezvous has a heavy implementation
+overhead through the introduction of an intermediary task and can also
+suffer from race conditions.
+</p>
+<p>
+   Ada 95 protected objects are an amalgam of the best features of
+conditional critical regions and monitors:  they collect all the data and
+operations together, like monitors, and yet they have barriers, like
+conditional critical regions.  The barriers describe the required state
+that must exist before an operation can be performed in a clear manner
+which aids program proof and understanding.  Protected objects are very
+similar to the shared objects of the Orca language developed by Bal,
+Kaashoek and Tanenbaum [Bal 92].
+</p>
+
+<h2>
+<a name=2>
+9.2  The Requeue Statement
+</a>
+</h2>
+
+<p>
+Components such as complex servers or user-defined schedulers often need
+to determine the order and the timing of the service provided by entry or
+accept bodies based on the values of various controlling items.  These
+items may be local to the server and dependent on its own state, be an
+attribute of the client or the controlled task, or be global to the
+system.  In addition, these items may often change from the time the
+entry call is made to the time the selection decision is itself finally
+made.
+</p>
+<p>
+   For fairly simple cases - that is when the items are known to the
+caller, do not change from the time of call, and have a relatively small
+discrete range - the entry family facility of Ada 83 might suffice (see
+[Wellings 84], [Burger 87], [Burns 87]).  However, when those
+restrictions do not hold, a more powerful mechanism is often needed.
+</p>
+<p>
+   Entry queue selection is sometimes called preference control.  Many
+papers discussing preference control have appeared in the literature
+[Elrad 88, Wellings 84, Burns 89].  Preference control arises in
+applications like resource allocation servers, which typically grant
+satisfiable requests and queue up unsatisfiable requests for later
+servicing. Wellings, Keefe and Tomlinson [Wellings 84] were unable to
+find a good way to implement such servers in Ada 83.
+</p>
+<p>
+   An intrinsic provision within a language of the full expressive power
+to describe the various forms of preference controls would require an
+elaborate semantic structure and a complex (and potentially large) run-
+time support system.
+</p>
+<p>
+   Instead, we have chosen to provide a single and simple statement in
+Ada 95 which allows the programmer to construct the desired control
+algorithms based on the balance of needs of specific applications.  This
+is the requeue statement and as we saw in Part One, it enables an entry
+call to be requeued on another or even the same entry.
+</p>
+<p>
+   In order for the server to gain access to the caller's parameters
+there is no need to resume the caller and to require it to initiate
+another entry call based on the results of the first; it may simply be
+moved to another entry queue.  An alternate approach that was considered
+required the caller to first query the state of the server, and then to
+initiate an entry call with appropriate parameters (presumably using a
+specific family member index) to reflect the server's state.  This
+approach suffers from the potential of race conditions, since no
+atomicity is guaranteed between the two calls (another caller may be
+serviced and the state of the server may be changed), so the validity of
+the second request which is based on the first, may be lost.
+</p>
+<p>
+   In the case of protected entry calls, exclusive access is maintained
+throughout the period of examining the parameters and doing the requeue;
+in the case of accept bodies, the server task controls its own state and
+since it can refuse to accept any intermediate calls, the atomicity is
+also maintained.
+</p>
+<p>
+   The requeue statement may be specified as with abort.  In Ada 83,
+after a rendezvous had started, there was no way for the caller to cancel
+the request (or for a time-out to take effect - a time-out request is
+present only until the acceptor starts the service).  There was, of
+course, good reason for this behavior; after the service has commenced,
+the server is in a temporary state, and removing the caller
+asynchronously can invalidate its internal data structures.  In addition,
+because of by-reference parameters, the acceptor must maintain its
+ability to access the caller's data areas (such as the stack).  If the
+caller "disappears", this might result in dangling references and
+consequent disaster.
+</p>
+<p>
+   However, in some cases, deferring the cancellation of a call is
+unacceptable, in particular when the time-out value is needed to control
+the amount of time until the service is completed (as opposed to just
+started).  With the addition of asynchronous transfer of control to Ada
+95, the same situation can arise if the caller is "interrupted" and must
+change its flow of control as soon as possible.
+</p>
+<p>
+   Since there is not a single best approach for all applications, and
+since no easy work-around exists, the with abort is provided to allow the
+programmer to choose the appropriate mechanism for the application
+concerned.  In general, when cancellation during a requeue is to be
+allowed, the server will "checkpoint" its data-structures before issuing
+requeue with abort, in such a way that if the caller is removed from the
+second queue, the server can continue to operate normally.  When this is
+not possible, or when the cancellation during a requeue is not required,
+a simple requeue will suffice, and will hold the caller until the service
+is fully completed.
+</p>
+<p>
+   The requeue statement is designed to handle two main situations
+</p>
+<ul>
+<li>
+         After an accept statement or entry body begins execution, it may be
+     determined that the request cannot be satisfied immediately.
+     Instead, there is a need to requeue the caller until the request can
+     be handled.
+<li>
+    Alternatively, part of the request may be handled immediately, but
+     there may be additional steps in the process that need to be
+     performed at a later point.
+</ul>
+<p>
+In both cases, the accept statement or entry body needs to relinquish
+control so that other callers may be handled or other processing may be
+performed; the requeue enables the original request to be processed in
+two or more parts.
+</p>
+<p>
+The requeue statement allows a caller to be "requeued" on the queue of
+the same or some other entry.  The caller need not be aware of the
+requeue and indeed the number of steps required to handle a given
+operation need not be visible outside the task or protected type.  The
+net effect is that the server can be more flexible, while presenting a
+simple single interface to the client.
+</p>
+<p>
+   As part of the requeue, the parameters are neither respecified nor
+reevaluated.  Instead, the parameters are carried over to the new call
+directly.  If a new parameter list were specifiable, then it might
+include references to data local to the accept statement or entry body
+itself.  This would cause problems because the accept statement or entry
+body is completed as a consequence of the requeue and its local variables
+are thus deallocated.  Subtype conformance is thus required between the
+new target entry (if it has any parameters) and the current entry.  This
+allows the same representation to be used for the new set of parameters
+whether they are by-copy or by-reference and also eliminates the need to
+allocate new space to hold the parameters.  Note that the only
+possibility other than passing on exactly the same parameters is that the
+requeued call requires no parameters at all.
+</p>
+<p>
+   As a first example of requeue, the reader is invited to look once more
+at the example of the broadcast signal which we first met in II.9 and
+which we now repeat for convenience.
+</p>
+<p>
+   As in the previous signal example in 9.1.2, tasks wait for an event to
+occur.  However, this is a broadcast signal because when the event is
+signaled, all waiting tasks are released, not just one.  After releasing
+them, the event reverts to its original state, so tasks can wait again,
+until another signal.  Note also, that unlike the previous example, the
+event here is not persistent.  If no tasks are waiting when the signal
+arrives, it is lost.
+<pre>
+   protected Event is
+      entry Wait;
+      entry Signal;
+   private
+      entry Reset;
+      Occurred: Boolean := False;
+   end Event;
+
+   protected body Event is
+
+      entry Wait when Occurred is
+      begin
+         null;         -- note null body
+      end Wait;
+
+      entry Signal when True is  -- barrier is always true
+      begin
+         if Wait'Count > 0 then
+            Occurred := True;
+            requeue Reset;
+         end if;
+      end Signal;
+
+      entry Reset when Wait'count = 0 is
+      begin
+         Occurred := False;
+      end Reset;
+
+   end Event;
+</pre>
+</p>
+<p>
+The intended use is that tasks wait for the event by calling
+<pre>
+   Event.Wait;
+</pre>
+and another task notifies them that the event has occurred by calling
+<pre>
+   Event.Signal;
+</pre>
+and this causes all currently waiting tasks to continue, and the event to
+be reset, so that future calls to Event.Wait will wait.
+</p>
+<p>
+   The example works as follows.  If a task calls Event.Wait, it will
+first seize the protected object lock.  It will check Occurred, find it
+to be False, add itself to the entry queue, and release the lock.
+Several tasks might add themselves to the queue in this manner.
+</p>
+<p>
+   Later, the signalling task might call Event.Signal.  After seizing the
+lock, the task will execute the entry body (since its barrier is True).
+If no tasks are currently waiting, the task exits without updating the
+flag. Otherwise, it sets the flag to indicate that the event has
+occurred, and requeues itself on the Reset entry.  (Reset is declared in
+the private part, because it is not intended to be used directly by
+clients of the protected object.)
+</p>
+<p>
+   Before releasing the lock, the signalling task will check the queues.
+The barrier for Wait is now True.  A task is chosen from the Wait queue,
+and allowed to proceed.  Since the entry body for Wait does nothing, the
+flag will not change.  (See the Real-Time Systems annex for the detailed
+rules for choosing among the tasks waiting in entry queues.)  This
+sequence of events will be repeated until the entry queue for Wait is
+empty.  When the Wait queue is finally empty (that is Wait'Count equals
+0), the barrier of Reset is True, and the Reset body is executed, thereby
+resetting the flag.  The queues are now empty, so the protected object
+lock is released.  Note that implementations can optimize null entry
+bodies by releasing waiting tasks in one operation, when the barrier is
+true.
+</p>
+<p>
+   Because the steps described in the last two paragraphs are executed
+with the protected object locked, any other tasks that try to Wait or
+Signal on that object during that time will have to wait for the queues
+to be emptied, as explained above. Furthermore, there are no race
+conditions because the value of the barrier cannot be changed between the
+time it is evaluated and the time the corresponding entry body is
+executed.
+</p>
+<p>
+   The check for now-true barriers happens whenever the state of the
+protected object might have changed and, of course, before releasing the
+lock; that is, they happen just after executing the body of a protected
+procedure or protected entry.
+</p>
+<p>
+   In summary
+</p>
+<ul>
+<li>
+         A requeue statement is only allowed in an entry body and an accept
+     statement.  The target entry may be (possibly the same entry) in the
+     same task or protected object or in a different task or protected
+     object.  All combinations are possible.
+<li>
+    Any actual parameters to the original call are passed to the new
+     entry; therefore, the new entry must have the same parameter
+     profile, or else no parameters at all.
+</ul>
+<p>
+In the broadcast example, the requeue statement prevents a race
+condition that might otherwise occur.  For example, if the signalling
+task were required to call Signal and Reset in sequence, then the
+releasing of waiting tasks would no longer be atomic.  A task that tried
+to Wait in between the two calls of the signalling task, might have been
+released as well.  It might even be the same task that was already
+released once by that Signal.
+</p>
+<p>
+   We noted in Part One that this example was for illustration only and
+could be programmed without using requeue.  Here is a possible solution
+which uses the Count attribute in barriers for both Wait and Signal.
+<pre>
+   protected Event is
+      entry Wait;
+      entry Signal;
+   end Event;
+
+   protected body Event is
+      entry Wait when Signal'Count > 0 is
+      begin
+         null;
+      end Wait;
+
+      entry Signal when Wait'Count = 0 is
+      begin
+         null;
+      end Signal;
+   end Event;
+</pre>
+</p>
+<p>
+   When the Wait entry is called, the caller will be blocked until some
+caller is enqueued on the Signal entry queue.  When the Signal entry is
+called, the caller is queued if there are any waiters, then all the tasks
+on the Wait entry queue are resumed.  The signaler is then dequeued and
+the entry call is complete.  If there are no waiters when Signal is
+called, it returns immediately.
+</p>
+<p>
+   This is an interesting solution.  It works because the event of
+joining a queue is a protected action and results in the evaluation of
+barriers (just as they are evaluated when a protected procedure or entry
+body finishes).  Note also that there is no protected data (and hence no
+private part) and that both entry bodies are null); in essence the
+protected data is the Count attributes and these therefore behave
+properly.  In contrast, the Count attributes of task entries are not
+reliable because the actions of adding and joining task entry queues are
+not performed in any protected manner.
+</p>
+
+<h3>
+<a name=2-1>
+9.2.1  Preference Control
+</a>
+</h3>
+
+<p>
+Many real-time applications require preference control, where the ability
+to satisfy a request depends on the parameters passed in by the calling
+task and often also on the internal state of the server.  Examples are
+</p>
+<ul>
+<li>
+    The server must serve higher-priority requests first, where the
+     priority of the request is passed as an entry parameter.
+<li>
+    A particular entry call is used to request any of several resources,
+     where some resources might be available, while others are in use.
+     An entry parameter indicates which of the resources the task is
+     requesting.
+<li>
+    Several copies of a resource may be allocated at once, where the
+     calling task passes in the number of required resources.  A specific
+     instance of this situation is a memory allocator, where the resource
+     is a block of storage units.  The calling task asks for a particular
+     number of storage units, and must wait until a contiguous portion of
+     memory of at least the right size is available.  It might be that a
+     request for 100 storage units can be satisfied, whereas a request
+     for 1000 storage units cannot.
+<li>
+    The server is controlling a device that might be ready to serve some
+     requests but not others.
+</ul>
+<p>
+We now consider an example of the last situation.  We have a disk device
+with a head that may be moved to different tracks.  When a calling task
+wants to write to the disk at a particular place, the call may proceed
+immediately if the disk head is already on the right track.  Otherwise,
+the disk manager tells the disk device to move the head.  When the disk
+has moved the head, it generates an interrupt.  While waiting for the
+interrupt, the calling task is blocked.
+</p>
+<p>
+   Preference control can be implemented in Ada 95 using the requeue
+statement.  The entry call proceeds whether it can be immediately
+satisfied or not.  Then the server checks to see whether the request can
+be immediately satisfied by looking at the parameters.  If it can, the
+request is processed, and the entry returns.  If not, the request is
+requeued to another entry, to wait until conditions change.
+</p>
+<p>
+   The preference control in our example is simple.  We can satisfy
+requests for the current disk track, and queue the others.  Since the
+disk address is passed in as an entry parameter, some calls to the Write
+entry can proceed, while others cannot.
+<pre>
+   protected Disk_Manager is
+      entry Write(Where: Disk_Address; Data: Disk_Buffer);
+         -- write data to the disk at the specified address
+      entry Read(Where: Disk_Address; Data: out Disk_Buffer);
+         -- read data from the disk at the specified address
+      procedure Disk_Interrupt;
+         -- called when the disk has interrupted, indicating
+         -- that the disk head has moved to the correct track
+   private
+      entry Pending_Write(Where: Disk_Address; Data: Disk_Buffer);
+      entry Pending_Read(Where: Disk_Address; Data: out Disk_Buffer);
+
+      Current_Disk_Track: Disk_Track_Address := ...;
+         -- track where the disk head currently is.
+      Operation_Pending: Boolean := False;
+         -- is an incomplete Read or Write operation pending?
+      Disk_Interrupted: Boolean := False;
+         -- has the disk responded to the move command with
+         -- an interrupt?
+   end Disk_Manager;
+</pre>
+</p>
+<p>
+   In order to write on the disk, a task calls Disk_Manager.Write,
+passing the disk address and data as parameters.  The Read operation is
+similar but the full details are omitted.  The body of the protected
+object is as follows
+<pre>
+   protected body Disk_Manager is
+
+      procedure Disk_Interrupt is
+      begin
+         Disk_Interrupted := True;  -- release pending operations
+      end Disk_Interrupt;
+
+      entry Pending_Write(Where: Disk_Address; Data: Disk_Buffer)
+         when Disk_Interrupted is
+      begin
+         Current_Disk_Track := Where.Track;
+             -- we know that the disk head is at the right track.
+         ... -- write Data to the disk
+         Operation_Pending := False;
+             -- allow Reads and Writes to proceed
+      end Pending_Write;
+
+      entry Write(Where: Disk_Address; Data: Disk_Buffer)
+         when not Operation_Pending is
+      begin
+         if Where.Track = Current_Disk_Track then
+            ... -- write Data to the disk
+         else
+            ... -- tell the disk to move to the right track
+            Disk_Interrupted := False;
+            Operation_Pending := True;
+                -- prevent further Reads and Writes
+            requeue Pending_Write; -- wait for the interrupt
+         end if;
+      end Write;
+
+      entry Pending_Read(Where: Disk_Address; Data: out Disk_Buffer)
+         when Disk_Interrupted is
+      begin
+         ... -- similar to Pending_Write
+      end Pending_Read;
+
+      entry Read(Where: Disk_Address; Data: out Disk_Buffer)
+         when not Operation_Pending is
+      begin
+         ... -- similar to Write
+      end Read;
+
+   end Disk_Manager;
+</pre>
+</p>
+<p>
+   The Write operation checks whether the disk head is already on the
+right track.  If so, it writes the data and returns.  If not, it sends a
+command to the disk telling it to move the head to the right track, and
+then requeues the caller on Pending_Write.  It sets a flag to prevent
+intervening Write and Read operations.  When the disk has completed the
+move-head command, it interrupts, causing the Disk_Interrupt operation to
+be invoked.  The Disk_Interrupt operation sets the flag that allows the
+Pending_Write operation to proceed.
+</p>
+<p>
+   We do not specify here how Disk_Interrupt gets called when the
+interrupt occurs.  It might be attached directly to the interrupt, or
+some other interrupt handler might call it or set a flag in some other
+protected object that causes Disk_Interrupt to be called.
+</p>
+<p>
+   A real disk manager would be more complicated; it would probably allow
+multiple pending requests, sorted by track number, the actual reading and
+writing might be interrupt driven (in addition to the disk head
+movement), and so on.  But this simple version nevertheless illustrates
+the key features of preference control.
+</p>
+<p>
+   The following points should be noted
+</p>
+<ul>
+<li>
+    One might think that an obvious way to implement preference control
+     would be to make the entry barrier depend on the parameters of the
+     entry.  However, that is not allowed in order to permit efficient
+     implementations and to avoid complex semantics for the user.
+     Because the barriers do not depend on the formal parameters, the
+     value of the barrier is the same for all callers of the same entry.
+     This means that there is only one barrier value per entry, not one
+     per entry call, so evaluation of barriers can be efficient.  If the
+     barrier expression can be evaluated in a bounded amount of time, as
+     is usually the case, the programmer can calculate total worst-case
+     barrier evaluation times based on the worst-case barrier evaluation
+     times of each of the entries.
+<li>
+    It is important that the decisions of when to service a request
+     happen inside a protected operation, because these decisions are
+     based on the protected object's local data, which, of course must be
+     protected.  The Ada 95 requeue mechanism achieves such protection.
+<li>
+    The example works properly in the presence of abort and asynchronous
+     transfer of control.  For example, if a writing task is aborted
+     while it is waiting on the Pending_Write queue, the abort will be
+     deferred until after Pending_Write has been executed.  On the other
+     hand, the programmer might wish to allow the task to be aborted
+     earlier.  In that case, the requeue statement would take the form
+     requeue Pending_Write with abort;
+<li>
+     and then the protected body would have to be written in such a way
+     that callers can silently disappear from the Pending_Write queue
+     without disruption.  (The barriers would have to depend upon
+     Pending_Write'Count.)
+<li>
+    In Ada 83, an extra "agent" task was required to "hold" the call in
+     examples such as this.  In order to correctly handle abort and
+     asynchronous transfer of control, and still handle multiple
+     outstanding requests, the agent tasks had to be created dynamically,
+     as necessary.  Such agent tasks were too expensive for many
+     applications, and their timing behavior was rather unpredictable.
+<li>
+    Other methods in Ada 83 required exporting several entries that had
+     to be called in a particular order.  This violated information-
+     hiding principles, and caused race conditions, because events could
+     occur between the multiple calls.
+<li>
+     The information-hiding objection could be answered by putting the
+     task in a package, and putting the correct pattern of entry calls in
+     a procedure exported from the package, thus enforcing the required
+     protocol.  But then, the resulting exported procedure could not be
+     used in timed, conditional, and selective entry calls.
+<li>
+     Other solutions to the race problems generally required the
+     requesting task to poll the server, which was inefficient and
+     nondeterministic, in addition to being error-prone.
+</ul>
+
+<h2>
+<a name=3>
+9.3  Timing
+</a>
+</h2>
+
+<p>
+Ada 83 was unhelpful in the area of timing by notionally providing only
+one clock that could be used directly for delaying a task or timing an
+operation.  Furthermore, the Ada 83 delay statement required a duration,
+rather than a wakeup time, making it difficult for a task to wake up at
+perfectly regular intervals as explained in II.10.
+</p>
+<p>
+   In Ada 95, the delay statement is augmented by a delay until
+statement.  The delay until statement takes the wakeup time rather than a
+duration as its argument.  Furthermore, the Real-Time Systems annex
+defines the package Ada.Real_Time which contains an additional time type
+Real_Time.Time with an accompanying function Real_Time.Clock, which may
+be used in a delay until statement.
+</p>
+<p>
+   The type Real_Time.Time is intended to represent a real-time clock
+with potentially finer granularity than the time-of-day clock associated
+with Calendar.Time.  Furthermore, the value returned by Real_Time.Clock
+is guaranteed to be monotonically non-decreasing, whereas the time-of-day
+Calendar.Clock may jump forward or backward due to resetting of the time
+by a human operator (perhaps in response to a change of time-zone or
+daylight saving).
+</p>
+<p>
+   The following example shows a task that awakens each night at midnight
+and performs some logging function.
+<pre>
+   task body At_Midnight is
+      One_Day : constant Calendar.Day_Duration := 86_400.0;
+      Now     : Calendar.Time := Calendar.Clock;
+      Midnight: Calendar.Time := Calendar.Time_Of(
+         Year    => Calendar.Year(Now),
+         Month   => Calendar.Month(Now),
+         Day     => Calendar.Day(Now),
+         Seconds => 0.0);
+            -- truncate current time to most recent midnight
+   begin
+      loop
+         Midnight := Midnight + One_Day;
+         delay until Midnight;
+         Log_Data;
+      end loop;
+   end At_Midnight;
+</pre>
+</p>
+<p>
+   Since the delay until expression specifies an absolute time rather
+than a time interval, there is no opportunity for preemption during the
+calculation of the interval, and therefore the delay will expire at
+precisely the time that is specified.
+</p>
+<p>
+   Note furthermore that since the delay is written in terms of the time-
+of-day clock in the package Calendar, if the time-of-day clock is changed
+to daylight saving time (or perhaps the cruise liner moves over a time
+zone), the delay expiration time might be according to the new setting of
+the clock (although this is not guaranteed).
+</p>
+<p>
+   As a further example we present a task that polls a device every 10
+milliseconds.
+<pre>
+   task body Poll_Device is
+      use Ada;
+      Poll_Time: Real_Time.Time := time to start polling;
+      Period: constant Real_Time.Time_Span :=
+                               Real_Time.Milliseconds(10);
+   begin
+      loop
+         delay until Poll_Time;
+         ... -- Poll the device
+         Poll_Time := Poll_Time + Period;
+      end loop;
+   end Poll_Device;
+</pre>
+</p>
+<p>
+   In this case the Poll_Device task polls the device every 10
+milliseconds starting at the initial value of Poll_Time.  The period will
+not drift, as explained above for the At_Midnight example.  We use
+Real_Time.Time instead of Calendar.Time in this example, because we do
+not wish to be sensitive to possible changes to the time-of-day clock.
+</p>
+<p>
+   The existing (relative) delay statement only takes a value of the type
+Duration; the basis for relative delays is not necessarily that of the
+clock in the package Calendar and should be monotonic.  The general idea
+is that relative delays should not be disturbed by a shift in the time
+base.  A ten minute delay still means just that even if the clock moves
+forward.
+</p>
+<p>
+   Finally note that in Ada 95 the package Calendar is a child of Ada.
+For compatibility it is also renamed as Standard.Calendar (all such
+existing library units in Ada 83 are similarly renamed for
+compatibility).
+</p>
+
+<h2>
+<a name=4>
+9.4  Asynchronous Transfer of Control
+</a>
+</h2>
+
+<p>
+Asynchronous transfer of control was identified as an important
+requirement for Ada 95 (Requirement R5.3-A(1)).  In Ada 83, the only way
+to asynchronously change the execution path of a task was to abort it.
+However, in many applications, it is desirable that an external event be
+able to cause a task to begin execution at a new point, without the task
+as a whole being aborted and restarted.
+</p>
+<p>
+   As an example of asynchronous transfer of control, consider an
+interactive program where the user may choose to terminate a given
+operation and begin a new one.  This is normally signaled by typing a
+special key or hitting a special button associated with the controlling
+input device.  The user does not want the entire context of the running
+program to be lost.  Furthermore, for a long-running system, it is
+important that the resources associated with the interrupted processing
+be reclaimed.  This implies that some mechanism for "cleaning up" be
+available as part of the asynchronous transfer process.  Finally, if the
+abortable operation is updating some global data structure, it is
+essential to temporarily defer any asynchronous transfers until after the
+update is complete.
+</p>
+<p>
+   As was briefly explained in II.10, Ada 95 has a form of select
+statement with an abortable part and a triggering alternative to support
+asynchronous transfer of control.  We showed a simple example where a
+computation was abandoned if it could not be completed within a stated
+period of time.
+</p>
+<p>
+   In essence the triggering statement and the abortable part execute in
+parallel and whichever finishes first causes the other to be abandoned.
+</p>
+<p>
+   If the triggering statement completes before the abortable part, then
+the abortable part is abandoned and control passes to the sequence of
+statements following the triggering statement.  On the other hand, if the
+abortable part completes before the triggering statement then the
+triggering alternative is abandoned.
+</p>
+<p>
+   The important point is that we only need one thread of control.
+Waiting for a delay or waiting on an entry queue do not require a
+separate thread.  Moreover, when a task entry is accepted it is the
+called task which executes the accept statement and even in the case of a
+protected entry it will often be another task which executes the entry
+body.  So the abortable part can generally continue during the execution
+of the triggering statement.  It is only when the entry call finally
+returns (or the delay expires) that the abortable part has to be
+abandoned.  For full details of the mechanism see [RM95 9.7.4].
+</p>
+<p>
+   By supporting asynchronous transfer of control as a form of select
+statement, several useful properties are provided
+</p>
+<ul>
+<li>
+    The statements that are abortable are clearly bracketed in the
+     abortable part.
+<li>
+    The asynchronous transfer of control is directly tied to the
+     acceptance of an entry call or the expiration of a delay.  This
+     allows the transfer to occur without requiring an additional task to
+     explicitly signal the occurrence of the triggering event; this is in
+     contrast to what is possible with abort.
+<li>
+    Nesting of abortable regions (which are potentially "sensitive" to
+     different events) and protecting code in these regions from
+     interruption, is naturally achieved by the select construct and
+     protected types.
+<li>
+    The asynchronous transfer cannot be mistakenly redirected by a local
+     handler, as might happen with a mechanism based on asynchronous
+     exceptions.
+</ul>
+<p>
+   Here is an example of a database transaction using asynchronous
+transfer of control.  The database operation may be cancelled by typing a
+special key on the input device.  However, once the transaction has begun
+(is committed), the operation may not be cancelled.
+<pre>
+   with Ada.Finalization; use Ada;
+   package Txn_Pkg is
+      type Txn_Status is (Incomplete, Failed, Succeeded);
+      type Transaction is new Finalization.Limited_Controlled with
+         private;
+      -- Transaction is a controlled type as discussed in 7.4
+      procedure Finalize(Txn: in out Transaction);
+      procedure Set_Status(Txn: in out Transaction;
+                        Status: Txn_Status);
+   private
+      type Transaction is new Finalization.Limited_Controlled with
+         record
+            Status: Txn_Status := Incomplete;
+            pragma Atomic (Status);
+            ... -- More components
+         end record;
+   end Txn_Pkg;
+
+   package body Txn_Pkg is
+
+      procedure Finalize(Txn: in out Transaction) is
+      begin
+         -- Finalization runs with abort and ATC deferred
+         if Txn.Status = Succeeded then
+            Commit(Txn);
+         else
+            Rollback(Txn);
+         end if;
+      end Finalize;
+
+      procedure Set_Status(Txn: in out Transaction);
+                        Status: Txn_Status) is
+      begin
+          Txn.Status := Status;
+      end Set_Status;
+
+   end Txn_Pkg;
+</pre>
+</p>
+<p>
+The package might be used as in the following
+<pre>
+   declare
+       Database_Txn: Transaction;
+        -- declare a transaction, will commit or abort
+        -- during finalization
+   begin
+      select
+         -- wait for a cancel key from the input device
+         Input_Device.Wait_For_Cancel;
+          -- the Status remains Incomplete, so that
+          -- the transaction will not commit
+      then abort
+          -- do the transaction
+         Read(Database_Txn, ...);
+         Write(Database_Txn, ...);
+         ...
+         Set_Status(Database_Txn, Succeeded);
+         -- set status to ensure the transaction is committed
+      exception
+         when others =>
+            Put_Line("Operation failed with unhandled exception");
+            -- set status to cause transaction to be aborted
+            Set_Status(Database_Txn, Failed);
+      end select;
+      -- Finalize on Database_Txn will be called here and,
+      -- based on the recorded status, will either commit or
+      -- abort the transaction.
+   end;
+</pre>
+</p>
+<p>
+   This illustrates the use of controlled types and asynchronous transfer
+of control.  At the end of the block, the Finalize operation is called
+and this will uniquely either rollback the transaction or commit to it.
+Note in particular the use of the pragma Atomic; this is described in the
+Systems Programming annex.  Note also that the Finalization is always
+performed with abort and ATC deferred so that no unfortunate interactions
+can occur.
+</p>
+<p>
+   The final example shows how asynchronous transfer of control can be
+used in a real-time application.  Current_Coordinates is periodically
+updated with a new set of computed coordinates.  A user task (not shown)
+can call Read as needed to get the most recently computed coordinates,
+which might then be used to control an external device.
+<pre>
+   protected Current_Coordinates is
+      procedure Update(New_Val: Coordinates);
+        -- used by the computing task only
+      function Read return Coordinates;
+        -- used by whoever needs the result
+   private
+      Current_Value: Coordinates;
+   end Current_Coordinates;
+
+   protected Controller is
+
+      entry Wait_For_Overrun;
+        -- called by the computing task
+      procedure Set_Overrun;
+        -- called by an executive or interrupt handler
+   private
+      Overrun_Occurred: Boolean := False;
+   end Controller;
+</pre>
+</p>
+<p>
+   The protected object Current_Coordinates provides mutually exclusive
+access to the most recently calculated coordinates.  The protected object
+Controller provides an entry for detecting overruns, designed to be
+called in the triggering alternative of an asynchronous select statement
+as shown below.
+</p>
+<p>
+   The following is the body of the Calculate task, which loops,
+progressively improving the estimate of the coordinates, until its time
+allotment expires, or the estimate stabilizes.
+<pre>
+   task body Calculate is
+      Problem: Problem_Defn;
+   begin
+      Get_Problem(Problem);
+      select
+         Controller.Wait_For_Overrun;   -- triggering alternative
+      then abort
+         declare
+            Answer: Coordinates := Initial_Value;
+            Temp  : Coordinates;
+         begin
+            Current_Coordinates.Update(Answer);
+            loop  -- loop until estimate stabilizes
+               Temp := Answer;
+               Track_Computation.Improve_Estimate(Problem, Answer);
+               Current_Coordinates.Update(Answer);
+               exit when Distance(Answer, Temp) <= Epsilon;
+            end loop;
+         end;
+      end select;
+   end Calculate;
+</pre>
+</p>
+<p>
+   The Calculate task sets the value of the Current_Coordinates
+initially, and then repeatedly calls Track_Computation.Improve_Estimate,
+which is presumably a time-consuming procedure that calculates a better
+estimate of the coordinates.  Calculate stops looping when it decides
+that the estimate has stabilized.  However, it may be that
+Improve_Estimate takes too long, or the system undergoes a mode change
+that requires the use of the current best estimate.  There is presumably
+an executive or interrupt handler that notices such a situation and calls
+Controller.Set_Overrun.  When that happens, the Calculate task does an
+asynchronous transfer of control thereby ending the computation loop.
+</p>
+<p>
+   We now show a possible (partial) implementation of the
+Improve_Estimate subprogram.  It depends on some work area that has a
+dynamic size, that can be allocated, lengthened, and deallocated.
+Improve_Estimate allocates the work area, and tries to compute the
+result.  However, the computation of the result may fail, requiring a
+larger work area.  Therefore, Improve_Estimate loops until it succeeds or
+the time expires or some resource is exhausted.
+<pre>
+   with Ada.Finalization; use Ada;
+   package body Track_Computation is
+      -- This package includes a procedure Improve_Estimate for
+      -- progressively calculating a better estimate of the coordinates.
+
+      -- buffer is used for a work area to compute new coordinates
+      type Buffer_Size is range 0 .. Max;
+      type Buffer is ...
+
+      type Buffer_Ptr is access Buffer;
+
+      type Work_Area is new Finalization.Limited_Controlled with
+         record
+            Buf: Buffer_Ptr;
+         end record;
+
+      -- these procedures allocate a work area of a given size,
+      -- and reallocate a longer work area
+      procedure Allocate_Work_Area(
+           Area: in out Work_Area;
+           Size: in Buffer_Size) is ...
+      procedure Lengthen_Work_Area(
+           Area  : in out Work_Area;
+           Amount: in Buffer_Size) is ...
+
+      -- this procedure is called automatically on scope exit,
+      -- and deallocates the buffer designated by Area.Buf
+      procedure Finalize(Area: in out Work_Area) is ...
+
+      procedure Improve_Estimate(
+           Problem: in Problem_Defn;
+           Answer : in out Coordinates) is
+         -- calculate a better estimate, given the old estimate
+         Initial_Size: Buffer_Size := Estimate_Size(Problem);
+         -- compute expected work area size, based on problem definition
+         Work_Buffer: Work_Area;
+      begin
+         Allocate_Work_Area(Work_Buffer, Initial_Size);
+         loop
+            begin
+               ... -- compute better estimate
+               Answer := ...;
+               exit;  -- computation succeeded
+            exception
+               when Work_Area_Too_Small =>
+                  -- the Problem requires a larger work area
+                  Lengthen_Work_Area(Work_Buffer, Size_Increment);
+                  -- now loop around to try again
+            end;
+         end loop;
+         -- Work_Buffer is automatically deallocated by
+         -- finalization on exit from the scope
+      end Improve_Estimate;
+
+   end Track_Computation;
+</pre>
+</p>
+<p>
+   Since it is important that the work area be deallocated when the
+asynchronous transfer of control occurs, Work_Area is derived from
+Finalization.Limited_Controlled so that a Finalize procedure can be
+defined.  This provides automatic clean up on scope exit.
+</p>
+<p>
+   Note that the Calculate task does not (and should not) need to know
+about the implementation details of Improve_Estimate.  Therefore, it is
+not feasible to put the call on Finalize(Work_Buffer) in Calculate.
+Furthermore, Allocate_Work_Area might not use a normal Ada allocator.  It
+might be allocating from some static data structure.  In any case, it is
+important to reclaim the resources allocated to the work area when the
+processing is complete or aborted.
+</p>
+<p>
+   Aborts and asynchronous transfers of control are deferred when a task
+is performing a protected subprogram or entry call, or during an
+initialization or finalization operation on an object of a controlled
+type.  The programmer has complete control over the amount of code that
+should be placed in such abort-deferred regions.  Typically, such regions
+should be kept short.
+</p>
+
+<h2>
+<a name=5>
+9.5  The Abort Statement
+</a>
+</h2>
+
+<p>
+In Ada 95, it is essential that use of the abort statement, and, more
+importantly, the asynchronous select statement with its abortable part,
+not result in corruption of global data structures.  In Ada 83, abort was
+deferred for a calling task while it was engaged in a rendezvous.  This
+allowed the rendezvous to complete normally so that the data structures
+managed by the accepting task were not left in an indeterminate state
+just because one of its callers was aborted.
+</p>
+<p>
+   For Ada 95, we have generalized this deferral of abort to include the
+time during which calls on protected operations are being serviced, and
+the initialization, assignment and finalization of controlled types (see
+7.4).  (However, we recall that requeue with abort allows a server to
+override deferral if desired as explained in 9.2.)
+</p>
+<p>
+   Without deferral of abort, any update of a global data structure
+becomes extremely unsafe, if not impossible.  Ultimately all updates are
+forced into a two-phase approach, where updates are first performed into
+unused storage, and then the final commitment of a change involves a
+single atomic store, typically of a pointer of some sort.  Such an
+approach can be extremely cumbersome, and very inefficient for large data
+structures.  In most cases, it is much simpler and efficient to
+selectively defer asynchronous transfers or aborts, rather than to allow
+them at any moment.
+</p>
+<p>
+   In addition to deferring abort, it is important to be able to reclaim
+resources allocated to constructs being aborted.  The support for user-
+defined initialization and finalization of controlled types provides the
+primitives necessary to perform appropriate resource reclamation, even in
+the presence of abort and asynchronous transfers.
+</p>
+<p>
+   Reclaiming local storage resources is of course important.  However,
+releasing resources is even more critical for a program involved in
+communicating with an external subsystem, such as a remote database or
+other server.  For a short-lived program, running on a conventional time-
+shared operating system, with no contact with external subsystems, it
+might be argued that there is no need to provide user-defined
+finalization that runs even when the task is aborted or is "directed" to
+execute an asynchronous transfer of control.  However, for a long-running
+program, with limited memory, and which is possibly communicating with
+external subsystems, it is crucial that relatively local events like an
+asynchronous transfer not undermine global resource management.
+</p>
+<p>
+   In general, the discussion in [RM95] is unified so that aborting a
+task and aborting a sequence of statements (as in ATC) are described
+together.
+</p>
+
+<h2>
+<a name=6>
+9.6  Tasking and Discriminants
+</a>
+</h2>
+
+<p>
+In Ada 95, we have generalized discriminants so that they are applicable
+to task types and protected types as well as to records.  This allows
+tasks and protected objects to be parameterized when they are declared.
+</p>
+<p>
+   An example of a protected type with a discriminant is the
+Counting_Semaphore in II.9.  The discriminant indicates the number of
+items in the resource being guarded by the semaphore.
+</p>
+<p>
+   Discriminants of tasks can be used to set the priority, storage size
+and size of entry families of individual tasks of a type.  In the case of
+storage size this is done with the new pragma Storage_Size by analogy
+with the pragma Priority.  (Note that an attribute definition clause
+could only be applied to all tasks of a type; the use of such an
+attribute definition clause for setting the storage size is now
+obsolescent.)
+</p>
+<p>
+   Of more importance is the ability to indicate the data associated with
+a task; this obviates the need for an initial rendezvous with a task and
+can eliminate or at least reduce any bottleneck in the parallel
+activation of tasks.
+</p>
+<p>
+   For example, in a numerical application we might have an array of
+tasks each of which works on some data.  In each case the data will be
+shared with an adjacent task and so can be conveniently accessed through
+a protected object.  The tasks do not therefore need to communicate with
+each other directly but just with the protected objects.  We might write
+<pre>
+   subtype Data_Range is Integer range 0 .. 1000;
+   subtype Task_Range is
+         Data_Range range Data_Range'First+1 .. Data_Range'Last-1;
+
+   protected type Data_Point is
+      procedure Put(New_Value: in Data);
+      procedure Get(Current_Value: out Data);
+   private
+      -- the protected data
+   end;
+   ...
+   The_Data: array (Data_Range) of Data_Point;
+
+   function Next_One return Task_Range;
+   ...
+   task type Computer(Index: Task_Range := Next_One);
+
+   The_Tasks: array (Task_Range) of Computer;
+</pre>
+where we assume that the data at the end-points of the range is fixed
+(the boundary conditions) and so no task is associated with these.
+</p>
+<p>
+   Successive calls of the function Next_One deliver the unique values
+throughout the task range.  This guarantees that each task has a unique
+value of the discriminant Index although this might not correspond to its
+index position in the array since the components can be initialized in
+any order.  However, they are not permitted to be initialized in parallel
+and so there is no need for the function Next_One to take any action to
+prevent parallel calls.  Each task can then use its discriminant Index to
+access the data in the protected objects.
+</p>
+<p>
+   An access discriminant is particularly useful for indicating the data
+associated with a task.  We could write
+<pre>
+   type Task_Data is
+      record
+         ...   -- data for task to work on
+      end record;
+
+   task type Worker(D: access Task_Data) is
+      ...
+   end;
+</pre>
+and then inside the body of Worker we can get hold of the data via the
+access discriminant D.  The data is associated with a particular task in
+its declaration
+<pre>
+   Data_For_Joe: aliased Task_Data := ...
+
+   Joe: Worker(Data_For_Joe'Access);
+</pre>
+where we note that the data has to be marked as aliased.  An advantage of
+access discriminants is that they are constants and cannot be detached
+from the task; hence the task and its data are securely bound together.
+We recall from 3.7.1 that there are consequently no access checks on the
+use of an access discriminant.
+</p>
+<p>
+   An alternative approach is to embed the task inside the data.  We can
+then use the self-referential technique described in 4.6.3.
+<pre>
+   type Task_And_Data is limited
+      record
+         ... -- some data
+         Jobber: Worker(Task_And_Data'Access);
+      end record;
+</pre>
+</p>
+<p>
+   We can use similar techniques with protected objects.  The data
+logically protected by a protected object need not be directly inside the
+protected object.  It could be indicated by an access discriminant.  For
+example
+<pre>
+   type Resource is
+      record
+         Counter: Integer;
+         ...
+      end record;
+
+   protected type Guardian(R: access Resource) is
+      procedure Increment;
+      ...
+   end Guardian;
+
+   protected body Guardian is
+      procedure Increment is
+      begin
+         R.Counter := R.Counter + 1;
+      end Increment;
+      ...
+   end Guardian;
+</pre>
+and then within the bodies of protected procedures such as Increment we
+can access the data of type Resource in a safe manner.  We declare a
+particular protected object thus
+<pre>
+   My_Resource: aliased Resource := ...
+   ..
+   My_Object: Guardian(My_Resource'Access);
+   ...
+   My_Object.Increment;
+</pre>
+</p>
+<p>
+   Clearly this approach can be used with any standard protected object
+such as the mailbox discussed in 9.1.2.
+</p>
+
+<h3>
+<a name=6-1>
+9.6.1  Interaction with OOP
+</a>
+</h3>
+
+<p>
+Tasks and protected objects may appear at first sight to be concerned
+with aspects of programming quite alien to the concepts associated with
+object oriented programming such as type extension and dispatching.  For
+example, it is not possible to extend a protected type with additional
+protected operations (this was considered at conflict with other
+considerations such as efficiency).  However, although indeed an
+orthogonal part of the language, tasks and protected objects work
+together with tagged types in a remarkable way.  Thus we can create
+structures with both synchronization and extension properties where
+protected objects or tasks provide the synchronization aspects and tagged
+types provide extension aspects.
+</p>
+<p>
+   For example, a task or protected object may be a component of a tagged
+object or conversely may contain a tagged object internally.  A powerful
+construction is where a task or protected object has a class-wide access
+discriminant that references a tagged object.  In this section we give
+some examples of the use of access discriminants in this way.
+</p>
+<p>
+   The first example illustrates how a task type can provide a template
+for a variety of related activities with the details filled in with
+dispatching calls.  (Remember from the discussion in 3.7.1 and 4.4.4 that
+type extension provides a flexible means of parameterizing a general
+activity such as the use of an iterator.)
+</p>
+<p>
+   Suppose that we wish to perform a number of activities that have the
+general pattern of performing some job a certain number of times at
+intervals with perhaps some initial and final actions as well.  We can
+also make provision for a general purpose exception handling mechanism.
+A suitable task type might be
+<pre>
+   task type T(Job: access Job_Descriptor'Class);
+
+   task body T is
+   begin
+      Start(Job);
+      for I in 1 .. Iterations(Job) loop
+         delay Interval(Job);
+         Do_It(Job, I);
+      end loop;
+      Finish(Job);
+   exception
+      when Event: others =>
+         Handle_Failure(Job, Event);
+   end T;
+</pre>
+</p>
+<p>
+Note carefully that the access discriminant Job is class-wide so that
+dispatching can occur.  The various subprograms Start, Iterations,
+Interval, Do_It, Finish and Handle_Failure are all dispatching operations
+of the type Job_Descriptor and might be declared as follows.
+<pre>
+   package Base_Job is
+      type Job_Descriptor is abstract tagged null record;
+      procedure Start(J: access Job_Descriptor);
+      function Iterations(J: access Job_Descriptor) return Integer
+                                                            is abstract;
+      function Interval(J: access Job_Descriptor) return Duration
+                                                            is abstract;
+      procedure Do_It(J: access Job_Descriptor; I: Integer) is abstract;
+      procedure Finish(J: access Job_Descriptor);
+      procedure Handle_Failure(J: access Job_Descriptor;
+                               E: Exception_Occurrence);
+   end Base_Job;
+</pre>
+</p>
+<p>
+We have made most of the operations abstract so that the user is forced
+to provide nonabstract versions but have chosen to make Start and Finish
+just null since that is an obvious default.  A convenient default for
+Handle_Failure would also seem appropriate.
+</p>
+<p>
+   Observe that the various operations dispatch on an access parameter.
+It would have been possible for the parameters to be just in parameters
+but then the actual parameters would have had to be Job.all in the
+various calls.  (If we wanted write access to Job then the parameters
+would have to be in out or access parameters; see 6.1.2 for a discussion
+on the merits of one versus the other.  Moreover, we might make the
+parameters of Iterations and Interval of mode in just to emphasize that
+they are read only operations.)
+</p>
+<p>
+   A demonstration task to output a message ten times with one minute
+intervals might be produced by writing
+<pre>
+   with Base_Job; use Base_Job;
+   package Demo_Stuff is
+      type Demo is new Job_Descriptor with null record;
+      function Iterations(D: access Demo) return Integer;
+      function Interval(D: access Demo) return Duration;
+      procedure Do_It(D: access Demo; I: Integer);
+   end;
+
+   package body Demo_Stuff is
+      function Iterations(D: access Demo) return Integer is
+      begin
+         return 10;
+      end Iterations;
+
+      function Interval(D: access Demo) return Duration is
+      begin
+         return 60.0;
+      end Interval;
+
+      procedure Do_It(D: access Demo; I: Integer) is
+      begin
+         New_Line; Put("This is number "); Put(I);
+      end Do_It;
+   end Demo_Stuff;
+   ...
+   The_Demo: Demo;                     -- data for the demo
+   The_Demo_Task: T(The_Demo'Access);  -- create the task
+</pre>
+</p>
+<p>
+   This somewhat pathetic demonstration task always does the same thing
+since there is actually no data in the type Demo.  All the object
+The_Demo does is indicate through its tag the particular subprograms to
+be called by dispatching.  Thus the type Demo is simply a tag.
+</p>
+<p>
+   A more exciting demonstration might be created by giving the type some
+components indicating the number of iterations and the interval.  The
+procedure Start might then check that the demonstration would not take
+too long (five minutes would be quite enough!) and, if necessary, by
+raising an exception cause the demonstration to be cancelled and a
+suitable message output.  This might be written as
+<pre>
+   package Better_Demo_Stuff is
+      type Better_Demo is new Job_Descriptor with
+         record
+            The_Iterations: Integer;
+            The_Interval: Duration;
+         end record;
+      Silly_Demo: exception;
+      ...
+
+   end;
+
+   package body Better_Demo_Stuff is
+      function Iterations(D: access Better_Demo) return Integer is
+      begin
+         return D.The_Iterations;
+      end Iterations;
+      ...
+      procedure Start(D: access Better_Demo) is
+      begin
+         if D.The_Iterations * D.The_Interval > 300.0 then
+            Raise_Exception(Silly_Demo'Identity, "Sorry; too long");
+         end if;
+      end Start;
+
+      procedure Handle_Failure(D: access Better_Demo;
+                               E: Exception_Occurrence) is
+      begin
+         Put_Line("Demonstration not executed because: ");
+         Put_Line(Exception_Message(E));
+      end Handle_Failure;
+   end Better_Demo_Stuff;
+</pre>
+</p>
+<p>
+   For illustrative purposes we have passed the message to be output
+using the exception message mechanism discussed  in 11.2.
+</p>
+<p>
+   Although our example has been merely a simple demonstration
+nevertheless the approach could be used to much effect in simulations and
+related applications.  By using type extension, unnecessary repetition of
+common code is avoided.
+</p>
+<p>
+   The next example illustrates how a class of types plus associated
+protocols originally developed for a non-tasking environment can be
+encapsulated as a protected type.  Again the key is the use of a class-
+wide access discriminant.
+</p>
+<p>
+   Suppose we have a queuing protocol defined by
+<pre>
+   type Queue is abstract tagged null record;
+   function Is_Empty(Q: in Queue) return Boolean is abstract;
+   function Is_Full(Q: in Queue) return Boolean is abstract;
+   procedure Add_To_Queue(Q: access Queue;
+                          X: Queue_Data) is abstract;
+   procedure Remove_From_Queue(Q: access Queue;
+                               X: out Queue_Data) is abstract;
+</pre>
+</p>
+<p>
+   Observe that this describes a whole class of queue types.  An existent
+Queue need only supply bodies for these four operations.  Incidentally
+Is_Empty and Is_Full take in parameters since they do not modify the
+queue whereas Add_To_Queue and Remove_From_Queue take access parameters
+because they do modify the queue.  This protocol is similar to the
+generic package in 4.4.1 except that we have assumed that we know the
+anticipated specific type when removing items from the queue.
+</p>
+<p>
+   A general protection template is provided by
+<pre>
+   protected type PQ(Q: access Queue'Class) is
+      entry Put(X: in Queue_Data);
+      entry Get(X: out Queue_Data);
+   end;
+
+   protected body PQ is
+      entry Put(X: in Queue_Data) when not Is_Full(Q.all) is
+      begin
+         Add_To_Queue(Q, X);
+      end Put;
+
+      entry Get(X: out Queue_Data) when not Is_Empty(Q.all) is
+      begin
+         Remove_From_Queue(Q, X);
+      end Get;
+   end PQ;
+</pre>
+</p>
+<p>
+   Interference between operations on a queue is prevented by the natural
+mechanism of the protected type.  Moreover, the functions Is_Empty and
+Is_Full (originally provided to enable the user of the non-tasking
+protocol to guard against misuse of the queue) can now be sensibly used
+as barriers to ensure that a user is automatically prevented from misuse
+of a queue.  Note that the particular queue is identified by the access
+discriminant.
+</p>
+<p>
+   The user can now define a particular implementation of a queue by type
+extension such as
+<pre>
+   type My_Queue is new Queue with private;
+   function Is_Empty(Q: My_Queue) return Boolean;
+   ...
+</pre>
+and then declare and use a protected queue as follows
+<pre>
+   Raw_Queue: aliased My_Queue;
+   My_Protected_Queue: PQ(Raw_Queue'Access);
+   ...
+   My_Protected_Queue.Put(An_Item);
+</pre>
+</p>
+<p>
+   The unprotected queue object provides the value of the access
+discriminant for the protected object.  Operations upon the protected
+queue are performed as expected by normal entry calls.
+</p>
+
+<h2>
+<a name=7>
+9.7  Other Improvements
+</a>
+</h2>
+
+<p>
+An improvement to the syntax allows entries and representation clauses to
+be in an arbitrary order in a task specification; previously all entries
+had to precede all representation clauses.
+</p>
+<p>
+   There are a number of other aspects of the control of tasks that are
+dealt with in the Systems Programming and the Real-Time Systems annexes.
+These cover topics such as the identification of tasks, task attributes,
+the handling of interrupts and the control of priorities.  For a
+discussion on these topics the reader is referred to Part Three of this
+rationale.
+</p>
+
+<h2>
+<a name=8>
+9.8  Requirements Summary
+</a>
+</h2>
+
+<p>
+The requirement
+<pre>
+     R2.2-A(1) - Reduce Deterrents to Efficiency
+</pre>
+is very clearly addressed by the introduction of protected objects.
+</p>
+<p>
+   The requirements
+<pre>
+     R5.1-A(1) - Elapsed Time Measurement
+
+     R5.1-B(1) - Precise Periodic Execution
+</pre>
+are met by the introduction of Real_Time.Time and the delay until
+statement (see 9.3).
+</p>
+<p>
+   The requirement
+<pre>
+     R5.2-A(1) - Alternative Scheduling Algorithms
+</pre>
+is generally addressed by the Real-Time Systems annex and is thus
+discussed in Part Three.  A related aspect is selection from entry
+queues.
+</p>
+<p>
+   The rather general requirement
+<pre>
+     R5.2-A(2) - Common Real-Time Paradigms
+</pre>
+is met variously by the protected type, the requeue statement, and the
+asynchronous select in the core language and the facilities for priority
+control in the Real-Time Systems annex.
+</p>
+<p>
+   The requirements
+<pre>
+     R5.3-A(1) - Asynchronous Transfer of Control
+
+     R5.1-C(1) - Detection of Missed Deadlines
+</pre>
+are met by the asynchronous select statement discussed in 9.4.
+</p>
+<p>
+   The requirement for
+<pre>
+     R5.4-A(1) - Non-Blocking Communication
+</pre>
+can be met by the use of a protected record as a mailbox buffer.
+</p>
+<p>
+   The study topic
+<pre>
+     S5.4-B(1) - Asynchronous Multicast
+</pre>
+can be met in various ways using protected objects as building blocks.
+</p>
+<p>
+   The requirements
+<pre>
+     R6.3-A(1) - Interrupt Servicing
+
+     R6.3-A(2) - Interrupt Binding
+</pre>
+are of great concern to hard real-time programs.  They are addressed in
+detail by the Systems Programming annex.
+</p>
+<p>
+   The study topic
+<pre>
+     S7.2-A(1) - Managing Large Numbers of Tasks
+</pre>
+is addressed by the introduction of task discriminants; see 9.6.
+</p>
+<p>
+   Finally, it should be noted that the two study topics
+<pre>
+     S7.3-A(1) - Statement Level Parallelism
+
+     S7.4-A(1) - Configuration of Parallel Programs
+</pre>
+which relate to vector processing are not directly addressed by any
+features in the language.  However, the rules for the interaction between
+exceptions and optimization have been relaxed [RM95 11.6] so that
+implementers should be able to add appropriate pragmas to allow statement
+level parallelism.  Mechanisms for controlling the configuration of
+parallel programs are clearly outside the scope of the language itself.
+</p>
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-8.html> Previous </a> |
+<a href=rat95-p2-10.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

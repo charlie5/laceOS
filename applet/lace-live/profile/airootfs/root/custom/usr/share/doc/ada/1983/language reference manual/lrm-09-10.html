@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 9.10: Abort Statements</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="9.10">9.10</A>.  Abort Statements  </H2>
+<A HREF="lrm-09-09.html#9.9"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-09.html#9"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-09-11.html#9.11"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+An  abort  statement  causes  one  or  more  tasks to become abnormal, thus
+preventing any further rendezvous with such tasks. 
+<pre>
+    abort_statement ::= abort task_name {, task_name}; 
+</pre>
+<P>
+The determination of the type of each task name uses the fact that the type
+of the name is a task type. 
+<P>
+For the execution of an abort statement, the given task names are evaluated
+in some order that is not defined by the language.  Each  named  task  then
+becomes abnormal unless it is already terminated;  similarly, any task that
+depends  on  a named task becomes abnormal unless it is already terminated. 
+<P>
+Any abnormal task whose execution is suspended at an  accept  statement,  a
+select  statement,  or  a  delay statement becomes completed;  any abnormal
+task whose execution is suspended at an entry call, and that is not yet  in
+a corresponding rendezvous, becomes completed and is removed from the entry
+queue;   any  abnormal task that has not yet started its activation becomes
+completed (and hence also terminated).  This completes the execution of the
+abort statement. 
+<P>
+The completion of any other abnormal task need not happen before completion
+of the abort statement.  It must happen no later  than  when  the  abnormal
+task  reaches a synchronization point that is one of the following: the end
+of its activation;  a point where it causes the activation of another task;
+an entry call; the start or the end  of  an  accept  statement;   a  select
+statement;   a  delay  statement;   an  exception  handler;   or  an  abort
+statement.  If a task that calls an  entry  becomes  abnormal  while  in  a
+rendezvous,  its  termination  does not take place before the completion of
+the rendezvous (see <a href="lrm-11-05.html#11.5">11.5</a>). 
+<P>
+The call of an entry of an abnormal task raises the exception TASKING_ERROR
+at the place of the call.  Similarly, the exception TASKING_ERROR is raised
+for any task that has called an entry of an abnormal  task,  if  the  entry
+call  is still queued or if the rendezvous is not yet finished (whether the
+entry call is an entry call statement, or  a  conditional  or  timed  entry
+call);   the  exception  is  raised  no  later  than  the completion of the   
+abnormal task.  The value of the attribute CALLABLE is FALSE for  any  task
+that is abnormal (or completed). 
+<P>
+If  the  abnormal completion of a task takes place while the task updates a
+variable, then the value of this variable is undefined.  Example: 
+<pre>
+    abort USER, TERMINAL.all, POOL(3); 
+</pre>
+<P>
+Notes: 
+<P>
+An abort statement should be  used  only  in  extremely  severe  situations
+requiring  unconditional termination.  A task is allowed to abort any task,
+including itself.    
+<P>
+<b>References:</b>  <A HREF="lrm-11-05.html#11.5">abnormal in rendezvous</A>,
+<A HREF="lrm-09-05.html#9.5">accept statement</A>,
+<A HREF="lrm-09-03.html#9.3">activation</A>,
+<A HREF="lrm-04-01.html#4.1.4">attribute</A>,
+<A HREF="lrm-09-09.html#9.9">callable  (predefined  attribute)</A>,
+<A HREF="lrm-09-07.html#9.7.2">conditional entry call</A>,
+<A HREF="lrm-09-06.html#9.6">delay statement</A>,
+<A HREF="lrm-09-04.html#9.4">dependent  task</A>,
+<A HREF="lrm-09-05.html#9.5">entry  call statement</A>,
+<A HREF="lrm-04-01.html#4.1">evaluation  of  a  name</A>,
+<A HREF="lrm-11-02.html#11.2">exception handler</A>,
+<A HREF="lrm-03-05.html#3.5.3">false boolean value</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-09-05.html#9.5">queue of entry calls</A>,
+<A HREF="lrm-09-05.html#9.5">rendezvous</A>,
+<A HREF="lrm-09-07.html#9.7">select  statement</A>,
+<A HREF="lrm-05.html#5">statement</A>,
+<A HREF="lrm-09.html#9">task</A>,
+<A HREF="lrm-11-01.html#11.1">tasking_error exception</A>,
+<A HREF="lrm-09-04.html#9.4">terminated task</A>,
+<A HREF="lrm-09-07.html#9.7.3">timed entry call</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-13-02.html#13.2.7">13.2.7&nbsp;Timed and Conditional Communication</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

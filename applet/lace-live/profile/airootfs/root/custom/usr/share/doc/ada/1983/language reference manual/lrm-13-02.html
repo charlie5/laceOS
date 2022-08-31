@@ -1,0 +1,167 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 13.2: Length Clauses</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="13.2">13.2</A>.  Length Clauses</H2>
+<A HREF="lrm-13-01.html#13.1"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-13.html#13"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-13-03.html#13.3"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+A length clause specifies an amount of storage associated with a type.
+<pre>
+    length_clause ::= for attribute use simple_expression;
+</pre>
+<p>
+The expression must be of some numeric type and is evaluated during the 
+elaboration of the length clause (unless it is a static expression).  The 
+prefix of the attribute must denote either a type or a first named subtype.  
+The prefix is called T in what follows.  The only allowed attribute 
+designators in a length clause are SIZE, STORAGE_SIZE, and SMALL.  The effect 
+of the length clause depends on the attribute designator:
+<ol>
+<li>Size specification: T'SIZE<br>
+The expression must be a static expression of some integer type.  The
+value of the expression specifies an upper bound for the number of bits 
+to be allocated to objects of the type or first named subtype T.  The
+size specification must allow for enough storage space to accommodate
+every allowable value of these objects.  A size specification for a 
+composite type may affect the size of the gaps between the storage areas 
+allocated to consecutive components. On the other hand, it need not 
+affect the size of the storage area allocated to each component.<br><br>
+The size specification is only allowed if the constraints on T and on its 
+subcomponents (if any) are static.  In the case of an unconstrained 
+array type, the index subtypes must also be static.<br><br>
+<li>Specification of collection size: T'STORAGE_SIZE<br>
+The prefix T must denote an access type. The expression must be of some 
+integer type (but need not be static); its value specifies the number of 
+storage units to be reserved for the collection, that is, the storage 
+space needed to contain all objects designated by values of the access 
+type and by values of other types derived form the access type, directly 
+or indirectly.  This form of length clause is not allowed for a type 
+derived from an access type.<br><br>
+<li>Specification of storage for a task activation: T'STORAGE _SIZE<br>
+The prefix T must denote a task type.  The expression must be of some 
+integer type (but need not be static); its value specifies the number of 
+storage units to be reserved for an activation (not the code) of a task 
+of the type.<br><br>
+<li>Specification of small for a fixed point type: T'SMALL<br>
+The prefix T must denote the first named subtype of a fixed point type.  
+The expression must be a static expression of some real type; its value 
+must be greater than the delta of the first named subtype.  The effect of 
+the length clause is to use this value of small for the representation of 
+values of the fixed point base type.  (The length clause thereby also 
+affects the amount of storage for objects that have this type).
+</ol>
+Notes:
+<P>
+A size specification is allowed for an access, task, or fixed point type, 
+whether or not another form of length clause is also given for the type.  
+<P>
+What is considered to be part of the storage reserved for a collection or 
+for an activation of a task is implementation-dependent.  The control 
+afforded by length clauses is therefore relative to the implementation
+conventions.  For example, the language does not define whether the storage 
+reserved for an activation of a task includes any storage needed for the 
+collection associated with an access type declared within the task body.  
+Neither does it define the method of allocation for objects denoted by 
+values of an access type.  For example, the space allocated could be on a 
+stack; alternatively, a general dynamic aliocation scheme or fixed storage 
+could be used.  
+<P>
+The objects allocated in a collection need not have the same size if the 
+designated type is an unconstrained array type or an unconstrained type with 
+discriminants.  Note also that the allocator itself may require some space 
+for internal tables and links.  Hence a length clause for the collection of 
+an access type does not always give precise control over the maximum number 
+of allocated objects.
+<P>
+Examples:
+<pre>
+      --assumed declarations:
+
+      type MEDIUM is range 0 .. 65000;
+      type SHORT  is delta 0.01 range -100.0 .. 100.0;
+      type DEGREE is delta 0.1  range -360.0 .. 360.0;
+
+      BYTE  : constant := 8;
+      PAGE  : constant := 2000;
+
+      --length clauses:
+
+      for COLOR'SIZE  use 1*BYTE; -- see <a href="lrm-03-05.html#3.5.1">3.5.1</a>
+      for MEDIUM'SIZE use 2*BYTE;
+      for SHORT'SIZE  use 15;
+
+      for CAR_NAME'STORAGE_SIZE use -- approximately 2000 cars
+              2000*((CAR'SIZE/SYSTEM.STORAGE_UNIT) +1);
+
+      for KEYBOARD_DRIVERS'STORAGE_SIZE use 1*PAGE;
+
+      for DEGREE'SMALL use 360.0/2**(SYSTEM.STORAGE_UNIT -1);
+</pre>
+<P>
+Notes on the examples:
+<P>
+In the length clause for SHORT, fifteen bits is the minimum necessary, 
+since the type definition requires SHORT'SMALL=2**(-7) and SHORT'MANTISSA = 
+14.  The length clause for DEGREE forces the model numbers to exactly span 
+the range of the type.
+<P>
+<b>References:</b> <A HREF="lrm-03-08.html#3.8">access type</A>,
+<A HREF="lrm-04-08.html#4.8">allocator</A>,
+<A HREF="lrm-01-06.html#1.6">allow</A>,
+<A HREF="lrm-03-06.html#3.6">array type</A>,
+<A HREF="lrm-04-01.html#4.1.4">attribute</A>,
+<A HREF="lrm-03-08.html#3.8">collection</A>,
+<A HREF="lrm-03-03.html#3.3">composite type</A>,
+<A HREF="lrm-03-03.html#3.3">constraint</A>,
+<A HREF="lrm-03-05.html#3.5.9">delta  of a fixed point  type</A>,
+<A HREF="lrm-03-04.html#3.4">derived type</A>,
+<A HREF="lrm-03-08.html#3.8">designate</A>,
+<A HREF="lrm-03-09.html#3.9">elaboration</A>,
+<A HREF="lrm-03-01.html#3.1">entity</A>,
+<A HREF="lrm-04-05.html#4.5">evaluation</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="lrm-13-01.html#13.1">first named subtype</A>,
+<A HREF="lrm-03-05.html#3.5.9">fixed point type</A>,
+<A HREF="lrm-03-06.html#3.6">index subtype</A>,
+<A HREF="lrm-03-05.html#3.5.4">integer type</A>,
+<A HREF="lrm-01-06.html#1.6">must</A>,
+<A HREF="lrm-03-05.html#3.5">numeric type</A>,
+<A HREF="lrm-03-02.html#3.2">object</A>,
+<A HREF="lrm-03-05.html#3.5.6">real type</A>,
+<A HREF="lrm-03-07.html#3.7">record type</A>,
+<A HREF="lrm-03-05.html#3.5.10">small of a  fixed point type</A>,
+<A HREF="lrm-04-09.html#4.9">static constraint</A>,
+<A HREF="lrm-04-09.html#4.9">static expression</A>,
+<A HREF="lrm-04-09.html#4.9">static subtype</A>,
+<A HREF="lrm-13-07.html#13.7">storage unit</A>,
+<A HREF="lrm-03-03.html#3.3">subcomponent</A>,
+<A HREF="lrm-13-07.html#13.7">system package</A>,
+<A HREF="lrm-09.html#9">task</A>,
+<A HREF="lrm-09-03.html#9.3">task activation</A>,
+<A HREF="lrm-09-01.html#9.1">task specification</A>,
+<A HREF="lrm-09-02.html#9.2">task type</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-03-06.html#3.6">unconstrained array type</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-15-04.html#15.4.2">15.4.2&nbsp;Length Clauses</a>
+<p>
+
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-04.html#5.4.3">5.4.3&nbsp;Dynamic Data</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-06.html#7.6.1">7.6.1&nbsp;Representation Clauses</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

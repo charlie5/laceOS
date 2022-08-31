@@ -1,0 +1,210 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Incompatibilities with original Ada 95</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-9-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-9-2-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>9.2.1 Incompatibilities with original Ada 95</H1>
+<div class="Normal">There are a small number of incompatibilities between 
+the original Ada 95 and that resulting from various corrections.<A NAME="I1431"></A></div>
+<div class="Normal">1 &mdash; A limited type can become nonlimited. Applying 
+the <SPAN Class="swiss">Access</SPAN> or <SPAN Class="swiss">Unchecked_Access</SPAN> 
+attribute to the current instance of such a type is now illegal. (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00225.TXT">AI-225</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-3-10.html">3.10(26.e)</A>)</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is fairly obscure. 
+Remember that the current instance rule is about referring to a type 
+within its own declaration such as&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Strange&nbsp;<B>is&nbsp;limited</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Me:&nbsp;<B>access</B>&nbsp;Strange&nbsp;:=&nbsp;Strange'Unchecked_Access;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is fine. It only 
+makes sense to permit the attribute if the type is limited. But a type 
+can be limited by virtue of having a limited component. for example&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Limp&nbsp;<B>is&nbsp;limited&nbsp;private</B>;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Strange&nbsp;<B>is&nbsp;</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Me:&nbsp;<B>access</B>&nbsp;Strange&nbsp;:=&nbsp;Strange'Unchecked_Access;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C:&nbsp;Limp;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal">If the component is limited private and it turns 
+out that the full type of the component is not limited after all then 
+the enclosing type becomes nonlimited. In such a case the attribute is 
+now not allowed. The cure is to make the enclosing type explicitly limited.</div>
+<div class="Normal">2 &mdash; Conversions between unrelated array types 
+that are limited or (for view conversions) might be by-reference types 
+are now illegal. This is because they might not have the same representation 
+and they cannot be copied in order to change the representation. (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00246.TXT">AI-246</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-4-6.html">4.6(71.j)</A>)</div>
+<div class="Normal">3 &mdash; The meaning of a record representation 
+clause and the storage place attributes for the non-default bit order 
+is now clarified. One consequence is that the equivalence of bit 1 in 
+word 1 to bit 9 in word 0 for a machine with <SPAN Class="swiss">Storage_Unit</SPAN> 
+= 8 no longer applies for the non-default order. (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00133.TXT">AI-133</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-13-5-1.html">13.5.1 
+(31.d)</A> and <A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-13-5-2.html">13.5.2 
+(5.c)</A>)</div>
+<div class="Normal">4 &mdash; Various new freezing rules were added in 
+order to fix a number of holes in the original rules for Ada 95. (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00341.TXT">AI-341</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-13-14.html">13.14(20.p)</A>)</div>
+<div class="Normal">5 &mdash; The type <SPAN Class="swiss">Unbounded_String</SPAN> 
+is defined to need finalization. If the partition has <SPAN Class="swiss">No_Nested_Finalization</SPAN> 
+and moreover the implementation of <SPAN Class="swiss">Unbounded_String</SPAN> 
+does not have a controlled part then it will not be allowed in local 
+objects now although it was in original Ada 95. Clearly this is extremely 
+unlikely. (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00360.TXT">AI-360</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-A-4-5.html">A.4.5(88.b)</A>). 
+The same applies to the type <SPAN Class="swiss">Generator</SPAN> in 
+<SPAN Class="swiss">Numerics.Float_Random</SPAN> and <SPAN Class="swiss">Discrete_Random</SPAN> 
+(<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00360.TXT">AI-360</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-A-5-2.html">A.5.2(61.a)</A>) 
+and to <SPAN Class="swiss">File_Type</SPAN> in <SPAN Class="swiss">Sequential_IO</SPAN> 
+(<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00360.TXT">AI-360</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-A-8-1.html">A.8.1(17.b)</A>), 
+<SPAN Class="swiss">Direct_IO</SPAN> (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00360.TXT">AI-360</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-A-4-8.html">A.8.4(20.a)</A>), 
+<SPAN Class="swiss">Text_IO</SPAN> (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00360.TXT">AI-360</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-A-10-1.html">A.10.1(86.c)</A>) 
+and <SPAN Class="swiss">Stream_IO</SPAN> (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00360.TXT">AI-360</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-A-12-1.html">A.12.1(36.b)</A>). 
+See also <A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-D-7.html">D.7(22.a)</A>.</div>
+<div class="Normal">This problem is unlikely with types such as <SPAN Class="swiss">Unbounded_String</SPAN> 
+which were introduced into Ada 95 at the same time as controlled types 
+and thus are almost inevitably implemented in terms of controlled types. 
+It is more likely with the file types that existed in Ada 83 since some 
+implementations might not have changed them to use controlled types.</div>
+<div class="Normal">6 &mdash; It is now illegal to apply the <SPAN Class="swiss">Access</SPAN> 
+attribute to a subprogram declared in the specification of a generic 
+unit in the body of that unit. The usual workaround applies which is 
+to move the use of the attribute to the private part. (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00229.TXT">AI-229</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-3-10-2.html">3.10.2((41.f)</A>)</div>
+<div class="Normal" style="margin-bottom: 0.4em">7 &mdash; It is now 
+illegal for the ancestor expression in an extended aggregate to be of 
+a class wide type or to be dispatching call (probably most readers would 
+never dream of doing that anyway). Thus if we have tagged type <SPAN Class="swiss">T</SPAN> 
+and a type <SPAN Class="swiss">NT</SPAN> extended from it and we declare</div>
+<div class="SwissExamples">X:&nbsp;T'Class&nbsp;:=&nbsp;...&nbsp;;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then the aggregate</div>
+<div class="SwissExamples">NT'(X&nbsp;<B>with</B>&nbsp;...&nbsp;)&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">is illegal. We have 
+to use a type conversion and write</div>
+<div class="SwissExamples">NT'(T(X)&nbsp;<B>with</B>&nbsp;...&nbsp;)&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">Similarly the ancestor 
+part cannot be a dispatching call such as <SPAN Class="swiss">F(X)</SPAN> 
+where the function <SPAN Class="swiss">F</SPAN> is&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;F(Y:&nbsp;T)&nbsp;<B>return</B>&nbsp;T&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Y;<BR>
+<B>end</B>&nbsp;F;<BR>
+...<BR>
+NT'(F(X)&nbsp;<B>with</B>&nbsp;...&nbsp;)&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal&nbsp;since&nbsp;X&nbsp;class&nbsp;wide</I></SPAN></div>
+<div class="Normal">Again it can be fixed by a suitable conversion to 
+a specific type. (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00306.TXT">AI-306</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-4-3-2.html">4.3.2((13.b)</A>)</div>
+<div class="Normal" style="margin-bottom: 0.4em">8 &mdash; If a generic 
+library unit and an instance of it both have child units with the same 
+name then they now hide each other. Thus&nbsp;</div>
+<div class="SwissExamples"><B>generic&nbsp;package</B>&nbsp;G&nbsp;<B>is</B>&nbsp;...&nbsp;;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>a&nbsp;generic&nbsp;G</I></SPAN></div>
+<div class="SwissExamples"><B>generic&nbsp;package</B>&nbsp;G.C&nbsp;<B>is</B>&nbsp;...&nbsp;;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>a&nbsp;child&nbsp;C</I></SPAN></div>
+<div class="SwissExamples"><B>with</B>&nbsp;G;<BR>
+<B>package</B>&nbsp;I&nbsp;<B>is&nbsp;new</B>&nbsp;G;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>the&nbsp;instance</I></SPAN></div>
+<div class="SwissExamples"><B>package</B>&nbsp;I.C&nbsp;<B>is</B>&nbsp;...&nbsp;;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>child&nbsp;of&nbsp;instance</I></SPAN></div>
+<div class="SwissExamples"><B>with</B>&nbsp;G.C;&nbsp;&nbsp;<B>with</B>&nbsp;I.C;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal,&nbsp;both&nbsp;hidden</I></SPAN><BR>
+<B>package</B>&nbsp;P&nbsp;...</div>
+<div class="Normal">Originally it seems that this was allowed but it 
+was not specified which package <SPAN Class="swiss">C</SPAN> would refer 
+to. This was fairly foolish and confusing. (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00220.TXT">AI-377</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-8-3.html">8.3(29.z)</A>)</div>
+<div class="Normal">9 &mdash; A subprogram body acting as a declaration 
+(that is without a distinct specification) cannot with a private child. 
+This was allowed by mistake originally and permitted the export of types 
+declared in private child packages. (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00220.TXT">AI-220</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-10-1-2.html">10.1.2(31.f)</A>)</div>
+<div class="Normal">10 &mdash; For the purposes of deciding whether a 
+unit can be preelaborable a generic formal object is nonstatic. (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00403.TXT">AI-403</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-10-2-1.html">10.2.1(28.f)</A>)</div>
+<div class="Normal">11 &mdash; Storage pools (and the attribute <SPAN Class="swiss">Storage_Size</SPAN>) 
+are not permitted for access to subprogram types. Originally it looked 
+as if they were allowed provided they were never used (or the size was 
+zero). (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00435.TXT">AI-435</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-13-11.html">13.11(43.d)</A>)</div>
+<div class="Normal">12 &mdash; The rules for the two pragmas <SPAN Class="swiss">Interrupt_Handler</SPAN> 
+and <SPAN Class="swiss">Attach_Handler</SPAN> are the same with respect 
+to where they are permitted. Originally it appeared that <SPAN Class="swiss">Interrupt_Handler</SPAN> 
+could be declared in a place remote from the subprogram it was referring 
+to. (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00253.TXT">AI-253</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-C-3-1.html">C.3.1(25.a)</A>)</div>
+<div class="Normal">13 &mdash; There are some changes regarding attributes 
+in remote type and RCI units. These changes primarily concern streams 
+for limited types. (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00240.TXT">AI-240</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-E-2-2.html">E.2.2(18.a)</A>, 
+<A HREF="http://www.adaic.org/resources/add_content/standards/05aarm/html/AA-E-2-3.html">E.2.3(20.b)</A>)</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-9-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-9-2-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

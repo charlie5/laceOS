@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 9.11: Shared Variables</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="9.11">9.11</A>.  Shared Variables  </H2>
+<A HREF="lrm-09-10.html#9.10"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-09.html#9"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-09-12.html#9.12"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The normal means of communicating values between tasks is  by  entry  calls
+and accept statements. 
+<P>
+If  two  tasks  read  or  update  a  shared  variable  (that is, a variable
+accessible by both), then neither of them may  assume  anything  about  the
+order  in  which  the  other  performs its operations, except at the points
+where they synchronize.  Two tasks are synchronized at the start and at the
+end of their rendezvous.  At the start and at the end of its activation,  a
+task  is  synchronized  with  the task that causes this activation.  A task
+that has completed its execution is synchronized with any other task. 
+<P>
+For the actions performed by a program  that  uses  shared  variables,  the
+following assumptions can always be made: 
+<ul>
+<li>If between two synchronization points of a task,  this  task  reads  a
+shared  variable  whose  type  is  a  scalar  or access type, then the
+variable is not updated by any other task at any  time  between  these
+two points. 
+<br><br>
+<li>If between two synchronization points of a task, this task  updates  a
+shared  variable  whose  type  is  a  scalar  or access type, then the
+variable is neither read nor updated by any other  task  at  any  time
+between these two points. 
+</ul>
+<P>
+The  execution  of  the program is erroneous if any of these assumptions is
+violated. 
+<P>
+If a given task reads the value of a shared variable, the above assumptions
+allow an implementation to maintain local copies of the value (for example,
+in registers or in some other form of temporary storage);  and for as  long
+as  the  given task neither reaches a synchronization point nor updates the
+value of the shared variable, the above assumptions  imply  that,  for  the
+given  task,  reading  a  local  copy  is  equivalent to reading the shared
+variable itself. 
+<P>
+Similarly, if a given task updates the value  of  a  shared  variable,  the
+above  assumptions  allow an implementation to maintain a local copy of the
+value, and to defer the effective store of the local copy into  the  shared
+variable until a synchronization point, provided that every further read or
+update  of the variable by the given task is treated as a read or update of
+the local copy.  On the other hand, an implementation  is  not  allowed  to
+introduce  a  store,  unless  this  store  would  also  be  executed in the
+canonical order (see <a href="lrm-11-06.html#11.6">11.6</a>). 
+<P>
+The pragma SHARED can be used to specify that every read  or  update  of  a  
+variable  is a synchronization point for that variable;  that is, the above
+assumptions always hold for the given variable  (but  not  necessarily  for
+other variables).  The form of this pragma is as follows: 
+<pre>
+    pragma SHARED(variable_simple_name);    
+</pre>
+<P>
+This  pragma  is  allowed  only  for  a  variable  declared  by  an  object
+declaration and whose type is  a  scalar  or  access  type;   the  variable
+declaration  and  the  pragma  must  both occur (in this order) immediately
+within the same declarative part or package specification;  the pragma must
+appear before any occurrence of the name of the variable, other than in  an
+address clause. 
+<P>
+An  implementation must restrict the objects for which the pragma SHARED is
+allowed to objects for which each of direct reading and direct updating  is
+implemented as an indivisible operation. 
+<P>
+<b>References:</b>    <A HREF="lrm-09-05.html#9.5">accept   statement</A>,
+<A HREF="lrm-09-03.html#9.3">activation</A>,
+<A HREF="lrm-05-02.html#5.2">assignment</A>,
+<A HREF="lrm-11-06.html#11.6">canonical order</A>,
+<A HREF="lrm-03-09.html#3.9">declarative  part</A>,
+<A HREF="lrm-09-05.html#9.5">entry  call  statement</A>,
+<A HREF="lrm-01-06.html#1.6">erroneous</A>,
+<A HREF="lrm-08-01.html#8.1">global</A>,
+<A HREF="lrm-07-01.html#7.1">package specification</A>,
+<A HREF="lrm-02-08.html#2.8">pragma</A>,
+<A HREF="lrm-06-02.html#6.2">read a value</A>,
+<A HREF="lrm-09-05.html#9.5">rendezvous</A>,
+<A HREF="lrm-03-01.html#3.1">simple name</A>,
+ and <A HREF="lrm-04-01.html#4.1">4.1</A>,
+<A HREF="lrm-09.html#9">task</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-06-02.html#6.2">update  a value</A>,
+<A HREF="lrm-03-02.html#3.2.1">variable</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-13-02.html#13.2.3">13.2.3&nbsp;Visibility Rules</a>
+<p>
+
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-02.html#6.2.4">6.2.4&nbsp;Shared Variables</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-04.html#7.4.7">7.4.7&nbsp;Shared Variables and Pragma Shared</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

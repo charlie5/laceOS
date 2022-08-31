@@ -1,0 +1,238 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Entry Queuing Policies</TITLE>
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    DIV.paranum {position: absolute; font-family: Arial, Helvetica, sans-serif; left: 0.5em; top: auto}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; margin-bottom: 0.6em}
+    DIV.Wide {font-family: "Times New Roman", Times, serif; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.WideAnnotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Index {font-family: "Times New Roman", Times, serif}
+    DIV.SyntaxSummary {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; margin-left: 2.0em}
+    DIV.SyntaxIndented {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Indented {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-bottom: 0.6em}
+    DIV.CodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.SmallIndented {font-family: "Times New Roman", Times, serif; margin-left:  10.0em; margin-bottom: 0.6em}
+    DIV.SmallCodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SmallExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left: 7.5em; margin-bottom: 0.6em}
+    DIV.IndentedExamples {font-family: "Courier New", monospace; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.SmallIndentedExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left:  15.0em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.IndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SyntaxIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.Hanging {font-family: "Times New Roman", Times, serif; margin-top: 0em; margin-bottom: 0.6em}
+    DD.Hanging {margin-left: 6.0em}
+    DL.IndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.IndentedHanging {margin-left: 2.0em}
+    DL.HangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.HangingInBulleted {margin-left: 4.0em}
+    DL.SmallHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallHanging {margin-left: 7.5em}
+    DL.SmallIndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallIndentedHanging {margin-left: 2.0em}
+    DL.SmallHangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallHangingInBulleted {margin-left: 5.0em}
+    DL.Enumerated {font-family: "Times New Roman", Times, serif; margin-right: 0.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.Enumerated {margin-left: 2.0em}
+    DL.SmallEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallEnumerated {margin-left: 2.5em}
+    DL.NestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.SmallNestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<P><A HREF="AA-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-D-3.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-D-5.html">Next</A></P>
+<HR>
+<H1> D.4 Entry Queuing Policies</H1>
+<DIV Class="Paranum"><FONT SIZE=-2>1/1</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<I><A HREF="defect1.html#8652/0074">8652/0074</A></I>}
+[<FONT SIZE="-1">{<I>queuing policy</I>}</FONT> <A NAME="I6850"></A>This
+clause specifies a mechanism for a user to choose an entry <I>queuing
+policy</I>. It also defines <U>two</U> <S>one</S> such polic<U>ies</U> <S>y</S>.
+Other policies are implementation defined.] </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>1.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Implementation defined: </B>Implementation-defined
+queuing policies.</FONT></DIV>
+
+<H4 ALIGN=CENTER>Syntax</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>2</FONT></DIV>
+<DIV Class="SyntaxIndented" Style="margin-bottom: 0.2em">The form of
+a <FONT FACE="Arial, Helvetica">pragma</FONT> Queuing_Policy is as follows:
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>3</FONT></DIV>
+<DIV Class="SyntaxIndented">&nbsp;&nbsp;<B>pragma</B> <A NAME="I6851"></A><A NAME="I6852"></A>Queuing_Policy(<I>policy_</I><A NAME="I6853"></A><FONT FACE="Arial, Helvetica">identifier</FONT>);
+</DIV>
+
+<H4 ALIGN=CENTER>Legality Rules</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>4</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The <I>policy_</I><A NAME="I6854"></A><FONT FACE="Arial, Helvetica">identifier</FONT>
+shall be either FIFO_Queuing, Priority_Queuing or an implementation-defined
+<A NAME="I6855"></A><FONT FACE="Arial, Helvetica">identifier</FONT>.</DIV>
+
+<H4 ALIGN=CENTER>Post-Compilation Rules</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>5</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<FONT SIZE="-1">{<I>configuration pragma (Queuing_Policy)</I>
+[partial]}</FONT> <A NAME="I6856"></A><FONT SIZE="-1">{<I>pragma, configuration
+(Queuing_Policy)</I> [partial]}</FONT> <A NAME="I6857"></A>A Queuing_Policy
+pragma is a configuration pragma.</DIV>
+
+<H4 ALIGN=CENTER>Dynamic Semantics</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>6</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<FONT SIZE="-1">{<I>queuing policy</I>}</FONT>
+<A NAME="I6858"></A>[A <I>queuing policy</I> governs the order in which
+tasks are queued for entry service, and the order in which different
+entry queues are considered for service.] The queuing policy is specified
+by a Queuing_Policy pragma. </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>6.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>The queuing
+policy includes entry queuing order, the choice among open alternatives
+of a <FONT FACE="Arial, Helvetica">selective_accept</FONT>, and the choice
+among queued entry calls of a protected object when more than one <FONT FACE="Arial, Helvetica">entry_barrier</FONT>
+<FONT FACE="Arial, Helvetica">condition</FONT> is True. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>7</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;Two queuing policies, FIFO_Queuing and Priority_Queuing,
+are language defined. If no Queuing_Policy pragma appears in any of the
+program units comprising the partition, the queuing policy for that partition
+is FIFO_Queuing. The rules for this policy are specified in <A HREF="AA-9-5-3.html">9.5.3</A>
+and <A HREF="AA-9-7-1.html">9.7.1</A>.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>8</FONT></DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;The Priority_Queuing
+policy is defined as follows: </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>9</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><FONT SIZE="-1">{<I>priority of an
+entry call</I>}</FONT> <A NAME="I6859"></A>The calls to an entry [(including
+a member of an entry family)] are queued in an order consistent with
+the priorities of the calls. The <I>priority of an entry call</I> is
+initialized from the active priority of the calling task at the time
+the call is made, but can change later. Within the same priority, the
+order is consistent with the calling (or requeuing, or priority setting)
+time (that is, a FIFO order).</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>10/1</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>{<I><A HREF="defect1.html#8652/0075">8652/0075</A></I>}
+After a call is first queued, changes to the active priority of a task
+do not affect the priority of the call, unless the base priority of the
+task is set<U> while the task is blocked on an entry call</U> .</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>11</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>When the base priority of a task is
+set (see <A HREF="AA-D-5.html">D.5</A>), if the task is blocked on an
+entry call, and the call is queued, the priority of the call is updated
+to the new active priority of the calling task. This causes the call
+to be removed from and then reinserted in the queue at the new active
+priority. </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>11.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Reason: </B>A task is blocked
+on an entry call if the entry call is simple, conditional, or timed.
+If the call came from the <FONT FACE="Arial, Helvetica">triggering_statement</FONT>
+of an <FONT FACE="Arial, Helvetica">asynchronous_select</FONT>, or a
+requeue thereof, then the task is not blocked on that call; such calls
+do not have their priority updated. Thus, there can exist many queued
+calls from a given task (caused by many nested ATC's), but a task can
+be blocked on only one call at a time.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>11.b</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">A previous version of Ada 9X
+required queue reordering in the <FONT FACE="Arial, Helvetica">asynchronous_select</FONT>
+case as well. If the call corresponds to a ``synchronous'' entry call,
+then the task is blocked while queued, and it makes good sense to move
+it up in the queue if its priority is raised.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>11.c</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">However, if the entry call is
+``asynchronous,'' that is, it is due to an <FONT FACE="Arial, Helvetica">asynchronous_select</FONT>
+whose <FONT FACE="Arial, Helvetica">triggering_statement</FONT> is an
+entry call, then the task is not waiting for this entry call, so the
+placement of the entry call on the queue is irrelevant to the rate at
+which the task proceeds.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>11.d</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">Furthermore, when an entry is
+used for <FONT FACE="Arial, Helvetica">asynchronous_select</FONT>s, it
+is almost certain to be a ``broadcast'' entry or have only one caller
+at a time. For example, if the entry is used to notify tasks of a mode
+switch, then all tasks on the entry queue would be signaled when the
+mode changes. Similarly, if it is indicating some interrupting event
+such as a control-C, all tasks sensitive to the interrupt will want to
+be informed that the event occurred. Hence, the order on such a queue
+is essentially irrelevant.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>11.e</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">Given the above, it seems an
+unnecessary semantic and implementation complexity to specify that asynchronous
+queued calls are moved in response to dynamic priority changes. Furthermore,
+it is somewhat inconsistent, since the call was originally queued based
+on the active priority of the task, but dynamic priority changes are
+changing the base priority of the task, and only indirectly the active
+priority. We say explicitly that asynchronous queued calls are not affected
+by normal changes in active priority during the execution of an <FONT FACE="Arial, Helvetica">abortable_part</FONT>.
+Saying that, if a change in the base priority affects the active priority,
+then we do want the calls reordered, would be inconsistent. It would
+also require the implementation to maintain a readily accessible list
+of all queued calls which would not otherwise be necessary.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>11.f</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">Several rules were removed or
+simplified when we changed the rules so that calls due to <FONT FACE="Arial, Helvetica">asynchronous_select</FONT>s
+are never moved due to intervening changes in active priority, be they
+due to protected actions, some other priority inheritance, or changes
+in the base priority. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>12</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>When more than one <FONT FACE="Arial, Helvetica">condition</FONT>
+of an <FONT FACE="Arial, Helvetica">entry_barrier</FONT> of a protected
+object becomes True, and more than one of the respective queues is nonempty,
+the call with the highest priority is selected. If more than one such
+call has the same priority, the call that is queued on the entry whose
+declaration is first in textual order in the <FONT FACE="Arial, Helvetica">protected_definition</FONT>
+is selected. For members of the same entry family, the one with the lower
+family index is selected.</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>13</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If the expiration time of two or more
+open <FONT FACE="Arial, Helvetica">delay_alternative</FONT>s is the same
+and no other <FONT FACE="Arial, Helvetica">accept_alternative</FONT>s
+are open, the <FONT FACE="Arial, Helvetica">sequence_of_statements</FONT>
+of the <FONT FACE="Arial, Helvetica">delay_alternative</FONT> that is
+first in textual order in the <FONT FACE="Arial, Helvetica">selective_accept</FONT>
+is executed.</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>14</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>When more than one alternative of
+a <FONT FACE="Arial, Helvetica">selective_accept</FONT> is open and has
+queued calls, an alternative whose queue has the highest-priority call
+at its head is selected. If two or more open alternatives have equal-priority
+queued calls, then a call on the entry in the <FONT FACE="Arial, Helvetica">accept_alternative</FONT>
+that is first in textual order in the <FONT FACE="Arial, Helvetica">selective_accept</FONT>
+is selected.</LI></UL>
+
+<H4 ALIGN=CENTER>Implementation Permissions</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>15</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;Implementations are allowed to define other queuing
+policies, but need not support more than one such policy per partition.
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>15.a.1/1</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Discussion: </B>{<I><A HREF="defect2.html#8652/0116">8652/0116</A></I>}
+<U>This rule is really redundant, as <A HREF="AA-10-1-5.html">10.1.5</A>
+allows an implementation to limit the use of configuration pragmas to
+an empty environment. In that case, there would be no way to have multiple
+policies in a partition. In any case, the wording here really ought to
+be &quot;...more than one queuing policy per partition.&quot;, since
+this part of the rule applies to all queuing policies, not just implementation-defined
+ones.</U>  </FONT></DIV>
+
+<H4 ALIGN=CENTER>Implementation Advice</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>16</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;The implementation should use names that end
+with ``_Queuing'' for implementation-defined queuing policies.</DIV>
+
+<HR>
+<P><A HREF="AA-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-D-3.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-D-5.html">Next</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-TTL.html">Legal</A></P>
+</BODY>
+</HTML>

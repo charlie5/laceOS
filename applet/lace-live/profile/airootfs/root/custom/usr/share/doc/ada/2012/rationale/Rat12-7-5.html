@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Hashing and comparison</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-7-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-7-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>7.5 Hashing and comparison</H1>
+<div class="Normal" style="margin-bottom: 0.4em">New library functions 
+are added for case insensitive comparisons and hashing. Thus we have<A NAME="I1591"></A></div>
+<div class="SwissExamples"><B>function</B>&nbsp;Ada.Strings.Equal_Case_Insensitive<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Left,&nbsp;Right:&nbsp;String)&nbsp;<B>return</B>&nbsp;Boolean;<A NAME="I1592"></A><A NAME="I1593"></A><BR>
+<B>pragma</B>&nbsp;Pure(Ada.Strings.Equal_Case_Insensitive);</div>
+<div class="Normal" style="margin-bottom: 0.4em">This simply compares 
+the strings <SPAN Class="swiss">Left</SPAN> and <SPAN Class="swiss">Right</SPAN> 
+for equality but ignoring case. Thus</div>
+<div class="SwissExamples">Equal_Case_Insensitive(&quot;Pig&quot;,&nbsp;&quot;PIG&quot;)</div>
+<div class="Normal">is true.</div>
+<div class="Normal">The function <SPAN Class="swiss">Ada.Strings.Fixed.Equal_Case_Insensitive</SPAN> 
+is a renaming of the above. There are also similar functions <SPAN Class="swiss">Ada.Strings.Bounded.Equal_Case_Insensitive</SPAN> 
+for bounded and <SPAN Class="swiss">Ada.Strings.Unbounded.Equal_Case_Insensitive</SPAN> 
+for unbounded strings. And, as expected, there are similar functions 
+for wide and wide wide versions.</div>
+<div class="Normal">Note that the comparison for strings can be phrased 
+as convert to lower case and then compare. But this does not always work 
+for wide and wide wide strings. The proper terminology is &quot;apply 
+locale-independent case folding and then compare&quot;.</div>
+<div class="Normal">Although it comes to the same thing for Latin-1 characters 
+there are problems with some character sets where there is not a one-one 
+correspondence between lower case and upper case. This used to apply 
+to English with the two forms of lower case S and still applies to the 
+corresponding letters in Greek where the upper case character is &#931; 
+and there are two lower case versions namely &#963; and &#962;. So</div>
+<div class="SwissExamples">Ada.Strings.Wide_Equal_Case_Insensitive(&quot;&#931;&#927;&#931;&quot;),&nbsp;&quot;&#963;&#959;&#962;&quot;)</div>
+<div class="Normal">returns true. Note that if we just convert to lower 
+case first rather than applying case folding then it would not be true.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Furthermore there is 
+also</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Ada.Strings.Less_Case_Insensitive<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Left,&nbsp;Right:&nbsp;String)&nbsp;<B>return</B>&nbsp;Boolean;<A NAME="I1594"></A><A NAME="I1595"></A><BR>
+<B>pragma</B>&nbsp;Pure(Ada.Strings.Less_Case_Insensitive);</div>
+<div class="Normal">which does a lexicographic comparison.</div>
+<div class="Normal">As expected there are similar functions for fixed, 
+bounded and unbounded strings and, naturally, for wide and wide wide 
+versions.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 2005 has functions 
+for hashing such as</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Containers;<BR>
+<B>function</B>&nbsp;Ada.Strings.Hash(Key:&nbsp;String)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Containers.Hash_Type;<A NAME="I1596"></A><A NAME="I1597"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 2012 adds case 
+insensitive versions as well such as</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Containers;<BR>
+<B>function</B>&nbsp;Ada.Strings.Hash_Case_Insensitive<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Key:&nbsp;String)&nbsp;<B>return</B>&nbsp;Containers.Hash_Type;<A NAME="I1598"></A><A NAME="I1599"></A></div>
+<div class="Normal">There are also fixed, bounded and unbounded versions 
+and the inevitable wide and wide wide ones as well.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-7-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-7-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

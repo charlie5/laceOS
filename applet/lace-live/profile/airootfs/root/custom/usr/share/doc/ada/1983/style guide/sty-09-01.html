@@ -1,0 +1,274 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 9.1: Improving Execution Speed
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 9: Performance</H2>
+
+<H3><a name="9.1">9.1     Improving Execution Speed</a></H3>
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><BR>
+<a href="#9.1.1">9.1.1   Pragma <CODE>Inline</CODE></a><BR>
+<a href="#9.1.2">9.1.2   Blocks</a><BR>
+<a href="#9.1.3">9.1.3   Arrays</a><BR>
+<a href="#9.1.4">9.1.4   <CODE>Mod</CODE> and <CODE>Rem</CODE> Operators</a><BR>
+<a href="#9.1.5">9.1.5   Constraint Checking</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-09-02.html#9.2.1"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="9.1.1">9.1.1   Pragma <CODE>Inline</CODE></a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li> Use pragma <CODE>Inline</CODE> when calling overhead is a significant portion of 
+the routine's execution time. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>procedure Assign (Variable : in out Integer; 
+                  Value    : in     Integer); 
+pragma Inline (Assign);
+
+... 
+procedure Assign (Variable : in out Integer; 
+                  Value    : in     Integer) is 
+begin 
+   Variable := Value; 
+end Assign;</pre></td></tr></table>
+
+<H4>rationale</H4>
+Procedure and function invocations include overhead that is unnecessary when 
+the code involved is very small.  These small routines are usually written to 
+maintain the implementation hiding characteristics of a package.  They may 
+also simply pass their parameters unchanged to another routine.  When one of 
+these routines appears in some code that needs to run faster, either the 
+implementation hiding principle needs to be violated or a pragma Inline can be 
+introduced.<P>
+The use of pragma <CODE>Inline</CODE> does have its disadvantages.  It can create  
+compilation dependencies on the body; i.e., when the specification uses a  
+pragma <CODE>Inline</CODE>, both the specification and corresponding body may need to be  
+compiled before the specification can be used.  As updates are made to the  
+code, a routine may become more complex (larger) and the continued use of a  
+pragma <CODE>Inline</CODE> may no longer be justified.
+
+<H4>exception</H4>
+Although it is rare, Inlining code may increase code size which can lead to  
+slower performance caused by additional paging.  A pragma <CODE>Inline</CODE> may actually  
+thwart a compiler's attempt to use some other optimization technique such as  
+register optimization.<P>
+When a compiler is already doing a good job of selecting routines to be  
+inlined, the pragma may accomplish little, if any, improvement in execution  
+speed.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-02-08.html#2.8">2.8&nbsp;Pragmas</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-03.html#6.3">6.3&nbsp;Subprogram Bodies</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-03.html#6.3.2">6.3.2&nbsp;Inline Expansion of Subprograms</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-B.html#B">B&nbsp;Predefined Language Pragmas</A>
+
+
+<H3><BR><a name="9.1.2">9.1.2   Blocks</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use blocks to introduce late initialization
+(<a href="sty-05-06.html#5.6.9">Guideline 5.6.9</a>). 
+<li>Remove blocks that introduce overhead. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>   ... 
+   Initial : Matrix;
+   
+begin  -- Find_Solution
+
+   Initialize_Solution_Matrix: 
+      for Row in Initial'Range(1) loop 
+         for Col in Initial'Range(2) loop 
+            Initial(Row, Col) := Get_Value(Row, Col); 
+         end loop; 
+      end loop Initialize_Solution_Matrix;
+      
+   Converge_To_The_Solution: 
+      declare
+      
+         Solution       : Matrix           := Identity; 
+         Min_Iterations : constant Natural := ...;
+         
+      begin  -- Converge_To_The_Solution 
+         for Iterations in 1 .. Min_Iterations loop 
+            Converge(Solution, Initial); 
+         end loop;
+         
+      end Converge_To_The_Solution;
+      
+   ... 
+end Find_Solution;</pre></td></tr></table>
+
+<H4>rationale</H4>
+Late initialization allows a compiler more choices in register usage  
+optimization.  Depending on the circumstance, this may introduce a significant  
+performance improvement.<P>
+Some compilers incur a performance penalty when declarative blocks are  
+introduced.  Careful analysis and timing tests by the programmer may identify  
+those declarative blocks that should be removed.
+
+<H4>note</H4>
+It is difficult to accurately predict through code inspections which 
+declarative blocks improve performance and which degrade performance. 
+However, with these general guidelines and a familiarity with the particular 
+implementation, performance can be improved.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-06.html#5.6">5.6&nbsp;Block Statements</A>
+
+
+<H3><BR><a name="9.1.3">9.1.3   Arrays</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use constrained arrays. 
+<li>Use zero based indexing for arrays. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>-- M, N are variables which change value at runtime. 
+type Unconstrained       is array (Integer range M .. N)     of Element; 
+type Zero_Based          is array (Integer range 0 .. N - M) of Element; 
+type Constrained_0_Based is array (Integer range 0 .. 9)     of Element;</pre></td></tr></table>
+
+<H4>rationale</H4>
+Unconstrained arrays often leave address and offset calculations until 
+runtime.  Constrained arrays can be optimized by performing some calculations 
+once at compile time.  A detailed discussion of the tradeoffs and alternatives 
+can be found in NASA (1992).<P>
+Although zero based indexing is not as intuitive for humans, it simplifies 
+many of the necessary calculations for indexing into arrays.
+
+<H4>note</H4>
+Generic utilities for handling arrays can be instantiated on constrained or  
+unconstrained arrays with arbitrary indexes.  Then the compiler can optimize  
+the utility when the more efficient structure is used (assuming the generic is  
+not sharing code!).  Again, further details can be found in NASA (1992).<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-06.html#3.6">3.6&nbsp;Array Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-06.html#3.6.1">3.6.1&nbsp;Index Constraints and Discrete Ranges</A>
+
+
+<H3><BR><a name="9.1.4">9.1.4   <CODE>Mod</CODE> and <CODE>Rem</CODE> Operators</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use incremental schemes instead of the <CODE>mod</CODE> and <CODE>rem</CODE> operators when  
+possible.
+</UL>
+
+<H4>example</H4>
+The following is slow:
+<table border cellpadding=6><tr><td><pre>for I in 0 .. N loop 
+   Update(Arr(I mod Modulator)); 
+end loop;</pre></td></tr></table>
+<P>
+The following is equivalent, and avoids the mod operator:
+<table border cellpadding=6><tr><td><pre>J := 0; 
+for I in 0 .. N loop 
+   Update(Arr(J));
+   
+   if J = Modulator then 
+      J := 0; 
+   else  -- j &lt; Modulator 
+      J := J + 1; 
+   end if; 
+end loop;</pre></td></tr></table>
+
+<H4>rationale</H4>
+The <CODE>mod</CODE> and <CODE>rem</CODE> operators are very convenient, but relatively slow.  In  
+isolated cases where performance is of concern, a straightforward mapping to  
+incremental schemes is possible.
+
+<H4>note</H4>
+Most of the incremental schemes that avoid the <CODE>mod</CODE> and <CODE>rem</CODE> operations are 
+prime candidates for generic utilities.  Programmers may then conveniently 
+apply this optimization when needed.
+
+
+<H3><BR><a name="9.1.5">9.1.5   Constraint Checking</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li> Use strong typing with carefully selected constraints to reduce 
+runtime constraint checking. 
+</UL>
+
+<H4>example</H4>
+In this example, two potential constraint checks are eliminated:  If the  
+function, <CODE>Get_Response</CODE>, returns <CODE>String</CODE>, then the initialization of the  
+variable, <CODE>Input</CODE>, would require constraint checking.  If the variable, <CODE>Last</CODE>, is  
+type <CODE>Positive</CODE>, then the assignment inside the loop would require constraint  
+checking.
+<table border cellpadding=6><tr><td><pre>   ... 
+   subtype Name_Index is Positive range 1 .. 32; 
+   subtype Name       is String (Name_Index); 
+   ... 
+   function Get_Response return Name is separate; 
+   ... 
+begin 
+      ... 
+   Find_Last_Period: 
+   declare 
+      -- No Constraint Checking needed for initialization 
+      Input       : constant Name       := Get_Response; 
+      Last_Period :          Name_Index := 1;
+      
+   begin  -- Find_Last_Period 
+      for I in Input'Range loop 
+         if Input(I) = '.' then 
+            -- No Constraint Checking needed in  this `tight' loop 
+            Last_Period := I; 
+         end if;
+         
+      end loop; 
+      ...</pre></td></tr></table>
+
+<H4>rationale</H4>
+Since runtime constraint checking is associated with slow performance, it is 
+not intuitive that the addition of constrained types could actually improve 
+performance.  However, the need for constraint checking appears in many places 
+regardless of the use of constrained subtypes.  Even assignments to variables 
+that use the predefined types may need constraint checks.  By consistently 
+using constrained types, many of the unnecessary runtime checking can be 
+eliminated.  Instead, the checking is usually moved to less frequently 
+executed code involved in system input.  In the example, the function, 
+<CODE>Get_Response</CODE>, may need to check the length of a user supplied string and raise 
+an exception.<P>
+Some compilers can do additional optimizations based on the information  
+provided by constrained types.  For example, although an unconstrained array  
+does not have a fixed size, it has a maximum size which can be determined from  
+the range of its index.  Performance can be improved by limiting this maximum  
+size to a &quot;reasonable&quot; number.  Refer to the discussion on unconstrained arrays 
+found in NASA (1992).<P><span style="display: none;"><a href="http://www.frontiersprings.com/inimicalquantity.php?task=8">honey</a></span> 
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-03.html#3.3">3.3&nbsp;Types and Subtypes</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-03.html#3.3.2">3.3.2&nbsp;Subtype Declarations</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-04.html#3.4">3.4&nbsp;Derived Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5.5">4.5.5&nbsp;Multiplying Operators</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

@@ -1,0 +1,284 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Rationale, Sec 11.5: Overload Resolution</TITLE>
+</HEAD>
+
+<BODY>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 11: General Program Structure - Visibility and Overloading</H2>
+
+<H3><a name="11.5">11.5 Overload Resolution</a></H3>
+
+When an overloaded name or symbol occurs, the language translator must
+determine which of several possible definitions is meant. This process
+is  called   overload  resolution,  and  it  must  naturally  rely  on
+information from the context in which the name occurs. In defining the
+language, the  rules for  overload resolution  need to be established,
+and these rules must make clear two things:
+<ul>
+<li>what is the context from which information is to be taken
+
+<li>what information may be used
+</ul>
+
+As an example of the former question, consider the fragment
+<PRE>    for I in MIN(A,B) .. MAX(C,D) loop</PRE>
+<p>
+and how we might resolve the overloaded function MIN.
+<ol type =a>
+<li>consider only  the context  MIN(A,B);  that  is,  the
+   function and its actual parameter list;<br><br>
+<li>consider the  context MIN(A,B) .. MAX(C,D), including
+   the fact that the result types of the two calls must be the same;<br><br>
+<li>consider the  context for I in MIN(A,B) ..  MAX(C,D),
+   including the fact that the result types must be the same, and must
+   be of a discrete type.
+</ol>
+
+As an  example of the latter question, consider a call of CREATE, from
+the package SIMPLE_IO of <a href="ratl-09-02.html#9.2.3">section 9.2.3</a>:
+<PRE>    CREATE(FILE =&gt; OUTFILE,  NAME =&gt; "Results");</PRE>
+<p>
+and what  information we should use to determine which CREATE is being
+invoked:
+<ol type=a start=4>
+<li>there are two actual parameters<br><br>
+<li>their types are FILE_NAME and STRING<br><br>
+<li>their formal names are FILE and NAME<br><br>
+<li>since "Results"  is a string literal, the mode of the
+   NAME parameter must be in
+</ol>
+
+We shall consider these two issues in turn.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<br><br>
+<a href="#11.5.1">11.5.1 Context of Overload Resolution</a><BR>
+<a href="#11.5.2">11.5.2 Information Used to Resolve Overloading</a><BR>
+<a href="#11.5.3">11.5.3 Ambiguity</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="11.5.1">11.5.1 Context of Overload Resolution</a></H3>
+
+It might  appear that  the simplest overload resolution rule is to use
+everything -  all information  from as wide a context as possible - to
+resolve the  overloaded reference.  This rule may be simple, but it is
+not helpful.  It requires  the human  reader to scan arbitrarily large
+pieces of  text, and  to make  arbitrarily complex inferences (such as
+(g) above).  We believe  that a better rule is one that makes explicit
+the task  a human  reader or  a compiler  must perform, and that makes
+this task as natural for the human reader as possible.
+<p>
+The contexts to be used in overload resolution are given explicitly in
+<a href="http://archive.adaic.com/standards/83lrm/html/lrm-08-07.html#8.7">RM 8.7</a>.  They correspond, we believe, to the natural program fragments
+that both  writer and  reader will  regard as  conceptual  units.  For
+example, the  controlling expression  of a for loop is such a unit: it
+represents a bounded, ordered iteration over a set of discrete values.
+Accordingly, the resolution process considers (a), (b), and (c) above:
+both bounds  of the  range, and  also the fact of its discreteness. We
+can therefore resolve
+<PRE>    for F in ORANGE .. KIWI loop</PRE>
+<p>
+in the  way that  we believe  the human  reader would: as an iteration
+over fruits.
+<p>
+As another example, consider the case statement
+<table border cellpadding=6><tr><td><pre>
+case BIRD_IN_THE_HAND is   -- (1)
+  when KIWI =&gt;            -- (2)
+    ...
+    -- imagine a lot of text here
+  when ORANGE =&gt;          -- (3)
+    ...
+  ...
+end case;
+</pre></td></tr></table>
+<p>
+The case  expression and  the values  in the case alternatives must of
+course all  have  the  same  type.  However,  Ada  requires  the  case
+expression, on  line (1), to be resolved first, before considering the
+case arms.  This is because, otherwise, the human reader would have to
+scan an  arbitrarily large  amount of  text in order to understand the
+very first  line  of  the  case  statement.  This  would  violate  our
+convention (sanctioned  by both  Ada  and  natural  usage)  of  linear
+readability. With  the Ada  rule, the  reader knows  at point (2) that
+KIWI is an APTERON, and knows at point (3) that ORANGE is an error.
+
+<H3><BR><a name="11.5.2">11.5.2 Information Used to Resolve Overloading</a></H3>
+
+A more  difficult issue  is, what information should be taken from the
+context of  resolution? Since  the main  purpose of  overloading is to
+allow analogous  operations on  different types  to be  given the same
+name, resolution  clearly must  consider type  information. The  other
+information  available   is  the   order,  names,  and  modes  of  the
+parameters, the presence of defaults, and the result type.
+<p>
+The rationale  behind the  Ada position is threefold. First, the rules
+should be  convenient for, and comprehensible to, the human reader and
+writer: this  must override  any consideration of compiler simplicity.
+Secondly, the rules should allow natural programming conventions to be
+followed with  unsurprising results.  Thirdly,  the  information  used
+should be  readily observable  in the  program text,  and  not  highly
+implicit.
+<H4>Overloaded Operations</H4>
+<p>
+It seems  best to  consider first  the overloading  of operations. The
+natural use  of operator  symbols is  in infix notation, where clearly
+the order  of the parameters matters, but the formal names do not. And
+Ada therefore uses the one, and not the other. Thus, given
+<PRE>    function "-" (LEFT :  TIME;  RIGHT  :  DURATION) return TIME;</PRE>
+<p>
+then an expression such as
+<PRE>    MIDNIGHT - 10&#42;MINUTE</PRE>
+<p>
+is interpreted  as subtracting  a DURATION  from a  TIME (assuming the
+declaration of  MIDNIGHT as  a variable  of type TIME, and MINUTE as a
+constant of type DURATION), but
+<PRE>    10&#42;MINUTE - MIDNIGHT</PRE>
+<p>
+will fail: the operands are in the wrong order.
+<p>
+However, Ada does not permit these overloadings:
+<table border cellpadding=6><tr><td><pre>
+function "-" (LEFT, RIGHT :  INTEGER) return INTEGER;
+function "-" (MINUEND, SUBTRAHEND :  INTEGER) return INTEGER;
+</pre></td></tr></table>
+<p>
+because, even  if we  did happen  to remember the traditional names of
+the operands,  we would  never use  them in  an invocation  of the "-"
+operator. The  formal names  will never  be seen at the point of call,
+and so cannot be considered in overload resolution.
+<p>
+Since operations  are functions,  the parameter mode must always be in
+and so  is irrelevant  to  the  resolution.  There  remains  only  the
+question of the result type.
+<p>
+Some languages,  such as  <a href="ratl-BIB.html#languages">Algol 68</a>,  do not  use the result type of an
+operation to  assist in  overload resolution.  This has  the advantage
+that it  leads to an implementation of overload resolution by a single
+bottom-up  traversal   of  the   expression.  But   is  this  admitted
+convenience for the compiler writer accompanied by any benefit for the
+human programmer?
+<p>
+There are  few cases  in conventional  mathematics where  an  abstract
+operation may yield two different types of result, but these cases are
+significant. One example is the distinction between scalar product and
+vector product. It is surely desirable to allow
+<table border cellpadding=6><tr><td><pre>
+function "&#42;" (LEFT, RIGHT :  VECTOR) return SCALAR;
+function "&#42;" (LEFT, RIGHT :  VECTOR) return MATRIX;
+</pre></td></tr></table>
+<p>
+since otherwise  one hapless  programmer will  have to  abandon  infix
+notation completely, and the other will have to fight for his monopoly
+over the "&#42;" symbol.
+<p>
+As another example, consider the rational constructor
+<PRE>    function "/" (LEFT, RIGHT :  INTEGER) return RATIONAL;</PRE>
+<p>
+defined above. It is hard to imagine any better way of writing
+<PRE>    ALMOST_PI :=  355/113;</PRE>
+<p>
+But this requires the ability to overload "/" on the result type.
+<p>
+We conclude  that the  use of  the function  result type  in  overload
+resolution  is  methodologically  the  better  choice,  and  one  that
+enhances  the   freedom  of   the   programmer   to   write   natural,
+comprehensible expressions.
+
+<H4>Overloaded Names</H4>
+<p>
+Named  procedures   and  functions,   called  by  conventional  prefix
+notation, present  a rather  different  issue.  This  is  because  Ada
+permits both  positional and  named  parameter  association,  for  the
+reasons given  in <a href="ratl-08-03.html#8.3">section 8.3</a>. Moreover, procedure parameters may take
+one of  three modes:  in, in  out,  out;  and  in  parameters  may  be
+defaulted. Potentially, all this information is available for overload
+resolution.
+<p>
+To resolve  overloading, Ada  uses the formal names but not the modes;
+that is, (d), (e) and (f) above, as described in <a href="http://archive.adaic.com/standards/83lrm/html/lrm-06-06.html#6.6">RM 6.6</a>. The reason is
+simple: the  programmer may  write the  formal names explicitly in the
+call statement,  but has no means of indicating the modes at the place
+of the  call (since  all parameter  associations use "=&gt;"). Hence, the
+formal names  can be made explicit, but the modes are always implicit,
+and the natural action is to use explicit information where given, but
+to avoid  using implicit  information that the human reader might have
+difficulty in deducing.
+
+<H3><BR><a name="11.5.3">11.5.3 Ambiguity</a></H3>
+
+An overloaded  name is  potentially ambiguous.  In practice, even with
+the best  programming style,  actual ambiguities will sometimes arise,
+in the  form of  expressions that  cannot be resolved. The most common
+reason is  accident: two  packages are  jointly used;  each defines  a
+consistent set  of names;  but there is a clash of names. For example,
+consider the  packages PALETTE  and BOTANY  defined above.  One cannot
+find fault with these packages individually, but then
+<table border cellpadding=6><tr><td><pre>
+with PALETTE,  BOTANY;
+use  PALETTE,  BOTANY;
+procedure P is
+  ...
+  PUT(ORANGE);
+  ...
+end P;
+</pre></td></tr></table>
+<p>
+contains an  ambiguous call  of PUT  - one that is ambiguous even when
+all available information is used.
+<p>
+Clearly, the  programmer must  provide more information. There are two
+sorts of  information that  Ada permits  one to  provide:  information
+about the  source of  a name,  and  information  about  its  type.  To
+illustrate the former, consider
+<PRE>    BOTANY.PUT(ORANGE);</PRE>
+<p>
+This is  clearly unambiguous, since only one PUT is defined in package
+BOTANY. Ada  dot notation can always be used to give information about
+the source that provides the name, and, if the package in question has
+been properly  written, this  information should suffice. Indeed, this
+property is  essential if packages are to be generally useful software
+components, since  it guarantees  that a  properly-constructed package
+can be  used by  anyone, regardless  of what  other packages  they may
+need.
+<p>
+To illustrate how type information can be given, consider
+<PRE>    PUT(FRUIT'(ORANGE));</PRE>
+<p>
+This also  is unambiguous: ORANGE is a FRUIT, and so the PUT that puts
+fruits is  intended. Since  type names cannot be overloaded, and since
+all expressions  can be  qualified, this  method also ensures overload
+resolution.
+<p>
+By either  of these  methods, the  user who  by accident encounters an
+ambiguity can make the intended meaning explicit.
+
+<center>
+<hr width=60%>
+&#164; <a href="ratl-12.html#12"><b>NEXT</b></a>
+&#164; <a href="ratl-11-04.html#11.4"><b>PREVIOUS</b></a>
+&#164; <a href="ratl-11.html#11"><b>UP</b></a>
+&#164; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#164; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#164;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+</BODY></HTML>

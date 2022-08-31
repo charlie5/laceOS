@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 5.4: Case Statements</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="5.4">5.4</A>.  Case Statements  </H2>
+<A HREF="lrm-05-03.html#5.3"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-05.html#5"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-05-05.html#5.5"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+A  case  statement  selects  for  execution  one of a number of alternative
+sequences of statements;  the chosen alternative is defined by the value of
+an expression.
+<pre>
+    case_statement ::=
+       case expression is
+           case_statement_alternative
+          {case_statement_alternative}
+       end case; 
+
+    case_statement_alternative ::=
+       when choice {| choice } =&gt;
+          sequence_of_statements 
+</pre>
+<P>
+The expression must be of  a  discrete  type  which  must  be  determinable
+independently  of the context in which the expression occurs, but using the 
+fact that the expression must be of a discrete type.  Moreover, the type of
+this expression must not be a generic formal type.  Each choice in  a  case
+statement alternative must be of the same type as the expression;  the list
+of  choices specifies for which values of the expression the alternative is
+chosen. 
+<P>
+If the expression is the name of an object whose subtype  is  static,  then
+each  value  of  this subtype must be represented once and only once in the
+set of choices of the case statement, and no other value is allowed;   this  
+rule  is  likewise  applied  if the expression is a qualified expression or
+type conversion whose type mark denotes a static subtype.   Otherwise,  for
+other  forms of expression, each value of the (base) type of the expression
+must be represented once and only once in the set of choices, and no  other
+value is allowed.                                                                                  
+<P>
+The  simple  expressions  and  discrete  ranges  given as choices in a case
+statement must be static.  A choice defined by a discrete range stands  for
+all  values  in the corresponding range (none if a null range).  The choice
+others is only allowed for the last alternative and as its only choice;  it
+stands for all values (possibly none) not given in the choices of  previous
+alternatives.  A component simple name is not allowed as a choice of a case
+statement alternative. 
+<P>
+The  execution  of  a  case  statement  consists  of  the evaluation of the
+expression followed by the execution of the chosen sequence of  statements. 
+<P>
+Examples: 
+<pre>
+    case SENSOR is
+       when ELEVATION  =&gt; RECORD_ELEVATION(SENSOR_VALUE); 
+       when AZIMUTH    =&gt; RECORD_AZIMUTH  (SENSOR_VALUE);
+       when DISTANCE   =&gt; RECORD_DISTANCE (SENSOR_VALUE);
+       when others     =&gt; null;
+    end case; 
+
+    case TODAY is
+       when MON        =&gt; COMPUTE_INITIAL_BALANCE;
+       when FRI        =&gt; COMPUTE_CLOSING_BALANCE;
+       when TUE .. THU =&gt; GENERATE_REPORT(TODAY);
+       when SAT .. SUN =&gt; null;
+    end case; 
+
+    case BIN_NUMBER(COUNT) is
+       when 1      =&gt; UPDATE_BIN(1);
+       when 2      =&gt; UPDATE_BIN(2);
+       when 3 | 4  =&gt;
+          EMPTY_BIN(1);
+          EMPTY_BIN(2);
+       when others =&gt; raise ERROR;
+    end case; 
+</pre>
+<P>
+Notes: 
+<P>
+The  execution  of  a  case statement chooses one and only one alternative,
+since the choices are exhaustive and mutually exclusive.  Qualification  of
+the expression of a case statement by a static subtype can often be used to
+limit the number of choices that need be given explicitly. 
+<P>
+An  others  choice  is  required  in  a  case statement if the  type of the
+expression is the type universal_integer (for example, if the expression is
+an integer literal), since this is the only way to cover all values of  the
+type universal_integer. 
+<P>
+<b>References:</b>   <A HREF="lrm-03-03.html#3.3">base  type</A>,
+<A HREF="lrm-03-07.html#3.7.3">choice</A>,
+<A HREF="lrm-08-07.html#8.7">context of overload resolution</A>,
+<A HREF="lrm-03-05.html#3.5">discrete type</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="lrm-06-04.html#6.4">function call</A>,
+<A HREF="lrm-12-01.html#12.1">generic  formal type</A>,
+<A HREF="lrm-04-06.html#4.6">conversion</A>,
+<A HREF="lrm-03-05.html#3.5">discrete type</A>,
+<A HREF="lrm-03-05.html#3.5.1">enumeration literal</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-03-02.html#3.2.1">object</A>,
+<A HREF="lrm-06-06.html#6.6">overloading</A>,
+ and <A HREF="lrm-08-07.html#8.7">8.7</A>,
+<A HREF="lrm-04-07.html#4.7">qualified expression</A>,
+<A HREF="lrm-05-01.html#5.1">sequence  of  statements</A>,
+<A HREF="lrm-04-09.html#4.9">static discrete range</A>,
+<A HREF="lrm-04-09.html#4.9">static subtype</A>,
+<A HREF="lrm-03-03.html#3.3">subtype</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-04-06.html#4.6">type conversion</A>,
+<A HREF="lrm-03-03.html#3.3.2">type  mark</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-02-02.html#2.2">2.2&nbsp;Textual Structure</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-03-07.html#3.7">3.7&nbsp;Statements</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-03-11.html#3.11">3.11&nbsp;Case Statements</a>,
+<p>
+
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-03-03.html#3.3.7">3.3.7&nbsp;Marker Comments</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-06.html#5.6.1">5.6.1&nbsp;Nesting</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-06.html#5.6.3">5.6.3&nbsp;Case Statements</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

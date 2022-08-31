@@ -1,0 +1,229 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Task termination</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>5.2 Task termination</H1>
+<div class="Normal" style="margin-bottom: 0.4em">In the Introduction 
+(in Section <A HREF="Rat-1-3-4.html">1.3.4</A>) we mentioned the problem 
+of how tasks can have a silent death in Ada 95. This happens if a task 
+raises an exception which is not handled by the task itself. Tasks may 
+also terminate because of going abnormal as well as terminating normally. 
+The detection of task termination and its causes can be monitored in 
+Ada 2005 by the package <SPAN Class="swiss">Ada.Task_Termination</SPAN> 
+whose specification is essentially<A NAME="I1148"></A></div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Task_Identification;&nbsp;<B>use</B>&nbsp;Ada.Task_Identification;<BR>
+<B>with</B>&nbsp;Ada.Exceptions;&nbsp;<B>use</B>&nbsp;Ada.Exceptions;<BR>
+<B>package</B>&nbsp;Ada.Task_Termination&nbsp;<B>is</B><A NAME="I1149"></A><A NAME="I1150"></A><A NAME="I1151"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable(Task_Termination);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Cause_Of_Termination&nbsp;<B>is</B>&nbsp;(Normal,&nbsp;Abnormal,&nbsp;Unhandled_Exception);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Termination_Handler&nbsp;<B>is&nbsp;access&nbsp;protected</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>(Cause:&nbsp;<B>in</B>&nbsp;Cause_Of_Termination;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T:&nbsp;<B>in</B>&nbsp;Task_Id;&nbsp;X:&nbsp;<B>in</B>&nbsp;Exception_Occurrence);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Dependents_Fallback_Handler&nbsp;(Handler:&nbsp;<B>in</B>&nbsp;Termination_Handler);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Current_Task_Fallback_Handler&nbsp;<B>return</B>&nbsp;Termination_Handler;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Specific_Handler(T:&nbsp;<B>in</B>&nbsp;Task_Id;&nbsp;Handler:&nbsp;<B>in</B>&nbsp;Termination_Handler);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Specific_Handler(T:&nbsp;<B>in</B>&nbsp;Task_Id)&nbsp;<B>return</B>&nbsp;Termination_Handler;</div>
+<div class="SwissExamples"><B>end</B>&nbsp;Ada.Task_Termination;</div>
+<div class="Normal">(The above includes use clauses in order to simplify 
+the presentation; the actual package does not have use clauses. The other 
+predefined packages described in this chapter are treated similarly.)</div>
+<div class="Normal">The general idea is that we can associate a protected 
+procedure with a task. The protected procedure is then invoked when the 
+task terminates with an indication of the reason passed via its parameters. 
+The protected procedure is identified by using the type <SPAN Class="swiss">Termination_Handler</SPAN> 
+which is an access type referring to a protected procedure.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The association can 
+be done in two ways. Thus (as in the Introduction) we might declare a 
+protected object <SPAN Class="swiss">Grim_Reaper</SPAN>&nbsp;</div>
+<div class="SwissExamples"><B>protected</B>&nbsp;Grim_Reaper&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Last_Gasp(C:&nbsp;Cause_Of_Termination;&nbsp;T:&nbsp;Task_Id;&nbsp;X:&nbsp;Exception_Occurrence);<BR>
+<B>end</B>&nbsp;Grim_Reaper;</div>
+<div class="Normal">which contains the protected procedure <SPAN Class="swiss">Last_Gasp</SPAN>. 
+Note that the parameters of <SPAN Class="swiss">Last_Gasp</SPAN> match 
+those of the access type <SPAN Class="swiss">Termination_Handler</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can then nominate 
+<SPAN Class="swiss">Last_Gasp</SPAN> as the protected procedure to be 
+called when the specific task <SPAN Class="swiss">T</SPAN> dies by&nbsp;</div>
+<div class="SwissExamples">Set_Specific_Handler(T'Identity,&nbsp;Grim_Reaper.Last_Gasp'Access);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Alternatively we can 
+nominate <SPAN Class="swiss">Last_Gasp</SPAN> as the protected procedure 
+to be called when any of the tasks dependent on the current task becomes 
+terminated by writing&nbsp;</div>
+<div class="SwissExamples">Set_Dependents_Fallback_Handler(Grim_Reaper.Last_Gasp'Access);</div>
+<div class="Normal">Note that a task is not dependent upon itself and 
+so this does not set a handler for the current task.</div>
+<div class="Normal">Thus a task can have two handlers. A fallback handler 
+and a specific handler and either or both of these can be null. When 
+a task terminates (that is after any finalization but just before it 
+vanishes), the specific handler is invoked if it is not null. If the 
+specific handler is null, then the fallback handler is invoked unless 
+it too is null. If both are null then no handler is invoked.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The body of protected 
+procedure <SPAN Class="swiss">Last_Gasp</SPAN> might then output various 
+diagnostic messages to a log for later analysis, thus&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Last_Gasp(C:&nbsp;Cause_Of_Termination;&nbsp;T:&nbsp;Task_Id;&nbsp;X:&nbsp;Exception_Occurrence)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>case</B>&nbsp;C&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Normal&nbsp;=&gt;&nbsp;<B>null</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Abnormal&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put_Log(&quot;Something&nbsp;nasty&nbsp;happened&nbsp;to&nbsp;task&nbsp;&quot;);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put_Log(Image(T));<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Unhandled_Exception&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put_Log(&quot;Unhandled&nbsp;exception&nbsp;occurred&nbsp;in&nbsp;task&nbsp;&quot;);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put_Log(Image(T));<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put_Log(Exception_Information(X));<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;case</B>;<BR>
+<B>end</B>&nbsp;Last_Gasp;</div>
+<div class="Normal">There are three possible reasons for termination, 
+it could be normal, abnormal (caused by abort), or because of propagation 
+of an unhandled exception. In the last case the parameter <SPAN Class="swiss">X</SPAN> 
+gives details of the exception occurrence whereas in the other cases 
+<SPAN Class="swiss">X</SPAN> has the value <SPAN Class="swiss">Null_Occurrence</SPAN>.</div>
+<div class="Normal">Initially both specific and fallback handlers are 
+null for all tasks. However, note that if a fallback handler has been 
+set for all dependent tasks of <SPAN Class="swiss">T</SPAN> then the 
+handler will also apply to any task subsequently created by <SPAN Class="swiss">T</SPAN> 
+or one of its descendants. Thus a task can be born with a fallback handler 
+already in place.</div>
+<div class="Normal">If a new handler is set then it replaces any existing 
+handler of the appropriate kind. Calling either setting procedure with 
+null for the handler naturally sets the appropriate handler to null. 
+The current handlers can be found by calling the functions <SPAN Class="swiss">Current_Task_Fallback_Handler</SPAN> 
+or <SPAN Class="swiss">Specific_Handler</SPAN>; they return null if the 
+handler is null.</div>
+<div class="Normal">It is important to realise that the fallback handlers 
+for the tasks dependent on <SPAN Class="swiss">T</SPAN> need not all 
+be the same since one of the dependent tasks of <SPAN Class="swiss">T</SPAN> 
+might set a different handler for its own dependent tasks. Thus the fallback 
+handlers for a tree of tasks can be different in various subtrees. This 
+structure is reflected by the fact that the determination of the current 
+fallback handler of a task is in fact done by searching recursively the 
+tasks on which it depends.</div>
+<div class="Normal">Note that we cannot directly interrogate the fallback 
+handler of a specific task but only that of the current task. Also, if 
+a task sets a fallback handler for its dependents and then enquires of 
+its own fallback handler it will not in general get the same answer since 
+it is not one of its own dependents.</div>
+<div class="Normal">Remember the situation regarding the environment 
+task. This unnamed task is the task that elaborates the library units 
+and then calls the main subprogram. Library tasks (that is tasks declared 
+at library level) are activated by the environment task before it calls 
+the main subprogram.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Suppose the main subprogram 
+calls the setting procedures as follows&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Main&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>protected</B>&nbsp;RIP&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;One(&nbsp;...&nbsp;);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Two(&nbsp;...&nbsp;);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Set_Dependents_Fallback_Handler(RIP.One'Access);<BR>
+&nbsp;&nbsp;&nbsp;Set_Specific_Handler(Current_Task,&nbsp;RIP.Two'Access);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Main;</div>
+<div class="Normal">The specific handler for the environment task is 
+then set to <SPAN Class="swiss">Two</SPAN> (because <SPAN Class="swiss">Current_Task</SPAN> 
+is the environment task at this point) but the fallback handler for the 
+environment task is null. On the other hand the fallback handler for 
+all other tasks in the program including any library tasks is set to 
+<SPAN Class="swiss">One</SPAN>. Note that it is not possible to set the 
+fallback handler for the environment task.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The astute reader will 
+note that there is actually a race condition here since a library task 
+might have terminated before the handler gets set. We could overcome 
+this by setting the handler as part of the elaboration code thus&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Start_Up&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Elaborate_Body;<BR>
+<B>end</B>;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Task_Termination;&nbsp;<B>use</B>&nbsp;Ada.Task_Termination;<BR>
+<B>package&nbsp;body</B>&nbsp;Start_Up&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Set_Dependents_Fallback_Handler(RIP.One'Access);<BR>
+<B>end</B>&nbsp;Start_Up;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Start_Up;<BR>
+<B>pragma</B>&nbsp;Elaborate(Start_Up);<BR>
+<B>package</B>&nbsp;Library_Tasks&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>declare&nbsp;library&nbsp;tasks&nbsp;here</I></SPAN><BR>
+<B>end</B>;</div>
+<div class="Normal">Note how the use of pragmas <SPAN Class="swiss">Elaborate_Body</SPAN> 
+and <SPAN Class="swiss">Elaborate</SPAN> ensures that things get done 
+in the correct order.</div>
+<div class="Normal">Some minor points are that if we try to set the specific 
+handler for a task that has already terminated then <SPAN Class="swiss">Tasking_Error</SPAN> 
+is raised. And if we try to set the specific handler for the null task, 
+that is call <SPAN Class="swiss">Set_Specific_Handler</SPAN> with parameter 
+<SPAN Class="swiss">T</SPAN> equal to <SPAN Class="swiss">Null_Task_Id</SPAN>, 
+then <SPAN Class="swiss">Program_Error</SPAN> is raised. These exceptions 
+are also raised by calls of the function <SPAN Class="swiss">Specific_Handler</SPAN> 
+in similar circumstances.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-5-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

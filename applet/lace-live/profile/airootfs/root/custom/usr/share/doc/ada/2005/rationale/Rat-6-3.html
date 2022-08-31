@@ -1,0 +1,409 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Numerics</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-6-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-6-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>6.3 Numerics</H1>
+<div class="Normal">Although Ada 95 introduced unsigned integer types 
+in the form of modular types, nevertheless, the strong typing rules of 
+Ada have not made it easy to get unsigned and signed integers to work 
+together. The following discussion using Ada 95 is based on that in <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00340.TXT">AI-340</A>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Suppose we wish to 
+implement a simulation of a typical computer which has addresses and 
+offsets. We make it a generic&nbsp;</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Address_Type&nbsp;<B>is&nbsp;mod</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Offset_Type&nbsp;<B>is&nbsp;range</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>package</B>&nbsp;Simulator&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Calc_Address(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Base_Add:&nbsp;Address_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Offset:&nbsp;Offset_Type)&nbsp;<B>return</B>&nbsp;Address_Type;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Simulator;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Addresses are represented 
+as unsigned integers (a modular type), whereas offsets are signed integers. 
+The function <SPAN Class="swiss">Calc_Address</SPAN> aims to add an offset 
+to a base address and return an address. The offset could be negative.</div>
+<div class="Normal">Na&iuml;vely we might hope to write&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Calc_Address(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Base_Add:&nbsp;Address_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Offset:&nbsp;Offset_Type)&nbsp;<B>return</B>&nbsp;Address_Type&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Base_Add&nbsp;+&nbsp;Offset;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+<B>end</B>&nbsp;Calc_Address;</div>
+<div class="Normal">but this is plainly illegal because <SPAN Class="swiss">Base_Add</SPAN> 
+and <SPAN Class="swiss">Offset</SPAN> are of different types.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can try a type conversion 
+thus&nbsp;</div>
+<div class="SwissExamples"><B>return</B>&nbsp;Base_Add&nbsp;+&nbsp;Address_Type(Offset);</div>
+<div class="Normal" style="margin-bottom: 0.4em">or perhaps, since <SPAN Class="swiss">Address_Type</SPAN> 
+might have a constraint,&nbsp;</div>
+<div class="SwissExamples"><B>return</B>&nbsp;Base_Add&nbsp;+&nbsp;Address_Type'Base(Offset);</div>
+<div class="Normal">but in any case the conversion is doomed to raise 
+<SPAN Class="swiss">Constraint_Error</SPAN> if <SPAN Class="swiss">Offset</SPAN> 
+is negative.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We then try to be clever 
+and write&nbsp;</div>
+<div class="SwissExamples"><B>return</B>&nbsp;Base_Add&nbsp;+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Address_Type'Base(Offset&nbsp;<B>mod</B>&nbsp;Offset_Type'Base(Address_Type'Modulus));</div>
+<div class="Normal" style="margin-bottom: 0.4em">but this raises <SPAN Class="swiss">Constraint_Error</SPAN> 
+if <SPAN Class="swiss">Address_Type'Modulus &gt; Offset_Type'Base'Last</SPAN> 
+which it often will be. To see this consider for example a 32-bit machine 
+with&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Offset_Type&nbsp;<B>is&nbsp;range</B>&nbsp;&ndash;(2**31)&nbsp;..&nbsp;2**31&ndash;1;<BR>
+<B>type</B>&nbsp;Address_Type&nbsp;<B>is&nbsp;mod</B>&nbsp;2**32;</div>
+<div class="Normal">in which case <SPAN Class="swiss">Address_Type'Modulus</SPAN> 
+is <SPAN Class="swiss">2**32</SPAN> which is greater than <SPAN Class="swiss">Offset_Type'Base'Last</SPAN> 
+which is <SPAN Class="swiss">2**31&ndash;1</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So we try an explicit 
+test for a negative offset&nbsp;</div>
+<div class="SwissExamples"><B>if</B>&nbsp;Offset&nbsp;&gt;=&nbsp;0&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Base_Add&nbsp;+&nbsp;Address_Type'Base(Offset);<BR>
+<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Base_Add&nbsp;-&nbsp;Address_Type'Base(&ndash;Offset);<BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal">But if <SPAN Class="swiss">Address_Type'Base'Last 
+&lt; Offset_Type'Last</SPAN> then this will raise <SPAN Class="swiss">Constraint_Error</SPAN> 
+for some values of <SPAN Class="swiss">Offset</SPAN>. Unlikely perhaps 
+but this is a generic and so ought to work for all possible pairs of 
+types.</div>
+<div class="Normal">If we attempt to overcome this then we run into problems 
+in trying to compare these two values since they are of different types 
+and converting one to the other can raise the <SPAN Class="swiss">Constraint_Error</SPAN> 
+problem once more. One solution is to use a bigger type to do the test 
+but this may not exist in some implementations. We could of course handle 
+the <SPAN Class="swiss">Constraint_Error</SPAN> and then patch up the 
+answer. The ruthless programmer might even think of <SPAN Class="swiss">Unchecked_Conversion</SPAN> 
+but this has its own problems. And so on &ndash; 'tis a wearisome tale.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The problem is neatly 
+overcome in Ada 2005 by the introduction of a new functional attribute<A NAME="I1232"></A><A NAME="I1233"></A> 
+</div>
+<div class="SwissExamples"><B>function</B>&nbsp;S'Mod(Arg:&nbsp;<SPAN Class="roman"><I>universal_integer</I></SPAN>)&nbsp;<B>return</B>&nbsp;S'Base;</div>
+<div class="Normal" style="margin-bottom: 0.4em"><SPAN Class="swiss">S'Mod</SPAN> 
+applies to any modular subtype <SPAN Class="swiss">S</SPAN> and returns 
+</div>
+<div class="SwissExamples">Arg&nbsp;<B>mod</B>&nbsp;S'Modulus</div>
+<div class="Normal" style="margin-bottom: 0.4em">In other words it converts 
+a <SPAN Class="roman"><I>universal_integer</I></SPAN> value to the modular 
+type using the corresponding mathematical mod operation. We can then 
+happily write&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Calc_Address(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Base_Add:&nbsp;Address_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Offset:&nbsp;Offset_Type)&nbsp;<B>return</B>&nbsp;Address_Type&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Base_Add&nbsp;+&nbsp;Address_Type'Mod(Offset);<BR>
+<B>end</B>&nbsp;Calc_Address;</div>
+<div class="Normal">and this always works.</div>
+<div class="Normal">The next topic in the numerics area concerns rounding. 
+One of the problems in the design of any programming language is getting 
+the correct balance between performance and portability. This is particularly 
+evident with numeric types where the computer has to implement only a 
+crude approximation to the mathematician's integers and reals. The best 
+performance is achieved by using types and operations that correspond 
+exactly to the hardware. On the other hand, perfect portability requires 
+using types with precisely identical characteristics on all implementations.</div>
+<div class="Normal">An interesting example of this problem arises with 
+conversions from a floating point type to an integer type when the floating 
+type value is midway between two integer values.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 83 the rounding 
+in the midway case was not specified. This upset some people and so Ada 
+95 went the other way and decreed that such rounding was always away 
+from zero. As well as this rule for conversion to integer types, Ada 
+95 also introduced a functional attribute to round a floating value. 
+Thus for a subtype <SPAN Class="swiss">S</SPAN> of a floating point type 
+<SPAN Class="swiss">T</SPAN> we have&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;S'Rounding(X:&nbsp;T)&nbsp;<B>return</B>&nbsp;T;</div>
+<div class="Normal">This returns the nearest integral value and for midway 
+values rounds away from zero.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 95 also gives a 
+bit more control for the benefit of the statistically minded by introducing 
+</div>
+<div class="SwissExamples"><B>function</B>&nbsp;S'Unbiased_Rounding(X:&nbsp;T)&nbsp;<B>return</B>&nbsp;T;</div>
+<div class="Normal">This returns the nearest integral value and for midway 
+values rounds to the even value.</div>
+<div class="Normal">However, there are many applications where we don't 
+care which value we get but would prefer the code to be fast. Implementers 
+have reported problems with the elementary functions where table look-up 
+is used to select a particular polynomial expansion. Either polynomial 
+will do just as well when at the midpoint of some range. However on some 
+popular hardware such as the Pentium, doing the exact rounding required 
+by Ada 95 just wastes time and the resulting function is perhaps 20% 
+slower. This is serious in any comparison with C.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This problem is overcome 
+in Ada 2005 by the introduction of a further attribute<A NAME="I1234"></A><A NAME="I1235"></A> 
+</div>
+<div class="SwissExamples"><B>function</B>&nbsp;S'Machine_Rounding(X:&nbsp;T)&nbsp;<B>return</B>&nbsp;T;</div>
+<div class="Normal">This does not specify which of the adjacent integral 
+values is returned if <SPAN Class="swiss">X</SPAN> lies midway. Note 
+that it is not implementation defined but deliberately unspecified. This 
+should discourage users from depending upon the behaviour on a particular 
+implementation and thus writing non-portable code.</div>
+<div class="Normal">Zerophiles will be pleased to note that if <SPAN Class="swiss">S'Signed_Zeros</SPAN> 
+is true and the answer is zero then it has the same sign as <SPAN Class="swiss">X</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It should be noted 
+that <SPAN Class="swiss">Machine_Rounding</SPAN>, like the other rounding 
+functions, returns a value of the floating point type and not perhaps 
+<SPAN Class="roman"><I>universal_integer</I></SPAN> as might be expected. 
+So it will typically be used in a context such as&nbsp;</div>
+<div class="SwissExamples">X:&nbsp;Some_Float;<BR>
+Index:&nbsp;Integer;<BR>
+...<BR>
+Index&nbsp;:=&nbsp;Integer(Some_Float'Machine_Rounding(X));<BR>
+...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>now&nbsp;use&nbsp;Index&nbsp;for&nbsp;table&nbsp;look-up</I></SPAN></div>
+<div class="Normal">Implementations are urged to detect this case in 
+order to generate fast code.</div>
+<div class="Normal">The third improvement to the core language in the 
+numerics area concerns fixed point arithmetic. This is a topic that concerns 
+few people but those who do use it probably feel passionately about it.<A NAME="I1236"></A></div>
+<div class="Normal">The trouble with floating point is that it is rather 
+machine dependent and of course integers are just integers. Many application 
+areas have used some form of scaled integers for many decades and the 
+Ada fixed point facility is important in certain applications where rigorous 
+error analysis is desirable.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The model of fixed 
+point was changed somewhat from Ada 83 to Ada 95. One change was that 
+the concepts of model and safe numbers were replaced by a much simpler 
+model just based on the multiples of the number <I>small</I>. Thus consider 
+the type&nbsp;</div>
+<div class="SwissExamples">Del:&nbsp;<B>constant</B>&nbsp;:=&nbsp;2.0**(&ndash;15);<BR>
+<B>type</B>&nbsp;Frac&nbsp;<B>is&nbsp;delta</B>&nbsp;Del&nbsp;<B>range</B>&nbsp;&ndash;1.0&nbsp;..&nbsp;1.0;</div>
+<div class="Normal">In Ada 83 small was defined to be the largest power 
+of 2 not greater than <SPAN Class="swiss">Del</SPAN>, and in this case 
+is indeed <SPAN Class="swiss">2.0**(&ndash;15)</SPAN>. But in Ada 95, 
+small can be chosen by the implementation to be any power of 2 not greater 
+than <SPAN Class="swiss">Del</SPAN> provided of course that the full 
+range of values is covered. In both languages an aspect clause can be 
+used to specify small and it need not be a power of 2. (Remember that 
+representation clauses are now known as aspect clauses.)</div>
+<div class="Normal">A more far reaching change introduced in Ada 95 concerns 
+the introduction of operations on the type <SPAN Class="roman"><I>universal_fixed</I></SPAN> 
+and type conversion.<A NAME="I1237"></A><A NAME="I1238"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">A minor problem in 
+Ada 83 was that explicit type conversion was required in places where 
+it might have been considered quite unnecessary. Thus supposing we have 
+variables <SPAN Class="swiss">F</SPAN>, <SPAN Class="swiss">G</SPAN>, 
+<SPAN Class="swiss">H</SPAN> of the above type <SPAN Class="swiss">Frac</SPAN>, 
+then in Ada 83 we could not write&nbsp;</div>
+<div class="SwissExamples">H&nbsp;:=&nbsp;F&nbsp;*&nbsp;G;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal&nbsp;in&nbsp;Ada&nbsp;83</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">but had to use an explicit 
+conversion</div>
+<div class="SwissExamples">H&nbsp;:=&nbsp;Frac(F&nbsp;*&nbsp;G);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal&nbsp;in&nbsp;Ada&nbsp;83</I></SPAN></div>
+<div class="Normal">In Ada 83, multiplication was defined between any 
+two fixed point types and produced a result of the type <SPAN Class="roman"><I>universal_fixed</I></SPAN> 
+and an explicit conversion was then required to convert this to the type 
+<SPAN Class="swiss">Frac</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This explicit conversion 
+was considered to be a nuisance so the rule was changed in Ada 95 to 
+say that multiplication was only defined between <SPAN Class="roman"><I>universal_fixed</I></SPAN> 
+operands and delivered a <SPAN Class="roman"><I>universal_fixed</I></SPAN> 
+result. Implicit conversions were then allowed for both operands and 
+result provided the type resolution rules identified no ambiguity. So 
+since the expected type was <SPAN Class="swiss">Frac</SPAN> and no other 
+interpretation was possible, the implicit conversion was allowed and 
+so in Ada 95 we can simply write&nbsp;</div>
+<div class="SwissExamples">H&nbsp;:=&nbsp;F&nbsp;*&nbsp;G;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal&nbsp;in&nbsp;Ada&nbsp;95</I></SPAN></div>
+<div class="Normal">Similar rules apply to division in both Ada 83 and 
+Ada 95.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note however that&nbsp;</div>
+<div class="SwissExamples">F&nbsp;:=&nbsp;F&nbsp;*&nbsp;G&nbsp;*&nbsp;H;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal">is illegal in Ada 95 because of the existence of 
+the pervasive type <SPAN Class="swiss">Duration</SPAN> defined in <SPAN Class="swiss">Standard</SPAN>. 
+The intermediate result could be either <SPAN Class="swiss">Frac</SPAN> 
+or <SPAN Class="swiss">Duration</SPAN>. So we have to add an explicit 
+conversion somewhere.</div>
+<div class="Normal" style="margin-bottom: 0.4em">One of the great things 
+about Ada is the ability to define your own operations. And in Ada 83 
+many programmers wrote their own arithmetic operations for fixed point. 
+These might be saturation operations in which the result is not allowed 
+to overflow but just takes the extreme implemented value. Such operations 
+often match the behaviour of some external device. So we might declare 
+</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;*&quot;(Left,&nbsp;Right:&nbsp;Frac)&nbsp;<B>return</B>&nbsp;Frac&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Standard.&quot;*&quot;(Left,&nbsp;Right);<BR>
+<B>exception</B><BR>
+&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;Constraint_Error&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;(Left&gt;0.0&nbsp;<B>and</B>&nbsp;Right&gt;0.0)&nbsp;<B>or</B>&nbsp;(Left&lt;0.0&nbsp;<B>and</B>&nbsp;Right&lt;0.0)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Frac'Last;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Frac'First;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end</B>&nbsp;&quot;*&quot;;</div>
+<div class="Normal">and similar functions for addition, subtraction, 
+and division (taking due care over division by zero and so on). This 
+works fine in Ada 83 and all calculations can now use the new operations 
+rather than the predefined ones in a natural manner.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note however that&nbsp;</div>
+<div class="SwissExamples">H&nbsp;:=&nbsp;Frac(F&nbsp;*&nbsp;G);</div>
+<div class="Normal" style="margin-bottom: 0.4em">is now ambiguous in 
+Ada 83 since both our own new <SPAN Class="swiss">&quot;*&quot;</SPAN> 
+and the predefined <SPAN Class="swiss">&quot;*&quot;</SPAN> are possible 
+interpretations. However, if we simply write the more natural&nbsp;</div>
+<div class="SwissExamples">H&nbsp;:=&nbsp;F&nbsp;*&nbsp;G;</div>
+<div class="Normal">then there is no ambiguity. So we can program in 
+Ada 83 without the explicit conversion.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, in Ada 95 
+we run into a problem when we introduce our own operations since&nbsp;</div>
+<div class="SwissExamples">H&nbsp;:=&nbsp;F&nbsp;*&nbsp;G;</div>
+<div class="Normal">is ambiguous because both the predefined operation 
+and our own operation are possible interpretations of <SPAN Class="swiss">&quot;*&quot;</SPAN> 
+in this context. There is no cure for this in Ada 95 except for changing 
+our own multiplying operations to be functions with identifiers such 
+as <SPAN Class="swiss">mul</SPAN> and <SPAN Class="swiss">div</SPAN>. 
+This is a very tedious chore and prone to errors.<A NAME="I1239"></A></div>
+<div class="Normal">It has been reported that because of this difficulty 
+many projects using fixed point have not moved from Ada 83 to Ada 95.</div>
+<div class="Normal">This problem is solved in Ada 2005 by changing the 
+name resolution rules to forbid the use of the predefined multiplication 
+(division) operation if there is a user-defined primitive multiplication 
+(division) operation for either operand type unless there is an explicit 
+conversion on the result or we write <SPAN Class="swiss">Standard.&quot;*&quot;</SPAN> 
+(or <SPAN Class="swiss">Standard.&quot;/&quot;</SPAN>).</div>
+<div class="Normal" style="margin-bottom: 0.4em">This means that when 
+there is no conversion as in&nbsp;</div>
+<div class="SwissExamples">H&nbsp;:=&nbsp;F&nbsp;*&nbsp;G;</div>
+<div class="Normal">then the predefined operation cannot apply if there 
+is a primitive user-defined <SPAN Class="swiss">&quot;*&quot;</SPAN> 
+for one of the operand types. So the ambiguity is resolved. Note that 
+if there is a conversion then it is still ambiguous as in Ada 83.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we absolutely need 
+to have a conversion then we can always use a qualification as well or 
+just instead. Thus we can write&nbsp;</div>
+<div class="SwissExamples">F&nbsp;:=&nbsp;Frac'(F&nbsp;*&nbsp;G)&nbsp;*&nbsp;H;</div>
+<div class="Normal">and this will unambiguously use our own operation.</div>
+<div class="Normal" style="margin-bottom: 0.4em">On the other hand if 
+we truly want to use the predefined operation then we can always write 
+</div>
+<div class="SwissExamples">H&nbsp;:=&nbsp;Standard.&quot;*&quot;(F,&nbsp;G);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another example might 
+be instructive. Suppose we declare three types <SPAN Class="swiss">TL</SPAN>, 
+<SPAN Class="swiss">TA</SPAN>, <SPAN Class="swiss">TV</SPAN> representing 
+lengths, areas, and volumes. We use centimetres as the basic unit with 
+an accuracy of 0.1 cm together with corresponding consistent units and 
+accuracies for areas and volumes. We might declare&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;TL&nbsp;<B>is&nbsp;delta</B>&nbsp;0.1&nbsp;<B>range</B>&nbsp;&ndash;100.0&nbsp;..&nbsp;100.0;<BR>
+<B>type</B>&nbsp;TA&nbsp;<B>is&nbsp;delta</B>&nbsp;0.01&nbsp;<B>range</B>&nbsp;&ndash;10_000.0&nbsp;..&nbsp;10_000.0;<BR>
+<B>type</B>&nbsp;TV&nbsp;<B>is&nbsp;delta</B>&nbsp;0.001&nbsp;<B>range</B>&nbsp;&ndash;1000_000.0&nbsp;..&nbsp;1000_000.0;<BR>
+<B>for</B>&nbsp;TL'Small&nbsp;<B>use</B>&nbsp;TL'Delta;<BR>
+<B>for</B>&nbsp;TA'Small&nbsp;<B>use</B>&nbsp;TA'Delta;<BR>
+<B>for</B>&nbsp;TV'Small&nbsp;<B>use</B>&nbsp;TV'Delta;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;&quot;*&quot;(Left:&nbsp;TL;&nbsp;Right:&nbsp;TL)&nbsp;<B>return</B>&nbsp;TA;<BR>
+<B>function</B>&nbsp;&quot;*&quot;(Left:&nbsp;TL;&nbsp;Right:&nbsp;TA)&nbsp;<B>return</B>&nbsp;TV;<BR>
+<B>function</B>&nbsp;&quot;*&quot;(Left:&nbsp;TA&nbsp;Right:&nbsp;TL)&nbsp;<B>return</B>&nbsp;TV;<BR>
+<B>function</B>&nbsp;&quot;/&quot;(Left:&nbsp;TV;&nbsp;Right:&nbsp;TL)&nbsp;<B>return</B>&nbsp;TA;<BR>
+<B>function</B>&nbsp;&quot;/&quot;(Left:&nbsp;TV;&nbsp;Right:&nbsp;TA)&nbsp;<B>return</B>&nbsp;TL;<BR>
+<B>function</B>&nbsp;&quot;/&quot;(Left:&nbsp;TA;&nbsp;Right:&nbsp;TL)&nbsp;<B>return</B>&nbsp;TL;</div>
+<div class="SwissExamples">XL,&nbsp;YL:&nbsp;TL;<BR>
+XA,&nbsp;YA:&nbsp;TA;<BR>
+XV,&nbsp;YV:&nbsp;TV;</div>
+<div class="Normal">These types have an explicit small equal to their 
+delta and are such that no scaling is required to implement the appropriate 
+multiplication and division operations. This absence of scaling is not 
+really relevant to the discussion below but simply illustrates why we 
+might have several fixed point types and operations between them.</div>
+<div class="Normal">Note that all three types have primitive user-defined 
+multiplication and division operations even though in the case of multiplication, 
+<SPAN Class="swiss">TV</SPAN> only appears as a result type. Thus the 
+predefined multiplication or division with any of these types as operands 
+can only be considered if the result has a type conversion.</div>
+<div class="Normal" style="margin-bottom: 0.4em">As a consequence the 
+following are legal&nbsp;</div>
+<div class="SwissExamples">XV&nbsp;:=&nbsp;XL&nbsp;*&nbsp;XA;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>OK,&nbsp;volume&nbsp;=&nbsp;length&nbsp;&times;&nbsp;area</I></SPAN><BR>
+XL&nbsp;:=&nbsp;XV&nbsp;/&nbsp;XA;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>OK,&nbsp;length&nbsp;=&nbsp;volume&nbsp;&divide;&nbsp;area</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">but the following are 
+not because they do not match the user-defined operations&nbsp;</div>
+<div class="SwissExamples">XV&nbsp;:=&nbsp;XL&nbsp;*&nbsp;XL;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>no,&nbsp;volume&nbsp;&#8800;&nbsp;length&nbsp;&times;&nbsp;length</I></SPAN><BR>
+XV&nbsp;:=&nbsp;XL&nbsp;/&nbsp;XA;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>no,&nbsp;volume&nbsp;&#8800;&nbsp;length&nbsp;&divide;&nbsp;area</I></SPAN><BR>
+XL&nbsp;:=&nbsp;XL&nbsp;*&nbsp;XL;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>no,&nbsp;length&nbsp;&#8800;&nbsp;length&nbsp;&times;&nbsp;length</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">But if we insist on 
+multiplying two lengths together then we can use an explicit conversion 
+thus&nbsp;</div>
+<div class="SwissExamples">XL&nbsp;:=&nbsp;TL(XL&nbsp;*&nbsp;XL);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>legal,&nbsp;predefined&nbsp;operation</I></SPAN></div>
+<div class="Normal">and this uses the predefined operation.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we need to multiply 
+three lengths to get a volume without storing an intermediate area then 
+we can write&nbsp;</div>
+<div class="SwissExamples">XV&nbsp;:=&nbsp;XL&nbsp;*&nbsp;XL&nbsp;*&nbsp;XL;</div>
+<div class="Normal">and this is unambiguous since there are no explicit 
+conversions and so the only relevant operations are those we have declared.</div>
+<div class="Normal">It is interesting to compare this with the corresponding 
+solution using floating point where we would need to make the unwanted 
+predefined operations abstract as discussed in an earlier chapter (see 
+<A HREF="Rat-2-7.html">2.7</A>).</div>
+<div class="Normal">It is hoped that the reader has not found this discussion 
+to be too protracted. Although fixed point is a somewhat specialized 
+area, it is important to those who find it useful and it is good to know 
+that the problems with Ada 95 have been resolved.</div>
+<div class="Normal">There are a number of other improvements in the numerics 
+area but these concern the Numerics annex and are discussed in Section 
+<A HREF="Rat-7-6.html">7.6</A>.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-6-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-6-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

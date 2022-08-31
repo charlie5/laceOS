@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Volatile</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.Indented1 {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-5-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-5-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>5.5 Volatile</H1>
+<div class="Normal">This is a curious topic and created much debate. 
+For the collector of statistics the real part of the AI is less than 
+two pages but the appendix has nearly twenty pages of chatter!</div>
+<div class="Normal">The problem is all about sharing variables and ensuring 
+that things happen in the correct order. Moreover, we need to avoid the 
+overhead of protected objects particularly on microprocessors where we 
+might be using low level features such as synchronous barriers discussed 
+in section <A HREF="Rat12-5-2.html">5.2</A> above.<A NAME="I1420"></A><A NAME="I1421"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Suppose we have two 
+tasks <SPAN Class="swiss">A</SPAN> and <SPAN Class="swiss">B</SPAN> which 
+access some shared data perhaps in a nice package <SPAN Class="swiss">Common</SPAN> 
+thus</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Common&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;Data:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Volatile(Data);<BR>
+&nbsp;&nbsp;&nbsp;Flag:&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Volatile(Flag);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Common;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and in task <SPAN Class="swiss">A</SPAN> 
+we write</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Common;&nbsp;<B>use</B>&nbsp;Common;<BR>
+<B>task</B>&nbsp;A&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;Data&nbsp;:=&nbsp;42;<BR>
+&nbsp;&nbsp;&nbsp;Flag&nbsp;:=&nbsp;True;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;A;</div>
+<div class="Normal" style="margin-bottom: 0.4em">whereas in task <SPAN Class="swiss">B</SPAN> 
+we have</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Common;&nbsp;<B>use</B>&nbsp;Common;<BR>
+<B>task</B>&nbsp;B&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Copy:&nbsp;Integer;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>exit&nbsp;when</B>&nbsp;Flag;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>spin</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;loop</B>;<BR>
+&nbsp;&nbsp;&nbsp;Copy&nbsp;:=&nbsp;Data;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;B;</div>
+<div class="Normal">The idea is that task <SPAN Class="swiss">A</SPAN> 
+assigns some value to <SPAN Class="swiss">Data</SPAN> and then indicates 
+this to task <SPAN Class="swiss">B</SPAN> by setting <SPAN Class="swiss">Flag</SPAN> 
+to true. Meanwhile, task <SPAN Class="swiss">B</SPAN> loops checking 
+<SPAN Class="swiss">Flag</SPAN> and when it is found to be true, then 
+reads the <SPAN Class="swiss">Data</SPAN>.</div>
+<div class="Normal">Does this work in Ada 2005? Hmm. Nearly. There are 
+three things that need to be ensured. One is that <SPAN Class="swiss">Flag</SPAN> 
+gets changed in one lump. Another is that the new value of <SPAN Class="swiss">Data</SPAN> 
+assigned by task <SPAN Class="swiss">A</SPAN> truly is updated when task 
+<SPAN Class="swiss">B</SPAN> reads it. And the third is that the actions 
+happen sequentially. Well, we should have applied pragma <SPAN Class="swiss">Atomic</SPAN> 
+to <SPAN Class="swiss">Flag</SPAN> to ensure the first but since it is 
+of type <SPAN Class="swiss">Boolean</SPAN> we might get away with it. 
+And note that <SPAN Class="swiss">Atomic</SPAN> implies <SPAN Class="swiss">Volatile</SPAN> 
+anyway. Also <SPAN Class="swiss">Atomic</SPAN> ensures that the actions 
+are sequential.</div>
+<div class="Normal">So, with the pragma <SPAN Class="swiss">Volatile</SPAN> 
+changed to <SPAN Class="swiss">Atomic</SPAN> for <SPAN Class="swiss">Flag</SPAN>, 
+it does indeed work in Ada 2005 because <SPAN Class="swiss">Volatile</SPAN> 
+ensures that read and writes are to memory and so things do happen in 
+the correct order. However, this is overkill. It is not necessary that 
+all accesses are to memory; all that matters is that they happen in the 
+correct order so they could be to some intermediate cache. Indeed, there 
+might be nested caches and as hardware evolves it is becoming more difficult 
+to make general statements about its structure; hence we can really only 
+make statements about the effect.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The possibility of 
+introducing a new pragma <SPAN Class="swiss">Coherent</SPAN> was debated 
+for some time. However, it was ultimately concluded that the definition 
+of <SPAN Class="swiss">Volatile</SPAN> should be weakened. In Ada 2005 
+it says</div>
+<div class="Indented1">For a volatile object all reads and updates of 
+the object as a whole are performed directly to memory.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 2012 it says</div>
+<div class="Indented1">All tasks of the program (on all processors) that 
+read or write volatile variables see the same order of updates to the 
+variables.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Of course, in Ada 2012, 
+we use aspects so the package <SPAN Class="swiss">Common</SPAN> becomes<A NAME="I1422"></A><A NAME="I1423"></A><A NAME="I1424"></A><A NAME="I1425"></A></div>
+<div class="SwissExamples"><B>package</B>&nbsp;Common&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;Data:&nbsp;Integer<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Volatile;<BR>
+&nbsp;&nbsp;&nbsp;Flag:&nbsp;Boolean<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Atomic;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Atomic&nbsp;implies&nbsp;Volatile</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Common;</div>
+<div class="Normal">where we have given <SPAN Class="swiss">Atomic</SPAN> 
+for <SPAN Class="swiss">Flag</SPAN>. As mentioned above, <SPAN Class="swiss">Atomic</SPAN> 
+implies <SPAN Class="swiss">Volatile</SPAN> so it is not necessary to 
+give both. However, if we do have to give two aspects, it is much neater 
+that the one aspect specification does this whereas two distinct pragmas 
+would be necessary.</div>
+<div class="Normal">It is said that this change brings the meaning of 
+volatile into line with that in C. However, it has also been said that 
+the definition of volatile in C is unclear.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-5-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-5-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

@@ -1,0 +1,241 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Priority Ceiling Locking</TITLE>
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    DIV.paranum {position: absolute; font-family: Arial, Helvetica, sans-serif; left: 0.5em; top: auto}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; margin-bottom: 0.6em}
+    DIV.Wide {font-family: "Times New Roman", Times, serif; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.WideAnnotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Index {font-family: "Times New Roman", Times, serif}
+    DIV.SyntaxSummary {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; margin-left: 2.0em}
+    DIV.SyntaxIndented {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Indented {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-bottom: 0.6em}
+    DIV.CodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.SmallIndented {font-family: "Times New Roman", Times, serif; margin-left:  10.0em; margin-bottom: 0.6em}
+    DIV.SmallCodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SmallExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left: 7.5em; margin-bottom: 0.6em}
+    DIV.IndentedExamples {font-family: "Courier New", monospace; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.SmallIndentedExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left:  15.0em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.IndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SyntaxIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.Hanging {font-family: "Times New Roman", Times, serif; margin-top: 0em; margin-bottom: 0.6em}
+    DD.Hanging {margin-left: 6.0em}
+    DL.IndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.IndentedHanging {margin-left: 2.0em}
+    DL.HangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.HangingInBulleted {margin-left: 4.0em}
+    DL.SmallHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallHanging {margin-left: 7.5em}
+    DL.SmallIndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallIndentedHanging {margin-left: 2.0em}
+    DL.SmallHangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallHangingInBulleted {margin-left: 5.0em}
+    DL.Enumerated {font-family: "Times New Roman", Times, serif; margin-right: 0.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.Enumerated {margin-left: 2.0em}
+    DL.SmallEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallEnumerated {margin-left: 2.5em}
+    DL.NestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.SmallNestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<P><A HREF="AA-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-D-2-2.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-D-4.html">Next</A></P>
+<HR>
+<H1> D.3 Priority Ceiling Locking</H1>
+<DIV Class="Paranum"><FONT SIZE=-2>1</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;[This clause specifies the interactions between
+priority task scheduling and protected object ceilings. This interaction
+is based on the concept of the <I>ceiling priority</I> of a protected
+object.] </DIV>
+
+<H4 ALIGN=CENTER>Syntax</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>2</FONT></DIV>
+<DIV Class="SyntaxIndented" Style="margin-bottom: 0.2em">The form of
+a <FONT FACE="Arial, Helvetica">pragma</FONT> Locking_Policy is as follows:
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>3</FONT></DIV>
+<DIV Class="SyntaxIndented">&nbsp;&nbsp;<B>pragma</B> <A NAME="I6835"></A><A NAME="I6836"></A>Locking_Policy(<I>policy_</I><A NAME="I6837"></A><FONT FACE="Arial, Helvetica">identifier</FONT>);
+</DIV>
+
+<H4 ALIGN=CENTER>Legality Rules</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>4</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The <I>policy_</I><A NAME="I6838"></A><FONT FACE="Arial, Helvetica">identifier</FONT>
+shall either be Ceiling_Locking or an implementation-defined <A NAME="I6839"></A><FONT FACE="Arial, Helvetica">identifier</FONT>.
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>4.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Implementation defined: </B>Implementation-defined
+<I>policy_</I><A NAME="I6840"></A><FONT FACE="Arial, Helvetica">identifier</FONT>s
+allowed in a <FONT FACE="Arial, Helvetica">pragma</FONT> Locking_Policy.</FONT></DIV>
+
+<H4 ALIGN=CENTER>Post-Compilation Rules</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>5</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<FONT SIZE="-1">{<I>configuration pragma (Locking_Policy)</I>
+[partial]}</FONT> <A NAME="I6841"></A><FONT SIZE="-1">{<I>pragma, configuration
+(Locking_Policy)</I> [partial]}</FONT> <A NAME="I6842"></A>A Locking_Policy
+pragma is a configuration pragma.</DIV>
+
+<H4 ALIGN=CENTER>Dynamic Semantics</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>6/1</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<I><A HREF="defect1.html#8652/0073">8652/0073</A></I>}
+<FONT SIZE="-1">{<I>locking policy</I>}</FONT> <A NAME="I6843"></A>[A
+locking policy specifies the details of protected object locking. These
+rules specify whether or not protected objects have priorities, and the
+relationships between these priorities and task priorities. In addition,
+the policy specifies the state of a task when it executes a protected
+action, and how its active priority is affected by the locking.] The
+<I>locking policy</I> is specified by a Locking_Policy pragma. For implementation-defined
+locking policies, the effect of a Priority or Interrupt_Priority pragma
+on a protected object is implementation defined. If no Locking_Policy
+pragma <U>applies to</U> <S>appears in</S> any of the program units comprising
+a partition, the locking policy for that partition, as well as the effect
+of specifying either a Priority or Interrupt_Priority pragma for a protected
+object, are implementation defined.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>7</FONT></DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;There is one predefined
+locking policy, Ceiling_Locking; this policy is defined as follows: </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>8</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><FONT SIZE="-1">{<I>ceiling priority
+(of a protected object)</I>}</FONT> <A NAME="I6844"></A>Every protected
+object has a <I>ceiling priority</I>, which is determined by either a
+Priority or Interrupt_Priority pragma as defined in <A HREF="AA-D-1.html">D.1</A>.
+The ceiling priority of a protected object (or ceiling, for short) is
+an upper bound on the active priority a task can have when it calls protected
+operations of that protected object.</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>9</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The <FONT FACE="Arial, Helvetica">expression</FONT>
+of a Priority or Interrupt_Priority pragma is evaluated as part of the
+creation of the corresponding protected object and converted to the subtype
+System.Any_Priority or System.Interrupt_Priority, respectively. The value
+of the <FONT FACE="Arial, Helvetica">expression</FONT> is the ceiling
+priority of the corresponding protected object. <FONT SIZE="-1">{<I>implicit
+subtype conversion (pragma Priority)</I> [partial]}</FONT> <A NAME="I6845"></A><FONT SIZE="-1">{<I>implicit
+subtype conversion (pragma Interrupt_Priority)</I> [partial]}</FONT>
+<A NAME="I6846"></A></LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>10</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If an Interrupt_Handler or Attach_Handler
+pragma (see <A HREF="AA-C-3-1.html">C.3.1</A>) appears in a <FONT FACE="Arial, Helvetica">protected_definition</FONT>
+without an Interrupt_Priority pragma, the ceiling priority of protected
+objects of that type is implementation defined, but in the range of the
+subtype System.Interrupt_Priority. </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>10.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Implementation defined: </B>Default
+ceiling priorities.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>11</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If no <FONT FACE="Arial, Helvetica">pragma</FONT>
+Priority, Interrupt_Priority, Interrupt_Handler, or Attach_Handler is
+specified in the <FONT FACE="Arial, Helvetica">protected_definition</FONT>,
+then the ceiling priority of the corresponding protected object is System.Priority'Last.</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>12</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>While a task executes a protected
+action, it inherits the ceiling priority of the corresponding protected
+object.</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>13</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><FONT SIZE="-1">{<I>Ceiling_Check</I>
+[partial]}</FONT> <A NAME="I6847"></A><FONT SIZE="-1">{<I>check, language-defined
+(Ceiling_Check)</I>}</FONT> <A NAME="I6848"></A><FONT SIZE="-1">{<I>Program_Error
+(raised by failure of run-time check)</I>}</FONT> <A NAME="I6849"></A>When
+a task calls a protected operation, a check is made that its active priority
+is not higher than the ceiling of the corresponding protected object;
+Program_Error is raised if this check fails.</LI></UL>
+
+<H4 ALIGN=CENTER>Implementation Permissions</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>14</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;The implementation is allowed to round all ceilings
+in a certain subrange of System.Priority or System.Interrupt_Priority
+up to the top of that subrange, uniformly. </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>14.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Discussion: </B>For example,
+an implementation might use Priority'Last for all ceilings in Priority,
+and Interrupt_Priority'Last for all ceilings in Interrupt_Priority. This
+would be equivalent to having two ceiling priorities for protected objects,
+``nonpreemptible'' and ``noninterruptible'', and is an allowed behavior.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>14.b</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">Note that the implementation
+cannot choose a subrange that crosses the boundary between normal and
+interrupt priorities. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>15</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;Implementations are allowed to define other locking
+policies, but need not support more than one such policy per partition.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>16</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;[Since implementations are allowed to place restrictions
+on code that runs at an interrupt-level active priority (see <A HREF="AA-C-3-1.html">C.3.1</A>
+and <A HREF="AA-D-2-1.html">D.2.1</A>), the implementation may implement
+a language feature in terms of a protected object with an implementation-defined
+ceiling, but the ceiling shall be no less than Priority'Last.] </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>16.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Implementation defined: </B>The
+ceiling of any protected object used internally by the implementation.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>16.b</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Proof: </B>This permission
+follows from the fact that the implementation can place restrictions
+on interrupt handlers and on any other code that runs at an interrupt-level
+active priority.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>16.c</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">The implementation might protect
+a storage pool with a protected object whose ceiling is Priority'Last,
+which would cause <FONT FACE="Arial, Helvetica">allocator</FONT>s to
+fail when evaluated at interrupt priority. Note that the ceiling of such
+an object has to be at least Priority'Last, since there is no permission
+for <FONT FACE="Arial, Helvetica">allocator</FONT>s to fail when evaluated
+at a non-interrupt priority. </FONT></DIV>
+
+<H4 ALIGN=CENTER>Implementation Advice</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>17</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;The implementation should use names that end
+with ``_Locking'' for implementation-defined locking policies.</DIV>
+<DIV Class="NotesHeader"><FONT SIZE="-1">NOTES</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>18</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">16&nbsp;&nbsp;While a task executes
+in a protected action, it can be preempted only by tasks whose active
+priorities are higher than the ceiling priority of the protected object.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>19</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">17&nbsp;&nbsp;If a protected object
+has a ceiling priority in the range of Interrupt_Priority, certain interrupts
+are blocked while protected actions of that object execute. In the extreme,
+if the ceiling is Interrupt_Priority'Last, all blockable interrupts are
+blocked during that time.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>20</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">18&nbsp;&nbsp;The ceiling priority
+of a protected object has to be in the Interrupt_Priority range if one
+of its procedures is to be used as an interrupt handler (see <A HREF="AA-C-3.html">C.3</A>).</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>21</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">19&nbsp;&nbsp;When specifying the
+ceiling of a protected object, one should choose a value that is at least
+as high as the highest active priority at which tasks can be executing
+when they call protected operations of that object. In determining this
+value the following factors, which can affect active priority, should
+be considered: the effect of Set_Priority, nested protected operations,
+entry calls, task activation, and other implementation-defined factors.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>22</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">20&nbsp;&nbsp;Attaching a protected
+procedure whose ceiling is below the interrupt hardware priority to an
+interrupt causes the execution of the program to be erroneous (see <A HREF="AA-C-3-1.html">C.3.1</A>).</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>23</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">21&nbsp;&nbsp;On a single processor
+implementation, the ceiling priority rules guarantee that there is no
+possibility of deadlock involving only protected subprograms (excluding
+the case where a protected operation calls another protected operation
+on the same protected object).</FONT></DIV>
+
+<HR>
+<P><A HREF="AA-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-D-2-2.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-D-4.html">Next</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-TTL.html">Legal</A></P>
+</BODY>
+</HTML>

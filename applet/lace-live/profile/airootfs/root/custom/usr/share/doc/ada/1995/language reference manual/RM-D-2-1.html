@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>The Task Dispatching Model</TITLE>
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    DIV.paranum {position: absolute; font-family: Arial, Helvetica, sans-serif; left: 0.5em; top: auto}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; margin-bottom: 0.6em}
+    DIV.Wide {font-family: "Times New Roman", Times, serif; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.WideAnnotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Index {font-family: "Times New Roman", Times, serif}
+    DIV.SyntaxSummary {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; margin-left: 2.0em}
+    DIV.SyntaxIndented {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Indented {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-bottom: 0.6em}
+    DIV.CodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.SmallIndented {font-family: "Times New Roman", Times, serif; margin-left:  10.0em; margin-bottom: 0.6em}
+    DIV.SmallCodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SmallExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left: 7.5em; margin-bottom: 0.6em}
+    DIV.IndentedExamples {font-family: "Courier New", monospace; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.SmallIndentedExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left:  15.0em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.IndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SyntaxIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.Hanging {font-family: "Times New Roman", Times, serif; margin-top: 0em; margin-bottom: 0.6em}
+    DD.Hanging {margin-left: 6.0em}
+    DL.IndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.IndentedHanging {margin-left: 2.0em}
+    DL.HangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.HangingInBulleted {margin-left: 4.0em}
+    DL.SmallHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallHanging {margin-left: 7.5em}
+    DL.SmallIndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallIndentedHanging {margin-left: 2.0em}
+    DL.SmallHangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallHangingInBulleted {margin-left: 5.0em}
+    DL.Enumerated {font-family: "Times New Roman", Times, serif; margin-right: 0.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.Enumerated {margin-left: 2.0em}
+    DL.SmallEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallEnumerated {margin-left: 2.5em}
+    DL.NestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.SmallNestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<P><A HREF="RM-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-D-2.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-D-2-2.html">Next</A></P>
+<HR>
+<H1> D.2.1 The Task Dispatching Model</H1>
+<DIV Class="Paranum"><FONT SIZE=-2>1</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;The task dispatching model specifies preemptive
+scheduling, based on conceptual priority-ordered ready queues. </DIV>
+
+<H4 ALIGN=CENTER>Dynamic Semantics</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>2</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;A task runs (that is, it becomes a <I>running
+task</I>) only when it is ready (see <A HREF="RM-9-2.html">9.2</A>) and
+the execution resources required by that task are available. Processors
+are allocated to tasks based on each task's active priority.</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>3</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;It is implementation defined whether, on a multiprocessor,
+a task that is waiting for access to a protected object keeps its processor
+busy. </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>4</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<A NAME="I6527"></A><A NAME="I6528"></A><A NAME="I6529"></A><A NAME="I6530"></A><I>Task
+dispatching</I> is the process by which one ready task is selected for
+execution on a processor. This selection is done at certain points during
+the execution of a task called <I>task dispatching points</I>. A task
+reaches a task dispatching point whenever it becomes blocked, and whenever
+it becomes ready. In addition, the completion of an <FONT FACE="Arial, Helvetica">accept_statement</FONT>
+(see <A HREF="RM-9-5-2.html">9.5.2</A>), and task termination are task
+dispatching points for the executing task. Other task dispatching points
+are defined throughout this Annex. </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>5</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<A NAME="I6531"></A><A NAME="I6532"></A><A NAME="I6533"></A><A NAME="I6534"></A><A NAME="I6535"></A><A NAME="I6536"></A><I>Task
+dispatching policies</I> are specified in terms of conceptual <I>ready
+queues</I>, task states, and task preemption. A ready queue is an ordered
+list of ready tasks. The first position in a queue is called the <I>head
+of the queue</I>, and the last position is called the <I>tail of the
+queue</I>. A task is <I>ready</I> if it is in a ready queue, or if it
+is running. Each processor has one ready queue for each priority value.
+At any instant, each ready queue of a processor contains exactly the
+set of tasks of that priority that are ready for execution on that processor,
+but are not running on any processor; that is, those tasks that are ready,
+are not running on any processor, and can be executed using that processor
+and other available resources. A task can be on the ready queues of more
+than one processor. </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>6</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<A NAME="I6537"></A>Each processor also has one
+<I>running task</I>, which is the task currently being executed by that
+processor. Whenever a task running on a processor reaches a task dispatching
+point, one task is selected to run on that processor. The task selected
+is the one at the head of the highest priority nonempty ready queue;
+this task is then removed from all ready queues to which it belongs.
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>7</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<A NAME="I6538"></A>A preemptible resource is
+a resource that while allocated to one task can be allocated (temporarily)
+to another instead. Processors are preemptible resources. Access to a
+protected object (see <A HREF="RM-9-5-1.html">9.5.1</A>) is a nonpreemptible
+resource. <A NAME="I6539"></A>When a higher-priority task is dispatched
+to the processor, and the previously running task is placed on the appropriate
+ready queue, the latter task is said to be <I>preempted</I>. </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>8</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<A NAME="I6540"></A><A NAME="I6541"></A>A new
+running task is also selected whenever there is a nonempty ready queue
+with a higher priority than the priority of the running task, or when
+the task dispatching policy requires a running task to go back to a ready
+queue. These are also task dispatching points. </DIV>
+
+<H4 ALIGN=CENTER>Implementation Permissions</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>9</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;An implementation is allowed to define additional
+resources as execution resources, and to define the corresponding allocation
+policies for them. Such resources may have an implementation defined
+effect on task dispatching (see <A HREF="RM-D-2-2.html">D.2.2</A>). </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>10</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;&nbsp;An implementation may place implementation-defined
+restrictions on tasks whose active priority is in the Interrupt_Priority
+range. </DIV>
+<DIV Class="NotesHeader"><FONT SIZE="-1">NOTES</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>11</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">7&nbsp;&nbsp;Section 9 specifies under
+which circumstances a task becomes ready. The ready state is affected
+by the rules for task activation and termination, delay statements, and
+entry calls. <A NAME="I6542"></A>When a task is not ready, it is said
+to be blocked.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>12</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">8&nbsp;&nbsp;An example of a possible
+implementation-defined execution resource is a page of physical memory,
+which needs to be loaded with a particular page of virtual memory before
+a task can continue execution.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>13</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">9&nbsp;&nbsp;The ready queues are
+purely conceptual; there is no requirement that such lists physically
+exist in an implementation.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>14</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">10&nbsp;&nbsp;While a task is running,
+it is not on any ready queue. Any time the task that is running on a
+processor is added to a ready queue, a new running task is selected for
+that processor.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>15</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">11&nbsp;&nbsp;In a multiprocessor
+system, a task can be on the ready queues of more than one processor.
+At the extreme, if several processors share the same set of ready tasks,
+the contents of their ready queues is identical, and so they can be viewed
+as sharing one ready queue, and can be implemented that way. Thus, the
+dispatching model covers multiprocessors where dispatching is implemented
+using a single ready queue, as well as those with separate dispatching
+domains.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>16</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">12&nbsp;&nbsp;The priority of a task
+is determined by rules specified in this subclause, and under <A HREF="RM-D-1.html">D.1</A>,
+``<A HREF="RM-D-1.html">Task Priorities</A>'', <A HREF="RM-D-3.html">D.3</A>,
+``<A HREF="RM-D-3.html">Priority Ceiling Locking</A>'', and <A HREF="RM-D-5.html">D.5</A>,
+``<A HREF="RM-D-5.html">Dynamic Priorities</A>''.</FONT></DIV>
+
+<HR>
+<P><A HREF="RM-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-D-2.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-D-2-2.html">Next</A>&nbsp;&nbsp;&nbsp;<A HREF="RM-TTL.html">Legal</A></P>
+</BODY>
+</HTML>

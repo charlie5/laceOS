@@ -1,0 +1,522 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 10.3: Window-Oriented Portable Dining Philosophers Example
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 10: Complete Examples</H2>
+
+<H3><a name="10.3">10.3    Window-Oriented Portable Dining Philosophers Example</a></H3>
+<BLOCKQUOTE><H6>Michael B. Feldman<BR>
+Dept. of Electrical Engineering and Computer Science<BR>
+The George Washington University<BR>
+Washington, DC 20052<BR><BR>
+(202) 994-5253<BR>
+<a href="mailto://mfeldman@seas.gwu.edu">mfeldman@seas.gwu.edu</a><BR><BR>
+Copyright 1991, Michael B. Feldman<BR>
+These programs may be freely copied, distributed, and modified for educational 
+purposes but not for profit.  If you modify or enhance the program (for 
+example, to use other display systems), please send Dr. Feldman a copy of the 
+modified code, either on diskette or by e-mail.</H6></BLOCKQUOTE><P>
+
+This system is an elaborate implementation of Edsger Dijkstra's famous Dining  
+Philosophers; a classical demonstration of deadlock problems in concurrent  
+programming.<P>
+This example builds on some of the utilities found in the Line-Oriented  
+example.
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------ 
+package Screen is
+
+   -- Procedures for drawing pictures on ANSI Terminal Screen
+   
+   Screen_Depth : constant := 24; 
+   Screen_Width : constant := 80;
+   
+   subtype Depth is Integer range 1 .. Screen_Depth; 
+   subtype Width is Integer range 1 .. Screen_Width;
+   
+   procedure Beep; 
+   procedure Clear_Screen; 
+   procedure Move_Cursor (Column : in     Width; 
+                          Row    : in     Depth);
+                          
+end Screen;
+
+------------------------------------------------------------------------
+
+with Screen; 
+use  Screen; 
+package Windows is
+
+   type Window is private;
+   
+   procedure Open 
+         (W      : in out Window;       -- Window variable returned 
+          Row    : in     Depth;        -- Upper left corner 
+          Column : in     Width; 
+          Height : in     Depth;        -- Size of window 
+          Width  : in     Screen.Width);
+          
+   -- Create a window variable and open the window for writing. 
+   -- No checks for overlap of windows are made.
+   
+   procedure Close (W : in out Window); 
+   -- Close window and clear window variable.
+   
+   procedure Title (W     : in out Window; 
+                    Name  : in     String; 
+                    Under : in     Character);
+                    
+   -- Put a title name at the top of the window.  If the parameter 
+   -- Under is nonblank, underline the title with the 
+   -- specified character.
+   
+   procedure Borders (W      : in out Window; 
+                      Corner : in     Character; 
+                      Down   : in     Character; 
+                      Across : in     Character);
+                      
+   -- Draw border around current writable area in window with 
+   -- characters specified.  Call this BEFORE Title.
+   
+   procedure Go_To_Row_Column (W      : in out Window; 
+                               Row    : in     Depth; 
+                               Column : in     Width);
+                               
+   -- Goto the row and column specified.  Coordinates are relative 
+   -- to the upper left corner of window, which is (1, 1)
+   
+   procedure Put 
+         (W  : in out Window; 
+          Ch : in     Character);
+          
+   -- put one character to the window. 
+   -- If end of column, go to the next row. 
+   -- If end of window, go to the top of the window.
+   
+   procedure Put_String (W : in out Window; 
+                         S : in     String);<P>
+   -- put a string to window.<P>
+   procedure New_Line (W : in out Window);<P>
+   -- Go to beginning of next line.  Next line is 
+   -- not blanked until next character is written<P>
+private<P>
+   type Window is 
+      record 
+         Current_Row    : Depth;          -- Current cursor row 
+         First_Row      : Depth; 
+         Last_Row       : Depth;<P>
+         Current_Column : Width;          -- Current cursor column 
+         First_Column   : Width; 
+         Last_Column    : Width;<P>
+      end record;<P>
+end Windows;<P>
+------------------------------------------------------------------------<P>
+with Text_IO; 
+package body Screen is<P>
+   package My_Int_IO is new Text_IO.Integer_IO (Integer);<P>
+   -- Procedures for drawing pictures on ANSI Terminal Screen<P>
+   --------------------------------------------------------------------- 
+   procedure Beep is 
+   begin 
+      Text_IO.Put(Item =&gt; ASCII.Bel); 
+   end Beep;<P>
+   ---------------------------------------------------------------------<P>
+   procedure Clear_Screen is 
+   begin 
+      Text_IO.Put(Item =&gt; ASCII.Esc); 
+      Text_IO.Put(Item =&gt; &quot;[2J&quot;); 
+   end Clear_Screen;<P>
+   ---------------------------------------------------------------------<P>
+   procedure Move_Cursor (Column : in     Width; 
+                          Row    : in     Depth) is 
+   begin 
+      Text_IO.New_Line; 
+      Text_IO.Put(Item =&gt; ASCII.Esc); 
+      Text_IO.Put(&quot;[&quot;); 
+      My_Int_IO.Put (Item  =&gt; Row, 
+                     Width =&gt; 1); 
+      Text_IO.Put(Item =&gt; ';'); 
+      My_Int_IO.Put (Item  =&gt; Column, 
+                     Width =&gt; 1); 
+      Text_IO.Put(Item =&gt; 'f'); 
+   end Move_Cursor;<P>
+   ---------------------------------------------------------------------<P>
+end Screen;<P>
+------------------------------------------------------------------------<P>
+with Text_IO; 
+with Medium_Integer_IO; 
+with Screen;<P>
+use  Text_IO; 
+use  Medium_Integer_IO; 
+use  Screen;<P>
+package body Windows is<P>
+   Cursor_Row : Depth := 1;            -- Current cursor position 
+   Cursor_Col : Width := 1;<P>
+   --------------------------------------------------------------------- 
+   procedure Open 
+         (W      : in out Window; 
+          Row    : in     Depth; 
+          Column : in     Width; 
+          Height : in     Depth; 
+          Width  : in     Screen.Width) is<P>
+      --Put the Window's cursor in upper left corner 
+   begin 
+      W.Current_Row := Row; 
+      W.First_Row := Row; 
+      W.Last_Row := Row + Height - 1;<P>
+      W.Current_Column := Column; 
+      W.First_Column := Column; 
+      W.Last_Column := Column + Width - 1; 
+   end Open;<P>
+   ---------------------------------------------------------------------<P>
+   procedure Close (W : in out Window) is 
+   begin 
+      null; 
+   end Close;<P>
+   ---------------------------------------------------------------------<P>
+   procedure Title (W     : in out Window; 
+                    Name  : in     String; 
+                    Under : in     Character) is<P>
+      -- Put name at the top of the Window.  If Under nonblank, 
+      -- underline the title. 
+   begin 
+      -- Put name on top line 
+      W.Current_Column := W.First_Column; 
+      W.Current_Row := W.First_Row; 
+      Put_String(W, Name); 
+      New_Line(W);<P>
+      -- Underline name if desired, and move the First line 
+      -- of the Window below the title 
+      if Under = ' ' then 
+         W.First_Row := W.First_Row + 1;<P>
+      else  -- put nonblank characters under title 
+         for I in W.First_Column .. W.Last_Column loop 
+            Put(W, Under); 
+         end loop; 
+         New_Line(W); 
+         W.First_Row := W.First_Row + 2; 
+      end if;<P>
+   end Title;<P>
+   ---------------------------------------------------------------------<P>
+   procedure Go_To_Row_Column (W      : in out Window; 
+                               Row    : in     Depth; 
+                               Column : in     Width) is<P>
+      -- Relative to writable Window boundaries, of course 
+   begin 
+      W.Current_Row    := W.First_Row    + Row; 
+      W.Current_Column := W.First_Column + Column; 
+   end Go_To_Row_Column;<P>
+   ---------------------------------------------------------------------<P>
+   procedure Borders (W      : in out Window; 
+                      Corner : in     Character; 
+                      Down   : in     Character; 
+                      Across : in     Character) is<P>
+      -- Draw border around current writable area in Window 
+      -- with characters. Call this BEFORE Title. 
+   begin<P>
+      -- Put top line of border 
+      Screen.Move_Cursor(W.First_Column, W.First_Row); 
+      Text_IO.Put(Corner);<P>
+      for J in W.First_Column + 1 .. W.Last_Column - 1 loop 
+         Text_IO.Put(Across); 
+      end loop; 
+      Text_IO.Put(Corner);<P>
+      -- Put the two side lines 
+      for I in W.First_Row + 1 .. W.Last_Row - 1 loop 
+         Screen.Move_Cursor(W.First_Column, I); 
+         Text_IO.Put(Down); 
+         Screen.Move_Cursor(W.Last_Column, I); 
+         Text_IO.Put(Down); 
+      end loop;<P>
+      -- Put the bottom line of the border 
+      Screen.Move_Cursor(W.First_Column, W.Last_Row); 
+      Text_IO.Put(Corner); 
+      for J in W.First_Column + 1 .. W.Last_Column - 1 loop 
+         Text_IO.Put(Across); 
+      end loop; 
+      Text_IO.Put(Corner);<P>
+      -- Put the cursor at the very end of the Window 
+      Cursor_Row := W.Last_Row; 
+      Cursor_Col := W.Last_Column + 1;<P>
+      -- Make the Window smaller by one character on each side 
+      W.First_Row := W.First_Row + 1; 
+      W.Current_Row := W.First_Row; 
+      W.Last_Row := W.Last_Row - 1; 
+      W.First_Column := W.First_Column + 1; 
+      W.Current_Column := W.First_Column; 
+      W.Last_Column := W.Last_Column - 1; 
+   end Borders;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Erase_To_End_Of_Line (W : in out Window) is 
+   begin 
+      Screen.Move_Cursor(W.Current_Column, W.Current_Row);
+      
+      for I in W.Current_Column .. W.Last_Column loop 
+         Text_IO.Put(' '); 
+      end loop;
+      
+      Screen.Move_Cursor(W.Current_Column, W.Current_Row); 
+      Cursor_Col := W.Current_Column; 
+      Cursor_Row := W.Current_Row; 
+   end Erase_To_End_Of_Line;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Put (W  : in out Window; 
+                  Ch : in     Character) is
+                  
+      -- If after end of line, move to First character of next line 
+      -- If about to write First character on line, blank rest of 
+      -- line. 
+      -- Put character.
+      
+   begin 
+      if Ch = ASCII.CR then 
+         New_Line(W);
+         
+         return;
+         
+      end if;
+      
+      -- If at end of current line, move to next line 
+      if W.Current_Column &gt; W.Last_Column then
+      
+         if W.Current_Row = W.Last_Row then 
+            W.Current_Row := W.First_Row;
+            
+         else  -- not at end of current line 
+            W.Current_Row := W.Current_Row + 1; 
+         end if;
+         
+         W.Current_Column := W.First_Column; 
+      end if;
+      
+      -- If at W.First char, erase line 
+      if W.Current_Column = W.First_Column then 
+         Erase_To_End_Of_Line(W); 
+      end if;
+      
+      -- Put physical cursor at Window's cursor 
+      if Cursor_Col /= W.Current_Column or 
+         Cursor_Row /= W.Current_Row    then
+         
+         Screen.Move_Cursor(W.Current_Column, W.Current_Row); 
+         Cursor_Row := W.Current_Row; 
+      end if;
+      
+      if Ch = ASCII.BS then 
+         -- Special backspace handling 
+         if W.Current_Column /= W.First_Column then 
+            Text_IO.Put(Ch); 
+            W.Current_Column := W.Current_Column - 1; 
+         end if;
+         
+      else  -- character is not a backspace, so just write it 
+         Text_IO.Put(Ch); 
+         W.Current_Column := W.Current_Column + 1; 
+      end if;
+      
+      Cursor_Col := W.Current_Column; 
+   end Put;
+   
+   ---------------------------------------------------------------------
+   
+   procedure New_Line (W : in out Window) is
+   
+      Col : Width;
+      
+      -- If not after line, blank rest of line. 
+      -- Move to First character of next line 
+   begin  -- New_Line
+   
+      if W.Current_Column = 0 then 
+         Erase_To_End_Of_Line(W); 
+      end if;
+      
+      if W.Current_Row = W.Last_Row then 
+         W.Current_Row := W.First_Row;
+         
+      else  -- not at bottom of screen 
+         W.Current_Row := W.Current_Row + 1; 
+      end if;
+      
+      W.Current_Column := W.First_Column; 
+   end New_Line;
+   
+   ---------------------------------------------------------------------
+   
+   procedure Put_String (W : in out Window; 
+                         S : in     String) is 
+   begin 
+      for I in S'First .. S'Last loop 
+         Put(W, S(I)); 
+      end loop; 
+   end Put_String;
+   
+   ---------------------------------------------------------------------
+   
+begin  -- Windows 
+   Screen.Clear_Screen; 
+   Screen.Move_Cursor(1, 1); 
+end Windows;
+
+------------------------------------------------------------------------
+
+with SPC_Numeric_Types; 
+with Windows; 
+with Chop; 
+with Phil; 
+with Calendar;
+
+use  SPC_Numeric_Types;
+
+pragma Elaborate (Phil); 
+package body Room is
+
+   Phils        : array (Table_Type) of Phil.Philosopher; 
+   Phil_Windows : array (Table_Type) of Windows.Window;
+   
+   type Phil_Names is (Dijkstra, Texel, Booch, Ichbiah, Stroustrup);
+   
+   task body Head_Waiter is
+   
+      T          : Medium_Positive; 
+      Start_Time : Calendar.Time;
+      
+   begin  -- Head_Waiter
+   
+      accept Open_The_Room; 
+      Start_Time := Calendar.Clock;
+      
+      Windows.Open (W      =&gt; Phil_Windows(1), 
+                    Row    =&gt; 1, 
+                    Column =&gt; 23, 
+                    Height =&gt; 7, 
+                    Width  =&gt; 30);
+
+      Windows.Borders(Phil_Windows(1), '+', '|', '-'); 
+      Windows.Title  (Phil_Windows(1), &quot;Eddy Dijkstra&quot;, '-'); 
+      Phils(1).Come_To_Life(1, 1, 2);
+      
+      Windows.Open (W      =&gt; Phil_Windows(3), 
+                    Row    =&gt; 9, 
+                    Column =&gt; 50, 
+                    Height =&gt; 7, 
+                    Width  =&gt; 30);
+
+      Windows.Borders(Phil_Windows(3), '+', '|', '-'); 
+      Windows.Title  (Phil_Windows(3), &quot;Grady Booch&quot;, '-'); 
+      Phils(3).Come_To_Life(3, 3, 4);
+      
+      Windows.Open (W      =&gt; Phil_Windows(2), 
+                    Row    =&gt; 9, 
+                    Column =&gt; 2, 
+                    Height =&gt; 7, 
+                    Width  =&gt; 30);
+
+      Windows.Borders(Phil_Windows(2), '+', '|', '-'); 
+      Windows.Title  (Phil_Windows(2), &quot;Putnam Texel&quot;, '-'); 
+      Phils(2).Come_To_Life(2, 2, 3);
+      
+      Windows.Open (W      =&gt; Phil_Windows(5), 
+                    Row    =&gt; 17, 
+                    Column =&gt; 41, 
+                    Height =&gt; 7, 
+                    Width  =&gt; 30);
+
+      Windows.Borders(Phil_Windows(5), '+', '|', '-'); 
+      Windows.Title  (Phil_Windows(5), &quot;Bjarne Stroustrup&quot;, '-'); 
+      Phils(5).Come_To_Life(5, 1, 5);
+      
+      Windows.Open (W      =&gt; Phil_Windows(4), 
+                    Row    =&gt; 17, 
+                    Column =&gt; 8, 
+                    Height =&gt; 7, 
+                    Width  =&gt; 30);
+
+      Windows.Borders(Phil_Windows(4), '+', '|', '-'); 
+      Windows.Title  (Phil_Windows(4), &quot;Jean Ichbiah&quot;, '-'); 
+      Phils(4).Come_To_Life(4, 4, 5);
+      
+      loop 
+         select 
+            accept Report_State 
+                  (Which_Phil : in     Table_Type; 
+                   State      : in     Phil.States; 
+                   How_Long   : in     Medium_Natural := 0) do 
+               T := 
+                     Medium_Natural 
+                        (Calendar.&quot;-&quot;(Calendar.Clock, Start_Time)); 
+               Windows.Put_String 
+                        (Phil_Windows(Which_Phil), 
+                         &quot;T=&quot; &amp; Medium_Natural'Image(T) &amp; &quot; &quot;); 
+               case State is 
+                  when Phil.Breathing =&gt; 
+                     Windows.Put_String 
+                              (Phil_Windows(Which_Phil), 
+                               &quot;Breathing...&quot;); 
+                     Windows.New_Line(Phil_Windows(Which_Phil));
+                     
+                  when Phil.Thinking =&gt; 
+                     Windows.Put_String 
+                        (Phil_Windows(Which_Phil), 
+                         &quot;Thinking&quot; &amp; Medium_Natural'Image(How_Long) &amp; 
+                         &quot; seconds.&quot;); 
+                     Windows.New_Line(Phil_Windows(Which_Phil));
+                     
+                  when Phil.Eating =&gt; 
+                     Windows.Put_String 
+                        (Phil_Windows(Which_Phil), 
+                         &quot;Eating&quot; &amp; Medium_Natural'Image(How_Long) &amp; 
+                         &quot; seconds.&quot;); 
+                     Windows.New_Line(Phil_Windows(Which_Phil));
+                     
+                  when Phil.Done_Eating =&gt; 
+                     Windows.Put_String 
+                              (Phil_Windows(Which_Phil), 
+                               &quot;Yum-yum (burp)&quot;); 
+                     Windows.New_Line(Phil_Windows(Which_Phil));
+                     
+                  when Phil.Got_One_Stick =&gt; 
+                     Windows.Put_String 
+                        (Phil_Windows(Which_Phil), 
+                         &quot;First chopstick&quot; &amp; 
+                         Medium_Natural'Image(How_Long)); 
+                     Windows.New_Line(Phil_Windows(Which_Phil));
+                     
+                  when Phil.Got_Other_Stick =&gt; 
+                     Windows.Put_String 
+                        (Phil_Windows(Which_Phil), 
+                         &quot;Second chopstick&quot; &amp; 
+                         Medium_Natural'Image(How_Long)); 
+                     Windows.New_Line(Phil_Windows(Which_Phil));
+                     
+               end case;
+               
+            end Report_State; 
+         or 
+            terminate; 
+         end select;
+         
+      end loop;
+      
+   -- An exception handler is not needed here. 
+   end Head_Waiter;
+   
+end Room; 
+------------------------------------------------------------------------</pre></td></tr></table>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>
+

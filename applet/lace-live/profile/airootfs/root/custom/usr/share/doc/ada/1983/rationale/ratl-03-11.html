@@ -1,0 +1,220 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 3.11: Case Statements</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 3: Classical Programming</H2>
+
+<H3><a name="3.11">3.11 Case Statements</a></H3>
+
+A case  statement selects for execution one of a number of alternative
+sequences of  statements: the  alternative selected  is defined by the
+value of  an expression.  Each sequence of statements is preceded by a
+list of choices defining the values for which that alternative must be
+selected. The  main criteria  in the  design of the case statement are
+reliability and generality.
+<p>
+For reliability,  the compiler  must be given the opportunity to check
+for the accidental omission of some alternatives. For that reason, Ada
+requires that  all possible  values of  the type of the discriminating
+expression be  provided for  in the  choices. This rule is weakened if
+the discriminating  expression is  a name whose subtype is static: the
+choices that must be provided are then all the values of this subtype.
+Finally, a  qualified expression  can be used to restrict the possible
+choices, and a final choice others may be used to represent all values
+not previously specified.
+<p>
+As an example consider the declarations
+<p>
+<table border cellpadding=6><tr><td><pre>
+type DAY is (MON, TUE, WED, THU, FRI, SAT, SUN);
+subtype WORKDAY  is DAY range MON .. FRI;
+subtype RESTDAY  is DAY range SAT  .. SUN;
+
+TODAY : DAY;
+START  : WORKDAY;
+</pre></td></tr></table>
+<p>
+With the  above declarations  all values  of the type DAY (the type of
+TODAY) must appear in one selection, as in
+<p>
+<table border cellpadding=6><tr><td><pre>
+case TODAY is
+  when MON | TUE | WED | THU | FRI =&gt;  WORK;
+  when SAT | SUN =&gt;  REST;
+end case;
+</pre></td></tr></table>
+<p>
+This could have been written in the equivalent form
+<p>
+<table border cellpadding=6><tr><td><pre>
+case TODAY is
+  when MON | TUE | WED | THU | FRI =&gt; WORK;
+  when others =&gt; REST;
+end case;
+</pre></td></tr></table>
+<p>
+If in  a given  context it is known that the case discriminant belongs
+to a  given subtype,  a case statement with a qualified expression may
+be used.  Only the  values of  the corresponding subtype can appear in
+the selections.
+<p>
+<table border cellpadding=6><tr><td><pre>
+case WORKDAY'(TODAY) is
+  when MON | WED | FRI =&gt;  LATE;
+  when TUE  | THU =&gt;  EARLY;
+end case;
+</pre></td></tr></table>
+<p>
+Should the  value of  TODAY not  belong to  the subtype  WORKDAY  (for
+example if  TODAY = SAT), then the exception CONSTRAINT_ERROR would be
+raised by  the evaluation  of the  qualified expression.  This  cannot
+arise in  the following  example, which uses the fact that the subtype
+of START is static:
+<p>
+<table border cellpadding=6><tr><td><pre>
+case START is
+  when MON  | WED | FRI =&gt;  LATE;
+  when TUE   | THU =&gt;  EARLY;
+end case;
+</pre></td></tr></table>
+<p>
+The  other  main  criterion  in  the  design  of  case  statements  is
+generality: the syntax of selections should accommodate all situations
+that are  likely to  arise, given  that the  case discriminant  has  a
+discrete type.  Hence it  should permit  ranges as  well as  lists  of
+values.
+<p>
+Thus the  first example  above is  more likely  to  be  written  using
+ranges:
+<p>
+<table border cellpadding=6><tr><td><pre>
+case TODAY is
+  when MON .. FRI     =&gt;  WORK;
+  when SAT  .. SUN    =&gt;  REST;
+end case;
+</pre></td></tr></table>
+<p>
+or (better) using the subtype names:
+<p>
+<table border cellpadding=6><tr><td><pre>
+case TODAY is
+  when WORKDAY  =&gt;  WORK;
+  when RESTDAY  =&gt;  REST;
+end case;
+</pre></td></tr></table>
+<p>
+Such ranges  and subtype  names are very useful for case choices. They
+avoid long  lists that  can be  tedious to  read and  therefore error-
+prone.
+<p>
+In many ways a case statement is similar to an array of statements and
+this is  somewhat reflected  in the syntax. For example we may compute
+the opposite of a given direction by means of a case statement:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type DIRECTION is (NORTH, WEST, SOUTH, EAST);
+COURSE :  DIRECTION;
+BACK    :  DIRECTION;
+  ...          -- a value is given to COURSE
+case COURSE is
+  when NORTH =&gt;  BACK :=  SOUTH;
+  when WEST  =&gt;  BACK :=  EAST;
+  when SOUTH =&gt;  BACK :=  NORTH;
+  when EAST  =&gt;  BACK :=  WEST;
+end case;
+  -- now BACK is the direction opposite to COURSE
+</pre></td></tr></table>
+<p>
+Another formulation  of this  computation uses  an array of directions
+declared as
+<p>
+<table border cellpadding=6><tr><td><pre>
+INVERSE : constant array(DIRECTION) of DIRECTION :=
+                   (NORTH =&gt;  SOUTH,
+                    WEST  =&gt;  EAST,
+                    SOUTH =&gt;  NORTH,
+                    EAST  =&gt;  WEST);
+</pre></td></tr></table>
+<p>
+and the assignment statement
+<p>
+<PRE>    BACK :=  INVERSE(COURSE);
+</PRE><p>
+As can  be seen  from the  above example, the conceptual similarity is
+actually  reflected  in  the  similarity  of  the  syntaxes  for  case
+statements and for array aggregates.
+<p>
+A very  important diagnostic facility that the compiler should provide
+is the  listing of  all values  of the discriminating type that do not
+appear in  the  listed  choices.  For  an  incomplete  (and  therefore
+incorrect) case statement, the compiler has the information and should
+provide it  to  the  programmer.  In  the  absence  of  this  kind  of
+diagnostic, it might be quite difficult for the programmer to discover
+missing values for an enumeration type with a large number of values.
+<p>
+Case  statements  are  conventionally  implemented  with  an  implicit
+transfer table.  This table  will generally contain one place for each
+possible value  of the  discriminating type.  Quite often  however, if
+some of  the alternatives  include null  statements, the  compiler may
+optimize the  code generated, by using a shorter table and an explicit
+range check. As an example
+<p>
+<table border cellpadding=6><tr><td><pre>
+case TODAY is
+  when SAT  =&gt;  SHOP;
+  when SUN  =&gt;  SLEEP;
+  when others    =&gt;  null;
+end case;
+</pre></td></tr></table>
+<p>
+may be compiled to produce code equivalent to
+<p>
+<table border cellpadding=6><tr><td><pre>
+if TODAY in RESTDAY then
+  case RESTDAY'(TODAY) is            -- no check needed
+    when SAT  =&gt;  SHOP;
+    when SUN  =&gt;  SLEEP;
+  end case;
+end if;
+</pre></td></tr></table>
+<p>
+thus leading  to a  two-place transfer table. Finally, case statements
+with very  sparse selections  or with  ranges  as  selections  can  be
+compiled as  equivalent if  statements. Thus  for our first example we
+may have:
+<p>
+<table border cellpadding=6><tr><td><pre>
+if TODAY in WORKDAY then
+  WORK;
+else
+  REST;
+end if;
+</pre></td></tr></table>
+
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-03-12.html#3.12"><b>NEXT</b></a>
+&#128; <a href="ratl-03-10.html#3.10"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-03.html#3"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

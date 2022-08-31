@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Preemptive Abort</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-5-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>D.6 Preemptive Abort</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal">This clause specifies requirements on the immediacy 
+with which an aborted construct is completed.&nbsp;</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal">On a system with a single processor, an aborted construct 
+is completed immediately at the first point that is outside the execution 
+of an abort-deferred operation.</DIV>
+
+<H4 Class="centered">Documentation Requirements</H4>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Normal">On a multiprocessor, the implementation shall document 
+any conditions that cause the completion of an aborted construct to be 
+delayed later than what is specified for a single processor.&nbsp;</DIV>
+
+<H4 Class="centered">Metrics</H4>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The implementation 
+shall document the following metrics:&nbsp;</DIV>
+<DIV Class="paranum">5</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The execution time, in processor clock 
+cycles, that it takes for an <SPAN Class="swiss"><A HREF="RM-9-8.html#S0227">abort_statement</A></SPAN> 
+to cause the completion of the aborted task. This is measured in a situation 
+where a task T2 preempts task T1 and aborts T1. T1 does not have any 
+finalization code. T2 shall verify that T1 has terminated, by means of 
+the Terminated attribute.</LI></UL>
+<DIV Class="paranum">6</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>On a multiprocessor, an upper bound 
+in seconds, on the time that the completion of an aborted task can be 
+delayed beyond the point that it is required for a single processor.</LI></UL>
+<DIV Class="paranum">7/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>An upper bound on the execution time 
+of an <SPAN Class="swiss"><A HREF="RM-9-7-4.html#S0223">asynchronous_select</A></SPAN>, 
+in processor clock cycles. This is measured between a point immediately 
+before a task T1 executes a protected operation Pr.Set that makes the 
+<SPAN Class="swiss"><A HREF="RM-5-3.html#S0139">condition</A></SPAN> 
+of an <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0205">entry_barrier</A></SPAN> 
+Pr.Wait True, and the point where task T2 resumes execution immediately 
+after an entry call to Pr.Wait in an <SPAN Class="swiss"><A HREF="RM-9-7-4.html#S0223">asynchronous_select</A></SPAN>. 
+T1 preempts T2 while T2 is executing the abortable part, and then blocks 
+itself so that T2 can execute. The execution time of T1 is measured separately, 
+and subtracted.</LI></UL>
+<DIV Class="paranum">8</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>An upper bound on the execution time 
+of an <SPAN Class="swiss"><A HREF="RM-9-7-4.html#S0223">asynchronous_select</A></SPAN>, 
+in the case that no asynchronous transfer of control takes place. This 
+is measured between a point immediately before a task executes the <SPAN Class="swiss"><A HREF="RM-9-7-4.html#S0223">asynchronous_select</A></SPAN> 
+with a nonnull abortable part, and the point where the task continues 
+execution immediately after it. The execution time of the abortable part 
+is subtracted.&nbsp;</LI></UL>
+
+<H4 Class="centered">Implementation Advice</H4>
+<DIV Class="paranum">9</DIV>
+<DIV Class="Normal">Even though the <SPAN Class="swiss"><A HREF="RM-9-8.html#S0227">abort_statement</A></SPAN> 
+is included in the list of potentially blocking operations (see <A HREF="RM-9-5-1.html">9.5.1</A>), 
+it is recommended that this statement be implemented in a way that never 
+requires the task executing the <SPAN Class="swiss"><A HREF="RM-9-8.html#S0227">abort_statement</A></SPAN> 
+to block.</DIV>
+<DIV Class="paranum">10</DIV>
+<DIV Class="Normal">On a multi-processor, the delay associated with aborting 
+a task on another processor should be bounded; the implementation should 
+use periodic polling, if necessary, to achieve this.</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">11</DIV>
+<DIV Class="Notes">32&nbsp;&nbsp;Abortion does not change the active 
+or base priority of the aborted task.</DIV>
+<DIV Class="paranum">12</DIV>
+<DIV Class="Notes">33&nbsp;&nbsp;Abortion cannot be more immediate than 
+is allowed by the rules for deferral of abortion during finalization 
+and in protected actions.</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-5-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

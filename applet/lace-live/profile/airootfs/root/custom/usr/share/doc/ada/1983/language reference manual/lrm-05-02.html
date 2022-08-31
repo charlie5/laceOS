@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 5.2: Assignment Statement</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="5.2">5.2</A>.  Assignment Statement     </H2>
+<A HREF="lrm-05-01.html#5.1"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-05.html#5"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-05-03.html#5.3"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+An assignment statement replaces the current value of a variable with a new
+value specified by an expression.  The named variable  and  the  right-hand
+side  expression must be of the same type;  this type must not be a limited type. 
+<pre>
+    assignment_statement ::=
+       variable_name := expression;    
+</pre>
+<P>
+For the execution of an assignment statement, the  variable  name  and  the
+expression  are  first  evaluated, in some order that is not defined by the
+language.  A check is then made that the value of the expression belongs to
+the subtype of the variable, except in the case of a variable  that  is  an
+array  (the  assignment  then involves a subtype conversion as described in
+section <a href="lrm-05-02.html#5.2.1">5.2.1</a>).  Finally, the value of the expression becomes the new value
+of the variable.                                                                    
+<P>
+The exception CONSTRAINT_ERROR is raised  if  the  above-mentioned  subtype
+check  fails;   in  such  a  case the current value of the variable is left
+unchanged.  If the variable is a subcomponent that depends on discriminants
+of an unconstrained record variable, then the execution of  the  assignment
+is  erroneous if the value of any of these discriminants is changed by this
+execution. 
+<P>
+Examples: 
+<pre>
+    VALUE := MAX_VALUE - 1;
+    SHADE := BLUE; 
+
+    NEXT_FRAME(F)(M, N) := 2.5;        --  see <a href="lrm-04-01.html#4.1.1">4.1.1</a>
+    U := DOT_PRODUCT(V, W);            --  see <a href="lrm-06-05.html#6.5">6.5</a> 
+
+    WRITER := (STATUS =&gt; OPEN, UNIT =&gt; PRINTER, LINE_COUNT =&gt; 60);  -- see <a href="lrm-03-07.html#3.7.3">3.7.3</a>
+    NEXT_CAR.all := (72074, null);    --  see <a href="lrm-03-08.html#3.8.1">3.8.1</a> 
+</pre>
+<P>
+Examples of constraint checks: 
+<pre>
+    I, J : INTEGER range 1 .. 10;
+    K    : INTEGER range 1 .. 20;
+     ... 
+
+    I := J;  --  identical ranges
+    K := J;  --  compatible ranges
+    J := K;  --  will raise the exception CONSTRAINT_ERROR if K > 10
+</pre>
+<P>
+Notes:
+<P>
+The values of the discriminants of an object designated by an access  value
+cannot  be  changed  (not  even by assigning a complete value to the object
+itself) since such objects, created by allocators, are  always  constrained
+(see <a href="lrm-04-08.html#4.8">4.8</a>);  however, subcomponents of such objects may be unconstrained. 
+<P>
+If  the  right-hand  side  expression  is either a numeric literal or named
+number, or an attribute that yields a result of type  universal_integer  or
+universal_real, then an implicit type conversion is performed, as described
+in section <a href="lrm-04-06.html#4.6">4.6</a>. 
+<P>
+The  determination  of  the type of the variable of an assignment statement
+may require consideration of the expression if the  variable  name  can  be
+interpreted  as  the  name  of  a  variable  designated by the access value
+returned by a function call, and similarly, as a component or slice of such
+a variable (see section <a href="lrm-08-07.html#8.7">8.7</a> for the context of overload resolution). 
+<P>
+<b>References:</b>  <A HREF="lrm-03-08.html#3.8">access type</A>,
+<A HREF="lrm-04-08.html#4.8">allocator</A>,
+<A HREF="lrm-03-06.html#3.6">array</A>,
+<A HREF="#5.2.1">array  assignment</A>,
+<A HREF="lrm-03-06.html#3.6">component</A>,
+ and <A HREF="lrm-03-07.html#3.7">3.7</A>,
+<A HREF="lrm-11-01.html#11.1">constraint_error exception</A>,
+<A HREF="lrm-03-08.html#3.8">designate</A>,
+<A HREF="lrm-03-07.html#3.7.1">discriminant</A>,
+<A HREF="lrm-01-06.html#1.6">erroneous</A>,
+<A HREF="lrm-04-05.html#4.5">evaluation</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="lrm-06-04.html#6.4">function call</A>,
+<A HREF="lrm-04-06.html#4.6">implicit type conversion</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-02-04.html#2.4">numeric  literal</A>,
+<A HREF="lrm-03-02.html#3.2">object</A>,
+<A HREF="lrm-06-06.html#6.6">overloading</A>,
+ and <A HREF="lrm-08-07.html#8.7">8.7</A>,
+<A HREF="lrm-04-01.html#4.1.2">slice</A>,
+<A HREF="lrm-03-03.html#3.3">subcomponent</A>,
+<A HREF="lrm-03-03.html#3.3">subtype</A>,
+<A HREF="lrm-04-06.html#4.6">subtype  conversion</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-03-05.html#3.5.4">universal_integer  type</A>,
+<A HREF="lrm-03-05.html#3.5.6">universal_real type</A>,
+<A HREF="lrm-03-02.html#3.2.1">variable</A>.
+<P>
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-03-08.html#3.8">3.8&nbsp;Assignment Statements - The Ada Model of Time</a>
+<p>
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-02-01.html#2.1.3">2.1.3&nbsp;Alignment of Operators</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-06.html#5.6.2">5.6.2&nbsp;Slices</a>
+<p>
+<b>Sub-topics:</b>
+<ul>
+<li><A HREF="#5.2.1">5.2.1</A> Array Assignments  
+</ul>
+
+<H3><A NAME="5.2.1">5.2.1</A>.  Array Assignments  </H3>
+<A HREF="#5.2"><img src="lrm-up.gif" alt="[UP]"></A>
+<P>
+If  the variable of an assignment statement is an array variable (including
+a slice variable), the value of the expression is implicitly  converted  to
+the  subtype  of the array variable;  the result of this subtype conversion
+becomes the new value of the array variable.                                               
+<P>
+This means that the new value of each component of the  array  variable  is 
+specified  by  the  matching  component  in  the  array  value  obtained by
+evaluation of the expression (see <a href="lrm-04-05.html#4.5.2">4.5.2</a>  for  the  definition  of  matching
+components).   The subtype conversion checks that for each component of the
+array variable there is a matching component in the array value,  and  vice
+versa.   The  exception CONSTRAINT_ERROR is raised if this check fails;  in
+such a case the value of each component  of  the  array  variable  is  left
+unchanged. 
+<P>
+Examples: 
+<pre>
+    A : STRING(1 .. 31);
+    B : STRING(3 .. 33);
+     ... 
+
+    A := B;  --  same number of components 
+
+    A(1 .. 9)  := "tar sauce";
+    A(4 .. 12) := A(1 .. 9);  --  A(1 .. 12) = "tartar sauce" 
+</pre>
+<P>
+Notes: 
+<P>
+Array assignment is defined even in the case of overlapping slices, because
+the  expression  on  the right-hand side is evaluated before performing any
+component assignment.  In the above example, an implementation yielding A(1
+.. 12) = "tartartartar" would be incorrect. 
+<P>
+The implicit subtype conversion described above for assignment to an  array
+variable  is performed only for the value of the right-hand side expression
+as a whole;  it is not performed for subcomponents that are  array  values. 
+<P>
+<b>References:</b>   <A HREF="lrm-03-06.html#3.6">array</A>,
+<A HREF="#5.2">assignment</A>,
+<A HREF="lrm-11-01.html#11.1">constraint_error exception</A>,
+<A HREF="lrm-04-05.html#4.5.2">matching array components</A>,
+<A HREF="lrm-04-01.html#4.1.2">slice</A>,
+<A HREF="lrm-04-06.html#4.6">subtype conversion</A>,
+<A HREF="lrm-03-03.html#3.3">type</A>,
+<A HREF="lrm-03-02.html#3.2.1">variable</A>.
+<P>
+
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

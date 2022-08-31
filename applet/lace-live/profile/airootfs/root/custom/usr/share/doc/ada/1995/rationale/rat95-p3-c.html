@@ -1,0 +1,1650 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Three - Chapter C
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p3-b.html> Previous </a> |
+<a href=rat95-p3-d.html> Next </a>
+<hr>
+
+<h1>
+C   Systems Programming
+</h1>
+
+<p>
+The Systems Programming Annex specifies additional capabilities for low-
+level programming.  These capabilities are also required in many real-
+time, embedded, distributed, and information systems.
+</p>
+<p>
+   The purpose of the Annex is to provide facilities for applications
+that are required to interface and interact with the outside world (i.e.
+outside the domain of an Ada program).  Examples may be other languages,
+an operating system, the underlying hardware, devices and I/O channels.
+Since these kinds of interfaces lie outside the Ada semantic model, it is
+necessary to resort to low-level, environment specific programming
+paradigms.  Such sections of the application are often implementation
+dependent and portability concerns are less critical.  However, rigid
+isolation of these components helps in improving the portability of the
+rest of the application.
+</p>
+<p>
+   The application domains of such systems include: real-time embedded
+computers, I/O drivers, operating systems and run-time systems,
+multilingual/multicomponent systems, performance-sensitive hardware
+dependent applications, resource managers, user-defined schedulers, and
+so on.  Accordingly, this annex covers the following facilities needed by
+such applications:
+</p>
+<ul>
+<li>
+    Access to the underlying hardware (machine instructions, hardware
+     devices, etc.);
+<li>
+    Access to the underlying operating or runtime system;
+<li>
+    Low-level, direct interrupt handling;
+<li>
+    Unchecked access to parts of the run-time model of the
+     implementation;
+<li>
+    Specifying the representation and allocation of program data
+     structures;
+<li>
+    Access to shared variables in a multitasking program;
+<li>
+    Access to the identity of tasks and the allocation of data on a per-
+     task basis.
+</ul>
+<p>
+   Note that implementation of this annex is a prerequisite for the
+implementation of the Real-Time Systems annex.
+</p>
+
+<h2>
+<a name=1>
+C.1  Access to Machine Operations
+</a>
+</h2>
+
+<p>
+In systems programming and embedded applications, we need to write
+software that interfaces directly to hardware devices.  This might be
+impossible if the Ada language implementation did not permit access to
+the full instruction set of the underlying machine.  A need to access
+specific machine instructions arises sometimes from other considerations
+as well.  Examples include instructions that perform compound operations
+atomically on shared memory, such as test-and-set and compare-and-swap,
+and instructions that provide high-level operations, such as translate-
+and-test and vector arithmetic.
+</p>
+<p>
+   It can be argued that Ada 83 already provides adequate access to
+machine operations, via the package Machine_Code.  However, in practice,
+the support for this feature was optional, and some implementations
+support it only in a form that is inadequate for the needs of systems
+programming and real-time applications.
+</p>
+<p>
+   The mechanisms specified in this Annex for access to machine code are
+already allowed in Ada 83.  The main difference is that now it is
+intended that the entire instruction set of a given machine should be
+accessible to an Ada program either via the Machine_Code package or via
+intrinsic subprograms (or indeed both).  In addition, implementation-
+defined attributes ought to allow machine code to refer to the addresses
+or offsets of entities declared within the Ada program.
+</p>
+<p>
+   This Annex leaves most of the interface to machine code implementation
+defined.  It is not appropriate for a language standard to specify
+exactly how access to machine operations must be provided, since machine
+instructions are inherently dependent on the machine.
+</p>
+<p>
+   We considered providing access to machine instructions only through
+interface to assembly language.  This would not entirely satisfy the
+requirements, however, since it does not permit insertion of machine
+instructions in-line.  Because the compiler cannot always perform
+register allocation across external subprogram calls, such calls
+generally require the saving and restoring of all registers.  Thus, the
+overhead of assembly language subprogram calls is too high where the
+effect of a single instruction (e.g. test-and-set or direct I/O) is
+desired.  For this, an in-line form of access is required.  This
+requirement is satisfied by machine-code inserts or intrinsic
+subprograms.
+</p>
+<p>
+   To be useful, a mechanism for access to machine code must permit the
+flow of data and control between machine operations and the rest of the
+Ada program.  There is not much value in being able to generate a machine
+code instruction if there is no way to apply it to operands in the Ada
+program.  For example, an implementation that only permits the insertion
+of machine code as numeric literal data would not satisfy this
+requirement, since there would be no way for machine code operations to
+read or write the values of variables of the Ada program, or to invoke
+Ada procedures.  However, this can be entirely satisfied by a primitive
+form of machine-code insertion, which allows an instruction sequence to
+be specified as a sequence of data values, so long as symbolic references
+to Ada entities are allowed in such a data sequence.
+</p>
+<p>
+   For convenience, it is desirable that certain instructions that are
+used frequently in systems programming, such as test-and-set and
+primitive I/O operations, be accessible as intrinsic subprograms, see
+[RM95 6.3.1].  However, it is not clear that it is practical for an
+implementation to provide access to all machine instructions in this
+form.  Thus, it might be desirable to provide machine code inserts for
+generality, and intrinsic operations for convenient access to the more
+frequently needed operations.
+</p>
+
+<dl>
+<dt>
+The Pragma Export
+<dd>
+<p>
+The implementation advice concerning the pragma Export [RM95 B.1]
+addresses unintended interactions between compiler/linker optimizations
+and machine code inserts in Ada 83.  A machine code insert might store an
+address, and later use it as a pointer or subprogram entry point - as
+with an interrupt handler.  In general, the compiler cannot detect how
+the variable or subprogram address is used.  When machine code is used in
+this way, it is the programmer's responsibility to inform the compiler
+about these usages, and it is the language's responsibility to specify a
+way for the programmer to convey this information.  Without this
+information, the compiler or linker might perform optimizations so that
+the data object or subprogram code are deleted, or loads and stores
+referencing the object are suppressed.
+</p>
+<p>
+   In Ada 95, machine code subprograms are like external subprograms
+written in another language, in that they may be opaque to optimization.
+That is, in general, the compiler cannot determine which data objects a
+machine code subprogram might read or update, or to where it might
+transfer control.  The Export pragma tells the compiler not to perform
+optimizations on an exported object.  By requiring the user to specify as
+exported anything that might be modified by an external call, the
+compiler is provided with information that allows better optimization in
+the general case.
+</p>
+<p>
+   Export can also be used to ensure that the specified entity is
+allocated at an addressable location.  For example, this might mean that
+a constant must actually be stored in memory, rather than only inserted
+in-line where used.
+</p>
+<dt>
+Interface to Assembly Language
+<dd>
+<p>
+An Ada implementation conforming to this Annex should also support
+interface to the traditional "systems programming language" for that
+target machine.  This might be necessary to interface with existing code
+provided by the hardware vendor, such as an operating system, device
+drivers, or built-in-test software.  We considered the possibility of
+requiring support for an assembler, but this has obvious problems.  It is
+hard to state this requirement in a way that would not create enforcement
+problems.  For example, what if there are several assemblers available
+for a given target, and new assemblers are developed from time to time?
+Which ones must an implementor support?  Likewise, how hard does an
+implementor need to look before concluding there are no assemblers for a
+given target?  However, we believe that stating the requirement simply as
+"should support interface to assembler" together with market forces will
+provide the appropriate direction for implementors in this area, even
+though compliance can not be fully defined.
+</p>
+<dt>
+Documentation Requirements
+<dd>
+<p>
+The intent of the documentation requirements is to ensure that the
+implementation provides enough information for the user to write machine
+code subprograms that interact with the rest of the Ada program.  To do
+so effectively, the machine code subprograms ought to be able to read
+constants and read and update variables (including protected objects), to
+call subprograms, and to transfer control to labels.
+</p>
+<dt>
+Validation
+<dd>
+<p>
+The specifications for machine code are not likely to be enforceable by
+standard validation tests, but it should be possible to check for the
+existence of the required documentation and interfaces by examination of
+vendor supplied documentation, and to carry out spot checks with
+particular machine instructions.
+</p>
+</dl>
+
+<h2>
+<a name=2>
+C.2  Required Representation Support
+</a>
+</h2>
+
+<p>
+The recommended levels of support defined in [RM95 13] are made into firm
+requirements if this annex is implemented because systems programming
+applications need to control data representations, and need to be able to
+count on a certain minimum level of support.
+</p>
+
+<h2>
+<a name=3>
+C.3  Interrupt Support
+</a>
+</h2>
+
+<p>
+The ability to write handlers for interrupts is essential in systems
+programming and in real-time embedded applications.
+</p>
+<p>
+   The model of interrupts and interrupt handling specified in Ada 95 is
+intended to capture the common elements of most hardware interrupt
+schemes, as well as the software interrupt models used by some
+application interfaces to operating systems, notably POSIX [1003.1 90].
+The specification allows an implementation to handle an interrupt
+efficiently by arranging for the interrupt handler to be invoked directly
+by the hardware.  This has been a major consideration in the design of
+the interrupt handling mechanisms.
+</p>
+<p>
+   The reason for distinguishing treatments from handlers is that
+executing a handler is only one of the possible treatments.  In
+particular, executing a handler constitutes delivery of the interrupt.
+The default treatment for an interrupt might be to keep the interrupt
+pending, or to discard it without delivery.  These treatments cannot be
+modelled as a default handler.
+</p>
+<p>
+   The notion of blocking an interrupt is an abstraction for various
+mechanisms that may be used to prevent delivery of an interrupt.  These
+include operations that "mask" off a set of interrupts, raise the
+hardware priority of the processor, or "disable" the processor interrupt
+mechanism.
+</p>
+<p>
+   On many hardware architectures it is not practical to allow a direct-
+execution interrupt handler to become blocked.  Trying to support
+blocking of interrupt handlers results in extra overhead, and can also
+lead to deadlock or stack overflow.  Therefore, interrupt handlers are
+not allowed to block.  To enable programmers to avoid unintentional
+blocking in handlers, the language specifies which operations are
+potentially blocking, see [RM95 9.5.1].
+</p>
+<p>
+   We introduced the concept of reserved interrupts to reflect the need
+of the Ada run-time system to install handlers for certain interrupts,
+including interrupts used to implement time delays or various constraint
+checks.  The possibility of simply making these interrupts invisible to
+the application was considered.  This is not possible without restricting
+the implementation of the Interrupt_ID type.  For example, if this type
+is an integer type and certain values within this range are reserved (as
+is the case with POSIX signals, for example), there is no way to prevent
+the application from attempting to attach a handler to one of the
+reserved interrupts; however, any such attempt will raise Program_Error.
+Besides, other (implementation-defined) uses for an interrupt-id type are
+anticipated for which the full range of values might be needed; if the
+standard interrupt-id type did not include all values, the implementation
+would have to declare an almost identical type for such purposes.
+</p>
+<p>
+   We also need to reserve certain interrupts for task interrupt entries.
+There are many ways in which implementations can support interrupt
+entries.  The higher-level mechanisms involve some degree of interaction
+with the Ada run-time system.  It could be disastrous if the run-time
+system is relying on one of these high-level delivery mechanisms to be in
+place, and the user installs a low-level handler.  For this reason, the
+concept of reserved interrupt is used here also, to prevent attachment of
+another handler to an interrupt while an interrupt entry is still
+attached to it.
+</p>
+<p>
+   On some processor architectures, the priority of an interrupt is
+determined by the device sending the interrupt, independent of the
+identity of the interrupt.  For this reason, we need to allow an
+interrupt to be generated at different priorities at different times.
+This can be modelled by hypothesizing several hardware tasks, at
+different priorities, which may all call the interrupt handler.
+</p>
+<p>
+   A consequence of direct hardware invocation of interrupt handlers is
+that one cannot speak meaningfully of the "currently executing task"
+within an interrupt handler (see [RM95 C.7.1]).  The alternative, of
+requiring the implementation to create the illusion of an Ada task as
+context for the execution of the handler would add execution time
+overhead to interrupt handling.  Since interrupts may occur very
+frequently, and require fast response, any such unnecessary overhead is
+intolerable.
+</p>
+<p>
+   For these and other reasons, care has been taken not to specify that
+interrupt handlers behave exactly as if they are called by a hardware
+"task".  The language must not preclude the writing of efficient
+interrupt handlers, just because the hardware does not provide a
+reasonable way to preserve the illusion of the handler being called by a
+task.
+</p>
+<p>
+   The Annex leaves as implementation-defined the semantics of interrupts
+when more than one interrupt subsystem exists on a multi-processor
+target.  This kind of configuration may dictate that different interrupts
+are delivered only to particular processors, and will require that
+additional rules be placed on the way handlers are attached.  In essence,
+such a system cannot be treated completely as a homogeneous multi-
+processor.  The means for identifying interrupt sources, and the
+specification of the circumstances when interrupts are blocked are
+therefore left open by the Annex.  It is expected that these additional
+rules will be defined as a logical extension of the existing ones.
+</p>
+<p>
+   From within the program the form of an interrupt handler is a
+protected procedure.  Typically we write
+<pre>
+   protected Alarm is
+      procedure Response;
+      pragma Attach_Handler(Response, Alarm_Int);
+   end Alarm;
+
+   protected body Alarm is
+      procedure Response is
+      begin
+         ...  -- the interrupt handling code
+      end Response;
+   end Alarm;
+</pre>
+where Alarm_Int identifies the physical interrupt as discussed in C.3.2.
+</p>
+<p>
+   Protected procedures have appropriate semantics for fast interrupt
+handlers; they are directly invoked by the hardware and share data with
+tasks and other interrupt handlers.  Thus, once the interrupt handler
+begins to execute it cannot block; on the other hand while any shared
+data is being accessed by other threads of control, an interrupt must be
+blocked.
+</p>
+<p>
+   For upward compatibility, the Ada 83 interrupt entry mechanism is
+retained although classified as obsolescent.  It has been extended
+slightly, as a result of the integration with the protected procedure
+interrupt-handling model.  In addition, this Annex does not preclude
+implementations from defining other forms of interrupt handlers such as
+protected procedures with parameters.  The recommendation is that such
+extensions will follow the model defined by this Annex.
+</p>
+<dl>
+<dt>
+Exceptions and Interrupt Handlers
+<dd>
+<p>
+Propagating an exception from an interrupt handler is specified to have
+no effect.  (If interrupt handlers were truly viewed as being "called" by
+imaginary tasks, the propagation of an exception back to the "caller" of
+an interrupt handler certainly should not affect any user-defined task.)
+</p>
+<p>
+   The real question seems to be whether the implementation is required
+to hide the effect of an interrupt from the user, or whether it can be
+allowed to cause a system crash.  If the implementation uses the
+underlying interrupt mechanism directly, i.e. by putting the address of a
+handler procedure into an interrupt vector location, the execution
+context of the handler will be just the stack frame that is generated by
+the hardware interrupt mechanism.  If an exception is raised and not
+handled within the interrupt handler, the exception propagation mechanism
+will try to unroll the stack, beyond the handler.  There needs to be some
+indication on the stack that it should stop at the interrupt frame, and
+not try to propagate beyond.  Lacking this, either the exception might
+just be propagated back to the interrupted task (if the hardware
+interrupt frame structure looks enough like a normal call), or the
+difference in frame structures will cause a failure.  The failure might
+be detected in the run-time system, might cause the run-time system to
+crash, or might result in transfer of control to an incorrect handler,
+thereby causing the application to run amok.  The desired behavior is for
+the exception mechanism to recognize the handler frame as a special case,
+and to simply do an interrupt return.  Unless the hardware happens to
+provide enough information in the handler frame to allow recognition, it
+seems an extra layer of software will be needed, i.e. a software wrapper
+for the user interrupt handler.  (This wrapper might be provided by the
+compiler, or by the run-time system.)
+</p>
+<p>
+   Thus, the requirement that propagating an exception from a handler be
+"safe" is likely to impose some extra run-time overhead on interrupt
+handlers but is justified by the additional safety it provides.  It is
+not expected that exceptions will be raised intentionally in interrupt
+handlers, but when an unexpected error (a bug) causes an exception to be
+raised, it is much better to contain the effect of this error than to
+allow the propagation to affect arbitrary code (including the RTS
+itself).
+</p>
+<dt>
+Implementation Requirements
+<dd>
+<p>
+It is not safe to write interrupt handlers without some means of
+reserving sufficient stack space for them to execute.  Implementations
+will differ in whether such handlers borrow stack space from the task
+they interrupt, or whether they execute on a separate stack.  In either
+case, with dynamic attachment of interrupt handlers, the application
+needs to inform the implementation of its maximum interrupt stack depth
+requirement.  This could be done via a pragma or a link-time command.
+</p>
+<dt>
+Documentation Requirements
+<dd>
+<p>
+     Where hardware permits an interrupt to be handled but not to be blocked
+(while in the handler), it might not be possible for an implementation to
+support the protected object locking semantics for such an interrupt.
+The documentation must describe any variations from the model.
+</p>
+<p>
+   For example, in many implementations, it may not be possible for an
+interrupted task to resume execution until the interrupt handler returns.
+The intention here is to allow the implementation to choose whether to
+run the handler on a separate stack or not.  The basic issue is whether
+the hardware (or underlying operating system) interrupt mechanism
+switches stacks, or whether the handler begins execution on the stack of
+the interrupted task.  Adding software to the handler to do stack
+switching (in both directions) can add significantly to the run-time
+overhead, and this may be unacceptable for high frequency interrupts.
+</p>
+<p>
+   Situations in which this would make a difference are rather unusual.
+Since the handler can interrupt, the task that it interrupts must have a
+lower active priority at that time.  Therefore, the only situations where
+the interrupted task would need to resume execution before the handler
+returns are:
+</p>
+<ul>
+<li>       
+    If there is more than one processor, and the interrupted task could
+     migrate to another available processor;
+<li>
+    If the handler or some higher priority task causes the priority of
+     the interrupted task to be raised (via a call to Set_Priority); or
+<li>
+    If priorities are not supported.
+</ul>
+<p>
+The semantic model, when the interrupt handler uses the stack of the
+interrupted task, is that the handler has taken a non-preemptable
+processing resource (the upper part of the stack) which the interrupted
+task needs in order to resume execution.  Note that this stack space was
+not in use by the interrupted task at the time it was preempted, since
+the stack did not yet extend that far, but it is needed by the
+interrupted task before it can resume execution.
+</p>
+</dl>
+
+<h3>
+<a name=3-1>
+C.3.1  Protected Procedure Handlers
+</a>
+</h3>
+
+<p>
+A handler can be statically attached to an interrupt by the use of the
+pragma Attach_Handler as in the example above.  Alternatively the
+connection can be made dynamic by using the pragma Interrupt_Handler
+together with the procedure Attach_Handler.  The example might then
+become
+<pre>
+   protected Alarm is
+      procedure Response;
+      pragma Interrupt_Handler(Response);
+   end Alarm;
+
+   protected body Alarm is
+      procedure Response is
+      begin
+      ...  -- the interrupt handling code
+      end Response;
+   end Alarm;
+   ...
+   Attach_Handler(Alarm.Response, Alarm_Int);
+</pre>
+</p>
+<p>
+Note therefore that the name Attach_Handler is used for both the pragma
+and for the procedure.
+</p>
+<p>
+   The procedure form is needed to satisfy the requirement for dynamic
+attachment.  The pragma form is provided to permit attachment earlier,
+during initialization of objects, or possibly at program load time.
+Another advantage of the pragma form is that it permits association of a
+handler attachment with a lexical scope, ensuring that it is detached on
+scope exit.  Note that while the protected type is required to be a
+library level declaration, the protected object itself may be declared in
+a deeper level.
+</p>
+<p>
+   Under certain conditions, implementations can preelaborate protected
+objects, see [RM95 10.2.1] and [RM95 C.4].  For such implementations, the
+Attach_Handler pragma provides a way to establish interrupt handlers
+truly statically, at program load time.
+</p>
+<p>
+   The Attach_Handler and Interrupt_Handler pragmas specify a protected
+procedure as one that is or may be used as an interrupt handler and (in
+the latter case) be attached dynamically.  This has three purposes:
+</p>
+<ul>
+<li>
+    It informs the compiler that it might need to generate code for a
+     protected procedure that can be invoked directly by the hardware
+     interrupt mechanism, and to generate appropriate calls to procedures
+     contained in such an object if they are called from software.
+<li>
+    It allows the implementation to allocate enough space for the
+     corresponding protected object to store the interrupt-id to which
+     the handler is attached.  (This might be needed on some
+     implementations in order to mask that interrupt when operations on
+     the protected object are called from software.)
+<li>
+    It serves as important documentation about the protected object.
+</ul>
+<p>
+In general, the hardware mechanism might require different code
+generation than for procedures called from software.  For example, a
+different return instruction might be used.  Also, the hardware mechanism
+may implicitly block and unblock interrupts, whereas a software call may
+require this to be done explicitly.  For a procedure that can be called
+from hardware or software, the compiler generally must choose between:
+</p>
+<ul>
+<li>
+     Compiling the procedure in the form for hardware invocation and
+     adding some sort of glue-code when it is called via software;
+<li>
+    Compiling the procedure in the form for software invocation, and
+     call it indirectly, from an extra layer of interrupt handler, when a
+     hardware interrupt occurs.
+</ul>
+</p>
+<p>
+   Because code generation is involved, the pragma is associated with the
+protected type declaration, rather than with a particular protected
+object.
+</p>
+<p>
+   The restrictions on protected procedures should be sufficient to
+eliminate the need for an implementation to place any further
+restrictions on the form or content of an interrupt handler.  Ordinarily,
+there should be no need for implementation-defined restrictions on
+protected procedure interrupt handlers, such as those imposed by Ada 83
+on tasks with fast interrupt handler entries.  However, such restrictions
+are permitted, in case they turn out to be needed by implementations.
+</p>
+<p>
+   This Annex requires only that an implementation support parameterless
+procedures as handlers.  In fact, some hardware interrupts do provide
+information about the cause of the interrupt and the state of the
+processor at the time of the interrupt.  Such information is also
+provided by operating systems that support software interrupts.  The
+specifics of such interrupt parameters are necessarily dependent on the
+execution environment, and so are not suitable for standardization.
+Where appropriate, implementation-defined child packages of
+Ada.Interrupts should provide services for such interrupt handlers,
+analogous to those defined for parameterless protected procedures in the
+package Ada.Interrupts itself.
+</p>
+<p>
+   Note that only procedures of library-level protected objects are
+allowed as dynamic handlers.  This is because the execution context of
+such procedures persists for the full lifetime of the partition.  If
+local procedures were allowed to be handlers, some extra prologue code
+would need to be added to the procedure, to set up the correct execution
+environment.  To avoid problems with dangling references, the attachment
+would need to be broken on scope exit.  This does not seem practical for
+the handlers that might be attached and detached via a procedure
+interface.  On the other hand, it could be practical for handlers that
+are attached via a pragma.  Some implementations may choose to allow
+local procedures to be used as handlers with the Attach_Handler pragma.
+</p>
+<p>
+   For some environments, it may be appropriate to also allow ordinary
+subprograms to serve as interrupt handlers; an implementation may support
+this, but the mechanism is not specified.  Protected procedures are the
+preferred mechanism because of the better semantic fit in the general
+case.  However, there are some situations where the fit might not be so
+good.  In particular, if the handler does not access shared data in a
+manner that requires the interrupt to be blocked, or if the hardware does
+not support blocking of the interrupt, the protected object model may not
+be appropriate.  Also, if the handler procedure needs to be written in
+another language, it may not be practical to use a protected procedure.
+</p>
+
+<dl>
+<dt>
+Issues Related to Ceiling Priorities
+<dd>
+<p>
+With priority-ceiling locking, it is important to specify the active
+priority of the task that "calls" the handler, since it determines the
+ability of the interrupt to preempt whatever is executing at the time.
+It is also relevant to the user, since the user must specify the ceiling
+priority of the handler object to be at least this high, or else the
+program will be erroneous (might crash).
+</p>
+<p>
+   Normally, a task has its active priority raised when it calls a
+protected operation with a higher ceiling than the task's own active
+priority.  The intent is that execution of protected procedures as
+interrupt handlers be consistent with this model.  The ability of the
+interrupt handler "call" from the hardware to preempt an executing task
+is determined by the hardware interrupt priority.  In this respect, the
+effect is similar to a call from a task whose active priority is at the
+level of the hardware interrupt priority.  Once the handler begins to
+execute, its active priority is set to the ceiling priority of the
+protected object.  For example, if a protected procedure of an object
+whose ceiling priority is 5 is attached as a handler to an interrupt of
+priority 3, and the interrupt occurs when a task of priority 4 runs, the
+interrupt will remain pending until there is no task executing with
+active priority higher than or equal to 3.  At that point, the interrupt
+will be serviced.  Once the handler starts executing, it will raise its
+active priority to 5.
+</p>
+<p>
+   It is impractical to specify that the hardware must perform a run-time
+check before calling an interrupt handler, in order to verify that the
+ceiling priority of the protected object is not lower than that of the
+hardware interrupt.  This means that checks must either be done at
+compile-time, at the time the handler is attached, or by the handler
+itself.
+</p>
+<p>
+   The potential for compile-time checking is limited, since dynamic
+attachment of handlers is allowed and the priority can itself be dynamic;
+all that can be done is to verify that the handler ceiling is specified
+via the Interrupt_Priority pragma thus
+<pre>
+   protected Alarm is
+      pragma Interrupt_Priority(N);
+      procedure Response;
+      pragma Interrupt_Handler(Response);
+   end Alarm;
+</pre>
+</p>
+<p>
+   Doing the check when the handler is attached is also limited on some
+systems.  For example, with some architectures, different occurrences of
+the same interrupt may be delivered at different hardware priorities.  In
+this case, the maximum priority at which an interrupt might be delivered
+is determined by the peripheral hardware rather than the processor
+architecture.  An implementation that chooses to provide attach-time
+ceiling checks for such an architecture could either assume the worst
+(i.e. that all interrupts can be delivered at the maximum priority) or
+make the maximum priority at which each interrupt can be delivered a
+configuration parameter.
+</p>
+<p>
+   A last-resort method of checking for ceiling violations is for the
+handler to start by comparing its own ceiling against the active priority
+of the task it interrupted.  Presumably, if a ceiling violation were
+detected, the interrupt could be ignored or the entire program could be
+aborted.  Providing the run-time check means inserting a layer of
+"wrapper" code around the user-provided handler, to perform the check.
+Executing this code will add to the execution time of the handler, for
+every execution.  This could be significant if the interrupt occurs with
+high frequency.
+</p>
+<p>
+   Because of the difficulty of guaranteeing against ceiling violations
+by handlers on all architectures, and the potential loss of efficiency,
+an implementation is not required to detect situations where the hardware
+interrupt mechanism violates a protected object ceiling.  Incorrect
+ceiling specification for an interrupt handler is "erroneous"
+programming, rather than a bounded error, since it might be impractical
+to prevent this from crashing the Ada RTS without actually performing the
+ceiling check.  For example, the handler might interrupt a protected
+action while an entry queue is being modified.  The epilogue code of the
+handler could then try to use the entry queue.  It is hard to predict how
+bad this could be, or whether this is the worst thing that could happen.
+At best, the effect might be limited to loss of entry calls and
+corresponding indefinite blocking of the calling tasks.
+</p>
+<p>
+   Since the priorities of the interrupt sources are usually known a
+priori and are an important design parameter, it seems that they are not
+likely to vary a lot and create problems after the initial debugging of
+the system.  Simple coding conventions can also help in preventing such
+cases.
+</p>
+<dt>
+Non-Suspending Locks
+<dd>
+<p>
+With interrupt handlers, it is important to implement protected object
+locking without suspension.  Two basic techniques can be applied.  One of
+these provides mutual exclusion between tasks executing on a single
+processor.  The other provides mutual exclusion between tasks executing
+on different processors, with shared memory.  The minimal requirement for
+locking in shared memory is to use some form of spin-wait on a word
+representing the protected object lock.  Other, more elaborate schemes
+are allowed (such as priority-based algorithms, or algorithms that
+minimize bus contention).
+</p>
+<p>
+   Within a single processor, a non-suspending implementation of
+protected object locking can be provided by limiting preemption.  The
+basic prerequisite is that while a protected object is locked, other
+tasks that might lock that protected object are not allowed to preempt.
+This imposes a constraint on the dispatching policy, which can be
+modelled abstractly in terms of locking sets.  The locking set of a
+protected object is the set of tasks and protected operations that might
+execute protected operations on that object, directly or indirectly.
+More precisely, the locking set of a protected object R includes:
+</p>
+<ul>
+<li>
+    Tasks that call protected operations of R directly.
+<li>
+    Protected procedures and entries whose bodies call a protected
+     operation of R.
+<li>
+    The locking set of Q, if Q is a protected object with a procedure or
+     entry whose body contains a call to an operation (including a
+     requeue) in the locking set of R.
+</ul>
+<p>
+   While a protected object is held locked by a task or interrupt
+handler, the implementation must prevent the other tasks and interrupt
+handlers in the locking set from executing on the same processor.  This
+can be enforced conservatively, by preventing a larger set of tasks and
+interrupt handlers from executing.  At one extreme, it may be enforced by
+blocking all interrupts, and disabling the dispatching of any other task.
+The priority-ceiling locking scheme described in [RM95 D.3] approximates
+the locking set a little less conservatively, by locking out all tasks
+and interrupt handlers with lower or equal priority to the one that is
+holding the protected object lock.
+</p>
+<p>
+   The above technique (for a single processor) can be combined with the
+spin-wait approach on a multiprocessor.  The spinning task raises its
+priority to the ceiling or mask interrupts before it tries to grab the
+lock, so that it will not be preempted after grabbing the lock (while
+still being in the "wrong" priority).
+</p>
+<dt>
+Metrics
+<dd>
+<p>
+     The interrupt handler overhead metric is provided so that a programmer
+can determine whether a given implementation can be used for a particular
+application.  There is clearly imprecision in the definition of such a
+metric.  The measurements involved require the use of a hardware test
+instrument, such as a logic analyzer; the inclusion of instructions to
+trigger such a device might alter the execution times slightly.  The
+validity of the test depends on the choice of reference code sequence and
+handler procedure.  It also relies on the fact that a compiler will not
+attempt in-line optimization of normal procedure calls to a protected
+procedure that is attached as an interrupt handler.  However, there is no
+requirement for the measurement to be absolutely precise.  The user can
+always obtain more precise information by carrying out specific testing.
+The purpose of the metric here is to allow the user to determine whether
+the implementation is close enough to the  requirements of the
+application to be worth considering.  For this purpose, the accuracy of a
+metric could be off by a factor of two and still be useful.
+</p>
+</dl>
+
+<h3>
+<a name=3-2>
+C.3.2  The Package Interrupts
+</a>
+</h3>
+
+<p>
+The operations defined in the package Ada.Interrupts are intended to be a
+minimum set needed to associate handlers with interrupts.  The type
+Interrupt_ID is implementation defined to allow the most natural choice
+of the type for the underlying computer architecture.  It is not required
+to be private, so that if the architecture permits it to be an integer, a
+non-portable application may take advantage of this information to
+construct arrays and loops indexed by Interrupt_ID.  It is, however,
+required to be a discrete type so that values of the type Interrupt_ID
+can be used as discriminants of task and protected types.  This
+capability is considered necessary to allow a single protected or task
+type to be used as handler for several interrupts thus
+<pre>
+   Device_Priority: constant array (1 .. 5) of Interrupt_Priority :=
+                                                                ( ... );
+   protected type Device_Interface(Int_ID: Interrupt_ID) is
+      procedure Handler;
+      pragma Attach_Handler(Handler, Int_ID);
+      ...
+      pragma Interrupt_Priority(Device_Priority(Int_ID));
+   end Device_Interface;
+   ...
+   Device_1_Driver: Device_Interface(1);
+   ...
+   Device_5_Driver: Device_Interface(5);
+   ...
+</pre>
+<p>
+Some interrupts may originate from more than one device, so an
+interrupt handler may need to perform additional tests to decide which
+device the interrupt came from.  For example, there might be several
+timers that all generate the same interrupt (and one of these timers
+might be used by the Ada run-time system to implement delays).  In such a
+case, the implementation may define multiple logical interrupt-id's for
+each such physical interrupt.
+</p>
+<p>
+   The atomic operation Exchange_Handler is provided to attach a handler
+to an interrupt and return the previous handler of that interrupt.  In
+principle, this functionality might also be obtained by the user through
+a protected procedure that locks out interrupts and then calls
+Current_Handler and Attach_Handler.  However, support for priority-
+ceiling locking of protected objects is not required.  Moreover, an
+exchange-handler operation is already provided in atomic form by some
+operating systems (e.g. POSIX).  In these cases, attempting to achieve
+the same effect via the use of a protected procedure would be
+inefficient, if feasible at all.
+</p>
+<p>
+   The value returned by Current_Handler and Exchange_Handler in the case
+that the default interrupt treatment is in force is left implementation-
+defined.  It is guaranteed however that using this value for
+Attach_Handler and Exchange_Handler will restore the default treatment.
+The possibility of simply requiring the value to be null in this case was
+considered but was believed to be an over-specification and to introduce
+an additional overhead for checking this special value on each operation.
+</p>
+<p>
+   Operations for blocking and unblocking interrupts are intentionally
+not provided.  One reason is that the priority model provides a way to
+lock out interrupts, using either the ceiling-priority of a protected
+object or the Set_Priority operation (see [RM95 D.5]).  Providing any
+other mechanism here would raise problems of interactions and conflicts
+with the priority model.  Another reason is that the capabilities for
+blocking interrupts differ enough from one machine to another that any
+more specific control over interrupts would not be applicable to all
+machines.
+</p>
+<p>
+   In Ada 83, interrupt entries are attached to interrupts using values
+of the type System.Address.  In Ada 95, protected procedures are attached
+as handlers using values of Interrupt_ID.  Changing the rules for
+interrupt entries was not considered feasible as it would introduce
+upward-incompatibilities, and would require support of the Interrupts
+package by all implementations.  To resolve the problem of two different
+ways to map interrupts to Ada types, the Reference function is provided.
+This function is intended to provide a portable way to convert a value of
+the type Interrupt_ID to a value of type System.Address that can be used
+in a representation clause to attach an interrupt entry to an interrupt
+source.
+</p>
+
+<dl>
+<dt>
+The Interrupts.Names Package
+<dd>
+<p>
+The names of interrupts are segregated into the child package
+Interrupts.Names, because these names will be implementation-defined.  In
+this way, a use clause for package Interrupts will not hide any user-
+defined names.
+</p>
+</dl>
+
+<h3>
+<a name=3-3>
+C.3.3  Task Entries as Handlers
+</a>
+</h3>
+
+<p>
+Attaching task entries to interrupts is specified as an obsolescent
+feature (see [RM95 J.7.1]).  This is because support of this feature in
+Ada 83 was never required and important semantic details were not given.
+Requiring every implementation to support attaching both protected
+procedures and task entries to interrupts was considered to be an
+unnecessarily heavy burden.  Also, with entries the implementation must
+choose between supporting the full semantics of rendezvous for interrupts
+(with more implementation overhead than protected procedures) versus
+imposing restrictions on the form of handler tasks (which will be
+implementation-dependent and subtle).  The possibility of imposing
+standard restrictions, such as those on protected types, was considered.
+It was rejected on the grounds that it would not be upward compatible
+with existing implementations of interrupt entries (which are diverse in
+this respect).  Therefore, if only one form of handler is to be
+supported, it should be protected procedures.
+</p>
+<p>
+   As compared to Ada 83, the specifications for interrupt entries are
+changed slightly.  First, the implementation is explicitly permitted to
+impose restrictions on the form of the interrupt handler task, and on
+calls to the interrupt entry from software tasks.  This affirms the
+existing practice of language implementations which support high-
+performance direct-execution interrupt entries.  Second, the dynamic
+attachment of different handlers to the same interrupt, sequentially, is
+explicitly allowed.  That is, when an interrupt handler task terminates
+and is finalized, the attachment of the interrupt entry to the interrupt
+is broken.  The interrupt again becomes eligible for attachment.  This is
+consistent with the dynamic attachment model for protected procedures as
+interrupt handlers, and is also consistent with a liberal reading of the
+Ada 83 standard.  Finally, in anticipation of Ada 95 applications that
+use protected procedures as handlers together with existing Ada 83 code
+that uses interrupt entries, interrupts that are attached to entries, are
+specified as reserved, and so effectively removed from the set of
+interrupts available for attachment to protected procedures.  This
+separation can therefore eliminate accidental conflicts in the use of
+values of the Interrupt_ID type.
+</p>
+
+<h2>
+<a name=4>
+C.4  Preelaboration Requirements
+</a>
+</h2>
+
+<p>
+The primary systems programming and real-time systems requirement
+addressed by preelaboration is the fast starting (and possibly
+restarting) of programs.  Preelaboration also provides a way to possibly
+reduce the run-time memory requirement of programs, by removing some of
+the elaboration code.  This section is in the Systems Programming Annex
+(rather than the Real-Time Annex) because the functionality is not
+limited to real-time applications.  It is also required to support
+distribution.
+</p>
+<dl>
+<dt>
+Rejected Approaches
+<dd>
+<p>
+There is a spectrum of techniques that can be used to reduce or eliminate
+elaboration code.  One possible technique is to run the entire program up
+to a certain point, then take a snap-shot of the memory image, which is
+copied out and transformed into a file that can be reloaded.  Program
+start-up would then consist of loading this check-point file and resuming
+execution.  This "core-dump" approach is suitable for some applications
+and it does not require special support from the language.  However, it
+is not really what has been known as preelaboration, nor does it address
+all the associated requirements.
+</p>
+<p>
+   The core-dump approach to accelerating program start-up suffers from
+several defects.  It is error-prone and awkward to use or maintain.  It
+requires the entire active writable memory of the application to be
+dumped.  This can take a large amount of storage, and a proportionately
+long load time.  It is also troublesome to apply this technique to
+constant tables that are to be mapped to read-only memory; if the
+compiler generates elaboration code to initialize such tables, writable
+memory must be provided in the development target during the elaboration,
+and replaced by read-only memory after the core-dump has been produced;
+the core-dump must then be edited to separate out the portions that need
+to be programmed into read-only memory from those that are loaded in the
+normal way.  This technique presumes the existence of an external reload
+device, which might not be available on smaller real-time embedded
+systems.  Finally, effective use of this method requires very precise
+control over elaboration order to ensure that the desired packages, and
+only those packages, are elaborated prior to the core-dump.  Since this
+order often includes implementation packages, it is not clear that the
+user can fully control this order.
+</p>
+<dt>
+The Chosen Approach
+<dd>
+<p>
+Preelaboration is controlled by the two pragmas Pure and Preelaborate as
+mentioned in 10.3.  Many predefined packages are Pure such as
+<pre>
+   package Ada.Characters is
+      pragma Pure(Characters);
+   end Ada.Characters;
+</pre>
+</p>
+<p>
+   The introduction of pure packages together with shared passive and
+remote call interface packages (see [RM95 E.2]) for distribution, created
+the need to talk about packages whose elaboration happens "before any
+other elaboration".  To accommodate this, the concept of a preelaborable
+construct is introduced in [RM95 10.2.1].  (Preelaborability is naturally
+the property of an entity which allows it to be preelaborated.)  Pure
+packages are always preelaborated, as well as packages to which the
+pragma Preelaborate specifically applies such as
+<pre>
+   package Ada.Characters.Handling is
+      pragma Preelaborate(Handling);
+      ...
+</pre>
+</p>
+<p>
+   The difference between pure packages and any other preelaborated
+package is that the latter may have "state".  In the core, being
+preelaborated does not necessarily mean "no code is generated for
+preelaboration", it only means that these library units are preelaborated
+before any other unit.
+</p>
+<p>
+   The Systems Programming Annex defines additional implementation and
+documentation requirements to ensure that the elaboration of
+preelaborated packages does not execute any code at all.
+</p>
+<dt>
+Issues Related to Preelaboration
+<dd>
+<p>
+Given this approach, some trade-offs had to be made between the
+generality of constructs to which this requirement applies, the degree of
+reduction in run-time elaboration code, the complexity of the compiler,
+and the degree to which the concerns of the run-time system can be
+separated from those of the compiler.
+</p>
+<p>
+   Bodies of subprograms that are declared in preelaborated packages are
+guaranteed to be elaborated before they can be called.  Therefore,
+implementations are required to suppress the elaboration checks for such
+subprograms.  This eliminates a source of a distributed overhead that has
+been  an issue in Ada 83.
+</p>
+<p>
+   Tasks, as well as allocators for other than access-to-constant types,
+are not included among the things specified as preelaborable, because the
+initialization of run-time system data structures for tasks and the
+dynamic allocation of storage for general access types would ordinarily
+require code to be executed at run time.  While it might be technically
+possible to preelaborate tasks and general allocators under sufficiently
+restrictive conditions, this is considered too difficult to be required
+of every implementation and would make the compiler very dependent on
+details of the run-time system.  The latter is generally considered to be
+undesirable by real-time systems developers, who often express the need
+to customize the Ada run-time environment.  It is also considered
+undesirable by compiler vendors, since it aggravates their configuration
+management and maintenance problem.  (Partial preelaboration of tasks
+might be more practical for the simple tasking model, described in [RM95
+D.7].)
+</p>
+<p>
+   Entryless protected objects are preelaborable and are essential for
+shared passive packages.  They are therefore allowed in preelaborated
+packages.  The initialization of run time data structures might require
+run-time system calls in some implementations.  In particular, where
+protected object locking is implemented using primitives of an operating
+system, it might be necessary to perform a system call to create and
+initialize a lock for the protected object.  On such systems, the system
+call for lock initialization could be postponed until the first operation
+that is performed on the protected object, but this means some overhead
+on every protected object operation (perhaps a load, compare, and
+conditional jump, or an indirect call from a dispatching table).  It
+seems that this kind of distributed overhead on operations that are
+intended to be very efficient is too high a price to pay for requiring
+preelaboration of protected objects.  These implementations can conform
+to the requirements in this Annex by doing all initializations "behind-
+the-scene" before the program actually starts.  On most other systems, it
+is expected that protected objects will be allocated and initialized
+statically and thus be elaborated when the program starts.  Thus, the
+difference between these two cases is not semantic, and can be left to
+metrics and documentation requirements.
+</p>
+</dl>
+
+<h2>
+<a name=5>
+C.5  Shared Variable Control
+</a>
+</h2>
+
+<p>
+Objects in shared memory may be used to communicate data between Ada
+tasks, between an Ada program and concurrent non-Ada software processes,
+or between an Ada program and hardware devices.
+</p>
+<p>
+   Ada 83 provided a limited facility for supporting variables shared
+between otherwise unsynchronized tasks.  The pragma Shared indicated that
+a particular elementary object is being concurrently manipulated by two
+or more tasks, and that all loads and stores should be indivisible.  The
+pragma Shared was quite weak.  The semantics were only defined in terms
+of tasks, and not very clearly.  This made it inadequate for
+communication with non-Ada software or hardware devices.  Moreover, it
+could be applied only to a limited set of objects.  For example, it could
+not be applied to a component of an array.  One of the most common
+requirements for shared data access is for buffers, which are typically
+implemented as arrays.  For these reasons, the pragma Shared was removed
+from the language and replaced by the pragmas Atomic and Volatile.
+</p>
+<p>
+   This Annex thus generalizes the capability to allow data sharing
+between non-Ada programs and hardware devices, and the sharing of
+composite objects.  In fact, two levels of sharability are introduced:
+</p>
+<ul>
+<li>
+atomic    This indicates that all loads and stores of the object should
+     be indivisible, and that no local copies of the object may be
+     retained.  It need only be supported for types where the underlying
+     hardware memory access allows indivisible load and store operations.
+     This imposes requirements on both the size and the alignment of the
+     object.
+<li>
+volatile  This indicates that the object can be updated asynchronously.
+</ul>
+<p>
+However, there is no need for indivisible load and store.
+</p>
+<p>
+   So we can write
+<pre>
+   type Data is new Long_Float;
+   pragma Atomic(Data);      -- applying to a type
+   ...
+   I: Integer;
+   pragma Volatile(I);       -- applying to a single object
+</pre>
+</p>
+<p>
+   Atomic types and objects are implicitly volatile as well.  This is
+because it would make little sense to have an operation applied to an
+atomic object while allowing the object itself not to be flushed to
+memory immediately afterwards.
+</p>
+<p>
+   Since the atomicity of an object might affect its layout, it is
+illegal to explicitly specify other aspects of the object layout in a
+conflicting manner.
+</p>
+<p>
+   These pragmas may be applied to a constant, but only if the constant
+is imported.  In Ada, the constant designation does not necessarily mean
+that the object's value cannot change, but rather that it is read-only.
+Therefore, it seems useful to allow an object to be read-only, while its
+value changes from the "outside".  The rules about volatile objects
+ensure that the Ada code will read a fresh value each time.
+</p>
+<p>
+   The run-time semantics of atomic/volatile objects are defined in terms
+of external effects since this is the only way one can talk formally
+about objects being flushed to or refreshed from memory (as is required
+to support such objects).
+</p>
+<p>
+   When using such pragmas, one would not want to have the effect of the
+pragma more general than is minimally needed (this avoids the unnecessary
+overhead of atomic or load/store operations).  That is why separate forms
+of the pragmas exist for arrays.  Writing
+<pre>
+   Buffer: array (1 .. Max) of Integer;
+   pragma Atomic_Components(Buffer);
+</pre>
+indicates that the atomicity applies individually to each component of
+the array but not to the array Buffer as a whole.
+</p>
+<p>
+   These pragmas must provide all the necessary information for the
+compiler to generate the appropriate code each time atomic or volatile
+objects are accessed.  This is why the indication is usually on the type
+declaration rather than on the object declaration itself.  For a stand-
+alone object there is no problem for the designation to be per-object,
+but for an array object whose components are atomic or volatile
+complications would arise.  Specifying array components as atomic or
+volatile is likely to have implications on the layout of the array
+objects (e.g.  components have to be on word boundaries).  In addition,
+if the type of a formal parameter does not have volatile components and
+the actual parameter does, one would have to pass the parameter by copy,
+which is generally undesirable.  Anonymous array types (as in the example
+above) do not present this problem since they cannot be passed as
+parameters directly; explicit conversion is always required, and it is
+not unreasonable to presume that a copy is involved in an explicit
+conversion.
+</p>
+<p>
+   The rules for parameter passing distinguish among several cases
+according to the type; some must be passed by copy, some must be passed
+by reference and in some cases either is permitted.  The last possibility
+presents a problem for atomic and volatile parameters.  To solve this,
+the rules in this section make them by reference if the parameter (or a
+component) is atomic or volatile.  Moreover, if the actual is atomic or
+volatile and the formal is not then the parameter is always passed by
+copy; this may require a local copy of the actual to be made at the site
+of the call.
+</p>
+<p>
+   The following example shows the use of these pragmas on the components
+of a record for doing memory-mapped I/O
+<pre>
+   type IO_Rec_Type is
+      record
+         Start_Address: System.Address;
+         pragma Volatile(Start_Address);
+         Length: Integer;
+         pragma Volatile(Length);
+         Operation: Operation_Type;
+         pragma Atomic(Operation);
+         Reset: Boolean;
+         pragma Atomic(Reset);
+      end record;
+
+   -- A store into the Operation field triggers an I/O operation.
+   -- Reading the Reset field terminates the current operation.
+
+   IO_Rec: IO_Rec_Type;
+
+   for IO_Rec'Address use ... ;
+</pre>
+</p>
+<p>
+   By using the pragmas to indicate the sharability of data, the
+semantics of reading and writing components can be controlled.  By
+declaring Operation and Reset to be atomic, the user ensures that reads
+and writes of these fields are not removed by optimization, and are
+performed indivisibly.  By declaring Start_Address and Length to be
+volatile, the user forces any store to happen immediately, without the
+use of local copies.
+</p>
+<dl>
+<dt>
+Other Alternatives
+<dd>
+<p>
+Another concept considered was a subtype modifier which would appear in a
+subtype indication, an object declaration, or parameter specification.
+However, for simplicity, pragmas were chosen instead.
+</p>
+<p>
+   Other possibilities included an "independent" indication.  This would
+mark the object as being used to communicate between synchronized tasks.
+Furthermore, the object should be allocated in storage so that loads and
+stores to it may be performed independently of neighboring objects.
+Since in Ada 83, all objects were implicitly assumed as independent, such
+a change would have created upward-compatibility problems.  For this
+reason, and for the sake of simplicity, this feature was rejected.
+</p>
+</dl>
+
+<h2>
+<a name=6>
+C.6  Task Identification and Attributes
+</a>
+</h2>
+
+<p>
+In order to permit the user to define task scheduling algorithms and to
+write server tasks that accept requests in an order different from entry
+service order, it is necessary to introduce a type which identifies a
+general task (not just of a particular task type) plus some basic
+operations.  This Task_ID type is used also by other language-defined
+packages to operate on task objects such as Dynamic_Priorities and
+Asynchronous_Task_Control.  In addition, a common need is to be able to
+associate user-defined properties with all tasks on a per-task basis;
+this is done through task attributes.
+</p>
+
+<h3>
+<a name=6-1>
+C.6.1  The Package Task_Identification
+</a>
+</h3>
+
+<p>
+The Task_ID type allows the user to refer to task objects using a
+copyable type.  This is often necessary when one wants to build tables of
+tasks with associated information.  Using access-to-task types is not
+always suitable since there is no way to define an access-to-any-task
+type.  Task types differ mostly in the entry declarations.  The common
+use of task-id's does not require this entry information, since no
+rendezvous is performed using objects of Task_ID.  Instead, the more
+generic information about the object as being a task is all that is
+needed.  Several constructs are provided to create objects of the Task_ID
+type.  These are the Current_Task function to query the task-id of the
+currently executing task; the Caller attribute for the task-id of entry
+callers; and the Identity attribute for the task-id of any task object.
+It is believed that together these mechanisms provide the necessary
+functionality for obtaining task-id values in various circumstances.  In
+addition, the package provides various rudimentary operations on the
+Task_ID type.
+</p>
+<p>
+Thus using the example from 9.6, the user might write
+<pre>
+   Joes_ID: Task_ID := Joe'Identity;
+   ...
+   Set_Priority(Urgent, Joes_ID);  -- see D.5
+   ...
+   Abort_Task(Joes_ID);            -- same as abort Joe;
+</pre>
+</p>
+<p>
+   Another use might be for remembering a caller in one rendezvous and
+then recognizing the caller again in a later rendezvous, thus
+<pre>
+   task body Some_Service is
+      Last_Caller: Task_ID;
+   begin
+      ...
+      accept Hello do
+         Last_Caller := Hello'Caller;
+         ...
+      end Hello;
+      ...
+      accept Goodbye do
+         if Last_Caller /= Goodbye'Caller then
+             raise Go_Away;  -- propagate exception to caller
+         end if;
+         ...
+      exception
+         when Go_Away => null;
+      end Goodbye;
+      ...
+   end Some_Service;
+</pre>
+</p>
+<p>
+   Since objects of Task_ID no longer have the corresponding type and
+scope information, the possibility for dangling references exist (since
+Task_ID objects are nonlimited, the value of such an object might contain
+a task-id of a task that no longer exists).  This is particularly so
+since a server is likely to be at a library level, while the managed
+tasks might be at a deeper level with a shorter life-time.  Operating on
+such values (here and in other language-defined packages) is defined to
+be erroneous.  Originally, the possibility of requiring scope checking on
+these values was considered.  Such a requirement would impose certain
+execution overhead on operations and space overhead on the objects of
+such a type.  Since this capability is mainly designed for low-level
+programming, such an overhead was considered unacceptable.  (Note,
+however, that nothing prevents an implementation from implementing a
+Task_ID as a record object containing a generation number and thereby
+providing a higher degree of integrity.)
+</p>
+<p>
+   The Task_ID type is defined as private to promote portability and to
+allow for flexibility of implementation (such as with a high degree of
+integrity).  The possibility of having a visible (implementation-defined)
+type was considered.  The main reason for this was to allow values of the
+type to be used as indices in user-defined arrays or as discriminants.
+To make this usable, the type would have to be discrete.  However a
+discrete type would not allow for schemes that use generation numbers
+(some sort of a record structure would then be required as mentioned
+above).  A visible type would also reduce portability.  So, in the end, a
+private type approach was chosen.  As always, implementations can provide
+a child package to add hashing functions on Task_ID values, if indexing
+seems to be an important capability.
+</p>
+<dl>
+<dt>
+Other Alternatives
+<dd>
+<p>
+In an earlier version of Ada 9X, the Task_ID type was defined as the root
+type of the task class.  Since that class was limited, a language-defined
+access type was also defined to accommodate the need for a copyable type.
+This definition relied on the existence of untagged class types which
+were later removed from the language.  The approach provided a nice
+encapsulation of the natural properties of such a type.  The general
+rules of derivations and scope checking could then be fitted directly
+into the needs of the Task_ID type.  Since the underlying model no longer
+exists, the simpler and more direct approach of a private type with
+specialized semantics and operation, was adopted.
+</p>
+<p>
+   Another possibility that was considered was to define a special,
+language-defined, access-to-task type which, unlike other access types,
+would be required to hold enough information to ensure safe access to
+dereferenced task objects.  This type could then be used as the task-id.
+Values of such a type would necessarily be larger.  This was rejected on
+the grounds that supporting this special access type in the compiler
+would be more burdensome to implementations.
+</p>
+<dt>
+Obtaining the Task Identity
+<dd>
+<p>
+The Current_Task function is needed in order to obtain the identity of
+the currently executing task when the name of this task is not known from
+the context alone; for example when the identity of the environment task
+is needed or in general service routines that are used by many different
+tasks.
+</p>
+<p>
+   There are two situations in which it is not meaningful to speak of the
+"currently executing task".  One is within an interrupt handler, which
+may be invoked directly by the hardware.  The other is within an entry
+body, which may be executed by one task on behalf of a call from another
+task (the Caller attribute may be used in the latter case, instead).  For
+efficiency, the implementation is not required to preserve the illusion
+of there being an interrupt handler task, or of each execution of an
+entry body being done by the task that makes the call.  Instead, calling
+Current_Task in these situations is defined to be a bounded error.
+</p>
+<p>
+   The values that may be returned if the error is not detected are based
+on the assumption that the implementation ordinarily keeps track of the
+currently executing task, but might not take the time to update this
+information when an interrupt handler is invoked or a task executes an
+entry body on behalf of a call from another task.  In this model, the
+value returned by Current_Task would identify the last value of "current
+task" recorded by the implementation.  In the case of an interrupt
+handler, this might be the task that the interrupt handler preempted, or
+an implementation task that executes when the processor would otherwise
+be idle.
+</p>
+<p>
+   If Current_Task could return a value that identifies an implementation
+task, it might be unsafe to allow a user to abort it or change its
+priority.  However, the likelihood of this occurring is too small to
+justify checking, especially in an implementation that is sufficiently
+concerned with efficiency not to have caught the error in the first
+place.  The documentation requirements provide a way for the user to find
+out whether this possibility exists.
+</p>
+<p>
+   Conversion from an object of any task type to a Task_ID is provided by
+the Identity attribute.  This conversion is always safe.  Support for
+conversion in the opposite direction is intentionally omitted.  Such a
+conversion is rarely useful since Task_ID is normally used when the
+specific type of the task object is not known, and would be extremely
+error-prone; (a value of one task type could then be used as another type
+with all the dangerous consequences of different entries and masters).
+</p>
+<p>
+   Caller and Identity are defined as attributes and not as functions.
+For Caller, an attribute allows for an easier compile-time detection of
+an incorrect placement of the construct.  For Identity, a function would
+require a formal parameter of a universal task type which does not exist.
+</p>
+<p>
+   The Caller attribute is allowed to apply to enclosing accept bodies
+(not necessarily the innermost one) since it seems quite useful without
+introducing additional run-time overhead.
+</p>
+<dt>
+Documentation Requirements
+<dd>
+<p>
+In some implementations, the result of calling Current_Task from an
+interrupt handler might be meaningful.  Non-portable applications may be
+able to make use of this information.
+</p>
+</dl>
+
+<h3>
+<a name=6-2>
+C.6.2  The Package Task_Attributes
+</a>
+</h3>
+
+<p>
+The ability to have data for which there is a copy for each task in the
+system is useful for providing various general services.  This was
+provided for example in RTL/2 [Barnes 76] as SVC data.
+</p>
+<p>
+   For Ada 95, several alternatives were considered for the association
+of user-defined information with each task in a program.
+</p>
+<p>
+   The approach which was finally selected is to have a language-defined
+generic package whose formal type is the type of an attribute object.
+This mechanism allows for multiple attributes to be associated with a
+task using the associated Task_ID.  These attributes may be dynamically
+defined, but they cannot be "destroyed".  A new attribute is created
+through instantiation of the generic package.
+</p>
+<p>
+   Thus if we wished to associate some integer token with every task in a
+program we could write
+<pre>
+   package Token is
+      new Ada.Task_Attributes(Attribute => Integer, Initial_Value => 0);
+</pre>
+and then give the task Joe its particular token by
+<pre>
+   Token.Set_Value(99, Joes_ID);
+</pre>
+</p>
+<p>
+Note that the various operations refer to the current task by default, so
+that
+<pre>
+   Token.Set_Value(101);
+</pre>
+sets the token of the task currently executing the statement.
+</p>
+<p>
+   After being defined, an object of that attribute exists for each
+current and newly created task and will be initialized with a user-
+provided value.  Internally the hidden object will typically be derived
+from the type Finalization.Controlled so that finalization of the
+attribute objects can be performed.  When a task terminates, all of its
+attribute objects are finalized.  Note that the attribute objects
+themselves are allocated in the RTS space, and are not directly
+accessible by the user program.  This avoids problems with dangling
+references.  Since the object is not in user space, it cannot live longer
+than the task that has it as an attribute.  Similarly, this object cannot
+be deallocated or finalized while the run-time system data structures
+still point to it.
+</p>
+<p>
+   Obviously, other unrelated user objects might still contain references
+to attribute objects after they have gone (as part of task termination).
+This can only happen when one dereferences the access value returned by
+the Reference function since the other operations return (or store) a
+copy of the attribute.  Such dereference (after the corresponding task
+has terminated) is therefore defined as erroneous.  Note that one does
+not have to wait until a master is left for this situation to arise;
+referencing an attribute of a terminated task is equally problematic.  In
+general, the Reference function is intended to be used "locally" by the
+task owning the attribute.  When the actual attribute object is large, it
+is sometimes useful to avoid the frequent copying of its value; instead a
+pointer to the object is obtained and the data is read or written in the
+user code.  When the Reference function is used for tasks other then the
+calling task, the safe practice should be to ensure, by other means, that
+the corresponding task is not yet terminated.
+</p>
+<p>
+   The generic package Task_Attributes can be instantiated locally in a
+scope deeper than the library level.  The effect of such an instantiation
+is to define a new attribute (for all tasks) for the lifetime of that
+scope.  When the scope is left, the corresponding attribute no longer
+exists and cannot be referenced anymore.  An implementation may therefore
+deallocate all such attribute objects when that scope is left.
+</p>
+<p>
+   For the implementation of this feature, several options exist.  The
+simplest approach is of a single pointer in the task control block (TCB)
+to a table containing pointers to the actual attributes, which in turn
+are allocated from a heap.  This table can be preallocated with some
+initial size.  When new attributes are added and the table space is
+exhausted, a larger one can be allocated with the contents of the old one
+being copied to the new one.  The index of this table can serve as the
+attribute-id.  Each instantiated attribute will have its own data
+structure (one per partition, not per task), which will contain some type
+information (for finalization) and the initial value.  The attribute-id
+in the TCB can then point to this attribute type information.  Instead of
+having this level of indirection, the pointer in the TCB can point to a
+linked list of attributes which then can be dynamically extended or
+shrunk.  Several optimizations on this general scheme are possible.  One
+can preallocate the initial table in the TCB itself, or store in it a
+fixed number of single-word attributes (presumably, a common case).
+Since implementations are allowed to place restrictions on the maximum
+number of attributes and their sizes, static allocation of attribute
+space is possible, when the application demands more deterministic
+behavior at run time.  Finally, attributes that have not been set yet, or
+have been reinitialized, do not have to occupy space at all.  A flag
+indicating this state is sufficient for the Value routine to retrieve the
+initial value from the attribute type area instead of requiring per-task
+replication of the same value.
+</p>
+<dl>
+<dt>
+Other Approaches
+<dd>
+<p>
+A number of other approaches were considered.  One was the idea of a per-
+task data area.  Library-level packages could have been characterized by
+a pragma as Per_Task, meaning that a fresh copy of the data area of such
+a package would be available for each newly created task.
+</p>
+<p>
+   Several problems existed with this approach.  These problems related
+to both the implementation and the usability aspects.  A task could only
+access its own data, not the data of any other task.  There were also
+serious problems concerning which packages actually constituted the per-
+task area.
+</p>
+<p>
+   Another approach considered was a singe attribute per task.
+Operations to set and retrieve the attribute value of any task were
+included in addition to finalization rules for when the task terminates.
+This approach was quite attractive.  It was simple to understand and
+could be implemented with minimal overhead.  Larger data structures could
+be defined by the user and anchored at the single pointer attribute.
+Operations on these attributes were defined as atomic to avoid race
+conditions.  But the biggest disadvantage of this approach, which
+eventually led to its rejection, was that such a mechanism does not
+compose very well and is thus difficult to use in the general case.
+</p>
+</dl>
+
+<h2>
+<a name=7>
+C.7  Requirements Summary
+</a>
+</h2>
+
+<p>
+The requirements
+<pre>
+     R6.3-A(1) - Interrupt Servicing
+
+     R6.3-A(2) - Interrupt Binding
+</pre>
+are met by the pragmas Interrupt_Handler and Attach_Handler plus the
+package Ada.Interrupts.
+</p>
+<p>
+   The requirement
+<pre>
+     R7.1-A(1) - Control of Shared Memory
+</pre>
+is met by the pragmas Atomic and Volatile discussed in C.5.
+</p>
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p3-b.html> Previous </a> |
+<a href=rat95-p3-d.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

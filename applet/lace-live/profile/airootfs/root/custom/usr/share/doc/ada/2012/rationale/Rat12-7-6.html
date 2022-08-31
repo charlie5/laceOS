@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Miscellanea</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-7-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>7.6 Miscellanea</H1>
+<div class="Normal" style="margin-bottom: 0.4em">The first item is that 
+the package <SPAN Class="swiss">Stream_IO</SPAN> should be marked as 
+preelaborated. So in Ada 2012 it now begins</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.IO_Exceptions;<BR>
+<B>package</B>&nbsp;Ada.Streams.Stream_IO&nbsp;<B>is</B><B>is</B><A NAME="I1600"></A><A NAME="I1601"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Stream_IO);<BR>
+&nbsp;&nbsp;&nbsp;...</div>
+<div class="Normal">The reason for making this change concerns the use 
+of input&mdash;output in preelaborated packages. The normal input&mdash;output 
+packages such as <SPAN Class="swiss">Text_IO</SPAN> are not preelaborated 
+and so cannot be used in packages that are themselves preelaborated. 
+This makes preelaborated packages awkward to debug since they cannot 
+do straightforward output for monitoring purposes. To make packages such 
+as <SPAN Class="swiss">Text_IO</SPAN> preelaborated is essentially impossible 
+because they involve local state. However, no such problem exists with 
+<SPAN Class="swiss">Stream_IO</SPAN>, and so making it preelaborated 
+means that it can be used to implement simple logging facilities in other 
+preelaborated packages.</div>
+<div class="Normal">In principle, there is a similar problem with pure 
+units. But they cannot change state anyway and so cannot do output since 
+that changes the state of the environment. They just have to be written 
+correctly in the first place.</div>
+<div class="Normal">(I have been told that there are naughty ways around 
+this with pure packages but I will not contaminate innocent minds with 
+the details.)</div>
+<div class="Normal" style="margin-bottom: 0.4em">The package <SPAN Class="swiss">Ada.Environment_Variables</SPAN> 
+was introduced in Ada 2005 as follows<A NAME="I1602"></A></div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Environment_Variables&nbsp;<B>is</B><A NAME="I1603"></A><A NAME="I1604"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Environment_Variables);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Value(Name:&nbsp;String)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Exists(Name:&nbsp;String)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set(Name:&nbsp;<B>in</B>&nbsp;String;&nbsp;Value:&nbsp;<B>in</B>&nbsp;String);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Clear(Name:&nbsp;<B>in</B>&nbsp;String);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Clear;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Iterate(Process:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;procedure</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Name,&nbsp;Value:&nbsp;<B>in</B>&nbsp;String));</div>
+<div class="SwissExamples"><B>end</B>&nbsp;Ada.Environment_Variables;</div>
+<div class="Normal">If we do not know whether an environment variable 
+exists then we can check by calling <SPAN Class="swiss">Exists</SPAN> 
+prior to accessing the current value. Thus a program might be running 
+in an environment where we might expect an environment variable <SPAN Class="swiss">&quot;Ada&quot;</SPAN> 
+whose value indicates the version of Ada currently supported.</div>
+<div class="Normal" style="margin-bottom: 0.4em">So as in <A HREF="Rat12-0-3.html#R7">[7]</A> 
+we might write</div>
+<div class="SwissExamples"><B>if&nbsp;not</B>&nbsp;Exists(&quot;Ada&quot;)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;<B>raise</B>&nbsp;Horror;<BR>
+<B>end&nbsp;if</B>;<BR>
+Put(&quot;Current&nbsp;Ada&nbsp;is&nbsp;&quot;);&nbsp;Put_Line(Value(&quot;Ada&quot;));</div>
+<div class="Normal">But this raises a possible race condition. After 
+determining that <SPAN Class="swiss">Ada</SPAN> does exist some malevolent 
+process (such as another Ada task or an external human agent) might execute 
+<SPAN Class="swiss">Clear(&quot;Ada&quot;);</SPAN> and then the call 
+of <SPAN Class="swiss">Value(&quot;Ada&quot;)</SPAN> will raise <SPAN Class="swiss">Constraint_Error</SPAN>.</div>
+<div class="Normal">The other race condition might arise as well. Having 
+decided that <SPAN Class="swiss">Ada</SPAN> does not exist and so taking 
+remedial action some kindly process might have created <SPAN Class="swiss">Ada</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">These problems are 
+overcome in Ada 2012 by the introduction of an additional function <SPAN Class="swiss">Value</SPAN> 
+with a default parameter<A NAME="I1605"></A></div>
+<div class="SwissExamples"><B>function</B>&nbsp;Value(Name:&nbsp;String;&nbsp;Default:&nbsp;String);</div>
+<div class="Normal">Calling this version of <SPAN Class="swiss">Value</SPAN> 
+returns the value of the variable if it exists and otherwise returns 
+the value of <SPAN Class="swiss">Default</SPAN>.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-7-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

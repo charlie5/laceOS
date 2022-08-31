@@ -1,0 +1,321 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Exceptions and Optimization</TITLE>
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    DIV.paranum {position: absolute; font-family: Arial, Helvetica, sans-serif; left: 0.5em; top: auto}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; margin-bottom: 0.6em}
+    DIV.Wide {font-family: "Times New Roman", Times, serif; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.WideAnnotations {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Index {font-family: "Times New Roman", Times, serif}
+    DIV.SyntaxSummary {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; margin-left: 2.0em}
+    DIV.SyntaxIndented {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-bottom: 0.4em}
+    DIV.Indented {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-bottom: 0.6em}
+    DIV.CodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-bottom: 0.6em}
+    DIV.SmallIndented {font-family: "Times New Roman", Times, serif; margin-left:  10.0em; margin-bottom: 0.6em}
+    DIV.SmallCodeIndented {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SmallExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left: 7.5em; margin-bottom: 0.6em}
+    DIV.IndentedExamples {font-family: "Courier New", monospace; margin-left: 8.0em; margin-bottom: 0.6em}
+    DIV.SmallIndentedExamples {font-family: "Courier New", monospace; font-size: 80%; margin-left:  15.0em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SmallNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.IndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.CodeIndentedNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-right: 8.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.SyntaxIndentedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesBulleted {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NotesNestedBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.Hanging {font-family: "Times New Roman", Times, serif; margin-top: 0em; margin-bottom: 0.6em}
+    DD.Hanging {margin-left: 6.0em}
+    DL.IndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.IndentedHanging {margin-left: 2.0em}
+    DL.HangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.HangingInBulleted {margin-left: 4.0em}
+    DL.SmallHanging {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallHanging {margin-left: 7.5em}
+    DL.SmallIndentedHanging {font-family: "Times New Roman", Times, serif; margin-left: 8.0em; margin-top: 0em; margin-bottom: 0.6em}
+    DD.SmallIndentedHanging {margin-left: 2.0em}
+    DL.SmallHangingInBulleted {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallHangingInBulleted {margin-left: 5.0em}
+    DL.Enumerated {font-family: "Times New Roman", Times, serif; margin-right: 0.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.Enumerated {margin-left: 2.0em}
+    DL.SmallEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 4.0em; margin-right: 4.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DD.SmallEnumerated {margin-left: 2.5em}
+    DL.NestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DL.SmallNestedEnumerated {font-family: "Times New Roman", Times, serif; margin-left: 6.0em; margin-right: 6.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<P><A HREF="AA-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-11-5.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-12.html">Next</A></P>
+<HR>
+<H1> 11.6 Exceptions and Optimization</H1>
+<DIV Class="Paranum"><FONT SIZE=-2>1</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;[<FONT SIZE="-1">{<I>language-defined check</I>}</FONT>
+<A NAME="I4151"></A><FONT SIZE="-1">{<I>check (language-defined)</I>}</FONT>
+<A NAME="I4152"></A><FONT SIZE="-1">{<I>run-time error</I>}</FONT> <A NAME="I4153"></A><FONT SIZE="-1">{<I>error
+(run-time)</I>}</FONT> <A NAME="I4154"></A><FONT SIZE="-1">{<I>optimization</I>}</FONT>
+<A NAME="I4155"></A><FONT SIZE="-1">{<I>efficiency</I>}</FONT> <A NAME="I4156"></A>This
+clause gives permission to the implementation to perform certain ``optimizations''
+that do not necessarily preserve the canonical semantics.] </DIV>
+
+<H4 ALIGN=CENTER>Dynamic Semantics</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>2</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;<FONT SIZE="-1">{<I>canonical semantics</I>}</FONT>
+<A NAME="I4157"></A>The rest of this International Standard (outside
+this clause) defines the <I>canonical semantics</I> of the language.
+[The canonical semantics of a given (legal) program determines a set
+of possible external effects that can result from the execution of the
+program with given inputs.] </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>2.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>Note that
+the canonical semantics is a set of possible behaviors, since some reordering,
+parallelism, and non-determinism is allowed by the canonical semantics.
+</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>2.b</FONT></DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em"><FONT SIZE="-1"><B>Discussion:
+</B>The following parts of the canonical semantics are of particular
+interest to the reader of this clause: </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>2.c</FONT></DIV>
+<UL Class="SmallBulleted"><LI TYPE=DISC><FONT SIZE="-1">Behavior in the
+presence of abnormal objects and objects with invalid representations
+(see <A HREF="AA-13-9-1.html">13.9.1</A>).</FONT></LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>2.d</FONT></DIV>
+<UL Class="SmallBulleted"><LI TYPE=DISC><FONT SIZE="-1">Various actions
+that are defined to occur in an arbitrary order.</FONT></LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>2.e</FONT></DIV>
+<UL Class="SmallBulleted"><LI TYPE=DISC><FONT SIZE="-1">Behavior in the
+presence of a misuse of Unchecked_Deallocation, Unchecked_Access, or
+imported or exported entity (see Section 13). </FONT></LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>3</FONT></DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;[As explained in <A HREF="AA-1-1-3.html">1.1.3</A>,
+``<A HREF="AA-1-1-3.html">Conformity of an Implementation with the Standard</A>'',
+the external effect of a program is defined in terms of its interactions
+with its external environment. Hence, the implementation can perform
+any internal actions whatsoever, in any order or in parallel, so long
+as the external effect of the execution of the program is one that is
+allowed by the canonical semantics, or by the rules of this clause.]
+</DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>3.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>Note that
+an optimization can change the external effect of the program, so long
+as the changed external effect is an external effect that is allowed
+by the semantics. Note that the canonical semantics of an erroneous execution
+allows any external effect whatsoever. Hence, if the implementation can
+prove that program execution will be erroneous in certain circumstances,
+there need not be any constraints on the machine code executed in those
+circumstances. </FONT></DIV>
+
+<H4 ALIGN=CENTER>Implementation Permissions</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>4</FONT></DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;The following additional
+permissions are granted to the implementation: </DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>5</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><FONT SIZE="-1">{<I>extra permission
+to avoid raising exceptions</I>}</FONT> <A NAME="I4158"></A><FONT SIZE="-1">{<I>undefined
+result</I>}</FONT> <A NAME="I4159"></A>An implementation need not always
+raise an exception when a language-defined check fails. Instead, the
+operation that failed the check can simply yield an <I>undefined result</I>.
+The exception need be raised by the implementation only if, in the absence
+of raising it, the value of this undefined result would have some effect
+on the external interactions of the program. In determining this, the
+implementation shall not presume that an undefined result has a value
+that belongs to its subtype, nor even to the base range of its type,
+if scalar. [Having removed the raise of the exception, the canonical
+semantics will in general allow the implementation to omit the code for
+the check, and some or all of the operation itself.] </LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>5.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>Even without
+this permission, an implementation can always remove a check if it cannot
+possibly fail. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>5.b</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Reason: </B>We express the
+permission in terms of removing the raise, rather than the operation
+or the check, as it minimizes the disturbance to the canonical semantics
+(thereby simplifying reasoning). By allowing the implementation to omit
+the raise, it thereby does not need to &quot;look&quot; at what happens
+in the exception handler to decide whether the optimization is allowed.
+</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>5.c</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Discussion: </B>The implementation
+can also omit checks if they cannot possibly fail, or if they could only
+fail in erroneous executions. This follows from the canonical semantics.
+</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>5.d</FONT></DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em"><FONT SIZE="-1"><B>Implementation
+Note: </B>This permission is intended to allow normal &quot;dead code
+removal&quot; optimizations, even if some of the removed code might have
+failed some language-defined check. However, one may not eliminate the
+raise of an exception if subsequent code presumes in some way that the
+check succeeded. For example: </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>5.e</FONT></DIV>
+<DIV Class="SmallExamples"><TT>&nbsp;&nbsp;<B>if</B>&nbsp;X&nbsp;*&nbsp;Y&nbsp;&gt;&nbsp;Integer'Last&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put_Line(&quot;X&nbsp;*&nbsp;Y&nbsp;overflowed&quot;);<BR>
+&nbsp;&nbsp;<B>end</B>&nbsp;<B>if</B>;<BR>
+<B>exception</B><BR>
+&nbsp;&nbsp;<B>when</B>&nbsp;<B>others</B>&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put_Line(&quot;X&nbsp;*&nbsp;Y&nbsp;overflowed&quot;);</TT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>5.e.1</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><S></S>If X*Y does overflow,
+you may not remove the raise of the exception if the code that does the
+comparison against Integer'Last presumes that it is comparing it with
+an in-range Integer value, and hence always yields False.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>5.f</FONT></DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em"><FONT SIZE="-1">As
+another example where a raise may not be eliminated: </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>5.g</FONT></DIV>
+<DIV Class="SmallExamples"><TT>&nbsp;&nbsp;<B>subtype</B>&nbsp;Str10&nbsp;<B>is</B>&nbsp;String(1..10);<BR>
+&nbsp;&nbsp;<B>type</B>&nbsp;P10&nbsp;<B>is</B>&nbsp;<B>access</B>&nbsp;Str10;<BR>
+&nbsp;&nbsp;X&nbsp;:&nbsp;P10&nbsp;:=&nbsp;<B>null</B>;<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;<B>if</B>&nbsp;X.all'Last&nbsp;=&nbsp;10&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put_Line(&quot;Oops&quot;);<BR>
+&nbsp;&nbsp;<B>end</B>&nbsp;<B>if</B>;</TT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>5.g.1</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">In the above code, it would
+be wrong to eliminate the raise of Constraint_Error on the &quot;X.all&quot;
+(since X is null), if the code to evaluate 'Last always yields 10 by
+presuming that X.all belongs to the subtype Str10, without even &quot;looking.&quot;
+</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>6</FONT></DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><FONT SIZE="-1">{<I>extra permission
+to reorder actions</I>}</FONT> <A NAME="I4160"></A>If an exception is
+raised due to the failure of a language-defined check, then upon reaching
+the corresponding <FONT FACE="Arial, Helvetica">exception_handler</FONT>
+(or the termination of the task, if none), the external interactions
+that have occurred need reflect only that the exception was raised somewhere
+within the execution of the <FONT FACE="Arial, Helvetica">sequence_of_statements</FONT>
+with the handler (or the <FONT FACE="Arial, Helvetica">task_body</FONT>),
+possibly earlier (or later if the interactions are independent of the
+result of the checked operation) than that defined by the canonical semantics,
+but not within the execution of some abort-deferred operation or <I>independent</I>
+subprogram that does not dynamically enclose the execution of the construct
+whose check failed. <FONT SIZE="-1">{<I>independent subprogram</I>}</FONT>
+<A NAME="I4161"></A>An independent subprogram is one that is defined
+outside the library unit containing the construct whose check failed,
+and has no Inline <FONT FACE="Arial, Helvetica">pragma</FONT> applied
+to it. <FONT SIZE="-1">{<I>normal state of an object</I>}</FONT> <A NAME="I4162"></A><FONT SIZE="-1">{<I>abnormal
+state of an object</I> [partial]}</FONT> <A NAME="I4163"></A><FONT SIZE="-1">{<I>disruption
+of an assignment</I> [partial]}</FONT> <A NAME="I4164"></A>Any assignment
+that occurred outside of such abort-deferred operations or independent
+subprograms can be disrupted by the raising of the exception, causing
+the object or its parts to become abnormal, and certain subsequent uses
+of the object to be erroneous, as explained in <A HREF="AA-13-9-1.html">13.9.1</A>.
+</LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>6.a</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Reason: </B>We allow such
+variables to become abnormal so that assignments (other than to atomic
+variables) can be disrupted due to ``imprecise'' exceptions or instruction
+scheduling, and so that assignments can be reordered so long as the correct
+results are produced in the end if no language-defined checks fail. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>6.b</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Ramification: </B>If a check
+fails, no result dependent on the check may be incorporated in an external
+interaction. In other words, there is no permission to output meaningless
+results due to postponing a check. </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>6.c</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1"><B>Discussion: </B>We believe
+it is important to state the extra permission to reorder actions in terms
+of what the programmer can expect at run time, rather than in terms of
+what the implementation can assume, or what transformations the implementation
+can perform. Otherwise, how can the programmer write reliable programs?</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>6.d</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">This clause has two conflicting
+goals: to allow as much optimization as possible, and to make program
+execution as predictable as possible (to ease the writing of reliable
+programs). The rules given above represent a compromise.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>6.e</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">Consider the two extremes:</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>6.f</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">The extreme conservative rule
+would be to delete this clause entirely. The semantics of Ada would be
+the canonical semantics. This achieves the best predictability. It sounds
+like a disaster from the efficiency point of view, but in practice, implementations
+would provide modes in which less predictability but more efficiency
+would be achieved. Such a mode could even be the out-of-the-box mode.
+In practice, implementers would provide a compromise based on their customer's
+needs. Therefore, we view this as one viable alternative.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>6.g</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">The extreme liberal rule would
+be ``the language does not specify the execution of a program once a
+language-defined check has failed; such execution can be unpredictable.''
+This achieves the best efficiency. It sounds like a disaster from the
+predictability point of view, but in practice it might not be so bad.
+A user would have to assume that exception handlers for exceptions raised
+by language-defined checks are not portable. They would have to isolate
+such code (like all nonportable code), and would have to find out, for
+each implementation of interest, what behaviors can be expected. In practice,
+implementations would tend to avoid going so far as to punish their customers
+too much in terms of predictability.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>6.h</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">The most important thing about
+this clause is that users understand what they can expect at run time,
+and implementers understand what optimizations are allowed. Any solution
+that makes this clause contain rules that can interpreted in more than
+one way is unacceptable.</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>6.i</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">We have chosen a compromise
+between the extreme conservative and extreme liberal rules. The current
+rule essentially allows arbitrary optimizations within a library unit
+and inlined subprograms reachable from it, but disallow semantics-disrupting
+optimizations across library units in the absence of inlined subprograms.
+This allows a library unit to be debugged, and then reused with some
+confidence that the abstraction it manages cannot be broken by bugs outside
+the library unit. </FONT></DIV>
+<DIV Class="NotesHeader"><FONT SIZE="-1">NOTES</FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>7</FONT></DIV>
+<DIV Class="Notes"><FONT SIZE="-1">3&nbsp;&nbsp;The permissions granted
+by this clause can have an effect on the semantics of a program only
+if the program fails a language-defined check. </FONT></DIV>
+
+<H4 ALIGN=CENTER>Wording Changes from Ada 83</H4>
+<DIV Class="Paranum"><FONT SIZE=-2>7.a</FONT></DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em"><FONT SIZE="-1">RM83-11.6
+was unclear. It has been completely rewritten here; we hope this version
+is clearer. Here's what happened to each paragraph of RM83-11.6: </FONT></DIV>
+<DIV Class="Paranum"><FONT SIZE=-2>7.b</FONT></DIV>
+<UL Class="SmallBulleted"><LI TYPE=DISC><FONT SIZE="-1">Paragraphs 1
+and 2 contain no semantics; they are merely pointing out that anything
+goes if the canonical semantics is preserved. We have similar introductory
+paragraphs, but we have tried to clarify that these are not granting
+any ``extra'' permission beyond what the rest of the document allows.</FONT></LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>7.c</FONT></DIV>
+<UL Class="SmallBulleted"><LI TYPE=DISC><FONT SIZE="-1">Paragraphs 3
+and 4 are reflected in the ``extra permission to reorder actions''. Note
+that this permission now allows the reordering of assignments in many
+cases.</FONT></LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>7.d</FONT></DIV>
+<UL Class="SmallBulleted"><LI TYPE=DISC><FONT SIZE="-1">Paragraph 5 is
+moved to <A HREF="AA-4-5.html">4.5</A>, ``<A HREF="AA-4-5.html">Operators
+and Expression Evaluation</A>'', where operator association is discussed.
+Hence, this is no longer an ``extra permission'' but is part of the canonical
+semantics.</FONT></LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>7.e</FONT></DIV>
+<UL Class="SmallBulleted"><LI TYPE=DISC><FONT SIZE="-1">Paragraph 6 now
+follows from the general permission to store out-of-range values for
+unconstrained subtypes. Note that the parameters and results of all the
+predefined operators of a type are of the unconstrained subtype of the
+type.</FONT></LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>7.f</FONT></DIV>
+<UL Class="SmallBulleted"><LI TYPE=DISC><FONT SIZE="-1">Paragraph 7 is
+reflected in the ``extra permission to avoid raising exceptions''. </FONT></LI></UL>
+<DIV Class="Paranum"><FONT SIZE=-2>7.g</FONT></DIV>
+<DIV Class="Annotations"><FONT SIZE="-1">We moved clause <A HREF="AA-11-5.html">11.5</A>,
+``<A HREF="AA-11-5.html">Suppressing Checks</A>'' from after 11.6 to
+before 11.6, in order to preserve the famous number ``11.6'' (given the
+changes to earlier clauses in Section 11). </FONT></DIV>
+
+<HR>
+<P><A HREF="AA-TOC.html">Contents</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-0-29.html">Index</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-SRCH.html">Search</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-11-5.html">Previous</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-12.html">Next</A>&nbsp;&nbsp;&nbsp;<A HREF="AA-TTL.html">Legal</A></P>
+</BODY>
+</HTML>

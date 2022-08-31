@@ -1,0 +1,355 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Rationale, Sec 5.1: Introduction (to Ch 5: Numeric Types)</TITLE>
+</HEAD>
+
+<BODY>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 5: Numeric Types</H2>
+
+<H3><a name="5.1">5.1 Introduction</a></H3>
+
+The importance of numerical calculations in the use of computers dates
+from their  earliest days.  The floating  point hardware of the second
+generation  of  machines  resulted  from  the  need  to  perform  fast
+calculations with  approximate representations  of numerical data that
+varied over  a wide  range of  values. However,  in spite of this long
+history of numerical computation, the handling of both fixed point and
+floating point  data  types  is  unsatisfactory  in  most  programming
+languages.
+<p>
+<a href="ratl-BIB.html#languages">Fortran</a> is  widely used  for scientific  computation and compilers are
+available on  almost all machines. Several large packages of numerical
+routines of  a high  professional standard,  such as  the  library  of
+subroutines  of  the  Numerical  Algorithms  Group  (NAG),  have  been
+implemented  in  Fortran  and  made  available  on  a  wide  range  of
+computers. Nevertheless,  numerous defects can easily trap the unwary.
+For example,  when a  floating point  value is  assigned to an integer
+variable the  value is  truncated; this  obvious trap is compounded by
+the lack  of any definition of this effect - the standard does not say
+whether -3.8  truncates to  -3 or  to -4, that is, whether the sign is
+considered after  truncation or  with it. Moreover Fortran provides no
+facilities for fixed point arithmetic, for which there is a particular
+need on computers without floating point hardware.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<br><br>
+<a href="#5.1.1">5.1.1  Floating Point: The Problems</a><BR>
+<a href="#5.1.2">5.1.2  Fixed Point: The Problems</a><BR>
+<a href="#5.1.3">5.1.3  Overview of Numerics in Ada</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="5.1.1">5.1.1 Floating Point: The Problems</a></H3>
+<p>
+
+The most  difficult area  is the  control of floating point precision,
+for which no entirely adequate solution is available. <a href="ratl-BIB.html#languages">Fortran</a> does not
+define the  accuracy of  single precision  values.  Consequently,  the
+number of  bits in  the mantissa of a single precision value can be 48
+on one  system and 24 on another; to achieve a given precision, say 30
+bits, one  would have  to specify single precision on the first system
+but double precision on the second.
+<p>
+To change the precision for a Fortran 66 program is extremely awkward,
+and requires  a careful  review of  the program text: the exponents of
+floating point  literals must be changed, all intrinsic functions must
+be altered,  and so  on; some  functions such  as FLOAT have no double
+length counterpart. The Numerical Algorithms Group overcame this by an
+elaborate text  processing  package  <a href="ratl-BIB.html">[HF  76]</a>.  By  adopting  suitable
+programming conventions, most of the changes can be made with a simple
+text edit, but there is no simple complete solution. For instance, use
+of double  length throughout is not effective because of its excessive
+cost, changing  the type  by IMPLICIT  is not standard Fortran, and in
+any case IMPLICIT cannot be used for literals.
+<p>
+Changing precision  is much  easier for  a Fortran 77 program, because
+many of  the problems  identified above  have  been  eliminated.  Some
+problems remain, however: thus it is still not possible to specify the
+precision of  a type  explicitly - say in decimal digits. Moreover the
+change from  single to  double precision  is sometimes  difficult: for
+instance single  length COMPLEX  is a  defined data  type  but  DOUBLE
+COMPLEX is  not. It should be noted that the proposed standard Fortran
+8X attempts  to overcome  all of  these problems,  and others,  and in
+consequence has features similar to those of Ada.
+<p>
+Several languages  in the <a href="ratl-BIB.html#languages">Algol 60</a> tradition, such as Pascal, Coral 66
+and RTL/2, admit only one floating point data type. In some cases this
+simple solution  meets the  users' requirements  better  than  Fortran
+does. The  two Algol  60 compilers for the IBM 360 provide a directive
+to specify  32 or  64 bit  precision -  substantially easier to change
+than the  corresponding precision  in Fortran.  In essence, unless the
+declarations can determine different precisions, it is best to use the
+same precision  for all  floating point  quantities, and  therefore to
+have only one floating-point data type in the language.
+<p>
+Control of precision in Algol 68 is by declaration of types real, long
+real, or  even long  long real.  Although the  precision  of  real  is
+implementation-dependent, so that declarative changes to a program may
+still be needed in order to maintain the required accuracy when moving
+it from one implementation to another, these changes are rather easy.
+<p>
+Any  language   that  has  user-defined  types,  and  some  method  of
+controlling precision,  has the  essential mechanism  for an effective
+solution of  this problem.  It is,  of  course,  imperative  that  the
+programmer use  the typing  facility in  such a  way that the floating
+point declarations  can easily  be remapped when a change of precision
+is needed.
+
+<h3><BR><a name="5.1.2">5.1.2 Fixed Point: The Problems</a></h3>
+
+There is  also considerable  difficulty in  formulating a satisfactory
+fixed point facility. The Steelman requirements <a href="ratl-BIB.html">[DoD 78]</a> specify exact
+fixed point computation:
+<blockquote>
+   ... fixed  point numbers  shall be  treated  as  exact  numeric
+   values.  ...   The  scale  or  step  size  (i.e.,  the  minimal
+   representable difference  between values)  of each  fixed point
+   variable must  be ...  determinable during  translation. Scales
+   shall not be restricted to powers of two.
+</blockquote>
+
+Thus the  possible values  of a  fixed point variable must be integral
+multiples of  a fixed  quantity called  the scale.  Exact addition and
+subtraction do not cause problems, but multiplication and division do.
+<p>
+To illustrate these problems, let us consider the case of calculations
+on electrical  insulation, using  Ohm's  Law:  current  multiplied  by
+resistance equals voltage. Suppose that we measure the leakage current
+to an  accuracy of one milliampere, and adopt this as the step size or
+scale of  a variable  LEAKAGE. This  means that  only whole numbers of
+milliamperes can  be represented:  the value of LEAKAGE will always be
+an integer  L times the scale of 0.001 amperes. In like fashion we may
+measure the  resistance of the insulation to an accuracy of 1000 ohms,
+and use  a variable RESISTANCE whose value will always be an integer R
+times the scale of 1000 ohms, that is, R kilo-ohms.
+<p>
+Now the  potential  supported  by  the  insulation  is  the  value  of
+LEAKAGE&#42;RESISTANCE, and  because the scale factors happen to cancel it
+will be  LR volts.  This is  again an  integer, but  we cannot  simply
+assign it  to a  third fixed  point variable  POTENTIAL  having  scale
+factor one  volt, and  treat this  variable in  the same  way  as  the
+others, because  only a subset of the possible values of POTENTIAL can
+arise in  this way.  Thus a  given value of POTENTIAL, say P volts (an
+integer) cannot be divided by a given value of RESISTANCE, say R kilo-
+ohms, to get L milliamperes exactly (which must be an integer) because
+P/R will  usually not  be an  integer.  In  addition  there  are  size
+problems because  single length  factors give a double length product.
+The Ironman requirements <a href="ratl-BIB.html">[DoD 77]</a> recognized this, and required built-
+in operations  for integer  and fixed  point division  with remainder.
+This would  allow a double length representation of P to be divided by
+R to  yield an  integer quotient  L1 and  integer remainder  L2,  each
+single length:
+<PRE>    P = R&#42;L1 + L2</PRE>
+<p>
+and it  would be in the hands of the programmer to ignore or use L2 as
+he wished.  The operation  would be exact, and L1 could be assigned to
+LEAKAGE for further use, as a quantity whose inaccuracy was known.
+<p>
+<a href="ratl-BIB.html#languages">Cobol</a> apparently  meets the  Ironman requirements,  but only  by using
+decimal scales, which are not adequate for two reasons. First, this is
+not necessarily the scaling required by the application, and secondly,
+10 is  too coarse  for the standard 16-bit minicomputer. A glance at a
+Cobol manual  will also  indicate that explaining the implicit decimal
+point to the programmer is not easy.
+<p>
+In view  of the  difficulty of providing exact fixed point computation
+to meet  the Steelman  requirements, we  considered  what  was  really
+needed by  the users. An analysis of actual applications in many real-
+time situations  revealed that  there was a need for cheap approximate
+computation. Small  but frequently executed computations are performed
+upon digital input signals. Simple machines do not have floating point
+hardware, and  emulation of  floating point  operations by software or
+firmware is  not fast  enough, hence  some other  means is required to
+perform approximate computations rapidly on such machines. To say that
+in the future floating point hardware will always be available may not
+be the answer: source data input is inevitably captured in fixed point
+representation, and floating point representation requires more space.
+Hence approximate fixed point is better matched than floating point to
+the needs of common applications.
+<p>
+It must  be admitted  that, as  we shall  see, programming  with fixed
+point is  much more  difficult than  with floating point. On the other
+hand, fixed  point is  potentially  more  reliable  because  effective
+numerical error  analysis requires tight bounds to be placed upon data
+values.
+<p>
+It is  concluded that  approximate fixed  point is  generally the most
+useful arithmetic  capability to  provide that will complement integer
+and floating  point facilities. However, Ada fixed point also provides
+some exact  operations such as addition and subtraction, and these are
+invaluable, for example for the manipulation of intervals of time.
+
+<H3><BR><a name="5.1.3">5.1.3 Overview of Numerics in Ada</a></H3>
+
+The facility  for numerics  is based  upon the  idea  that  a  numeric
+variable has  an abstract  value. The  set of values of a numeric type
+will be a subset of the set of real numbers. Computation with integers
+is  exact.   Computation  with  fixed  point  and  floating  point  is
+approximate: the  former with  an absolute  bound on  the  error,  the
+latter with  a relative  bound. These approximate types are called the
+real types  since they  can be  thought of  as approximations  to  the
+mathematical concept of the real numbers.
+<p>
+The semantics  of each  numeric operation is determined by the type of
+its operands. The facility for numerics is based upon three types that
+cannot be  named in a program (and hence are said to be anonymous - no
+variable of  such a type can be declared). These types are referred to
+as  universal_integer,   universal_real,  and   universal_fixed.   Any
+specific type in a given implementation is a partial representation of
+a universal type.
+<DL>
+<DT><b>(1) universal_integer</b>
+<DD>The type  universal_integer is  an integer  type with a range large
+   enough  to   encompass  every   conceivable  integer  type  of  the
+   implementation. Integer literals are of type universal_integer.
+
+<DT><b>(2) universal_real</b>
+<DD>The type  universal_real is  a real  type with  a precision that is
+   high enough  to encompass  any implemented real type. Real literals
+   are of type universal_real.
+
+<DT><b>(3) universal_fixed</b>
+<DD>The type  universal_fixed is  introduced as  the result type of the
+   unscaled fixed  point operations  of multiplication and division to
+   be detailed  later. It  is  essentially  a  type  for  intermediate
+   results. The  universal_fixed type  has  a  finer  delta  than  any
+   implemented fixed point type.
+</DL>
+The mapping of these universal types onto the implementation-dependent
+types is described below.
+<DL>
+<DT><b>(1) Integer types</b>
+<DD>There is  an implementation-dependent  type INTEGER, defined in the
+   package STANDARD. The range of type INTEGER reflects the properties
+   of the  underlying hardware,  in that  the most efficiently handled
+   integer size is used, with a range symmetric about zero (apart from
+   possibly one  negative value - see <a href="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.4">RM 3.5.4</a>(7)). It would have been
+   possible to  have designed  a language  that had no predefined type
+   such as  INTEGER, but this would have meant that in order to obtain
+   a type  that would  give as  large a  range of  int&Acirc;ger  values  as
+   possible without  losing efficiency,  the programmer would &Euml;ave had
+   to use language facilities that were highly system dependent. So to
+   avoid this  dependence, it  is desirable  to have a predefined type
+   that maps onto the integer type that is most efficiently handled by
+   the target computer.<br><br>
+
+   Additionally, an  implementation may provide types LONG_INTEGER and
+   SHORT_INTEGER with larger and smaller ranges than INTEGER. The user
+   can define  an integer  type by  stating the  required range;  this
+   defines a  subtype of  a type  derived from one of these predefined
+   types  -  the  predefined  type  being  suitably  selected  by  the
+   implementation. The  most positive and most negative integer values
+   that are  supported by  an implementation  are  SYSTEM.MAX_INT  and
+   SYSTEM.MIN_INT respectively.<br><br>
+
+<DT><b>(2) Floating point types</b>
+<DD>The implementation-defined  types FLOAT, LONG_FLOAT (and so on) can
+   be thought  of as  copies  of  the  type  universal_real  but  with
+   restricted relative  accuracy. These  types are predefined so as to
+   approximate closely  to the  intrinsic floating-point  types of the
+   target computer.  The user may define other floating point types in
+   terms of  these machine  types, or  simply by  stating the required
+   precision; in  the latter  case this  defines a  subtype of  a type
+   derived from  one of  the predefined  types -  the predefined  type
+   being suitably selected by the implementation.<br><br>
+
+   A  hardware  floating  point  representation  has  two  independent
+   parameters -  the length  of the  mantissa and  the  range  of  the
+   exponent. The  mantissa length  defines the  relative accuracy, and
+   the exponent  range defines the range of the floating point values.
+   In Ada,  the user defines a floating point type by stating only the
+   required precision, as a number of decimal digits; this defines the
+   mantissa length.  The language requires each floating point type to
+   have an exponent range that is workable in relation to its mantissa
+   length. In  this way  the two parameters are reduced to one, with a
+   gain in simplicity for the user.<br><br>
+
+<DT><b>(3) Fixed point types</b>
+<DD>In contrast  to floating  point, a fixed point type has an absolute
+   rather than  a relative accuracy. This absolute bound on the errors
+   is called the delta. The user can define other fixed point types by
+   specifying  the   required  delta,   together  with  the  range  of
+   magnitudes to be encompassed.
+</DL>
+
+<H4>Constants</H4>
+
+One finds  in many  programs several  constants that  parameterize the
+particular application.  These constants  have no particular type, but
+may be  related one  to another;  for example  the middle of a line is
+related to the line length. Number declarations are provided in Ada to
+express this.  They allow  the calculation  of specific  values having
+fixed relationships. For example:
+
+<table border cellpadding=6><tr><td><pre>
+LINE_LENGTH          :  constant :=  80;
+MID_LINE             :  constant :=  LINE_LENGTH/2;
+PI                   :  constant :=  3.14159_26536;
+RADIANS_PER_DEGREE   :  constant :=  PI/180;
+</pre></td></tr></table>
+<p>
+Without this  facility, a  change to  the program to modify a constant
+would involve  a search for all occurrences of the constant as well as
+of related  constants. This  would be  both  tedious  and  risky:  for
+example the constant 40 might or might not be intended to signify half
+the line  length, and  even with  a corresponding  comment the process
+would be error prone.
+<p>
+The type  of such  a named number depends on the primaries used in the
+expression on  the right;  if these yield real values, the type of the
+constant is  universal_real, if they yield integer values, the type is
+universal_integer;  a   mixture  of  real  and  integer  values  gives
+universal_real.  Thus  the  first  two  examples  above  are  of  type
+universal_integer and the second two are of type universal_real.
+<p>
+A numeric literal is either an integer literal or a real literal. Thus
+80 and  2 above  are integer  literals because they contain no decimal
+point, while  3.14159_26536 is a real literal. Within an expression, a
+numeric literal  will be  implicitly converted  to the  required  type
+determined by  the context - an integer literal to an integer type and
+a real  literal to  a real  type. For  example, implicit conversion is
+performed in these cases:
+<table border cellpadding=6><tr><td><pre>
+J  :  INTEGER :=  2;
+P  :  INTEGER :=  4&#42;J;
+A  :  REAL :=  REAL(P) - 0.23;
+</pre></td></tr></table>
+<p>
+In the  second case, because J is of type INTEGER, the integer literal
+4  is   implicitly  converted   to  INTEGER   as  an  operand  of  the
+multiplication, which  yields a  product of  type INTEGER. In the last
+case, the  subtraction must deliver a REAL result, so P needs explicit
+conversion to  the type  REAL, but conversion of the real literal 0.23
+to REAL  is implicit.  It should be noted that no accuracy can be lost
+by such  implicit  conversion  of  numeric  literals  -  the  accuracy
+required by the target type is always provided.
+
+<center>
+<hr width=60%>
+&#164; <a href="ratl-05-02.html#5.2"><b>NEXT</b></a>
+&#164; <a href="ratl-05.html#5"><b>PREVIOUS</b></a>
+&#164; <a href="ratl-05.html#5"><b>UP</b></a>
+&#164; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#164; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#164;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+</BODY></HTML>
+

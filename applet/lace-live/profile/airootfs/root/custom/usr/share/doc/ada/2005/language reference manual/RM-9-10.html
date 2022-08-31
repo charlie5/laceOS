@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Shared Variables</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-9.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-11.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>9.10 Shared Variables</H1>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal"><A NAME="I3899"></A><A NAME="I3900"></A>If two different 
+objects, including nonoverlapping parts of the same object, are <I>independently 
+addressable</I>, they can be manipulated concurrently by two different 
+tasks without synchronization. Normally, any two nonoverlapping objects 
+are independently addressable. However, if packing, record layout, or 
+Component_Size is specified for a given composite object, then it is 
+implementation defined whether or not two nonoverlapping parts of that 
+composite object are independently addressable.&nbsp;</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">Separate tasks normally 
+proceed independently and concurrently with one another. However, task 
+interactions can be used to synchronize the actions of two or more tasks 
+to allow, for example, meaningful communication by the direct updating 
+and reading of variables shared between the tasks. The actions of two 
+different tasks are synchronized in this sense when an action of one 
+task <I>signals</I> an action of the other task; <A NAME="I3901"></A>an 
+action A1 is defined to signal an action A2 under the following circumstances: 
+</DIV>
+<DIV Class="paranum">3</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If A1 and A2 are part of the execution 
+of the same task, and the language rules require A1 to be performed before 
+A2;</LI></UL>
+<DIV Class="paranum">4</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If A1 is the action of an activator 
+that initiates the activation of a task, and A2 is part of the execution 
+of the task that is activated;</LI></UL>
+<DIV Class="paranum">5</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If A1 is part of the activation of 
+a task, and A2 is the action of waiting for completion of the activation;</LI></UL>
+<DIV Class="paranum">6</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If A1 is part of the execution of 
+a task, and A2 is the action of waiting for the termination of the task;</LI></UL>
+<DIV Class="paranum">6.1/1</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If A1 is the termination of a task 
+T, and A2 is either the evaluation of the expression T'Terminated or 
+a call to Ada.Task_Identification.Is_Terminated with an actual parameter 
+that identifies T (see <A HREF="RM-C-7-1.html">C.7.1</A>);</LI></UL>
+<DIV Class="paranum">7</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If A1 is the action of issuing an 
+entry call, and A2 is part of the corresponding execution of the appropriate 
+<SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0203">entry_body</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0201">accept_statement</A></SPAN>. 
+</LI></UL>
+<DIV Class="paranum">8</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If A1 is part of the execution of 
+an <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0201">accept_statement</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0203">entry_body</A></SPAN>, 
+and A2 is the action of returning from the corresponding entry call;</LI></UL>
+<DIV Class="paranum">9</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If A1 is part of the execution of 
+a protected procedure body or <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0203">entry_body</A></SPAN> 
+for a given protected object, and A2 is part of a later execution of 
+an <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0203">entry_body</A></SPAN> 
+for the same protected object;&nbsp;</LI></UL>
+<DIV Class="paranum">10</DIV>
+<UL Class="Bulleted" Style="margin-bottom: 0.3em"><LI TYPE=DISC>If A1 
+signals some action that in turn signals A2.&nbsp;</LI></UL>
+
+<H4 Class="centered">Erroneous Execution</H4>
+<DIV Class="paranum">11</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><A NAME="I3902"></A>Given 
+an action of assigning to an object, and an action of reading or updating 
+a part of the same object (or of a neighboring object if the two are 
+not independently addressable), then the execution of the actions is 
+erroneous unless the actions are <I>sequential</I>. <A NAME="I3903"></A>Two 
+actions are sequential if one of the following is true:&nbsp;</DIV>
+<DIV Class="paranum">12</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>One action signals the other;</LI></UL>
+<DIV Class="paranum">13</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>Both actions occur as part of the 
+execution of the same task;&nbsp;</LI></UL>
+<DIV Class="paranum">14</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>Both actions occur as part of protected 
+actions on the same protected object, and at most one of the actions 
+is part of a call on a protected function of the protected object.&nbsp;</LI></UL>
+<DIV Class="paranum">15</DIV>
+<DIV Class="Normal">A <SPAN Class="swiss"><A HREF="RM-2-8.html#S0019">pragma</A></SPAN> 
+Atomic or Atomic_Components may also be used to ensure that certain reads 
+and updates are sequential &mdash; see <A HREF="RM-C-6.html">C.6</A>. 
+</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-9.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-11.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

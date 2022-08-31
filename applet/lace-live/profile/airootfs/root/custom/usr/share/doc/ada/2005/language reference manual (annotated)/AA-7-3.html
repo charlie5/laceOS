@@ -1,0 +1,712 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Private Types and Private Extensions</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    SPAN.insert1 {text-decoration: underline; color: rgb(0,51,51) }
+    SPAN.delete1 {text-decoration: line-through; color: rgb(0,51,51) }
+    SPAN.insert2 {text-decoration: underline; color: rgb(0,102,0) }
+    SPAN.delete2 {text-decoration: line-through; color: rgb(0,102,0) }
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Wide {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-top: 0.6em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 6.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.SyntaxIndented {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-bottom: 0.4em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    DIV.SmallExamples {font-family: "Courier New", monospace; font-size: 72%; line-height: 122%; margin-left: 9.6em; margin-bottom: 0.6em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><B><SPAN Style="font-size:200%; color: rgb(0,51,153)">Annotated</SPAN><SPAN Style="font-size:200%; color: rgb(0,0,102)">&nbsp;Ada Reference Manual</SPAN></B> &mdash; <A HREF="AA-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-7-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-7-3-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>7.3 Private Types and Private Extensions</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal">[The declaration (in the visible part of a package) 
+of a type as a private type or private extension serves to separate the 
+characteristics that can be used directly by outside program units (that 
+is, the logical properties) from other characteristics whose direct use 
+is confined to the package (the details of the definition of the type 
+itself). See <A HREF="AA-3-9-1.html">3.9.1</A> for an overview of type 
+extensions. <SPAN STYLE="font-size: 80%">{<I>private types and private 
+extensions</I>}</SPAN> <A NAME="I3576"></A><SPAN STYLE="font-size: 80%">{<I>information 
+hiding: See private types and private extensions</I>}</SPAN> <A NAME="I3577"></A><SPAN STYLE="font-size: 80%">{<I>opaque 
+type: See private types and private extensions</I>}</SPAN> <A NAME="I3578"></A><SPAN STYLE="font-size: 80%">{<I>abstract 
+data type (ADT): See private types and private extensions</I>}</SPAN> 
+<A NAME="I3579"></A><SPAN STYLE="font-size: 80%">{<I>ADT (abstract data 
+type): See private types and private extensions</I>}</SPAN> <A NAME="I3580"></A>]</DIV>
+
+<H4 Class="centered">Language Design Principles</H4>
+<DIV Class="paranum">1.a</DIV>
+<DIV Class="Annotations">A private (untagged) type can be thought of 
+as a record type with the type of its single (hidden) component being 
+the full view.</DIV>
+<DIV Class="paranum">1.b</DIV>
+<DIV Class="Annotations">A private tagged type can be thought of as a 
+private extension of an anonymous parent with no components. The only 
+dispatching operation of the parent is equality (although the Size attribute, 
+and, if nonlimited, assignment are allowed, and those will presumably 
+be implemented in terms of dispatching).&nbsp;</DIV>
+
+<H4 Class="centered">Syntax</H4>
+<DIV Class="paranum">2</DIV>
+<DIV Class="SyntaxIndented"><SPAN Class="swiss">private_type_declaration</SPAN><A NAME="I3581"></A><A NAME="S0176"></A><SPAN Class="swiss">&nbsp;::=&nbsp;</SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I3582"></A><SPAN Class="swiss"><A HREF="AA-3-1.html#S0022">defining_identifier</A></SPAN>&nbsp;[<A NAME="I3583"></A><SPAN Class="swiss"><A HREF="AA-3-7.html#S0059">discriminant_part</A></SPAN>]&nbsp;<B>is</B>&nbsp;[[<B>abstract</B>]&nbsp;<B>tagged</B>]&nbsp;[<B>limited</B>]&nbsp;<B>private</B>;</DIV>
+<DIV Class="paranum">3/2</DIV>
+<DIV Class="SyntaxIndented">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00251.TXT">AI95-00251-01</A></I>} 
+{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00419.TXT">AI95-00419-01</A></I>} 
+{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00443.TXT">AI95-00443-01</A></I>} 
+<SPAN Class="swiss">private_extension_declaration</SPAN><A NAME="I3584"></A><A NAME="S0177"></A><SPAN Class="swiss">&nbsp;::=&nbsp;</SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I3585"></A><SPAN Class="swiss"><A HREF="AA-3-1.html#S0022">defining_identifier</A></SPAN>&nbsp;[<A NAME="I3586"></A><SPAN Class="swiss"><A HREF="AA-3-7.html#S0059">discriminant_part</A></SPAN>]&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<B>abstract</B>]&nbsp;<SPAN class="insert2">[<B>limited</B>&nbsp;|&nbsp;<B>synchronized</B>]</SPAN>&nbsp;<B>new</B>&nbsp;<I>ancestor_</I><A NAME="I3587"></A><SPAN Class="swiss"><A HREF="AA-3-2-2.html#S0027">subtype_indication</A></SPAN><SPAN class="insert2"><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<B>and</B>&nbsp;<A NAME="I3588"></A><SPAN Class="swiss"><A HREF="AA-3-9-4.html#S0078">interface_list</A></SPAN>]</SPAN>&nbsp;<B>with&nbsp;private</B>;</DIV>
+
+<H4 Class="centered">Legality Rules</H4>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>partial view (of 
+a type)</I>}</SPAN> <A NAME="I3589"></A><SPAN STYLE="font-size: 80%">{<I>requires 
+a completion (declaration of a partial view)</I> [partial]}</SPAN> <A NAME="I3590"></A>A 
+<SPAN Class="swiss"><A HREF="AA-7-3.html#S0176">private_type_declaration</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="AA-7-3.html#S0177">private_extension_declaration</A></SPAN> 
+declares a <I>partial view</I> of the type; such a declaration is allowed 
+only as a <SPAN Class="swiss"><A HREF="AA-3-11.html#S0087">declarative_item</A></SPAN> 
+of the visible part of a package, and it requires a completion, which 
+shall be a <SPAN Class="swiss"><A HREF="AA-3-2-1.html#S0024">full_type_declaration</A></SPAN> 
+that occurs as a <SPAN Class="swiss"><A HREF="AA-3-11.html#S0087">declarative_item</A></SPAN> 
+of the private part of the package. <SPAN class="delete2"><SPAN STYLE="font-size: 80%">{<I>full 
+view (of a type)</I>}</SPAN> <A NAME="I3591"></A></SPAN>[ The view of 
+the type declared by the <SPAN Class="swiss"><A HREF="AA-3-2-1.html#S0024">full_type_declaration</A></SPAN> 
+is called the <I>full view</I>.] A generic formal private type or a generic 
+formal private extension is also a partial view.&nbsp;</DIV>
+<DIV Class="paranum">4.a</DIV>
+<DIV Class="Annotations"><B>To be honest:&nbsp;</B>A private type can also 
+be completed by a <SPAN Class="swiss"><A HREF="AA-2-8.html#S0019">pragma</A></SPAN> 
+Import, if supported by an implementation.&nbsp;</DIV>
+<DIV Class="paranum">4.b</DIV>
+<DIV Class="Annotations"><B>Reason:&nbsp;</B>We originally used the term &ldquo;private 
+view,&rdquo; but this was easily confused with the view provided <I>from</I> 
+the private part, namely the full view.&nbsp;</DIV>
+<DIV Class="paranum">4.c/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Proof:&nbsp;</B></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00326.TXT">AI95-00326-01</A></I>} 
+<SPAN class="insert2">Full view is now defined in <A HREF="AA-3-2-1.html">3.2.1</A>, 
+&ldquo;<A HREF="AA-3-2-1.html">Type Declarations</A>&rdquo;, as all types 
+now have them.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">5</DIV>
+<DIV Class="Normal">[A type shall be completely defined before it is 
+frozen (see <A HREF="AA-3-11-1.html">3.11.1</A> and <A HREF="AA-13-14.html">13.14</A>). 
+Thus, neither the declaration of a variable of a partial view of a type, 
+nor the creation by an <SPAN Class="swiss"><A HREF="AA-4-8.html#S0129">allocator</A></SPAN> 
+of an object of the partial view are allowed before the full declaration 
+of the type. Similarly, before the full declaration, the name of the 
+partial view cannot be used in a <SPAN Class="swiss"><A HREF="AA-12-3.html#S0257">generic_instantiation</A></SPAN> 
+or in a representation item.]&nbsp;</DIV>
+<DIV Class="paranum">5.a</DIV>
+<DIV Class="Annotations"><B>Proof:&nbsp;</B>This rule is stated officially 
+in <A HREF="AA-3-11-1.html">3.11.1</A>, &ldquo;<A HREF="AA-3-11-1.html">Completions 
+of Declarations</A>&rdquo;.&nbsp;</DIV>
+<DIV Class="paranum">6/2</DIV>
+<DIV Class="Normal">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00419.TXT">AI95-00419-01</A></I>} 
+{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00443.TXT">AI95-00443-01</A></I>} 
+[A private type is limited if its declaration includes the reserved word 
+<B>limited</B>; a private extension is limited if its ancestor type is 
+<SPAN class="insert2">a limited type that is not an interface type, or 
+if the reserved word <B>limited</B> or <B>synchronized</B> appears in 
+its definition</SPAN><SPAN class="delete2">&nbsp;limited</SPAN>.] If the partial 
+view is nonlimited, then the full view shall be nonlimited. If a tagged 
+partial view is limited, then the full view shall be limited. [On the 
+other hand, if an untagged partial view is limited, the full view may 
+be limited or nonlimited.]</DIV>
+<DIV Class="paranum">7</DIV>
+<DIV Class="Normal">If the partial view is tagged, then the full view 
+shall be tagged. [On the other hand, if the partial view is untagged, 
+then the full view may be tagged or untagged.] In the case where the 
+partial view is untagged and the full view is tagged, no derivatives 
+of the partial view are allowed within the immediate scope of the partial 
+view; [derivatives of the full view are allowed.]&nbsp;</DIV>
+<DIV Class="paranum">7.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>Note that deriving from 
+a partial view within its immediate scope can only occur in a package 
+that is a child of the one where the partial view is declared. The rule 
+implies that in the visible part of a public child package, it is impossible 
+to derive from an untagged private type declared in the visible part 
+of the parent package in the case where the full view of the parent type 
+turns out to be tagged. We considered a model in which the derived type 
+was implicitly redeclared at the earliest place within its immediate 
+scope where characteristics needed to be added. However, we rejected 
+that model, because (1) it would imply that (for an untagged type) subprograms 
+explicitly declared after the derived type could be inherited, and (2) 
+to make this model work for composite types as well, several implicit 
+redeclarations would be needed, since new characteristics can become 
+visible one by one; that seemed like too much mechanism.&nbsp;</DIV>
+<DIV Class="paranum">7.b</DIV>
+<DIV Class="Annotations"><B>Discussion:&nbsp;</B>The rule for tagged partial 
+views is redundant for partial views that are private extensions, since 
+all extensions of a given ancestor tagged type are tagged, and limited 
+if the ancestor is limited. We phrase this rule partially redundantly 
+to keep its structure parallel with the other rules.&nbsp;</DIV>
+<DIV Class="paranum">7.c</DIV>
+<DIV Class="Annotations"><B>To be honest:&nbsp;</B>This rule is checked in 
+a generic unit, rather than using the &ldquo;assume the best&rdquo; or 
+&ldquo;assume the worst&rdquo; method.&nbsp;</DIV>
+<DIV Class="paranum">7.d/2</DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em"><B>Reason:&nbsp;</B>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00230.TXT">AI95-00230-01</A></I>} 
+Tagged limited private types have certain capabilities that are incompatible 
+with having assignment for the full view of the type. In particular, 
+tagged limited private types can be extended with <SPAN class="delete2">access 
+discriminants and&nbsp;</SPAN>components of a limited type, which works only 
+because assignment is not allowed. Consider the following example:&nbsp;</DIV>
+<DIV Class="paranum">7.e</DIV>
+<DIV Class="SmallExamples"><B>package</B>&nbsp;P1&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T1&nbsp;<B>is</B>&nbsp;<B>tagged</B>&nbsp;<B>limited</B>&nbsp;<B>private</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Foo(X&nbsp;:&nbsp;<B>in</B>&nbsp;T1'Class);<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T1&nbsp;<B>is</B>&nbsp;<B>tagged</B>&nbsp;<B>null</B>&nbsp;<B>record</B>;&nbsp;--<SPAN Class="roman"><I>&nbsp;Illegal!</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;This&nbsp;should&nbsp;say&nbsp;&ldquo;<B>tagged&nbsp;limited&nbsp;null&nbsp;record</B>&rdquo;.</I></SPAN><BR>
+<B>end</B>&nbsp;P1;</DIV>
+<DIV Class="paranum">7.f/1</DIV>
+<DIV Class="SmallExamples"><B>package</B>&nbsp;<B>body</B>&nbsp;P1&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;A&nbsp;<B>is</B>&nbsp;<B>access</B>&nbsp;T1'Class;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Global&nbsp;:&nbsp;A;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Foo(X&nbsp;:&nbsp;<B>in</B>&nbsp;T1'Class)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Global&nbsp;:=&nbsp;<B>new</B>&nbsp;T1'Class'(X);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;This&nbsp;would&nbsp;be&nbsp;illegal&nbsp;if&nbsp;the&nbsp;full&nbsp;view&nbsp;of</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;T1&nbsp;were&nbsp;limited,&nbsp;like&nbsp;it's&nbsp;supposed&nbsp;to&nbsp;be.</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;<SPAN class="insert1">Foo</SPAN><SPAN class="delete1">&nbsp;A</SPAN>;<BR>
+<B>end</B>&nbsp;P1;</DIV>
+<DIV Class="paranum">7.g/2</DIV>
+<DIV Class="SmallExamples">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00230.TXT">AI95-00230-01</A></I>} 
+<B>with</B>&nbsp;P1;<BR>
+<B>package</B>&nbsp;P2&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T2(D&nbsp;:&nbsp;<B>access</B>&nbsp;Integer)<SPAN class="delete2">&nbsp;--<SPAN Class="roman"><I>&nbsp;Trouble!</I></SPAN></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;P1.T1&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;My_Task&nbsp;:&nbsp;Some_Task_Type;&nbsp;--<SPAN Class="roman"><I>&nbsp;</I></SPAN><SPAN class="insert2"><SPAN Class="roman"><I>Trouble</I></SPAN></SPAN><SPAN Class="roman"><I></I></SPAN><SPAN class="delete2"><SPAN Class="roman"><I>&nbsp;More&nbsp;trouble</I></SPAN></SPAN><SPAN Class="roman"><I>!</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;<B>record</B>;<BR>
+<B>end</B>&nbsp;P2;</DIV>
+<DIV Class="paranum">7.h/1</DIV>
+<DIV Class="SmallExamples"><B>with</B>&nbsp;P1;<BR>
+<B>with</B>&nbsp;P2;<BR>
+<B>procedure</B>&nbsp;Main&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Local&nbsp;:&nbsp;<B>aliased</B>&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Y&nbsp;:&nbsp;P2.T2(<SPAN class="insert1">D</SPAN><SPAN class="delete1">&nbsp;A</SPAN>&nbsp;=&gt;&nbsp;Local'Access);<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;P1.Foo(Y);<BR>
+<B>end</B>&nbsp;Main;<BR>
+&nbsp;&nbsp;</DIV>
+<DIV Class="paranum">7.i/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00230.TXT">AI95-00230-01</A></I>} 
+If the above example were legal, we would have succeeded in <SPAN class="delete2">making 
+an access value that points to Main.Local after Main has been left, and 
+we would also have succeeded in&nbsp;</SPAN>doing an assignment of a task 
+object, <SPAN class="delete2">both of&nbsp;</SPAN>which <SPAN class="insert2">is</SPAN><SPAN class="delete2">&nbsp;are</SPAN> 
+supposed to be <SPAN class="insert2">a no-no</SPAN><SPAN class="delete2">&nbsp;no-no's</SPAN>. 
+</DIV>
+<DIV Class="paranum">7.j</DIV>
+<DIV Class="Annotations">This rule is not needed for private extensions, 
+because they inherit their limitedness from their ancestor, and there 
+is a separate rule forbidding limited components of the corresponding 
+record extension if the parent is nonlimited.&nbsp;</DIV>
+<DIV Class="paranum">7.k</DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em"><B>Ramification: 
+</B>A type derived from an untagged private type is untagged, even if 
+the full view of the parent is tagged, and even at places that can see 
+the parent:&nbsp;</DIV>
+<DIV Class="paranum">7.l</DIV>
+<DIV Class="SmallExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Parent&nbsp;<B>is</B>&nbsp;<B>private</B>;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Parent&nbsp;<B>is</B>&nbsp;<B>tagged</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X:&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;<B>record</B>;<BR>
+<B>end</B>&nbsp;P;</DIV>
+<DIV Class="paranum">7.m/1</DIV>
+<DIV Class="SmallExamples"><SPAN class="insert1"><B>with</B>&nbsp;P;<BR>
+</SPAN><B>package</B>&nbsp;Q&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;<SPAN class="insert1">P.</SPAN> Parent;<BR>
+<B>end</B>&nbsp;Q;</DIV>
+<DIV Class="paranum">7.n</DIV>
+<DIV Class="SmallExamples"><B>with</B>&nbsp;Q;&nbsp;<B>use</B>&nbsp;Q;<BR>
+<B>package</B>&nbsp;<B>body</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;T'Class&nbsp;...&nbsp;--<SPAN Class="roman"><I>&nbsp;Illegal!</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Object:&nbsp;T;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;Object.X&nbsp;...&nbsp;--<SPAN Class="roman"><I>&nbsp;Illegal!</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;Parent(Object).X&nbsp;...&nbsp;--<SPAN Class="roman"><I>&nbsp;OK.</I></SPAN><BR>
+<B>end</B>&nbsp;P;</DIV>
+<DIV Class="paranum">7.o</DIV>
+<DIV Class="Annotations">The declaration of T declares an untagged view. 
+This view is always untagged, so T'Class is illegal, it would be illegal 
+to extend T, and so forth. The component name X is never visible for 
+this view, although the component is still there &mdash; one can get 
+one's hands on it via a <SPAN Class="swiss"><A HREF="AA-4-6.html#S0127">type_conversion</A></SPAN>.</DIV>
+<DIV Class="paranum">7.1/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00396.TXT">AI95-00396-01</A></I>} 
+<SPAN class="insert2">If a full type has a partial view that is tagged, 
+then:</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">7.2/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><SPAN class="insert2">the partial 
+view shall be a synchronized tagged type (see <A HREF="AA-3-9-4.html">3.9.4</A>) 
+if and only if the full type is a synchronized tagged type;</SPAN></LI></UL>
+<DIV Class="paranum">7.o.1/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Reason:&nbsp;</B> Since 
+we do not allow record extensions of synchronized tagged types, this 
+property has to be visible in the partial view to avoid privacy breaking. 
+Generic formals do not need a similar rule as any extensions are rechecked 
+for legality in the specification, and extensions of tagged formals are 
+always illegal in a generic body.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">7.3/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><SPAN class="insert2">the partial 
+view shall be a descendant of an interface type (see 3.9.4) if and only 
+if the full type is a descendant of the interface type.</SPAN></LI></UL>
+<DIV Class="paranum">7.p/2</DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em"><SPAN class="insert2"><B>Reason: 
+</B>Consider the following example:</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">7.q/2</DIV>
+<DIV Class="SmallExamples"><SPAN class="insert2"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;Pkg&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Ifc&nbsp;<B>is&nbsp;interface</B>;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Foo&nbsp;(X&nbsp;:&nbsp;Ifc)&nbsp;<B>is&nbsp;abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Pkg;</SPAN></DIV>
+<DIV Class="paranum">7.r/2</DIV>
+<DIV Class="SmallExamples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Parent_1&nbsp;<B>is&nbsp;tagged&nbsp;null&nbsp;record</B>;</SPAN></DIV>
+<DIV Class="paranum">7.s/2</DIV>
+<DIV Class="SmallExamples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T1&nbsp;<B>is&nbsp;new</B>&nbsp;Parent_1&nbsp;<B>with&nbsp;private</B>;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Parent_2&nbsp;<B>is&nbsp;new</B>&nbsp;Parent_1&nbsp;<B>and</B>&nbsp;Pkg.Ifc&nbsp;<B>with&nbsp;null&nbsp;record</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Foo&nbsp;(X&nbsp;:&nbsp;Parent_2);&nbsp;--&nbsp;<SPAN Class="roman"><I>Foo&nbsp;#1</I></SPAN></SPAN></DIV>
+<DIV Class="paranum">7.t/2</DIV>
+<DIV Class="SmallExamples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T1&nbsp;<B>is&nbsp;new</B>&nbsp;Parent_2&nbsp;<B>with&nbsp;null&nbsp;record</B>;&nbsp;--&nbsp;<SPAN Class="roman"><I>Illegal.</I></SPAN><BR>
+<B>end</B>&nbsp;P;</SPAN></DIV>
+<DIV Class="paranum">7.u/2</DIV>
+<DIV Class="SmallExamples"><SPAN class="insert2"><B>with</B>&nbsp;P;<BR>
+<B>package</B>&nbsp;P_Client&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T2&nbsp;<B>is&nbsp;new</B>&nbsp;P.T1&nbsp;<B>and</B>&nbsp;P.Pkg.Ifc&nbsp;<B>with&nbsp;null&nbsp;record</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Foo&nbsp;(X&nbsp;:&nbsp;T2);&nbsp;--&nbsp;<SPAN Class="roman"><I>Foo&nbsp;#2</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;X&nbsp;:&nbsp;T2;<BR>
+<B>end</B>&nbsp;P_Client;</SPAN></DIV>
+<DIV Class="paranum">7.v/2</DIV>
+<DIV Class="SmallExamples"><SPAN class="insert2"><B>with</B>&nbsp;P_Client;<BR>
+<B>package&nbsp;body</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;...</SPAN></DIV>
+<DIV Class="paranum">7.w/2</DIV>
+<DIV Class="SmallExamples"><SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Bar&nbsp;(X&nbsp;:&nbsp;T1'Class)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pkg.Foo&nbsp;(X);&nbsp;--&nbsp;<SPAN Class="roman"><I>should&nbsp;call&nbsp;Foo&nbsp;#1&nbsp;or&nbsp;an&nbsp;override&nbsp;thereof</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>;</SPAN></DIV>
+<DIV Class="paranum">7.x/2</DIV>
+<DIV Class="SmallExamples"><SPAN class="insert2"><B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Pkg.Foo&nbsp;(Pkg.Ifc'Class&nbsp;(P_Client.X));&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>should&nbsp;call&nbsp;Foo&nbsp;#2</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;Bar&nbsp;(T1'Class&nbsp;(P_Client.X));<BR>
+<B>end</B>&nbsp;P;</SPAN></DIV>
+<DIV Class="paranum">7.y/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2">This example is illegal 
+because the completion of T1 is descended from an interface that the 
+partial view is not descended from. If it were legal, T2 would implement 
+Ifc twice, once in the visible part of P, and once in the visible part 
+of P_Client. We would need to decide how Foo #1 and Foo #2 relate to 
+each other. There are two options: either Foo #2 overrides Foo #1, or 
+it doesn't.</SPAN></DIV>
+<DIV Class="paranum">7.z/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2">If Foo #2 overrides Foo 
+#1, we have a problem because the client redefines a behavior that it 
+doesn't know about, and we try to avoid this at all costs, as it would 
+lead to a breakdown of whatever abstraction was implemented. If the abstraction 
+didn't expose that it implements Ifc, there must be a reason, and it 
+should be able to depend on the fact that no overriding takes place in 
+clients. Also, during maintenance, things may change and the full view 
+might implement a different set of interfaces. Furthermore, the situation 
+is even worse if the full type implements another interface Ifc2 that 
+happens to have a conforming Foo (otherwise unrelated, except for its 
+name and profile).</SPAN></DIV>
+<DIV Class="paranum">7.aa/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2">If Foo #2 doesn't override 
+Foo #1, there is some similarity with the case of normal tagged private 
+types, where a client can declare an operation that happens to conform 
+to some private operation, and that's OK, it gets a different slot in 
+the type descriptor. The problem here is that T2 would implement Ifc 
+in two different ways, and through conversions to Ifc'Class we could 
+end up with visibility on both of these two different implementations. 
+This is the &ldquo;diamond inheritance&rdquo; problem of C++ all over 
+again, and we would need some kind of a preference rule to pick one implementation. 
+We don't want to go there (if we did, we might as well provide full-fledged 
+multiple inheritance).</SPAN></DIV>
+<DIV Class="paranum">7.bb/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2">Note that there wouldn't 
+be any difficulty to implement the first option, so the restriction is 
+essentially methodological. The second option might be harder to implement, 
+depending on the language rules that we would choose.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">7.cc/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Ramification:&nbsp;</B>This 
+rule also prevents completing a private type with an interface. A interface, 
+like all types, is a descendant of itself, and thus this rule is triggered. 
+One reason this is necessary is that a client of a private extension 
+should be able to inherit limitedness without having to look in the private 
+part to see if the type is an interface (remember that limitedness of 
+interfaces is never inherited, while it is inherited from other types).</SPAN> 
+</DIV>
+<DIV Class="paranum">8</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>ancestor subtype 
+(of a private_extension_declaration)</I>}</SPAN> <A NAME="I3592"></A>The 
+<I>ancestor subtype</I> of a <SPAN Class="swiss"><A HREF="AA-7-3.html#S0177">private_extension_declaration</A></SPAN> 
+is the subtype defined by the <I>ancestor_</I><SPAN Class="swiss"><A HREF="AA-3-2-2.html#S0027">subtype_indication</A></SPAN>; 
+the ancestor type shall be a specific tagged type. The full view of a 
+private extension shall be derived (directly or indirectly) from the 
+ancestor type. In addition to the places where Legality Rules normally 
+apply (see <A HREF="AA-12-3.html">12.3</A>), the requirement that the 
+ancestor be specific applies also in the private part of an instance 
+of a generic unit.&nbsp;</DIV>
+<DIV Class="paranum">8.a</DIV>
+<DIV Class="Annotations"><B>Reason:&nbsp;</B>This rule allows the full view 
+to be defined through several intermediate derivations, possibly from 
+a series of types produced by <SPAN Class="swiss"><A HREF="AA-12-3.html#S0257">generic_instantiation</A></SPAN>s. 
+</DIV>
+<DIV Class="paranum">8.1/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00419.TXT">AI95-00419-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00443.TXT">AI95-00443-01</A></I>} 
+<SPAN class="insert2">If the reserved word <B>limited</B> appears in 
+a <SPAN Class="swiss"><A HREF="AA-7-3.html#S0177">private_extension_declaration</A></SPAN>, 
+the ancestor type shall be a limited type. If the reserved word <B>synchronized</B> 
+appears in a <SPAN Class="swiss"><A HREF="AA-7-3.html#S0177">private_extension_declaration</A></SPAN>, 
+the ancestor type shall be a limited interface.</SPAN></DIV>
+<DIV Class="paranum">9</DIV>
+<DIV Class="Normal">If the declaration of a partial view includes a <SPAN Class="swiss"><A HREF="AA-3-7.html#S0061">known_discriminant_part</A></SPAN>, 
+then the <SPAN Class="swiss"><A HREF="AA-3-2-1.html#S0024">full_type_declaration</A></SPAN> 
+shall have a fully conforming [(explicit)] <SPAN Class="swiss"><A HREF="AA-3-7.html#S0061">known_discriminant_part</A></SPAN> 
+[(see <A HREF="AA-6-3-1.html">6.3.1</A>, &ldquo;<A HREF="AA-6-3-1.html">Conformance 
+Rules</A>&rdquo;)]. <SPAN STYLE="font-size: 80%">{<I>full conformance 
+(required)</I>}</SPAN> <A NAME="I3593"></A>[The ancestor subtype may 
+be unconstrained; the parent subtype of the full view is required to 
+be constrained (see <A HREF="AA-3-7.html">3.7</A>).]&nbsp;</DIV>
+<DIV Class="paranum">9.a</DIV>
+<DIV Class="Annotations"><B>Discussion:&nbsp;</B>If the ancestor subtype has 
+discriminants, then it is usually best to make it unconstrained.&nbsp;</DIV>
+<DIV Class="paranum">9.b</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>If the partial view has 
+a <SPAN Class="swiss"><A HREF="AA-3-7.html#S0061">known_discriminant_part</A></SPAN>, 
+then the full view has to be a composite, non-array type, since only 
+such types may have known discriminants. Also, the full view cannot inherit 
+the discriminants in this case; the <SPAN Class="swiss"><A HREF="AA-3-7.html#S0061">known_discriminant_part</A></SPAN> 
+has to be explicit.</DIV>
+<DIV Class="paranum">9.c</DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em">That is, the following 
+is illegal:&nbsp;</DIV>
+<DIV Class="paranum">9.d</DIV>
+<DIV Class="SmallExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T(D&nbsp;:&nbsp;Integer)&nbsp;<B>is</B>&nbsp;<B>private</B>;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;Some_Other_Type;&nbsp;--<SPAN Class="roman"><I>&nbsp;Illegal!</I></SPAN><BR>
+<B>end</B>&nbsp;P;<BR>
+&nbsp;&nbsp;</DIV>
+<DIV Class="paranum">9.e</DIV>
+<DIV Class="Annotations">even if Some_Other_Type has an integer discriminant 
+called D.</DIV>
+<DIV Class="paranum">9.f</DIV>
+<DIV Class="Annotations">It is a ramification of this and other rules 
+that in order for a tagged type to privately inherit unconstrained discriminants, 
+the private type declaration has to have an <SPAN Class="swiss"><A HREF="AA-3-7.html#S0060">unknown_discriminant_part</A></SPAN>. 
+</DIV>
+<DIV Class="paranum">10</DIV>
+<DIV Class="Normal">If a private extension inherits known discriminants 
+from the ancestor subtype, then the full view shall also inherit its 
+discriminants from the ancestor subtype, and the parent subtype of the 
+full view shall be constrained if and only if the ancestor subtype is 
+constrained.&nbsp;</DIV>
+<DIV Class="paranum">10.a</DIV>
+<DIV Class="Annotations"><B>Reason:&nbsp;</B>The first part ensures that the 
+full view has the same discriminants as the partial view. The second 
+part ensures that if the partial view is unconstrained, then the full 
+view is also unconstrained; otherwise, a client might constrain the partial 
+view in a way that conflicts with the constraint on the full view.&nbsp;</DIV>
+<DIV Class="paranum">10.1/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00419.TXT">AI95-00419-01</A></I>} 
+<SPAN class="insert2">If the <SPAN Class="swiss"><A HREF="AA-3-2-1.html#S0024">full_type_declaration</A></SPAN> 
+for a private extension is defined by a <SPAN Class="swiss"><A HREF="AA-3-4.html#S0035">derived_type_definition</A></SPAN>, 
+then the reserved word <B>limited</B> shall appear in the <SPAN Class="swiss"><A HREF="AA-3-2-1.html#S0024">full_type_declaration</A></SPAN> 
+if and only if it also appears in the <SPAN Class="swiss"><A HREF="AA-7-3.html#S0177">private_extension_declaration</A></SPAN>.</SPAN> 
+</DIV>
+<DIV Class="paranum">10.b/2</DIV>
+<DIV Class="Annotations"><SPAN class="insert2"><B>Reason:&nbsp;</B>The word 
+<B>limited</B> is optional (unless the ancestor is an interface), but 
+it should be used consistently. Otherwise things would be too confusing 
+for the reader. Of course, we only require that if the full type is defined 
+by a <SPAN Class="swiss"><A HREF="AA-3-4.html#S0035">derived_type_definition</A></SPAN>, 
+as we want to allow task and protected types to complete extensions of 
+synchronized interfaces.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">11</DIV>
+<DIV Class="Normal">[If a partial view has unknown discriminants, then 
+the <SPAN Class="swiss"><A HREF="AA-3-2-1.html#S0024">full_type_declaration</A></SPAN> 
+may define a definite or an indefinite subtype, with or without discriminants.]</DIV>
+<DIV Class="paranum">12</DIV>
+<DIV Class="Normal">If a partial view has neither known nor unknown discriminants, 
+then the <SPAN Class="swiss"><A HREF="AA-3-2-1.html#S0024">full_type_declaration</A></SPAN> 
+shall define a definite subtype.</DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Normal">If the ancestor subtype of a private extension has 
+constrained discriminants, then the parent subtype of the full view shall 
+impose a statically matching constraint on those discriminants. <SPAN STYLE="font-size: 80%">{<I>statically 
+matching (required)</I> [partial]}</SPAN> <A NAME="I3594"></A></DIV>
+<DIV Class="paranum">13.a</DIV>
+<DIV Class="Annotations"><B>Ramification:&nbsp;</B>If the parent type of the 
+full view is not the ancestor type, but is rather some descendant thereof, 
+the constraint on the discriminants of the parent type might come from 
+the declaration of some intermediate type in the derivation chain between 
+the ancestor type and the parent type.&nbsp;</DIV>
+<DIV Class="paranum">13.b</DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em"><B>Reason:&nbsp;</B>This 
+prevents the following:&nbsp;</DIV>
+<DIV Class="paranum">13.c</DIV>
+<DIV Class="SmallExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T2&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;T1(Discrim&nbsp;=&gt;&nbsp;3)&nbsp;<B>with</B>&nbsp;<B>private</B>;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T2&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;T1(Discrim&nbsp;=&gt;&nbsp;999)&nbsp;--<SPAN Class="roman"><I>&nbsp;Illegal!</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;<B>record</B>&nbsp;...;<BR>
+<B>end</B>&nbsp;P;</DIV>
+<DIV Class="paranum">13.d</DIV>
+<DIV Class="Annotations">The constraints in this example do not statically 
+match.</DIV>
+<DIV Class="paranum">13.e</DIV>
+<DIV Class="Annotations" Style="margin-bottom: 0.4em">If the constraint 
+on the parent subtype of the full view depends on discriminants of the 
+full view, then the ancestor subtype has to be unconstrained:&nbsp;</DIV>
+<DIV Class="paranum">13.f</DIV>
+<DIV Class="SmallExamples"><B>type</B>&nbsp;One_Discrim(A:&nbsp;Integer)&nbsp;<B>is</B>&nbsp;<B>tagged</B>&nbsp;...;<BR>
+...<BR>
+<B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Two_Discrims(B:&nbsp;Boolean;&nbsp;C:&nbsp;Integer)&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;One_Discrim&nbsp;<B>with</B>&nbsp;<B>private</B>;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Two_Discrims(B:&nbsp;Boolean;&nbsp;C:&nbsp;Integer)&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;One_Discrim(A&nbsp;=&gt;&nbsp;C)&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;<B>record</B>;<BR>
+<B>end</B>&nbsp;P;</DIV>
+<DIV Class="paranum">13.g</DIV>
+<DIV Class="Annotations">The above example would be illegal if the private 
+extension said &ldquo;is new One_Discrim(A =&gt; C);&rdquo;, because 
+then the constraints would not statically match. (Constraints that depend 
+on discriminants are not static.)</DIV>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">14</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>private type</I> 
+[partial]}</SPAN> <A NAME="I3595"></A>A <SPAN Class="swiss"><A HREF="AA-7-3.html#S0176">private_type_declaration</A></SPAN> 
+declares a private type and its first subtype. <SPAN STYLE="font-size: 80%">{<I>private 
+extension</I> [partial]}</SPAN> <A NAME="I3596"></A>Similarly, a <SPAN Class="swiss"><A HREF="AA-7-3.html#S0177">private_extension_declaration</A></SPAN> 
+declares a private extension and its first subtype.&nbsp;</DIV>
+<DIV Class="paranum">14.a</DIV>
+<DIV Class="Annotations"><B>Discussion:&nbsp;</B>{<I>package-private type</I>} 
+<A NAME="I3597"></A>A <I>package-private type</I> is one declared by 
+a <SPAN Class="swiss"><A HREF="AA-7-3.html#S0176">private_type_declaration</A></SPAN>; 
+that is, a private type other than a generic formal private type. {<I>package-private 
+extension</I>} <A NAME="I3598"></A>Similarly, a <I>package-private extension</I> 
+is one declared by a <SPAN Class="swiss"><A HREF="AA-7-3.html#S0177">private_extension_declaration</A></SPAN>. 
+These terms are not used in the RM95 version of this document.&nbsp;</DIV>
+<DIV Class="paranum">15</DIV>
+<DIV Class="Normal">A declaration of a partial view and the corresponding 
+<SPAN Class="swiss"><A HREF="AA-3-2-1.html#S0024">full_type_declaration</A></SPAN> 
+define two views of a single type. The declaration of a partial view 
+together with the visible part define the operations that are available 
+to outside program units; the declaration of the full view together with 
+the private part define other operations whose direct use is possible 
+only within the declarative region of the package itself. <SPAN STYLE="font-size: 80%">{<I>characteristics</I>}</SPAN> 
+<A NAME="I3599"></A>Moreover, within the scope of the declaration of 
+the full view, the <I>characteristics</I> of the type are determined 
+by the full view; in particular, within its scope, the full view determines 
+the classes that include the type, which components, entries, and protected 
+subprograms are visible, what attributes and other predefined operations 
+are allowed, and whether the first subtype is static. See <A HREF="AA-7-3-1.html">7.3.1</A>.</DIV>
+<DIV Class="paranum">16/2</DIV>
+<DIV Class="Normal">&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00401.TXT">AI95-00401</A></I>} 
+A private extension inherits components (including discriminants unless 
+there is a new <SPAN Class="swiss"><A HREF="AA-3-7.html#S0059">discriminant_part</A></SPAN> 
+specified) and user-defined primitive subprograms from its ancestor type<SPAN class="insert2">&nbsp;and its progenitor types (if any)</SPAN>, in the same way that a record 
+extension inherits components and user-defined primitive subprograms 
+from its parent type<SPAN class="insert2">&nbsp;and its progenitor types</SPAN> 
+(see <A HREF="AA-3-4.html">3.4</A>).&nbsp;</DIV>
+<DIV Class="paranum">16.a</DIV>
+<DIV Class="Annotations"><B>To be honest:&nbsp;</B>If an operation of the 
+parent type is abstract, then the abstractness of the inherited operation 
+is different for nonabstract record extensions than for nonabstract private 
+extensions (see <A HREF="AA-3-9-3.html">3.9.3</A>).&nbsp;</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">17</DIV>
+<DIV Class="Normal"><SPAN STYLE="font-size: 80%">{<I>elaboration (private_type_declaration)</I> 
+[partial]}</SPAN> <A NAME="I3600"></A>The elaboration of a <SPAN Class="swiss"><A HREF="AA-7-3.html#S0176">private_type_declaration</A></SPAN> 
+creates a partial view of a type. <SPAN STYLE="font-size: 80%">{<I>elaboration 
+(private_extension_declaration)</I> [partial]}</SPAN> <A NAME="I3601"></A>The 
+elaboration of a <SPAN Class="swiss"><A HREF="AA-7-3.html#S0177">private_extension_declaration</A></SPAN> 
+elaborates the <I>ancestor_</I><SPAN Class="swiss"><A HREF="AA-3-2-2.html#S0027">subtype_indication</A></SPAN>, 
+and creates a partial view of a type.&nbsp;</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">18</DIV>
+<DIV Class="Notes">5&nbsp;&nbsp;The partial view of a type as declared 
+by a <SPAN Class="swiss"><A HREF="AA-7-3.html#S0176">private_type_declaration</A></SPAN> 
+is defined to be a composite view (in <A HREF="AA-3-2.html">3.2</A>). 
+The full view of the type might or might not be composite. A private 
+extension is also composite, as is its full view.</DIV>
+<DIV Class="paranum">19/2</DIV>
+<DIV Class="Notes">6&nbsp;&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-10318.TXT">AI95-00318-02</A></I>} 
+Declaring a private type with an <SPAN Class="swiss"><A HREF="AA-3-7.html#S0060">unknown_discriminant_part</A></SPAN> 
+is a way of preventing clients from creating uninitialized objects of 
+the type; they are then forced to initialize each object by calling some 
+operation declared in the visible part of the package. <SPAN class="delete2">If 
+such a type is also limited, then no objects of the type can be declared 
+outside the scope of the <SPAN Class="swiss"><A HREF="AA-3-2-1.html#S0024">full_type_declaration</A></SPAN>, 
+restricting all object creation to the package defining the type. This 
+allows complete control over all storage allocation for the type. Objects 
+of such a type can still be passed as parameters, however.</SPAN>&nbsp;</DIV>
+<DIV Class="paranum">19.a</DIV>
+<DIV Class="Annotations"><B>Discussion:&nbsp;</B>{<I>generic contract/private 
+type contract analogy</I>} <A NAME="I3602"></A>Packages with private 
+types are analogous to generic packages with formal private types, as 
+follows: The declaration of a package-private type is like the declaration 
+of a formal private type. The visible part of the package is like the 
+generic formal part; these both specify a contract (that is, a set of 
+operations and other things available for the private type). The private 
+part of the package is like an instantiation of the generic; they both 
+give a <SPAN Class="swiss"><A HREF="AA-3-2-1.html#S0024">full_type_declaration</A></SPAN> 
+that specifies implementation details of the private type. The clients 
+of the package are like the body of the generic; usage of the private 
+type in these places is restricted to the operations defined by the contract.</DIV>
+<DIV Class="paranum">19.b</DIV>
+<DIV Class="Annotations">In other words, being inside the package is 
+like being outside the generic, and being outside the package is like 
+being inside the generic; a generic is like an &ldquo;inside-out&rdquo; 
+package.</DIV>
+<DIV Class="paranum">19.c</DIV>
+<DIV Class="Annotations">This analogy also works for private extensions 
+in the same inside-out way.</DIV>
+<DIV Class="paranum">19.d</DIV>
+<DIV Class="Annotations">Many of the legality rules are defined with 
+this analogy in mind. See, for example, the rules relating to operations 
+of [formal] derived types.</DIV>
+<DIV Class="paranum">19.e</DIV>
+<DIV Class="Annotations">The completion rules for a private type are 
+intentionally quite similar to the matching rules for a generic formal 
+private type.</DIV>
+<DIV Class="paranum">19.f</DIV>
+<DIV Class="Annotations">This analogy breaks down in one respect: a generic 
+actual subtype is a subtype, whereas the full view for a private type 
+is always a new type. (We considered allowing the completion of a <SPAN Class="swiss"><A HREF="AA-7-3.html#S0176">private_type_declaration</A></SPAN> 
+to be a <SPAN Class="swiss"><A HREF="AA-3-2-2.html#S0026">subtype_declaration</A></SPAN>, 
+but the semantics just won't work.) This difference is behind the fact 
+that a generic actual type can be class-wide, whereas the completion 
+of a private type always declares a specific type.&nbsp;</DIV>
+<DIV Class="paranum">20/2</DIV>
+<DIV Class="Notes">7&nbsp;&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00401.TXT">AI95-00401</A></I>} 
+The ancestor type specified in a <SPAN Class="swiss"><A HREF="AA-7-3.html#S0177">private_extension_declaration</A></SPAN> 
+and the parent type specified in the corresponding declaration of a record 
+extension given in the private part need not be the same<SPAN class="insert2">. 
+If the ancestor type is not an interface type,</SPAN><SPAN class="delete2">&nbsp;&mdash;</SPAN> the parent type of the full view can be any descendant 
+of the ancestor type. In this case, for a primitive subprogram that is 
+inherited from the ancestor type and not overridden, the formal parameter 
+names and default expressions (if any) come from the corresponding primitive 
+subprogram of the specified ancestor type, while the body comes from 
+the corresponding primitive subprogram of the parent type of the full 
+view. See <A HREF="AA-3-9-2.html">3.9.2</A>.</DIV>
+<DIV Class="paranum">20.1/2</DIV>
+<DIV Class="Notes">8&nbsp;&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00401.TXT">AI95-00401</A></I>} 
+<SPAN class="insert2">If the ancestor type specified in a <SPAN Class="swiss"><A HREF="AA-7-3.html#S0177">private_extension_declaration</A></SPAN> 
+is an interface type, the parent type can be any type so long as the 
+full view is a descendant of the ancestor type. The progenitor types 
+specified in a <SPAN Class="swiss"><A HREF="AA-7-3.html#S0177">private_extension_declaration</A></SPAN> 
+and the progenitor types specified in the corresponding declaration of 
+a record extension given in the private part need not be the same &mdash; 
+the only requirement is that the private extension and the record extension 
+be descended from the same set of interfaces.</SPAN>&nbsp;</DIV>
+
+<H4 Class="centered">Examples</H4>
+<DIV Class="paranum">21</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><I>Examples of private 
+type declarations:</I>&nbsp;</DIV>
+<DIV Class="paranum">22</DIV>
+<DIV Class="Examples"><B>type</B>&nbsp;Key&nbsp;<B>is</B>&nbsp;<B>private</B>;<BR>
+<B>type</B>&nbsp;File_Name&nbsp;<B>is</B>&nbsp;<B>limited</B>&nbsp;<B>private</B>;</DIV>
+<DIV Class="paranum">23</DIV>
+<DIV Class="Wide" Style="margin-bottom: 0.4em"><I>Example of a private 
+extension declaration:</I>&nbsp;</DIV>
+<DIV Class="paranum">24</DIV>
+<DIV Class="Examples"><B>type</B>&nbsp;List&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;Ada.Finalization.Controlled&nbsp;<B>with</B>&nbsp;<B>private</B>;</DIV>
+
+<H4 Class="centered">Extensions to Ada 83</H4>
+<DIV Class="paranum">24.a</DIV>
+<DIV Class="Annotations">{<I>extensions to Ada 83</I>} <A NAME="I3603"></A>The 
+syntax for a <SPAN Class="swiss"><A HREF="AA-7-3.html#S0176">private_type_declaration</A></SPAN> 
+is augmented to allow the reserved word <B>tagged</B>.</DIV>
+<DIV Class="paranum">24.b</DIV>
+<DIV Class="Annotations">In Ada 83, a private type without discriminants 
+cannot be completed with a type with discriminants. Ada 95 allows the 
+full view to have discriminants, so long as they have defaults (that 
+is, so long as the first subtype is definite). This change is made for 
+uniformity with generics, and because the rule as stated is simpler and 
+easier to remember than the Ada 83 rule. In the original version of Ada 
+83, the same restriction applied to generic formal private types. However, 
+the restriction was removed by the ARG for generics. In order to maintain 
+the &ldquo;generic contract/private type contract analogy&rdquo; discussed 
+above, we have to apply the same rule to package-private types. Note 
+that a private untagged type without discriminants can be completed with 
+a tagged type with discriminants only if the full view is constrained, 
+because discriminants of tagged types cannot have defaults.&nbsp;</DIV>
+
+<H4 Class="centered">Wording Changes from Ada 83</H4>
+<DIV Class="paranum">24.c</DIV>
+<DIV Class="Annotations">RM83-7.4.1(4), &ldquo;Within the specification 
+of the package that declares a private type and before the end of the 
+corresponding full type declaration, a restriction applies....&rdquo;, 
+is subsumed (and corrected) by the rule that a type shall be completely 
+defined before it is frozen, and the rule that the parent type of a derived 
+type declaration shall be completely defined, unless the derived type 
+is a private extension.&nbsp;</DIV>
+
+<H4 Class="centered">Extensions to Ada 95</H4>
+<DIV Class="paranum">24.d/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00251.TXT">AI95-00251-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00396.TXT">AI95-00396-01</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00401.TXT">AI95-00401-01</A></I>} 
+<SPAN class="insert2">{<I>extensions to Ada 95</I>} <A NAME="I3604"></A>Added 
+<SPAN Class="swiss"><A HREF="AA-3-9-4.html#S0078">interface_list</A></SPAN> 
+to private extensions to support interfaces and multiple inheritance 
+(see <A HREF="AA-3-9-4.html">3.9.4</A>).</SPAN></DIV>
+<DIV Class="paranum">24.e/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00419.TXT">AI95-00419-01</A></I>} 
+<SPAN class="insert2">A private extension may specify that it is a limited 
+type. This is required for interface ancestors (from which limitedness 
+is not inherited), but it is generally useful as documentation of limitedness.</SPAN></DIV>
+<DIV Class="paranum">24.f/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00443.TXT">AI95-00443-01</A></I>} 
+<SPAN class="insert2">A private extension may specify that it is a synchronized 
+type. This is required in order so that a regular limited interface can 
+be used as the ancestor of a synchronized type (we do not allow hiding 
+of synchronization).</SPAN>&nbsp;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-7-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-7-3-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="font-size: 125%">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

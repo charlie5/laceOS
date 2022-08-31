@@ -1,0 +1,253 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Dispatching Operations of Tagged Types</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    UL.NestedBulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 5.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-3-9-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-3-9-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>3.9.2 Dispatching Operations of Tagged Types</H1>
+<DIV Class="paranum">1/2</DIV>
+<DIV Class="Normal"><A NAME="I2070"></A><A NAME="I2071"></A><A NAME="I2072"></A><A NAME="I2073"></A><A NAME="I2074"></A><A NAME="I2075"></A><A NAME="I2076"></A><A NAME="I2077"></A>The 
+primitive subprograms of a tagged type, the subprograms declared by <SPAN Class="swiss"><A HREF="RM-12-6.html#S0277">formal_abstract_subprogram_declaration</A></SPAN>s, 
+and the stream attributes of a specific tagged type that are available 
+(see <A HREF="RM-13-13-2.html">13.13.2</A>) at the end of the declaration 
+list where the type is declared are called <I>dispatching operations</I>. 
+A dispatching operation can be called using a statically determined <I>controlling</I> 
+tag, in which case the body to be executed is determined at compile time. 
+Alternatively, the controlling tag can be dynamically determined, in 
+which case the call <I>dispatches</I> to a body that is determined at 
+run time; such a call is termed a <I>dispatching call</I>. As explained 
+below, the properties of the operands and the context of a particular 
+call on a dispatching operation determine how the controlling tag is 
+determined, and hence whether or not the call is a dispatching call. 
+Run-time polymorphism is achieved when a dispatching operation is called 
+by a dispatching call. <A NAME="I2078"></A><A NAME="I2079"></A><A NAME="I2080"></A><A NAME="I2081"></A><A NAME="I2082"></A></DIV>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">2/2</DIV>
+<DIV Class="Normal"><A NAME="I2083"></A><A NAME="I2084"></A>A <I>call 
+on a dispatching operation</I> is a call whose <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+denotes the declaration of a dispatching operation. <A NAME="I2085"></A>A 
+<I>controlling operand</I> in a call on a dispatching operation of a 
+tagged type <I>T</I> is one whose corresponding formal parameter is of 
+type <I>T</I> or is of an anonymous access type with designated type 
+<I>T</I>; <A NAME="I2086"></A>the corresponding formal parameter is called 
+a <I>controlling formal parameter</I>. If the controlling formal parameter 
+is an access parameter, the controlling operand is the object designated 
+by the actual parameter, rather than the actual parameter itself. <A NAME="I2087"></A>If 
+the call is to a (primitive) function with result type <I>T</I>, then 
+the call has a <I>controlling result</I> &mdash; the context of the call 
+can control the dispatching. Similarly, if the call is to a function 
+with access result type designating <I>T</I>, then the call has a <I>controlling 
+access result</I>, and the context can similarly control dispatching. 
+</DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">A <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+or expression of a tagged type is either <I>statically</I> tagged, <I>dynamically</I> 
+tagged, or <I>tag indeterminate</I>, according to whether, when used 
+as a controlling operand, the tag that controls dispatching is determined 
+statically by the operand's (specific) type, dynamically by its tag at 
+run time, or from context. A <SPAN Class="swiss"><A HREF="RM-4-7.html#S0128">qualified_expression</A></SPAN> 
+or parenthesized expression is statically, dynamically, or indeterminately 
+tagged according to its operand. For other kinds of <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN>s 
+and expressions, this is determined as follows:&nbsp;</DIV>
+<DIV Class="paranum">4/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I2088"></A>The <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+or expression is <I>statically tagged</I> if it is of a specific tagged 
+type and, if it is a call with a controlling result or controlling access 
+result, it has at least one statically tagged controlling operand;&nbsp;</LI></UL>
+<DIV Class="paranum">5/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I2089"></A>The <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+or expression is <I>dynamically tagged</I> if it is of a class-wide type, 
+or it is a call with a controlling result or controlling access result 
+and at least one dynamically tagged controlling operand;</LI></UL>
+<DIV Class="paranum">6/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I2090"></A>The <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+or expression is <I>tag indeterminate</I> if it is a call with a controlling 
+result or controlling access result, all of whose controlling operands 
+(if any) are tag indeterminate.&nbsp;</LI></UL>
+<DIV Class="paranum">7/1</DIV>
+<DIV Class="Normal">A <SPAN Class="swiss"><A HREF="RM-4-6.html#S0127">type_conversion</A></SPAN> 
+is statically or dynamically tagged according to whether the type determined 
+by the <SPAN Class="swiss"><A HREF="RM-3-2-2.html#S0028">subtype_mark</A></SPAN> 
+is specific or class-wide, respectively. For an object that is designated 
+by an expression whose expected type is an anonymous access-to-specific 
+tagged type, the object is dynamically tagged if the expression, ignoring 
+enclosing parentheses, is of the form X'Access, where X is of a class-wide 
+type, or is of the form <B>new</B> T'(...), where T denotes a class-wide 
+subtype. Otherwise, the object is statically or dynamically tagged according 
+to whether the designated type of the type of the expression is specific 
+or class-wide, respectively.&nbsp;</DIV>
+
+<H4 Class="centered">Legality Rules</H4>
+<DIV Class="paranum">8</DIV>
+<DIV Class="Normal">A call on a dispatching operation shall not have 
+both dynamically tagged and statically tagged controlling operands.&nbsp;</DIV>
+<DIV Class="paranum">9/1</DIV>
+<DIV Class="Normal">If the expected type for an expression or <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+is some specific tagged type, then the expression or <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+shall not be dynamically tagged unless it is a controlling operand in 
+a call on a dispatching operation. Similarly, if the expected type for 
+an expression is an anonymous access-to-specific tagged type, then the 
+object designated by the expression shall not be dynamically tagged unless 
+it is a controlling operand in a call on a dispatching operation.&nbsp;</DIV>
+<DIV Class="paranum">10/2</DIV>
+<DIV Class="Normal">&nbsp;In the declaration of a dispatching operation of 
+a tagged type, everywhere a subtype of the tagged type appears as a subtype 
+of the profile (see <A HREF="RM-6-1.html">6.1</A>), it shall statically 
+match the first subtype of the tagged type. <A NAME="I2091"></A>If the 
+dispatching operation overrides an inherited subprogram, it shall be 
+subtype conformant with the inherited subprogram. <A NAME="I2092"></A>The 
+convention of an inherited dispatching operation is the convention of 
+the corresponding primitive operation of the parent or progenitor type. 
+The default convention of a dispatching operation that overrides an inherited 
+primitive operation is the convention of the inherited operation; if 
+the operation overrides multiple inherited operations, then they shall 
+all have the same convention. An explicitly declared dispatching operation 
+shall not be of convention Intrinsic.&nbsp;</DIV>
+<DIV Class="paranum">11/2</DIV>
+<DIV Class="Normal">&nbsp;The <SPAN Class="swiss"><A HREF="RM-3-7.html#S0063">default_expression</A></SPAN> 
+for a controlling formal parameter of a dispatching operation shall be 
+tag indeterminate.&nbsp;</DIV>
+<DIV Class="paranum">11.1/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;&nbsp;If a dispatching operation is defined by a <SPAN Class="swiss"><A HREF="RM-8-5-4.html#S0186">subprogram_renaming_declaration</A></SPAN> 
+or the instantiation of a generic subprogram, any access parameter of 
+the renamed subprogram or the generic subprogram that corresponds to 
+a controlling access parameter of the dispatching operation, shall have 
+a subtype that excludes null.</DIV>
+<DIV Class="paranum">12</DIV>
+<DIV Class="Normal">A given subprogram shall not be a dispatching operation 
+of two or more distinct tagged types.&nbsp;</DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Normal">The explicit declaration of a primitive subprogram 
+of a tagged type shall occur before the type is frozen (see <A HREF="RM-13-14.html">13.14</A>). 
+For example, new dispatching operations cannot be added after objects 
+or values of the type exist, nor after deriving a record extension from 
+it, nor after a body.</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">14</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><A NAME="I2093"></A><A NAME="I2094"></A>For 
+the execution of a call on a dispatching operation of a type <I>T</I>, 
+the <I>controlling tag value</I> determines which subprogram body is 
+executed. The controlling tag value is defined as follows:&nbsp;</DIV>
+<DIV Class="paranum">15</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I2095"></A>If one or more 
+controlling operands are statically tagged, then the controlling tag 
+value is <I>statically determined</I> to be the tag of <I>T</I>.</LI></UL>
+<DIV Class="paranum">16</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If one or more controlling operands 
+are dynamically tagged, then the controlling tag value is not statically 
+determined, but is rather determined by the tags of the controlling operands. 
+<A NAME="I2096"></A><A NAME="I2097"></A>If there is more than one dynamically 
+tagged controlling operand, a check is made that they all have the same 
+tag. <A NAME="I2098"></A>If this check fails, Constraint_Error is raised 
+unless the call is a <SPAN Class="swiss"><A HREF="RM-6-4.html#S0164">function_call</A></SPAN> 
+whose <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+denotes the declaration of an equality operator (predefined or user defined) 
+that returns Boolean, in which case the result of the call is defined 
+to indicate inequality, and no <SPAN Class="swiss"><A HREF="RM-6-3.html#S0162">subprogram_body</A></SPAN> 
+is executed. This check is performed prior to evaluating any tag-indeterminate 
+controlling operands.&nbsp;</LI></UL>
+<DIV Class="paranum">17/2</DIV>
+<UL Class="Bulleted" Style="margin-bottom: 0.3em"><LI TYPE=DISC>If all 
+of the controlling operands (if any) are tag-indeterminate, then:&nbsp;</LI></UL>
+<DIV Class="paranum">18/2</DIV>
+<UL Class="NestedBulleted"><LI TYPE=DISC>If the call has a controlling 
+result or controlling access result and is itself, or designates, a (possibly 
+parenthesized or qualified) controlling operand of an enclosing call 
+on a dispatching operation of a descendant of type <I>T</I>, then its 
+controlling tag value is determined by the controlling tag value of this 
+enclosing call;</LI></UL>
+<DIV Class="paranum">18.1/2</DIV>
+<UL Class="NestedBulleted"><LI TYPE=DISC>If the call has a controlling 
+result or controlling access result and (possibly parenthesized, qualified, 
+or dereferenced) is the expression of an <SPAN Class="swiss"><A HREF="RM-5-2.html#S0137">assignment_statement</A></SPAN> 
+whose target is of a class-wide type, then its controlling tag value 
+is determined by the target;</LI></UL>
+<DIV Class="paranum">19</DIV>
+<UL Class="NestedBulleted"><LI TYPE=DISC><A NAME="I2099"></A>Otherwise, 
+the controlling tag value is statically determined to be the tag of type 
+<I>T</I>.&nbsp;</LI></UL>
+<DIV Class="paranum">20/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;For the execution 
+of a call on a dispatching operation, the action performed is determined 
+by the properties of the corresponding dispatching operation of the specific 
+type identified by the controlling tag value. If the corresponding operation 
+is explicitly declared for this type, even if the declaration occurs 
+in a private part, then the action comprises an invocation of the explicit 
+body for the operation. If the corresponding operation is implicitly 
+declared for this type:</DIV>
+<DIV Class="paranum">20.1/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>if the operation is implemented by 
+an entry or protected subprogram (see <A HREF="RM-9-1.html">9.1</A> and 
+<A HREF="RM-9-4.html">9.4</A>), then the action comprises a call on this 
+entry or protected subprogram, with the target object being given by 
+the first actual parameter of the call, and the actual parameters of 
+the entry or protected subprogram being given by the remaining actual 
+parameters of the call, if any;</LI></UL>
+<DIV Class="paranum">20.2/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>otherwise, the action is the same 
+as the action for the corresponding operation of the parent type.&nbsp;</LI></UL>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">21</DIV>
+<DIV Class="Notes">72&nbsp;&nbsp;The body to be executed for a call on 
+a dispatching operation is determined by the tag; it does not matter 
+whether that tag is determined statically or dynamically, and it does 
+not matter whether the subprogram's declaration is visible at the place 
+of the call.</DIV>
+<DIV Class="paranum">22/2</DIV>
+<DIV Class="Notes">73&nbsp;&nbsp;This subclause covers calls on dispatching 
+subprograms of a tagged type. Rules for tagged type membership tests 
+are described in <A HREF="RM-4-5-2.html">4.5.2</A>. Controlling tag determination 
+for an <SPAN Class="swiss"><A HREF="RM-5-2.html#S0137">assignment_statement</A></SPAN> 
+is described in <A HREF="RM-5-2.html">5.2</A>.</DIV>
+<DIV Class="paranum">23</DIV>
+<DIV Class="Notes">74&nbsp;&nbsp;A dispatching call can dispatch to a 
+body whose declaration is not visible at the place of the call.</DIV>
+<DIV Class="paranum">24</DIV>
+<DIV Class="Notes">75&nbsp;&nbsp;A call through an access-to-subprogram 
+value is never a dispatching call, even if the access value designates 
+a dispatching operation. Similarly a call whose <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+denotes a <SPAN Class="swiss"><A HREF="RM-8-5-4.html#S0186">subprogram_renaming_declaration</A></SPAN> 
+cannot be a dispatching call unless the renaming itself is the declaration 
+of a primitive subprogram.&nbsp;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-3-9-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-3-9-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

@@ -1,0 +1,463 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>The Package Text_IO</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    SPAN.insert1 {text-decoration: underline; color: rgb(0,51,51) }
+    SPAN.delete1 {text-decoration: line-through; color: rgb(0,51,51) }
+    SPAN.insert2 {text-decoration: underline; color: rgb(0,102,0) }
+    SPAN.delete2 {text-decoration: line-through; color: rgb(0,102,0) }
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Annotations {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 6.2em; margin-bottom: 0.6em}
+    DIV.Examples {font-family: "Courier New", monospace; font-size: 90%; line-height: 122%; margin-left: 3.4em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><B><SPAN Style="font-size:200%; color: rgb(0,51,153)">Annotated</SPAN><SPAN Style="font-size:200%; color: rgb(0,0,102)">&nbsp;Ada Reference Manual</SPAN></B> &mdash; <A HREF="AA-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-A-10.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-A-10-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>A.10.1 The Package Text_IO</H1>
+
+<H4 Class="centered">Static Semantics</H4>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">The library package 
+Text_IO has the following declaration:&nbsp;</DIV>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Examples"><B>with</B>&nbsp;Ada.IO_Exceptions;<BR>
+<B>package</B>&nbsp;Ada.Text_IO&nbsp;<B>is</B><A NAME="I6224"></A></DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6225"></A>File_Type&nbsp;<B>is</B>&nbsp;<B>limited</B>&nbsp;<B>private</B>;</DIV>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6226"></A>File_Mode&nbsp;<B>is</B>&nbsp;(In_File,&nbsp;Out_File,&nbsp;Append_File);</DIV>
+<DIV Class="paranum">5</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6227"></A>Count&nbsp;<B>is</B>&nbsp;<B>range</B>&nbsp;0&nbsp;..&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;<A NAME="I6228"></A>Positive_Count&nbsp;<B>is</B>&nbsp;Count&nbsp;<B>range</B>&nbsp;1&nbsp;..&nbsp;Count'Last;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6229"></A>Unbounded&nbsp;:&nbsp;<B>constant</B>&nbsp;Count&nbsp;:=&nbsp;0;&nbsp;--<SPAN Class="roman"><I>&nbsp;line&nbsp;and&nbsp;page&nbsp;length</I></SPAN></DIV>
+<DIV Class="paranum">6</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;<A NAME="I6230"></A>Field&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>is</B>&nbsp;Integer&nbsp;<B>range</B>&nbsp;0&nbsp;..&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;<A NAME="I6231"></A>Number_Base&nbsp;<B>is</B>&nbsp;Integer&nbsp;<B>range</B>&nbsp;2&nbsp;..&nbsp;16;</DIV>
+<DIV Class="paranum">7</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6232"></A>Type_Set&nbsp;<B>is</B>&nbsp;(Lower_Case,&nbsp;Upper_Case);</DIV>
+<DIV Class="paranum">8</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;File&nbsp;Management</I></SPAN></DIV>
+<DIV Class="paranum">9</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6233"></A>Create&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mode&nbsp;:&nbsp;<B>in</B>&nbsp;File_Mode&nbsp;:=&nbsp;Out_File;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name&nbsp;:&nbsp;<B>in</B>&nbsp;String&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;&quot;&quot;;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;:&nbsp;<B>in</B>&nbsp;String&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;&quot;&quot;);</DIV>
+<DIV Class="paranum">10</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6234"></A>Open&nbsp;&nbsp;&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mode&nbsp;:&nbsp;<B>in</B>&nbsp;File_Mode;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;:&nbsp;<B>in</B>&nbsp;String&nbsp;:=&nbsp;&quot;&quot;);</DIV>
+<DIV Class="paranum">11</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6235"></A>Close&nbsp;&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;File_Type);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6236"></A>Delete&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;File_Type);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6237"></A>Reset&nbsp;&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;File_Type;&nbsp;Mode&nbsp;:&nbsp;<B>in</B>&nbsp;File_Mode);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6238"></A>Reset&nbsp;&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;<B>out</B>&nbsp;File_Type);</DIV>
+<DIV Class="paranum">12</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&nbsp;<A NAME="I6239"></A>Mode&nbsp;&nbsp;&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;File_Mode;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&nbsp;<A NAME="I6240"></A>Name&nbsp;&nbsp;&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&nbsp;<A NAME="I6241"></A>Form&nbsp;&nbsp;&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;String;</DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&nbsp;<A NAME="I6242"></A>Is_Open(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">14</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;Control&nbsp;of&nbsp;default&nbsp;input&nbsp;and&nbsp;output&nbsp;files</I></SPAN></DIV>
+<DIV Class="paranum">15</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6243"></A>Set_Input&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6244"></A>Set_Output(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6245"></A>Set_Error&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type);</DIV>
+<DIV Class="paranum">16</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6246"></A>Standard_Input&nbsp;&nbsp;<B>return</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6247"></A>Standard_Output&nbsp;<B>return</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6248"></A>Standard_Error&nbsp;&nbsp;<B>return</B>&nbsp;File_Type;</DIV>
+<DIV Class="paranum">17</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6249"></A>Current_Input&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6250"></A>Current_Output&nbsp;&nbsp;<B>return</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6251"></A>Current_Error&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;File_Type;</DIV>
+<DIV Class="paranum">18</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;<A NAME="I6252"></A>File_Access&nbsp;<B>is</B>&nbsp;<B>access</B>&nbsp;<B>constant</B>&nbsp;File_Type;</DIV>
+<DIV Class="paranum">19</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6253"></A>Standard_Input&nbsp;&nbsp;<B>return</B>&nbsp;File_Access;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6254"></A>Standard_Output&nbsp;<B>return</B>&nbsp;File_Access;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6255"></A>Standard_Error&nbsp;&nbsp;<B>return</B>&nbsp;File_Access;</DIV>
+<DIV Class="paranum">20</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6256"></A>Current_Input&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;File_Access;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6257"></A>Current_Output&nbsp;&nbsp;<B>return</B>&nbsp;File_Access;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6258"></A>Current_Error&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;File_Access;</DIV>
+<DIV Class="paranum">21/1</DIV>
+<DIV Class="Examples">{<I><A HREF="defect1.html#8652/0051">8652/0051</A></I>} 
+{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00057.TXT">AI95-00057-01</A></I>} 
+--<SPAN Class="roman"><I>Buffer&nbsp;control</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6259"></A>Flush&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;<SPAN class="delete1"><B>out</B>&nbsp;</SPAN>File_Type);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6260"></A>Flush;</DIV>
+<DIV Class="paranum">22</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;Specification&nbsp;of&nbsp;line&nbsp;and&nbsp;page&nbsp;lengths</I></SPAN></DIV>
+<DIV Class="paranum">23</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6261"></A>Set_Line_Length(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;&nbsp;To&nbsp;:&nbsp;<B>in</B>&nbsp;Count);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6262"></A>Set_Line_Length(To&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Count);</DIV>
+<DIV Class="paranum">24</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6263"></A>Set_Page_Length(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;&nbsp;To&nbsp;:&nbsp;<B>in</B>&nbsp;Count);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6264"></A>Set_Page_Length(To&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Count);</DIV>
+<DIV Class="paranum">25</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&nbsp;<A NAME="I6265"></A>Line_Length(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;Count;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&nbsp;<A NAME="I6266"></A>Line_Length&nbsp;<B>return</B>&nbsp;Count;</DIV>
+<DIV Class="paranum">26</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&nbsp;<A NAME="I6267"></A>Page_Length(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;Count;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&nbsp;<A NAME="I6268"></A>Page_Length&nbsp;<B>return</B>&nbsp;Count;</DIV>
+<DIV Class="paranum">27</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;Column,&nbsp;Line,&nbsp;and&nbsp;Page&nbsp;Control</I></SPAN></DIV>
+<DIV Class="paranum">28</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6269"></A>New_Line&nbsp;&nbsp;&nbsp;(File&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Spacing&nbsp;:&nbsp;<B>in</B>&nbsp;Positive_Count&nbsp;:=&nbsp;1);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6270"></A>New_Line&nbsp;&nbsp;&nbsp;(Spacing&nbsp;:&nbsp;<B>in</B>&nbsp;Positive_Count&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">29</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6271"></A>Skip_Line&nbsp;&nbsp;(File&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Spacing&nbsp;:&nbsp;<B>in</B>&nbsp;Positive_Count&nbsp;:=&nbsp;1);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6272"></A>Skip_Line&nbsp;&nbsp;(Spacing&nbsp;:&nbsp;<B>in</B>&nbsp;Positive_Count&nbsp;:=&nbsp;1);</DIV>
+<DIV Class="paranum">30</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&nbsp;<A NAME="I6273"></A>End_Of_Line(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&nbsp;<A NAME="I6274"></A>End_Of_Line&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">31</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6275"></A>New_Page&nbsp;&nbsp;&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6276"></A>New_Page;</DIV>
+<DIV Class="paranum">32</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6277"></A>Skip_Page&nbsp;&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6278"></A>Skip_Page;</DIV>
+<DIV Class="paranum">33</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&nbsp;<A NAME="I6279"></A>End_Of_Page(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&nbsp;<A NAME="I6280"></A>End_Of_Page&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">34</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&nbsp;<A NAME="I6281"></A>End_Of_File(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;&nbsp;<A NAME="I6282"></A>End_Of_File&nbsp;<B>return</B>&nbsp;Boolean;</DIV>
+<DIV Class="paranum">35</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6283"></A>Set_Col&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;&nbsp;To&nbsp;:&nbsp;<B>in</B>&nbsp;Positive_Count);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6284"></A>Set_Col&nbsp;(To&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive_Count);</DIV>
+<DIV Class="paranum">36</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6285"></A>Set_Line(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;&nbsp;To&nbsp;:&nbsp;<B>in</B>&nbsp;Positive_Count);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6286"></A>Set_Line(To&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Positive_Count);</DIV>
+<DIV Class="paranum">37</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6287"></A>Col&nbsp;(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;Positive_Count;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6288"></A>Col&nbsp;&nbsp;<B>return</B>&nbsp;Positive_Count;</DIV>
+<DIV Class="paranum">38</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6289"></A>Line(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;Positive_Count;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6290"></A>Line&nbsp;<B>return</B>&nbsp;Positive_Count;</DIV>
+<DIV Class="paranum">39</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6291"></A>Page(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;Positive_Count;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6292"></A>Page&nbsp;<B>return</B>&nbsp;Positive_Count;</DIV>
+<DIV Class="paranum">40</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;Character&nbsp;Input-Output</I></SPAN></DIV>
+<DIV Class="paranum">41</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6293"></A>Get(File&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;&nbsp;Item&nbsp;:&nbsp;<B>out</B>&nbsp;Character);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6294"></A>Get(Item&nbsp;:&nbsp;<B>out</B>&nbsp;Character);</DIV>
+<DIV Class="paranum">42</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6295"></A>Put(File&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;&nbsp;Item&nbsp;:&nbsp;<B>in</B>&nbsp;Character);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6296"></A>Put(Item&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;Character);</DIV>
+<DIV Class="paranum">43</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6297"></A>Look_Ahead&nbsp;(File&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Character;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;End_Of_Line&nbsp;:&nbsp;<B>out</B>&nbsp;Boolean);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6298"></A>Look_Ahead&nbsp;(Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Character;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;End_Of_Line&nbsp;:&nbsp;<B>out</B>&nbsp;Boolean);</DIV>
+<DIV Class="paranum">44</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6299"></A>Get_Immediate(File&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Character);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6300"></A>Get_Immediate(Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Character);</DIV>
+<DIV Class="paranum">45</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6301"></A>Get_Immediate(File&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Character;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Available&nbsp;:&nbsp;<B>out</B>&nbsp;Boolean);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6302"></A>Get_Immediate(Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Character;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Available&nbsp;:&nbsp;<B>out</B>&nbsp;Boolean);</DIV>
+<DIV Class="paranum">46</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;String&nbsp;Input-Output</I></SPAN></DIV>
+<DIV Class="paranum">47</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6303"></A>Get(File&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;&nbsp;Item&nbsp;:&nbsp;<B>out</B>&nbsp;String);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6304"></A>Get(Item&nbsp;:&nbsp;<B>out</B>&nbsp;String);</DIV>
+<DIV Class="paranum">48</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6305"></A>Put(File&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;&nbsp;Item&nbsp;:&nbsp;<B>in</B>&nbsp;String);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6306"></A>Put(Item&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;String);</DIV>
+<DIV Class="paranum">49</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6307"></A>Get_Line(File&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>out</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last&nbsp;:&nbsp;<B>out</B>&nbsp;Natural);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6308"></A>Get_Line(Item&nbsp;:&nbsp;<B>out</B>&nbsp;String;&nbsp;Last&nbsp;:&nbsp;<B>out</B>&nbsp;Natural);</DIV>
+<DIV Class="paranum">49.1/2</DIV>
+<DIV Class="Examples">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00301.TXT">AI95-00301-01</A></I>} 
+<SPAN class="insert2">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6309"></A>Get_Line(File&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;<A NAME="I6310"></A>Get_Line&nbsp;<B>return</B>&nbsp;String;</SPAN></DIV>
+<DIV Class="paranum">50</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6311"></A>Put_Line(File&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;&nbsp;Item&nbsp;:&nbsp;<B>in</B>&nbsp;String);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6312"></A>Put_Line(Item&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;String);</DIV>
+<DIV Class="paranum">51</DIV>
+<DIV Class="Examples">--<SPAN Class="roman"><I>&nbsp;Generic&nbsp;packages&nbsp;for&nbsp;Input-Output&nbsp;of&nbsp;Integer&nbsp;Types</I></SPAN></DIV>
+<DIV Class="paranum">52</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Num&nbsp;<B>is</B>&nbsp;<B>range</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;<A NAME="I6313"></A>Integer_IO&nbsp;<B>is</B></DIV>
+<DIV Class="paranum">53</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6314"></A>Default_Width&nbsp;:&nbsp;Field&nbsp;:=&nbsp;Num'Width;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6315"></A>Default_Base&nbsp;&nbsp;:&nbsp;Number_Base&nbsp;:=&nbsp;10;</DIV>
+<DIV Class="paranum">54</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6316"></A>Get(File&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;0);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6317"></A>Get(Item&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;Field&nbsp;:=&nbsp;0);</DIV>
+<DIV Class="paranum">55</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6318"></A>Put(File&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Width;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Base&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Number_Base&nbsp;:=&nbsp;Default_Base);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6319"></A>Put(Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Width;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Base&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Number_Base&nbsp;:=&nbsp;Default_Base);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6320"></A>Get(From&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>out</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last&nbsp;:&nbsp;<B>out</B>&nbsp;Positive);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6321"></A>Put(To&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Base&nbsp;:&nbsp;<B>in</B>&nbsp;Number_Base&nbsp;:=&nbsp;Default_Base);</DIV>
+<DIV Class="paranum">56</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Integer_IO;</DIV>
+<DIV Class="paranum">57</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Num&nbsp;<B>is</B>&nbsp;<B>mod</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;<A NAME="I6322"></A>Modular_IO&nbsp;<B>is</B></DIV>
+<DIV Class="paranum">58</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6323"></A>Default_Width&nbsp;:&nbsp;Field&nbsp;:=&nbsp;Num'Width;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6324"></A>Default_Base&nbsp;&nbsp;:&nbsp;Number_Base&nbsp;:=&nbsp;10;</DIV>
+<DIV Class="paranum">59</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6325"></A>Get(File&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;0);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6326"></A>Get(Item&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;Field&nbsp;:=&nbsp;0);</DIV>
+<DIV Class="paranum">60</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6327"></A>Put(File&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Width;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Base&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Number_Base&nbsp;:=&nbsp;Default_Base);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6328"></A>Put(Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Width;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Base&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Number_Base&nbsp;:=&nbsp;Default_Base);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6329"></A>Get(From&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>out</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last&nbsp;:&nbsp;<B>out</B>&nbsp;Positive);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6330"></A>Put(To&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Base&nbsp;:&nbsp;<B>in</B>&nbsp;Number_Base&nbsp;:=&nbsp;Default_Base);</DIV>
+<DIV Class="paranum">61</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Modular_IO;</DIV>
+<DIV Class="paranum">62</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;Generic&nbsp;packages&nbsp;for&nbsp;Input-Output&nbsp;of&nbsp;Real&nbsp;Types</I></SPAN></DIV>
+<DIV Class="paranum">63</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Num&nbsp;<B>is</B>&nbsp;<B>digits</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;<A NAME="I6331"></A>Float_IO&nbsp;<B>is</B></DIV>
+<DIV Class="paranum">64</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6332"></A>Default_Fore&nbsp;:&nbsp;Field&nbsp;:=&nbsp;2;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6333"></A>Default_Aft&nbsp;&nbsp;:&nbsp;Field&nbsp;:=&nbsp;Num'Digits-1;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6334"></A>Default_Exp&nbsp;&nbsp;:&nbsp;Field&nbsp;:=&nbsp;3;</DIV>
+<DIV Class="paranum">65</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6335"></A>Get(File&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;Field&nbsp;:=&nbsp;0);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6336"></A>Get(Item&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;Field&nbsp;:=&nbsp;0);</DIV>
+<DIV Class="paranum">66</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6337"></A>Put(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fore&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Fore;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Aft&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Aft;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exp&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Exp);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6338"></A>Put(Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fore&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Fore;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Aft&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Aft;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exp&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Exp);</DIV>
+<DIV Class="paranum">67</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6339"></A>Get(From&nbsp;:&nbsp;<B>in</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>out</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last&nbsp;:&nbsp;<B>out</B>&nbsp;Positive);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6340"></A>Put(To&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Aft&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Aft;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exp&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Exp);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Float_IO;</DIV>
+<DIV Class="paranum">68</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Num&nbsp;<B>is</B>&nbsp;<B>delta</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;<A NAME="I6341"></A>Fixed_IO&nbsp;<B>is</B></DIV>
+<DIV Class="paranum">69</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6342"></A>Default_Fore&nbsp;:&nbsp;Field&nbsp;:=&nbsp;Num'Fore;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6343"></A>Default_Aft&nbsp;&nbsp;:&nbsp;Field&nbsp;:=&nbsp;Num'Aft;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6344"></A>Default_Exp&nbsp;&nbsp;:&nbsp;Field&nbsp;:=&nbsp;0;</DIV>
+<DIV Class="paranum">70</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6345"></A>Get(File&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;Field&nbsp;:=&nbsp;0);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6346"></A>Get(Item&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;Field&nbsp;:=&nbsp;0);</DIV>
+<DIV Class="paranum">71</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6347"></A>Put(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fore&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Fore;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Aft&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Aft;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exp&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Exp);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6348"></A>Put(Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fore&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Fore;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Aft&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Aft;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exp&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Exp);</DIV>
+<DIV Class="paranum">72</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6349"></A>Get(From&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>out</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last&nbsp;:&nbsp;<B>out</B>&nbsp;Positive);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6350"></A>Put(To&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Aft&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Aft;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exp&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Exp);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Fixed_IO;</DIV>
+<DIV Class="paranum">73</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Num&nbsp;<B>is</B>&nbsp;<B>delta</B>&nbsp;&lt;&gt;&nbsp;<B>digits</B>&nbsp;&lt;&gt;;<BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;<A NAME="I6351"></A>Decimal_IO&nbsp;<B>is</B></DIV>
+<DIV Class="paranum">74</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6352"></A>Default_Fore&nbsp;:&nbsp;Field&nbsp;:=&nbsp;Num'Fore;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6353"></A>Default_Aft&nbsp;&nbsp;:&nbsp;Field&nbsp;:=&nbsp;Num'Aft;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6354"></A>Default_Exp&nbsp;&nbsp;:&nbsp;Field&nbsp;:=&nbsp;0;</DIV>
+<DIV Class="paranum">75</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6355"></A>Get(File&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;Field&nbsp;:=&nbsp;0);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6356"></A>Get(Item&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;Field&nbsp;:=&nbsp;0);</DIV>
+<DIV Class="paranum">76</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6357"></A>Put(File&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fore&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Fore;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Aft&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Aft;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exp&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Exp);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6358"></A>Put(Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fore&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Fore;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Aft&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Aft;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exp&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Exp);</DIV>
+<DIV Class="paranum">77</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6359"></A>Get(From&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>out</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last&nbsp;:&nbsp;<B>out</B>&nbsp;Positive);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6360"></A>Put(To&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>in</B>&nbsp;Num;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Aft&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Aft;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exp&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;:=&nbsp;Default_Exp);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Decimal_IO;</DIV>
+<DIV Class="paranum">78</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;Generic&nbsp;package&nbsp;for&nbsp;Input-Output&nbsp;of&nbsp;Enumeration&nbsp;Types</I></SPAN></DIV>
+<DIV Class="paranum">79</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Enum&nbsp;<B>is</B>&nbsp;(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;<A NAME="I6361"></A>Enumeration_IO&nbsp;<B>is</B></DIV>
+<DIV Class="paranum">80</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6362"></A>Default_Width&nbsp;&nbsp;&nbsp;:&nbsp;Field&nbsp;:=&nbsp;0;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A NAME="I6363"></A>Default_Setting&nbsp;:&nbsp;Type_Set&nbsp;:=&nbsp;Upper_Case;</DIV>
+<DIV Class="paranum">81</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6364"></A>Get(File&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>out</B>&nbsp;Enum);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6365"></A>Get(Item&nbsp;:&nbsp;<B>out</B>&nbsp;Enum);</DIV>
+<DIV Class="paranum">82</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6366"></A>Put(File&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;File_Type;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Enum;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;Default_Width;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Type_Set&nbsp;:=&nbsp;Default_Setting);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6367"></A>Put(Item&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Enum;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp;:&nbsp;<B>in</B>&nbsp;Field&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;Default_Width;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set&nbsp;&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;Type_Set&nbsp;:=&nbsp;Default_Setting);</DIV>
+<DIV Class="paranum">83</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6368"></A>Get(From&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>out</B>&nbsp;Enum;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last&nbsp;:&nbsp;<B>out</B>&nbsp;Positive);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;<A NAME="I6369"></A>Put(To&nbsp;&nbsp;&nbsp;:&nbsp;<B>out</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;Enum;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set&nbsp;&nbsp;:&nbsp;<B>in</B>&nbsp;&nbsp;Type_Set&nbsp;:=&nbsp;Default_Setting);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Enumeration_IO;</DIV>
+<DIV Class="paranum">84</DIV>
+<DIV Class="Examples">--<SPAN Class="roman"><I>&nbsp;Exceptions</I></SPAN></DIV>
+<DIV Class="paranum">85</DIV>
+<DIV Class="Examples">&nbsp;&nbsp;&nbsp;<A NAME="I6370"></A>Status_Error&nbsp;:&nbsp;<B>exception</B>&nbsp;<B>renames</B>&nbsp;IO_Exceptions.Status_Error;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6371"></A>Mode_Error&nbsp;&nbsp;&nbsp;:&nbsp;<B>exception</B>&nbsp;<B>renames</B>&nbsp;IO_Exceptions.Mode_Error;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6372"></A>Name_Error&nbsp;&nbsp;&nbsp;:&nbsp;<B>exception</B>&nbsp;<B>renames</B>&nbsp;IO_Exceptions.Name_Error;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6373"></A>Use_Error&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>exception</B>&nbsp;<B>renames</B>&nbsp;IO_Exceptions.Use_Error;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6374"></A>Device_Error&nbsp;:&nbsp;<B>exception</B>&nbsp;<B>renames</B>&nbsp;IO_Exceptions.Device_Error;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6375"></A>End_Error&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<B>exception</B>&nbsp;<B>renames</B>&nbsp;IO_Exceptions.End_Error;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6376"></A>Data_Error&nbsp;&nbsp;&nbsp;:&nbsp;<B>exception</B>&nbsp;<B>renames</B>&nbsp;IO_Exceptions.Data_Error;<BR>
+&nbsp;&nbsp;&nbsp;<A NAME="I6377"></A>Layout_Error&nbsp;:&nbsp;<B>exception</B>&nbsp;<B>renames</B>&nbsp;IO_Exceptions.Layout_Error;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;Ada.Text_IO;</DIV>
+<DIV Class="paranum">86/2</DIV>
+<DIV Class="Normal">&nbsp;{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00360.TXT">AI95-00360-01</A></I>} 
+<SPAN class="insert2">The type File_Type needs finalization (see <A HREF="AA-7-6.html">7.6</A>).</SPAN></DIV>
+
+<H4 Class="centered">Incompatibilities With Ada 83</H4>
+<DIV Class="paranum">86.a</DIV>
+<DIV Class="Annotations">{<I>incompatibilities with Ada 83</I>} <A NAME="I6378"></A>Append_File 
+is a new element of enumeration type File_Mode.&nbsp;</DIV>
+
+<H4 Class="centered">Extensions to Ada 83</H4>
+<DIV Class="paranum">86.b</DIV>
+<DIV Class="Annotations">{<I>extensions to Ada 83</I>} <A NAME="I6379"></A>Get_Immediate, 
+Look_Ahead, the subprograms for dealing with standard error, the type 
+File_Access and its associated subprograms, and the generic packages 
+Modular_IO and Decimal_IO are new in Ada 95.&nbsp;</DIV>
+
+<H4 Class="centered">Incompatibilities With Ada 95</H4>
+<DIV Class="paranum">86.c/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00360.TXT">AI95-00360-01</A></I>} 
+<SPAN class="insert2">{<I>incompatibilities with Ada 95</I>} <A NAME="I6380"></A><B>Amendment 
+Correction:</B> Text_IO.File_Type is defined to need finalization. If 
+the restriction No_Nested_Finalization (see <A HREF="AA-D-7.html">D.7</A>) 
+applies to the partition, and File_Type does not have a controlled part, 
+it will not be allowed in local objects in Ada 2005 whereas it would 
+be allowed in original Ada 95. Such code is not portable, as another 
+Ada compiler may have a controlled part in File_Type, and thus would 
+be illegal.</SPAN>&nbsp;</DIV>
+
+<H4 Class="centered">Wording Changes from Ada 95</H4>
+<DIV Class="paranum">86.d/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="defect1.html#8652/0051">8652/0051</A></I>} 
+<SPAN class="insert2"></SPAN>{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00057.TXT">AI95-00057-01</A></I>} 
+<SPAN class="insert2"><B>Corrigendum:</B> Corrected the parameter mode 
+of Flush; otherwise it could not be used on Standard_Output.</SPAN></DIV>
+<DIV Class="paranum">86.e/2</DIV>
+<DIV Class="Annotations">{<I><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00301.TXT">AI95-00301-01</A></I>} 
+<SPAN class="insert2">The Text_IO.Get_Line functions are new; they are 
+described in <A HREF="AA-A-10-7.html">A.10.7</A>, &ldquo;<A HREF="AA-A-10-7.html">Input-Output 
+of Characters and Strings</A>&rdquo;.</SPAN>&nbsp;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="AA-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-A-10.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="AA-A-10-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="font-size: 125%">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

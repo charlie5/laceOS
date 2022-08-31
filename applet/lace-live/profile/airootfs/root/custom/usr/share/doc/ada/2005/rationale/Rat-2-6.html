@@ -1,0 +1,462 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Object factory functions</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-2-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-2-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>2.6 Object factory functions</H1>
+<div class="Normal">The Ada 95 Rationale (<A HREF="http://www.adaic.org/resources/add_content/standards/95rat/rat95html/rat95-p2-4.">Section 
+4.4.1</A>) <A HREF="Rat-0-2.html#R7">[7]</A> says &quot;We also note 
+that object oriented programming requires thought especially if variant 
+programming is to be avoided. There is a general difficulty in finding 
+out what is coming which is particularly obvious with input&ndash;output; 
+it is easy to write dispatching output operations but generally impossible 
+for input.&quot; In this context, variant programming means messing about 
+with case statements and so on.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The point about input&ndash;output 
+is that it is easy to write a heterogeneous file but not so easy to read 
+it. In the simple case of a text file we can just do a series of calls 
+of <SPAN Class="swiss">Put</SPAN> thus&nbsp;</div>
+<div class="SwissExamples">Put&nbsp;(&quot;John&nbsp;is&nbsp;&quot;);&nbsp;&nbsp;Put(21,&nbsp;0);&nbsp;&nbsp;Put(&quot;&nbsp;years&nbsp;old.&quot;);</div>
+<div class="Normal">But text input is not so easy unless we know the 
+order of the items in the file. If we don't know the order then we really 
+have to read the wretched thing a line at a time and then analyse the 
+lines.</div>
+<div class="Normal">Ada 95 includes a mechanism for doing this relatively 
+easily in the case of tagged types and stream input&ndash;output. Suppose 
+we have a class of tagged types rooted at <SPAN Class="swiss">Root</SPAN> 
+with various derived specific types <SPAN Class="swiss">T1</SPAN>, <SPAN Class="swiss">T2</SPAN> 
+and so on. We can then output a sequence of values <SPAN Class="swiss">X1</SPAN>, 
+<SPAN Class="swiss">X2</SPAN>, <SPAN Class="swiss">X3</SPAN> of a variety 
+of these types to a file identified by the stream access value <SPAN Class="swiss">S</SPAN> 
+by writing&nbsp;</div>
+<div class="SwissExamples">Root'Class'Output(S,&nbsp;X1);<BR>
+Root'Class'Output(S,&nbsp;X2);<BR>
+Root'Class'Output(S,&nbsp;X3);<BR>
+...</div>
+<div class="Normal">The various calls first write the tag of the specific 
+type and then the value of the type. The tag corresponding to the type<SPAN Class="swiss">&nbsp;T1</SPAN> is the string <SPAN Class="swiss">External_Tag(T1'Tag)</SPAN>. 
+Remember that <SPAN Class="swiss">External_Tag</SPAN> is a function in 
+the predefined package <SPAN Class="swiss">Ada.Tags</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">On input we can reverse 
+the process by writing something like&nbsp;</div>
+<div class="SwissExamples"><B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;X:&nbsp;Root'Class&nbsp;:=&nbsp;Root'Class'Input(S);<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Process(X);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>now&nbsp;process&nbsp;the&nbsp;object&nbsp;in&nbsp;X</I></SPAN></div>
+<div class="Normal">The call of <SPAN Class="swiss">Root'Class'Input</SPAN> 
+first reads the external tag and then dispatches to the appropriate function 
+<SPAN Class="swiss">Tn'Input</SPAN> according to the value of the tag. 
+The function reads the value and this is now assigned as the initial 
+value to the class wide variable <SPAN Class="swiss">X</SPAN>. We can 
+then do whatever we want with <SPAN Class="swiss">X</SPAN> by perhaps 
+dispatching to a procedure <SPAN Class="swiss">Process</SPAN> which deals 
+with it according to its specific type.</div>
+<div class="Normal">This works in Ada 95 but it is all magic and done 
+by smoke and mirrors inside the implementation. The underlying techniques 
+are unfortunately not available to the user.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This means that if 
+we want to devise our own stream protocol or maybe just process some 
+values in circumstances where we cannot directly use dispatching then 
+we have to do it all ourselves with if statements or case statements. 
+Thus we might be given a tag value and separately some information from 
+which we can create the values of the particular type. In Ada 95 we typically 
+have to do something like&nbsp;</div>
+<div class="SwissExamples">The_Tag:&nbsp;Ada.Tags.Tag;<BR>
+A_T1:&nbsp;T1;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>series&nbsp;of&nbsp;objects&nbsp;of&nbsp;each</I></SPAN><BR>
+A_T2:&nbsp;T2;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>specific&nbsp;type</I></SPAN><BR>
+A_T3:&nbsp;T3;<BR>
+...<BR>
+The_Tag&nbsp;:=&nbsp;Get_Tag(&nbsp;...&nbsp;);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>get&nbsp;the&nbsp;tag&nbsp;value</I></SPAN><BR>
+<B>if</B>&nbsp;The_Tag&nbsp;=&nbsp;T1'Tag&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;A_T1&nbsp;:=&nbsp;Get_T(&nbsp;...&nbsp;);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>get&nbsp;value&nbsp;of&nbsp;specific&nbsp;type</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;Process(A_T1);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>process&nbsp;the&nbsp;object</I></SPAN><BR>
+<B>elsif</B>&nbsp;The_Tag&nbsp;=&nbsp;T2'Tag&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;A_T2&nbsp;:=&nbsp;Get_T(&nbsp;...&nbsp;);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>get&nbsp;value&nbsp;of&nbsp;specific&nbsp;type</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;Process(A_T2);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>process&nbsp;the&nbsp;object</I></SPAN><BR>
+<B>elsif</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal">We assume that <SPAN Class="swiss">Get_T</SPAN> is 
+a primitive function of the class rooted at <SPAN Class="swiss">Root</SPAN>. 
+There is therefore a function for each specific type and the selection 
+in the if statements is made at compile time by the normal overload rules. 
+Similarly <SPAN Class="swiss">Process</SPAN> is also a primitive subprogram 
+of the class of types.</div>
+<div class="Normal">This is all very tedious and needs careful maintenance 
+if we add further types to the class.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 2005 overcomes 
+this problem by providing a generic constructor function. The objective 
+of this is to create an object given the value of its tag. Such functions 
+are often called object factory functions for obvious reasons (the word 
+factory is derived from the Latin facere, to make). The specification 
+of the function is<A NAME="I1083"></A><A NAME="I1084"></A><A NAME="I1085"></A><A NAME="I1086"></A> 
+</div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;(&lt;&gt;)&nbsp;<B>is&nbsp;abstract&nbsp;tagged&nbsp;limited&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Parameters&nbsp;(&lt;&gt;)&nbsp;<B>is&nbsp;limited&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Constructor(Params:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;Parameters)<BR>
+<B>return</B>&nbsp;T&nbsp;<B>is&nbsp;abstract</B>;<BR>
+<B>function</B>&nbsp;Ada.Tags.Generic_Dispatching_Constructor<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(The_Tag:&nbsp;Tag;&nbsp;Params:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;Parameters)&nbsp;<B>return</B>&nbsp;T'Class;<BR>
+<B>pragma</B>&nbsp;Preelaborate(Generic_Dispatching_Constructor);<BR>
+<B>pragma</B>&nbsp;Convention(Intrinsic,&nbsp;Generic_Dispatching_Constructor);</div>
+<div class="Normal">This generic function works for both limited and 
+nonlimited types. Remember that a nonlimited type is allowed as an actual 
+generic parameter corresponding to a limited formal generic type. The 
+generic function <SPAN Class="swiss">Generic_Dispatching_Constructor</SPAN> 
+is preelaborable and has convention <SPAN Class="swiss">Intrinsic</SPAN>.</div>
+<div class="Normal">Note carefully the formal function <SPAN Class="swiss">Constructor</SPAN>. 
+This is an example of a new kind of formal generic parameter introduced 
+in Ada 2005. The distinctive feature is the use of <B>is abstract</B> 
+in its specification. The interpretation is that the actual function 
+must be a dispatching operation of a tagged type uniquely identified 
+by the profile of the formal function. The actual operation can be concrete 
+or abstract. Remember that the overriding rules ensure that the specific 
+operation for any concrete type will always have a concrete body. Note 
+also that since the operation is abstract it can only be called through 
+dispatching.</div>
+<div class="Normal">In this example, it therefore has to be a dispatching 
+operation of the type <SPAN Class="swiss">T</SPAN> since that is the 
+only tagged type involved in the profile of <SPAN Class="swiss">Constructor</SPAN>. 
+We say that <SPAN Class="swiss">T</SPAN> is the controlling type. In 
+the general case, the controlling type does not itself have to be a formal 
+parameter of the generic unit but usually will be as here. Moreover, 
+note that although the operation has to be a dispatching operation, it 
+is not primitive and so if we derive from the type <SPAN Class="swiss">T</SPAN>, 
+it will not be inherited.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Formal abstract subprograms 
+can of course be procedures as well as functions. It is important that 
+there is exactly one controlling type in the profile. Thus given that 
+<SPAN Class="swiss">TT1</SPAN> and <SPAN Class="swiss">TT2</SPAN> are 
+tagged types then the following would both be illegal&nbsp;</div>
+<div class="SwissExamples"><B>with&nbsp;procedure</B>&nbsp;Do_This(X1:&nbsp;TT1;&nbsp;X2:&nbsp;TT2)&nbsp;<B>is&nbsp;abstract</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+<B>with&nbsp;function</B>&nbsp;Fn(X:&nbsp;Float)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is&nbsp;abstract</B>;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal">The procedure <SPAN Class="swiss">Do_This</SPAN> 
+is illegal because it has two controlling types <SPAN Class="swiss">TT1</SPAN> 
+and <SPAN Class="swiss">TT2</SPAN>. Remember that we can declare a subprogram 
+with parameters of more than one tagged type but it can only be a dispatching 
+operation of one tagged type. The function <SPAN Class="swiss">Fn</SPAN> 
+is illegal because it doesn't have any controlling types at all (and 
+so could never be called in a dispatching call anyway).</div>
+<div class="Normal">The formal function <SPAN Class="swiss">Constructor</SPAN> 
+is legal because only <SPAN Class="swiss">T</SPAN> is tagged; the type 
+<SPAN Class="swiss">Parameters</SPAN> which also occurs in its profile 
+is not tagged.</div>
+<div class="Normal">And now to return to the dispatching constructor. 
+The idea is that we instantiate the generic function with a (root) tagged 
+type <SPAN Class="swiss">T</SPAN>, some type <SPAN Class="swiss">Parameters</SPAN> 
+and the dispatching function <SPAN Class="swiss">Constructor</SPAN>. 
+The type <SPAN Class="swiss">Parameters</SPAN> provides a means whereby 
+auxiliary information can be passed to the function <SPAN Class="swiss">Constructor</SPAN>.</div>
+<div class="Normal">The generic function <SPAN Class="swiss">Generic_Dispatching_Constructor</SPAN> 
+takes two parameters, one is the tag of the type of the object to be 
+created and the other is the auxiliary information to be passed to the 
+dispatching function <SPAN Class="swiss">Constructor</SPAN>.<A NAME="I1087"></A><A NAME="I1088"></A><A NAME="I1089"></A><A NAME="I1090"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that the type 
+<SPAN Class="swiss">Parameters</SPAN> is used as an access parameter 
+in both the generic function and the formal function <SPAN Class="swiss">Constructor</SPAN>. 
+This is so that it can be matched by the profile of the attribute <SPAN Class="swiss">Input</SPAN> 
+whose specification is&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;T'Input(Stream:&nbsp;<B>access</B>&nbsp;Root_Stream_Type'Class)&nbsp;<B>return</B>&nbsp;T;</div>
+<div class="Normal">Suppose we instantiate <SPAN Class="swiss">Generic_Dispatching_Constructor</SPAN> 
+to give a function <SPAN Class="swiss">Make_T</SPAN>. A call of <SPAN Class="swiss">Make_T</SPAN> 
+takes a tag value, dispatches to the appropriate <SPAN Class="swiss">Constructor</SPAN> 
+which creates a value of the specific tagged type corresponding to the 
+tag and this is finally returned as the value of the class wide type 
+<SPAN Class="swiss">T'Class</SPAN> as the result of <SPAN Class="swiss">Make_T</SPAN>. 
+It's still magic but anyone can use the magic and not just the magician 
+implementing stream input&ndash;output.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can now do our abstract 
+problem as follows&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Make_T&nbsp;<B>is</B>&nbsp;<B>new</B>&nbsp;Generic_Dispatching_Constructor(Root,&nbsp;Params,&nbsp;Get_T);<BR>
+...<BR>
+<B>declare</B><BR>
+&nbsp;&nbsp;&nbsp;Aux:&nbsp;<B>aliased</B>&nbsp;Params&nbsp;:=&nbsp;...&nbsp;;<BR>
+&nbsp;&nbsp;&nbsp;A_T:&nbsp;Root'Class:=&nbsp;Make_T(Get_Tag(&nbsp;...&nbsp;),&nbsp;Aux'Access);<BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Process(A_T);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>dispatch&nbsp;to&nbsp;process&nbsp;the&nbsp;object</I></SPAN><BR>
+<B>end</B>;</div>
+<div class="Normal">We no longer have the tedious sequence of if statements 
+and the calls of <SPAN Class="swiss">Get_T</SPAN> and <SPAN Class="swiss">Process</SPAN> 
+are dispatching calls.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The previously magic 
+function <SPAN Class="swiss">T'Class'Input</SPAN> can now be implemented 
+in a very natural way by something like&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Dispatching_Input&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Generic_Dispatching_Constructor(T,&nbsp;Root_Stream_Type'Class,&nbsp;T'Input);</div>
+<div class="SwissExamples"><B>function</B>&nbsp;T_Class_Input(S:&nbsp;<B>access</B>&nbsp;Root_Stream_Type'Class)&nbsp;<B>return</B>&nbsp;T'Class&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;The_String:&nbsp;String&nbsp;:=&nbsp;String'Input(S);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>read&nbsp;tag&nbsp;as&nbsp;string&nbsp;from&nbsp;stream</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;The_Tag:&nbsp;Tag&nbsp;:=&nbsp;Descendant_Tag(The_String,&nbsp;T'Tag);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>convert&nbsp;to&nbsp;a&nbsp;tag</I></SPAN><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>now&nbsp;dispatch&nbsp;to&nbsp;the&nbsp;appropriate&nbsp;function&nbsp;Input</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Dispatching_Input(The_Tag,&nbsp;S);<BR>
+<B>end</B>&nbsp;T_Class_Input;</div>
+<div class="SwissExamples"><B>for</B>&nbsp;T'Class'Input&nbsp;<B>use</B>&nbsp;T_Class_Input;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The body could of course 
+be written as one giant statement&nbsp;</div>
+<div class="SwissExamples"><B>return</B>&nbsp;Dispatching_Input(Descendant_Tag(String'Input(S),&nbsp;T'Tag),&nbsp;S);</div>
+<div class="Normal">but breaking it down hopefully clarifies what is 
+happening.</div>
+<div class="Normal">Note the use of <SPAN Class="swiss">Descendant_Tag</SPAN> 
+rather than <SPAN Class="swiss">Internal_Tag</SPAN>. <SPAN Class="swiss">Descendant_Tag</SPAN> 
+is one of a few new functions introduced into the package <SPAN Class="swiss">Ada.Tags</SPAN> 
+in Ada 2005. Streams did not work very well for nested tagged types in 
+Ada 95 because of the possibility of multiple elaboration of declarations 
+(as a result of tasking and recursion); this meant that two descendant 
+types could have the same external tag value and <SPAN Class="swiss">Internal_Tag</SPAN> 
+could not distinguish them. This is not an important problem in Ada 95 
+as nested tagged types are rarely used. In Ada 2005 the situation is 
+potentially made worse because of the possibility of nested type extension.<A NAME="I1091"></A></div>
+<div class="Normal">The goal in Ada 2005 is simply to ensure that streams 
+do work with types declared at the same level and to prevent erroneous 
+behaviour otherwise. The goal is not to permit streams to work with the 
+nested extensions introduced in Ada 2005. Any attempt to do so will result 
+in <SPAN Class="swiss">Tag_Error</SPAN> being raised.</div>
+<div class="Normal">Note that we cannot actually declare an attribute 
+function such as <SPAN Class="swiss">T'Class'Input</SPAN> by directly 
+using the attribute name. We have to use some other identifier such as 
+<SPAN Class="swiss">T_Class_Input</SPAN> and then use an attribute definition 
+clause as shown above.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Observe that <SPAN Class="swiss">T'Class'Output</SPAN> 
+can be implemented as&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;T_Class_Output(S:&nbsp;<B>access</B>&nbsp;Root_Stream_Type'Class;&nbsp;X:&nbsp;<B>in</B>&nbsp;T'Class)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if&nbsp;not</B>&nbsp;Is_Descendant_At_Same_Level&nbsp;(X'Tag,&nbsp;T'Tag)&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>raise</B>&nbsp;Tag_Error;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;String'Output(S,&nbsp;External_Tag(X'Tag));<BR>
+&nbsp;&nbsp;&nbsp;T'Output(S,&nbsp;X);<BR>
+<B>end</B>&nbsp;T_Class_Output;</div>
+<div class="SwissExamples"><B>for</B>&nbsp;T'Class'Output&nbsp;<B>use</B>&nbsp;T_Class_Output;</div>
+<div class="Normal">Remember that streams are designed to work only with 
+types declared at the same accessibility level as the parent type <SPAN Class="swiss">T</SPAN>. 
+The call of <SPAN Class="swiss">Is_Descendant_At_Same_Level</SPAN>, which 
+is another new function in Ada 2005, ensures this.</div>
+<div class="Normal">We can use the generic constructor to create our 
+own stream protocol. We could in fact replace <SPAN Class="swiss">T'Class'Input</SPAN> 
+and <SPAN Class="swiss">T'Class'Output</SPAN> or just create our own 
+distinct subsystem. One reason why we might want to use a different protocol 
+is when the external protocol is already given such as in the case of 
+XML.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that it will sometimes 
+be the case that there is no need to pass any auxiliary parameters to 
+the constructor function in which case we can declare&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Params&nbsp;<B>is&nbsp;null&nbsp;record</B>;<BR>
+Aux:&nbsp;<B>aliased</B>&nbsp;Params&nbsp;:=&nbsp;(<B>null&nbsp;record</B>);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another example can 
+be based on part of the program Magic Moments in <A HREF="Rat-0-2.html#R6">[6]</A>. 
+This reads in the values necessary to create various geometrical objects 
+such as a <SPAN Class="swiss">Circle</SPAN>, <SPAN Class="swiss">Triangle</SPAN>, 
+or <SPAN Class="swiss">Square</SPAN> which are derived from an abstract 
+type <SPAN Class="swiss">Object</SPAN>. The values are preceded by a 
+letter C, T or S as appropriate. The essence of the code is&nbsp;</div>
+<div class="SwissExamples">Get(Code_Letter);<BR>
+<B>case</B>&nbsp;Code_Letter&nbsp;is<BR>
+&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;'C'&nbsp;=&gt;&nbsp;Object_Ptr&nbsp;:=&nbsp;Get_Circle;<BR>
+&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;'T'&nbsp;=&gt;&nbsp;Object_Ptr&nbsp;:=&nbsp;Get_Triangle;<BR>
+&nbsp;&nbsp;&nbsp;<B>when</B>&nbsp;'S'&nbsp;=&gt;&nbsp;Object_Ptr&nbsp;:=&nbsp;Get_Square;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end&nbsp;case</B>;</div>
+<div class="Normal">The types <SPAN Class="swiss">Circle</SPAN>, <SPAN Class="swiss">Triangle</SPAN>, 
+and <SPAN Class="swiss">Square</SPAN> are derived from the root type 
+<SPAN Class="swiss">Object</SPAN> and <SPAN Class="swiss">Object_Ptr</SPAN> 
+is of the type <B>access</B> <SPAN Class="swiss">Object'Class</SPAN>. 
+The function <SPAN Class="swiss">Get_Circle</SPAN> reads the value of 
+the radius from the keyboard, the function <SPAN Class="swiss">Get_Triangle</SPAN> 
+reads the values of the lengths of the three sides from the keyboard 
+and so on.</div>
+<div class="Normal">The first thing to do is to change the various constructor 
+functions such as <SPAN Class="swiss">Get_Circle</SPAN> into various 
+specific overridings of a primitive operation <SPAN Class="swiss">Get_Object</SPAN> 
+so that we can dispatch on it.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Rather than just read 
+the code letter we could make the user type the external tag string and 
+then we might have&nbsp;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Make_Object&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Generic_Dispatching_Constructor(Object,&nbsp;Params,&nbsp;Get_Object);</div>
+<div class="SwissExamples">...<BR>
+S:&nbsp;String&nbsp;:=&nbsp;Get_String;<BR>
+...<BR>
+Object_Ptr&nbsp;:=&nbsp;<B>new</B>&nbsp;Object'(Make_Object(Internal_Tag(S),&nbsp;Aux'Access));</div>
+<div class="Normal" style="margin-bottom: 0.4em">but this is very tedious 
+because the user now has to type the external tag which will be an implementation 
+defined mess of characters. Observe that the string produced by a call 
+of <SPAN Class="swiss">Expanded_Name</SPAN> such as &quot;<SPAN Class="swiss">OBJECTS.CIRCLE</SPAN>&quot; 
+cannot be used because it will not in general be unique and so there 
+is no reverse function. (It is not generally unique because of tasking 
+and recursion.) But <SPAN Class="swiss">Expanded_Name</SPAN> is useful 
+for debugging purposes.</div>
+<div class="Normal">In these circumstances the best way to proceed is 
+to invent some sort of registration system to make a map to convert the 
+simple code letters into the tag. We might have a package&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Tags;&nbsp;<B>use</B>&nbsp;Ada.Tags;<BR>
+<B>package</B>&nbsp;Tag_Registration&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Register(The_Tag:&nbsp;Tag;&nbsp;Code:&nbsp;Character);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Decode(Code:&nbsp;Character)&nbsp;<B>return</B>&nbsp;Tag;<BR>
+<B>end</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then we can write 
+</div>
+<div class="SwissExamples">Register(Circle'Tag,&nbsp;'C');<BR>
+Register(Triangle'Tag,&nbsp;'T');<BR>
+Register(Square'Tag,&nbsp;'S');</div>
+<div class="Normal" style="margin-bottom: 0.4em">And now the program 
+to read the code and then make the object becomes simply&nbsp;</div>
+<div class="SwissExamples">Get(Code_Letter);<BR>
+Object_Ptr&nbsp;:=&nbsp;<B>new</B>&nbsp;Object'(Make_Object(Decode(Code_Letter),&nbsp;Aux'Access));</div>
+<div class="Normal">and there are no case statements to maintain.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The really important 
+point about this example is that if we decide at a later date to add 
+more types such as <SPAN Class="swiss">'P'</SPAN> for <SPAN Class="swiss">Pentagon</SPAN> 
+and <SPAN Class="swiss">'H'</SPAN> for <SPAN Class="swiss">Hexagon</SPAN> 
+then all we have to do is register the new code letters thus&nbsp;</div>
+<div class="SwissExamples">Register(Pentagon'Tag,&nbsp;'P');<BR>
+Register(Hexagon'Tag,&nbsp;'H');</div>
+<div class="Normal">and nothing else needs changing. This registration 
+can conveniently be done when the types are declared.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The package <SPAN Class="swiss">Tag_Registration</SPAN> 
+could be implemented trivially as follows by&nbsp;</div>
+<div class="SwissExamples"><B>package&nbsp;body</B>&nbsp;Tag_Registration&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Table:&nbsp;<B>array</B>&nbsp;(Character&nbsp;<B>range</B>&nbsp;'A'&nbsp;..&nbsp;'Z')&nbsp;<B>of</B>&nbsp;Tag&nbsp;:=&nbsp;(<B>others</B>&nbsp;=&gt;&nbsp;No_Tag);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Register(The_Tag:&nbsp;Tag;&nbsp;Code:&nbsp;Character)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Table(Code)&nbsp;:=&nbsp;The_Tag;<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Register;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Decode(Code:&nbsp;Character)&nbsp;<B>return</B>&nbsp;Tag&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Table(Code);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Decode;<BR>
+<B>end</B>&nbsp;Tag_Registration;</div>
+<div class="Normal">The constant <SPAN Class="swiss">No_Tag</SPAN> is 
+a value of the type <SPAN Class="swiss">Tag</SPAN> which does not represent 
+an actual tag. If we forget to register a type then <SPAN Class="swiss">No_Tag</SPAN> 
+will be returned by <SPAN Class="swiss">Decode</SPAN> and this will cause 
+<SPAN Class="swiss">Make_Object</SPAN> to raise <SPAN Class="swiss">Tag_Error</SPAN>.</div>
+<div class="Normal">A more elegant registration system could be easily 
+implemented using the container library which is described in Chapter 
+<A HREF="Rat-8.html">8</A>.</div>
+<div class="Normal">Note that any instance of <SPAN Class="swiss">Generic_Dispatching_Constructor</SPAN> 
+checks that the tag passed as parameter is indeed that of a type descended 
+from the root type <SPAN Class="swiss">T</SPAN> and raises <SPAN Class="swiss">Tag_Error</SPAN> 
+if it is not.</div>
+<div class="Normal">In simple cases we could in fact perform that check 
+for ourselves by writing something like&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;Trial_Tag:&nbsp;Tag&nbsp;:=&nbsp;The_Tag;<BR>
+<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Trial_Tag&nbsp;=&nbsp;T'Tag&nbsp;<B>then&nbsp;exit</B>;&nbsp;<B>end&nbsp;if</B>;<BR>
+&nbsp;&nbsp;&nbsp;Trial_Tag&nbsp;:=&nbsp;Parent_Tag(Trial_Tag);<BR>
+&nbsp;&nbsp;&nbsp;<B>if</B>&nbsp;Trial_Tag&nbsp;=&nbsp;No_Tag&nbsp;<B>then&nbsp;raise</B>&nbsp;Tag_Error;&nbsp;<B>end&nbsp;if</B>;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The function <SPAN Class="swiss">Parent_Tag</SPAN> 
+and the constant <SPAN Class="swiss">No_Tag</SPAN> are further items 
+in the package <SPAN Class="swiss">Ada.Tags</SPAN> whose specification 
+in Ada 2005 is&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Tags&nbsp;<B>is</B><A NAME="I1092"></A><A NAME="I1093"></A><A NAME="I1094"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Tags);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Tag&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(Tag);<BR>
+&nbsp;&nbsp;&nbsp;No_Tag:&nbsp;<B>constant</B>&nbsp;Tag;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Expanded_Name(T:&nbsp;Tag)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>also&nbsp;Wide&nbsp;and&nbsp;Wide_Wide&nbsp;versions</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;External_Tag(T:&nbsp;Tag)&nbsp;<B>return</B>&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Internal_Tag(External:&nbsp;String)&nbsp;<B>return</B>&nbsp;Tag;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Descendant_Tag(External:&nbsp;String;&nbsp;Ancestor:&nbsp;Tag)<BR>
+<B>return</B>&nbsp;Tag;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Is_Descendant_At_Same_Level(Descendant,&nbsp;Ancestor:&nbsp;Tag)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Parent_Tag(T:&nbsp;Tag)&nbsp;<B>return</B>&nbsp;Tag;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Tag_Array&nbsp;<B>is</B>&nbsp;(Positive&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;<B>of</B>&nbsp;Tag;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Interface_Ancestor_Tags(T:&nbsp;Tag)&nbsp;<B>return</B>&nbsp;Tag_Array;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;Tag_Error:&nbsp;<B>exception</B>;<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Ada.Tags;</div>
+<div class="Normal">The function <SPAN Class="swiss">Parent_Tag</SPAN> 
+returns <SPAN Class="swiss">No_Tag</SPAN> if the parameter <SPAN Class="swiss">T</SPAN> 
+of type <SPAN Class="swiss">Tag</SPAN> has no parent which will be the 
+case if it is the ultimate root type of the class. As mentioned earlier, 
+two other new functions <SPAN Class="swiss">Descendant_Tag&nbsp;</SPAN>and 
+<SPAN Class="swiss">Is_Descendant_At_Same_Level</SPAN> are necessary 
+to prevent the misuse of streams with types not all declared at the same 
+level.</div>
+<div class="Normal">There is also a function <SPAN Class="swiss">Interface_Ancestor_Tags</SPAN> 
+which returns the tags of all those interfaces which are ancestors of 
+<SPAN Class="swiss">T</SPAN> as an array. This includes the parent if 
+it is an interface, any progenitors and all their ancestors which are 
+interfaces as well &ndash; but it excludes the type <SPAN Class="swiss">T</SPAN> 
+itself.</div>
+<div class="Normal">Finally note that the introduction of 16- and 32-bit 
+characters in identifiers means that functions also have to be provided 
+to return the images of identifiers as a <SPAN Class="swiss">Wide_String</SPAN> 
+or <SPAN Class="swiss">Wide_Wide_String</SPAN>. So we have functions 
+<SPAN Class="swiss">Wide_Expanded_Name</SPAN> and <SPAN Class="swiss">Wide_Wide_Expanded_Name</SPAN> 
+as well as<SPAN Class="swiss">&nbsp;Expanded_Name</SPAN>. The lower bound 
+of the strings returned by these functions and by<SPAN Class="swiss">&nbsp;External_Tag</SPAN> is <SPAN Class="swiss">1</SPAN> &ndash; Ada 95 forgot 
+to state this for <SPAN Class="swiss">External_Tag</SPAN> and <SPAN Class="swiss">Expanded_Name</SPAN>!</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-2-5.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-2-7.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

@@ -1,0 +1,265 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 5.3: Types
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 5: Programming Practices</H2>
+
+<H3><a name="5.3">5.3     Types</a></H3>
+In addition to determining the possible values for variables, type names, and  
+distinctions can be very valuable aids in developing safe, readable, and  
+understandable code. Types clarify the structure of your data and can limit or  
+restrict the operations performed on that data. &quot;Keeping types distinct has 
+been found to be a very powerful means of detecting logical mistakes when a  
+program is written and to give valuable assistance whenever the program is  
+being subsequently maintained.&quot; (Pyle 1985)  Take advantage of Ada's strong  
+typing capability in the form of subtypes, derived types, task types, private  
+types, and limited private types.<P>
+The guidelines encourage much code to be written to ensure strong typing 
+(i.e., subtypes). While it might appear that there would be execution 
+penalties for this amount of code, this is usually not the case. In contrast 
+to other conventional languages, Ada has a less direct relationship between 
+the amount of code that is written and the size of the resulting executable 
+program. Most of the strong type checking is performed at compilation time 
+rather than execution time, so the size of the executable code is not greatly 
+affected.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03.html#3">3&nbsp;Declarations and Types</A>
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><br>
+<a href="#5.3.1">5.3.1   Derived Types and Subtypes</a><BR>
+<a href="#5.3.2">5.3.2   Anonymous Types</a><BR>
+<a href="#5.3.3">5.3.3   Private Types</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-05-10.html#5.10.3"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="5.3.1">5.3.1   Derived Types and Subtypes</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use existing types as building blocks by deriving new types from them. 
+<li>Use range constraints on subtypes. 
+<li>Define new types, especially derived types, to include the largest set  of possible values, including boundary values. 
+<li> Constrain the ranges of derived types with subtypes, excluding 
+boundary values. 
+</UL>
+
+<H4>example</H4>
+Type <CODE>Table</CODE> is a building block for the creation of new types:
+<table border cellpadding=6><tr><td><pre>type Table is 
+   record 
+      Count : List_Size  := Empty; 
+      List  : Entry_List := Empty_List; 
+   end record;
+   
+type Telephone_Directory  is new Table; 
+type Department_Inventory is new Table;</pre></td></tr></table>
+<P>
+The following are distinct types that cannot be intermixed in operations that  
+are not programmed explicitly to use them both:
+<table border cellpadding=6><tr><td><pre>type Dollars is new Number; 
+type Cents   is new Number;</pre></td></tr></table>
+<P>
+Below, <CODE>Source_Tail</CODE> has a value outside the range of <CODE>Listing_Paper</CODE> when the 
+line is empty. All the indices can be mixed in expressions, as long as the 
+results fall within the correct subtypes:
+<table border cellpadding=6><tr><td><pre>type Columns          is range First_Column - 1 .. Listing_Width + 1; 
+subtype Listing_Paper is 
+      Columns range First_Column .. Listing_Width; 
+subtype Dumb_Terminal is 
+      Columns range First_Column .. Dumb_Terminal_Width;
+      
+type Line             is array (Columns range &lt;&gt;) of Bytes; 
+subtype Listing_Line  is Line (Listing_Paper); 
+subtype Terminal_Line is Line (Dumb_Terminal);
+
+Source_Tail : Columns       := Columns'First; 
+Source      : Listing_Line; 
+Destination : Terminal_Line;
+
+...
+
+Destination(Destination'First .. Source_Tail - Destination'Last) := 
+      Source(Columns'Succ(Destination'Last) .. Source_Tail);</pre></td></tr></table>
+
+<H4>rationale</H4>
+The name of a derived type can make clear its intended use and avoid 
+proliferation of similar type definitions. Objects of two derived types, even 
+though derived from the same type, cannot be mixed in operations unless such 
+operations are supplied explicitly or one is converted to the other 
+explicitly.  This prohibition is an enforcement of strong typing.<P>
+Define new types, derived types, and subtypes cautiously and deliberately. The  
+concepts of subtype and derived type are not equivalent, but they can be used  
+to advantage in concert. A subtype limits the range of possible values for a  
+type, but does not define a new type.<P>
+Types can have highly constrained sets of values without eliminating useful  
+values. Used in concert, derived types and subtypes can eliminate many flag  
+variables and type conversions within executable statements. This renders the  
+program more readable, enforces the abstraction, and allows the compiler to  
+enforce strong typing constraints.<P>
+Many algorithms begin or end with values just outside the normal range. If 
+boundary values are not compatible within subexpressions, algorithms can be 
+needlessly complicated. The program can become cluttered with flag variables 
+and special cases when it could just test for zero or some other sentinel 
+value just outside normal range.<P>
+The type <CODE>Columns</CODE> and the subtype <CODE>Listing_Paper</CODE> in the example above 
+demonstrate how to allow sentinel values. The subtype <CODE>Listing_Paper</CODE> could be 
+used as the type for parameters of subprograms declared in the specification 
+of a package.  This would restrict the range of values which could be 
+specified by the caller.  Meanwhile, the type <CODE>Columns</CODE> could be used to store 
+such values internally to the body of the package, allowing <CODE>First_Column - 1</CODE> 
+to be used as a sentinel value. This combination of types and subtypes allows 
+compatibility between subtypes within subexpressions without type conversions 
+as would happen with derived types.
+
+<H4>note</H4>
+The price of the reduction in the number of independent type declarations is  
+that subtypes and derived types change when the base type is redefined. This  
+trickle-down of changes is sometimes a blessing and sometimes a curse. However, 
+usually it is intended and beneficial.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-03.html#3.3.2">3.3.2&nbsp;Subtype Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-04.html#3.4">3.4&nbsp;Derived Types</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5">3.5&nbsp;Scalar Types</A>
+
+        
+<H3><BR><a name="5.3.2">5.3.2   Anonymous Types</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Avoid anonymous types. 
+<li>Use anonymous types for array variables when no suitable type exists  
+and the array will not be referenced as a whole. 
+</UL>
+
+<H4>example</H4>
+Use
+<table border cellpadding=6><tr><td><pre>type Buffer_Index is range 1 .. 80; 
+type Buffer       is array (Buffer_Index) of Character;
+
+Input_Line : Buffer;</pre></td></tr></table>
+<p>
+rather than
+
+<table border cellpadding=6><tr><td><pre>Input_Line : array (Buffer_Index) of Character;</pre></td></tr></table>
+
+<H4>rationale</H4>
+Although Ada allows anonymous types, they have limited usefulness and  
+complicate program modification. For example, except for arrays, a variable of  
+anonymous type can never be used as an actual parameter because it is not  
+possible to define a formal parameter of the same type. Even though this may  
+not be a limitation initially, it precludes a modification in which a piece of  
+code is changed to a subprogram. Also, two variables declared using the same  
+anonymous type declaration are actually of different types.<P>
+Even though the implicit conversion of array types during parameter passing is 
+supported in Ada, it is difficult to justify not using the type of the 
+parameter.  In most situations, the type of the parameter is visible and 
+easily substituted in place of an anonymous array type.  The use of an 
+anonymous array type implies that the array is only being used as a convenient 
+way to implement a collection of values.  It is misleading to use an anonymous 
+type and then treat the variable as an object.
+
+<H4>note</H4>
+For anonymous task types, see <a href="sty-06-01.html#6.1.2">Guideline 6.1.2</a>.<P>
+In reading the <a href="http://archive.adaic.com/standards/83lrm/html/">Ada Language Reference Manual</a> (Department of Defense 1983), you  
+will notice that there are cases when anonymous types are mentioned abstractly  
+as part of the description of the Ada computational model. These cases do not  
+violate this guideline.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-06.html#3.6">3.6&nbsp;Array Types</A>
+
+
+<H3><BR><a name="5.3.3">5.3.3   Private Types</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use limited private types in preference to private types.  
+<li>Use private types in preference to nonprivate types. 
+<li>Explicitly export needed operations rather than easing restrictions. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------ 
+package Packet_Telemetry is
+
+   type Frame_Header is limited private; 
+   type Frame_Data   is private; 
+   type Frame_Codes  is (Main_Bus_Voltage, Transmitter_1_Power);
+   
+   ... 
+private
+
+   type Frame_Header is 
+      record 
+         ... 
+      end record;
+      
+   type Frame_Data is 
+      record 
+         ... 
+      end record;
+      
+   ... 
+end Packet_Telemetry; 
+------------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+Limited private types and private types support abstraction and information  
+hiding better than nonprivate types. The more restricted the type, the better  
+information hiding is served. This, in turn, allows the implementation to  
+change without affecting the rest of the program. While there are many valid  
+reasons to export types, it is better to try the preferred route first,  
+loosening the restrictions only as necessary. If it is necessary for a user of  
+the package to use a few of the restricted operations, it is better to export  
+the operations explicitly and individually via exported subprograms than to  
+drop a level of restriction. This practice retains the restrictions on other  
+operations. <P>
+Limited private types have the most restricted set of operations available to  
+users of a package. Of the types that must be made available to users of a  
+package, as many as possible should be limited private. The operations  
+available to limited private types are membership tests, selected components,  
+components for the selections of any discriminant, qualification and explicit  
+conversion, and attributes <CODE>'Base</CODE> and <CODE>'Size</CODE>. Objects of a limited private type  
+also have the attribute <CODE>'Constrained</CODE> if there are discriminants. None of these  
+operations allow the user of the package to manipulate objects in a way that  
+depends on the structure of the type.<P>
+If additional operations must be available to the type, the restrictions may 
+be loosened by making it a private type. The operations available on objects 
+of nprivate types that are not available on objects of limited private types 
+are assignment and tests for equality and inequality. There are advantages to 
+the restrictive nature of limited private types. For example, assignment 
+allows copies of an object to be made. This could be a problem if the object's 
+type is a pointer.
+
+<H4>note</H4>
+The predefined packages Direct_IO and Sequential_IO do not accept limited  
+private types as generic parameters.  This restriction should be considered  
+when I/O operations are needed for a type.<P>
+<b>Language Ref Manual references:</b> 
+<A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-04.html#7.4">7.4&nbsp;Private Type and Deferred Constant Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-04.html#7.4.1">7.4.1&nbsp;Private Types</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-04.html#7.4.4">7.4.4&nbsp;Limited Types</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-12-03.html#12.3.2">12.3.2&nbsp;Matching Rules for Formal Private Types</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-A.html#A">A&nbsp;Predefined Language Attributes</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

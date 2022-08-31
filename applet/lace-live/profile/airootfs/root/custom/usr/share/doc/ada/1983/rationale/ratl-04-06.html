@@ -1,0 +1,273 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 4.6: Record Types</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 4: Types</H2>
+
+<H3><a name="4.6">4.6 Record Types</a></H3>
+
+The basic  form of  record type is similar to that provided in <a href="ratl-BIB.html#languages">Pascal</a>:
+the component  declarations are  enclosed by the reserved words record
+and end record, as in the following example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type DATE is
+  record
+    MONTH  :  MONTH_NAME;           -- a suitable enumeration type
+    DAY    :  INTEGER range 1 .. 31;
+    YEAR   :  INTEGER range 1 .. 3000;
+  end record;
+</pre></td></tr></table>
+<p>
+Here the  set of  values consists  of all ordered triples containing a
+month, a  day, and  a year  in this  order and  having  the  specified
+component names  MONTH, DAY,  YEAR. The  set  of  operations  includes
+assignment, test  for equality,  component  selection,  and  aggregate
+formation. For example, having declared
+<p>
+<PRE>    TODAY :  DATE;</PRE>
+<p>
+we can select the corresponding year by a selected component
+<p>
+<PRE>    TODAY.YEAR</PRE>
+<p>
+as in the following assignment
+<p>
+<PRE>    TODAY.YEAR :=  TODAY.YEAR + 1;</PRE>
+<p>
+Selection of  the component YEAR can actually be viewed as achieved by
+a basic  operation ".YEAR"  which can  be applied in postfix manner to
+the name  of any  object of  type DATE.  These  basic  operations  are
+implicitly declared  by the  record type  declaration itself, although
+Ada does not allow the explicit declaration of postfix operations such
+as ".YEAR".
+<p>
+Aggregates have  already been  discussed in <a href="ratl-03-05.html#3.5">section 3.5</a>: in particular
+we  have  seen  that  Ada  provides  both  positional  aggregates  and
+aggregates in named notation:
+<p>
+<table border cellpadding=6><tr><td><pre>
+(DEC, 12, 1983)                                         -- positional
+(DAY =&gt;  12,  MONTH =&gt;  DEC,  YEAR =&gt;  1983)   -- named
+</pre></td></tr></table>
+<p>
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#4.6.1">4.6.1  Equivalence</a><BR>
+<a href="#4.6.2">4.6.2  Default Initialization of Record Components</a><BR>
+<b>
+     </TD>
+   </TR>
+</TABLE></center>
+<p>
+
+<H3><BR><a name="4.6.1">4.6.1 Equivalence</a></H3>
+
+Name equivalence  is used  for record  types, as  for other  types. To
+emphasize the  arguments against  structural equivalence, consider the
+following record type declarations:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type PAIR is
+  record
+    LEFT  :  INTEGER;
+    RIGHT :  INTEGER;
+  end record;
+
+type RATIONAL is
+  record
+    NUMERATOR     :  INTEGER;
+    DENOMINATOR   :  INTEGER range 1 .. INTEGER'LAST;
+  end record;
+</pre></td></tr></table>
+<p>
+Several alternative  forms of  structural  equivalence  rules  can  be
+considered, involving  increasing amounts  of checking,  especially if
+the record types have a large number of components:
+<ol type=a>
+<li>Two record types are equivalent if the texts of their
+   type  definitions   (what   appears   after   is)   are   identical
+   (disregarding textual layout such as spaces, new lines, and so on).
+<p>
+<li>Two record types are equivalent if they have the same
+   number of components, and at each component position, corresponding
+   components have  the same  name and are declared with the same type
+   name.
+<p>
+<li>Same as (b) but the names of corresponding components
+   need not  agree, only  the type  names. This is a more mathematical
+   point of view, where one considers a record as a cartesian product.
+<p>
+<li>Same as  (b) but  the  order  of  components  is  not
+   significant.
+<p>
+<li>Same as  (c) but  the  constraints  on  corresponding
+   components may differ.
+<p>
+<li>Same as (e) but the subtypes must be the same.
+<p>
+<li>Same  as   (e)  but   the  component  types  must  be
+   equivalent, while their names need not be identical.
+<p>
+<li>Same as (g) but a type name is also equivalent to the
+   text of  the corresponding  type definition  (which could  even  be
+   anonymous).
+</ol>
+
+The types  PAIR and RATIONAL given above would be equivalent under all
+the rules  if their  component names were accidentally the same and if
+the  constraint   on  DENOMINATOR  were  not  expressed  in  the  type
+declaration.  More   specifically,  under  rule  (b),  PAIR  would  be
+equivalent to
+<p>
+<table border cellpadding=6><tr><td><pre>
+type ANOTHER_PAIR is
+  record
+    LEFT, RIGHT :  INTEGER;
+  end record;
+</pre></td></tr></table>
+<p>
+Rule (c)  makes sense  for a  language for which all aggregates are in
+positional notation.  It complicates  the checking  by  the  compiler,
+since all permutations must be considered. Conversely, the rule (d) is
+sensible for  a totally  non-positional language where components must
+always be  named  in  record  aggregates.  Rule  (e)  complicates  the
+implementation of  constraints and subtypes for components, since they
+must be  checked for  each component  on record  or array assignments.
+Rule (f)  cannot be  checked statically. Rule (g) requires a recursive
+matching algorithm. In addition, rule (h) requires type expansion, and
+even an algorithm of cycle reduction in the case of mutually recursive
+access types.
+<p>
+All these complexities for the implementation - and above all, for the
+reader -  are avoided  in Ada  by adopting  the simple rule that every
+declaration declares a distinct type.
+
+<H3><BR><a name="4.6.2">4.6.2 Default Initialization of Record Components</a>
+</H3><p>
+
+Default initialization can be specified for some or for all components
+of a record. Consider for example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type FRACTION is
+  record
+    DIVIDEND :  INTEGER    :=  0;
+    DIVISOR  :  POSITIVE   :=  1;
+  end record;
+</pre></td></tr></table>
+<p>
+The indicated  initializations will be performed by the elaboration of
+the declaration  of an  object of  type FRACTION,  in the  absence  of
+explicit initialization. Thus after the elaboration of
+<p>
+<table border cellpadding=6><tr><td><pre>
+F  :  FRACTION;
+G  :  FRACTION  :=  (2, 3);
+</pre></td></tr></table>
+<p>
+the value  of F  is well-defined  and is  equal to (0, 1), whereas the
+value  of  G  is  equal  to  (2,  3)  as  specified  by  the  explicit
+initialization.
+<p>
+Note that initial values need not be static, as is illustrated here:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type BUFFER(LENGTH :  POSITIVE) is
+  record
+    POS      :  NATURAL  :=  0;
+    VALUE :  STRING(1 .. LENGTH)  :=  (1 .. LENGTH =&gt;  ' ');
+  end record;
+
+type TRIPLE is
+  record
+    A, B, C :  PERSON_NAME  :=  new PERSON;
+  end record;
+</pre></td></tr></table>
+<p>
+The  following   example  shows   that  default   initializations  (in
+combination with  access types)  can even  be used  to construct quite
+elaborate dynamic structures:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type NODE(LEVEL :  POSITIVE  :=  1);
+type LINK is access NODE;
+function BRANCH(N :  POSITIVE) return LINK;
+
+type NODE(LEVEL :  POSITIVE  :=  1) is
+  record
+    VALUE :  ITEM  :=  NULL_ITEM;
+    LEFT, RIGHT :  LINK  :=  BRANCH(LEVEL);
+  end record;
+
+function BRANCH(N :  POSITIVE) return LINK is
+begin
+  if N = 1 then
+    return null;
+  else
+    return new NODE(N - 1);
+  end if;
+end;
+</pre></td></tr></table>
+<p>
+Thus whereas the declaration
+<p>
+<PRE>    TERMINAL :  NODE(1);</PRE>
+<p>
+will create a single node, a declaration such as
+<p>
+<PRE>    TREE :  NODE(5);</PRE>
+<p>
+will lead  to the  dynamic creation  of a  complete binary tree with 5
+levels (thus  including 1 node of level 5, 2 nodes of level 4, 4 nodes
+of level 3, 8 nodes of level 2, and 16 nodes of level 1).
+<p>
+The previous  example is mainly intended to show the power that can be
+achieved by  default initializations.  Clearly more power also creates
+more danger and an incorrect program could certainly enter an infinite
+recursion during the elaboration of declarations.
+<p>
+The main motivation for allowing default initialization is however one
+of program reliability. In many applications, it is found desirable to
+have a  consistent initial state for all objects: the services offered
+by  the   program  may   critically  depend   on  objects  being  well
+initialized. To  achieve this,  we could  of course  define an initial
+value to  be used  for all  declarations, or provide the users with an
+initialization procedure to be applied before any other use is made of
+objects. The  weakness of  these approaches  lies in the fact that our
+program would  remain vulnerable  to users  that do  not  follow  this
+initialization discipline  (whether unintentionally  or not). The only
+safe solution  is therefore  to have  a default initialization that is
+invoked without any reliance on the user.
+
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-04-07.html#4.7"><b>NEXT</b></a>
+&#128; <a href="ratl-04-05.html#4.5"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-04.html#4"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

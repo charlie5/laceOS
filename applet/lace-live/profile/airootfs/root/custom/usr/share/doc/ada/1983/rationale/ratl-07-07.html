@@ -1,0 +1,170 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 7.7: Achieving Transitivity of Visibility</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 7: Derived Types</H2>
+
+<H3><a name="7.7">7.7 Achieving Transitivity of Visibility</a></H3>
+
+When a derived type  is declared, a new type is thereby obtained that
+is a copy of  an existing  parent type.  The new  type  derives  some
+operations from  the parent  type and  these  derived  operations  are
+implicitly declared  at the  point of declaration of the derived type.
+This ability  to declare  a copy  of a  type can  be used  to  achieve
+transitivity of  visibility.  This  term  will  be  explained  by  the
+following examples. Consider a generic package
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  ...
+package BASE is
+  type T is private;
+
+  function F(X   :  T)     return T;
+  function G(X   :  T)     return T;
+  ...
+  function H(X   :  T)     return T;
+  ...
+end;
+</pre></td></tr></table>
+<p>
+Consider now an application of this package, and let us assume that we
+now want  to build  higher-level operations  on top  of those of BASE.
+This can be achieved as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+with BASE;
+package HIGHER_LEVEL is
+  package NEW_BASE is new BASE(...);
+
+  type T is new NEW_BASE.T;
+  -- this derived type declaration implicitly declares:
+
+  -- function F(X  :  T)   return T;
+  -- function G(X  :  T)   return T;
+  ...
+  -- function H(X  :  T)   return T;
+
+  -- now we declare additional operations on T:
+
+  procedure P(X, Y :  in out T);
+  ...
+  procedure R(X :  T);
+end;
+</pre></td></tr></table>
+<p>
+Consider finally a user procedure
+<p>
+<table border cellpadding=6><tr><td><pre>
+with HIGHER_LEVEL; use HIGHER_LEVEL;
+procedure USER is
+  ...
+end;
+</pre></td></tr></table>
+<p>
+Within the body of USER the operations directly available on T are the
+functions F,  G, ... , H, and the procedures P, ... , R. The functions
+are directly visible, without having to write
+<p>
+<PRE>    use NEW_BASE;</PRE>
+<p>
+It is  in this  sense that  derivation has  achieved  transitivity  of
+visibility.
+<p>
+To further  emphasize the  point, consider a nongeneric formulation of
+the above problem
+<p>
+<table border cellpadding=6><tr><td><pre>
+package BASE is
+  ...
+end;
+
+with BASE;
+package HIGHER_LEVEL is
+  type T is new BASE.T;
+  -- implicit declaration of F, G, ... , H
+
+  procedure P(X, Y :  in out T);
+  ...
+  procedure R(X :  T);
+end;
+</pre></td></tr></table>
+<p>
+Because of the transitivity achieved by derivation, the procedure USER
+does not have to mention
+<p>
+<PRE>    with BASE; use BASE;</PRE>
+<p>
+The package  BASE can  thus be  considered as  a  lower-level  package
+ignored by the user.
+<p>
+Note that the controlled transitivity achieved by derivation would not
+be obtained by subtypes. Consider for example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+with BASE; use BASE;
+package HIGHER_LEVEL is
+  subtype T is BASE.T;
+  procedure P(X, Y :  in out T);
+  ...
+  procedure R(X :  T);
+end;
+</pre></td></tr></table>
+<p>
+The effect of the use clause "use BASE;" is not transitive. This means
+that its  effect  covers  the  package  HIGHER_LEVEL  itself  but  not
+packages that mention HIGHER_LEVEL in their context clause.
+<p>
+Another alternative  for achieving  transitivity is to use renaming as
+shown in the example below:
+<p>
+<table border cellpadding=6><tr><td><pre>
+with BASE;
+package HIGHER_LEVEL is
+  package NEW_BASE is new BASE(...);
+  subtype T is NEW_BASE.T;
+
+  function F(X  :  T) return T renames NEW_BASE.F;
+  function G(X  :  T) return T renames NEW_BASE.G;
+  ...
+  function H(X  :  T) return T renames NEW_BASE.H;
+
+  procedure P(X, Y :  in out T);
+  ...
+  procedure R(X :  T);
+end;
+</pre></td></tr></table>
+<p>
+The main disadvantage of this alternative approach is that it involves
+considerable rewriting  and therefore  suffers  from  the  maintenance
+problems that  are inherent  in manual  copying:  any  change  in  the
+specification of  the operations  of the  type  T  would  have  to  be
+repeated in  the renaming declarations. Hence the renaming alternative
+is not very appealing.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-07-08.html#7.8"><b>NEXT</b></a>
+&#128; <a href="ratl-07-06.html#7.6"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-07.html#7"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

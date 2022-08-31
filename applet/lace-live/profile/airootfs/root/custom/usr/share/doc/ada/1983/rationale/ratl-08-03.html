@@ -1,0 +1,155 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 8.3: Parameter Passing Notations</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 8: Subprograms</H2>
+
+<H3><a name="8.3">8.3 Parameter Passing Notations</a></H3>
+
+Two notations  for parameter  passing need to be considered. The usual
+positional notation is almost universal. However, with more than three
+or four  parameters it  is hard  to follow the text. Following the Lis
+language, and  common usage  in many control languages, Ada permits an
+alternative notation  of parameter  passing in  which the associations
+are specified on a name basis (see also <a href="ratl-BIB.html">[Fr 77]</a> and <a href="#ratl-BIB.html">[Har 76]</a>). Placing
+the  formal  parameter  on  the  left  and  the  corresponding  actual
+parameter on  the right  of  a  parameter  association  provides  more
+readable procedure calls. For example:
+<p>
+<PRE>    CREATE(FILE =&gt;  MY_FILE,  NAME =&gt;  "FINALTEXT.FEB.15");</PRE>
+<p>
+Where long  parameter lists  are common and have default values, as in
+the job  control  area,  this  form  of  named  parameter  association
+provides especially  high readability.  It may  be used in conjunction
+with the  default value  facility available  for an in parameter if no
+explicit value  is provided within the call. For example, a simulation
+package may declare the procedure ACTIVATE as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure ACTIVATE       (PROCESS         :  in PROCESS_NAME;
+                 AFTER   :  in PROCESS_NAME    :=  NO_PROCESS;
+                 WAIT    :  in DURATION   :=  0.0;
+                 PRIOR   :  in BOOLEAN    :=  FALSE);
+</pre></td></tr></table>
+<p>
+As shown  in this  declaration, the parameter PROCESS must be provided
+in all  calls (because  no default  expression is given). On the other
+hand the parameters AFTER, WAIT and PRIOR may be omitted. Thus the two
+following calls of ACTIVATE are equivalent:
+<p>
+<table border cellpadding=6><tr><td><pre>
+ACTIVATE(PROCESS =&gt;  X,    AFTER =&gt;  NO_PROCESS,
+                     WAIT =&gt;  0.0,  PRIOR =&gt;  FALSE);
+ACTIVATE(PROCESS =&gt; X);
+</pre></td></tr></table>
+<p>
+Clearly in  many contexts  the order  of parameters  is either  highly
+conventional  (as   for  coordinate  systems)  or  immaterial  (as  in
+MAX(X,Y)). Hence Ada admits both conventions. The classical positional
+notation  may  be  used  whenever  the  programmer  feels  that  named
+parameters would add verbosity without any gain in readability.
+<p>
+The two  notations may  also be  combined, with  positional parameters
+appearing first;  that is,  once naming  is used  the rest of the call
+must use  naming. This  allows the  default value mechanism to be used
+even when  positional notation  is  desirable,  as  in  the  following
+examples from graph plotting and simulation:
+<p>
+<table border cellpadding=6><tr><td><pre>
+MOVE_PEN(X1, Y1, LINE =&gt;  THICK);
+MOVE_PEN(X2, Y2, PEN  =&gt;  UP);
+
+ACTIVATE(X);
+ACTIVATE(X, AFTER =&gt;  Y);
+ACTIVATE(X, WAIT   =&gt;  50&#42;SECONDS, PRIOR =&gt; TRUE);
+</pre></td></tr></table>
+<p>
+As shown  in this  last example,  the named  notation may  be used  in
+conjunction with  the default  parameters to  provide a high degree of
+expressivity and  readability. For  the activate  primitive in <a href="ratl-BIB.html#languages">Simula</a>,
+this could only be achieved at the expense of predefined syntax.
+<p>
+Finally the default parameter facility can be used in conjunction with
+overloading,  thereby   allowing  further   possibilities.  These  are
+illustrated  by  the  declarations  of  PUT  in  the  generic  package
+INTEGER_IO:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure PUT      (FILE           :  in  FILE_TYPE;
+            ITEM   :  in NUM;
+            WIDTH  :  in FIELD     :=  DEFAULT_WIDTH;
+            BASE   :  in NUMBER_BASE :=  DEFAULT_BASE);
+
+procedure PUT      (ITEM           :  in  NUM;
+            WIDTH  :  in FIELD     :=  DEFAULT_WIDTH;
+            BASE   :  in NUMBER_BASE :=  DEFAULT_BASE);
+</pre></td></tr></table>
+<p>
+Given the declarations
+<p>
+<table border cellpadding=6><tr><td><pre>
+F  :  FILE;
+N  :  NUM;
+</pre></td></tr></table>
+<p>
+we can issue the following procedure calls for output on the file F:
+<p>
+<table border cellpadding=6><tr><td><pre>
+PUT(F, N, 10, 8);                  -- width 10, octal base
+PUT(F, N, WIDTH =&gt; 10, BASE =&gt; 8); -- more explicitly
+PUT(F, N);                         -- default width, decimal base
+</pre></td></tr></table>
+<p>
+We can  also issue  similar calls  for output  on the  current default
+output file:
+<p>
+<table border cellpadding=6><tr><td><pre>
+PUT(N, 10, 8);
+PUT(N, WIDTH =&gt;  10, BASE =&gt;  8);
+PUT(N);
+</pre></td></tr></table>
+<p>
+Overloading and  default parameters  are complementary:  In theory, we
+could achieve  the desired  flexibility of procedure calls by means of
+overloading, but  this would  require a procedure declaration for each
+possible form  of call (eight instead of two in the above example). On
+the other  hand default  parameters provide  a concise  - and  thereby
+convenient -  formulation. But  - as  the above  example shows - if we
+want to  omit the  first parameter  without using  named associations,
+this will have to be achieved by overloading.
+<p>
+The example  of the  two PUT  procedures further  illustrates that the
+default expressions need not be static: DEFAULT_WIDTH and DEFAULT_BASE
+are variables.  Another example  of the dynamic computation of default
+expressions  is   provided  by   the  following  procedure  ADMISSION:
+Admission requires  a key, a new one being allocated by default in the
+absence of an explicit one:
+<p>
+   procedure ADMISSION(K :  in KEY_NAME  :=  new KEY);
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-08-04.html#8.4"><b>NEXT</b></a>
+&#128; <a href="ratl-08-02.html#8.2"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-08.html#8"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

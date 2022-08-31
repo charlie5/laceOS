@@ -1,0 +1,516 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 14.2: Sequential and Direct Files</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="14.2">14.2</A>.  Sequential and Direct Files  </H2>
+<A HREF="lrm-14-01.html#14.1"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-14.html#14"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-14-03.html#14.3"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+Two  kinds  of access to external files are defined:  sequential access and
+direct access.  The corresponding file types and the associated  operations
+are  provided  by the generic packages SEQUENTIAL_IO and DIRECT_IO.  A file
+object to be used for sequential access is called a  sequential  file,  and
+one to be used for direct access is called a direct file. 
+<P>
+For  sequential access, the file is viewed as a sequence of values that are
+transferred in the order of their appearance (as produced by the program or
+by the environment).  When the file is opened,  transfer  starts  from  the
+beginning of the file.                                                                
+<P>
+For  direct  access,  the  file  is  viewed  as a set of elements occupying
+consecutive positions in linear order;  a value can be  transferred  to  or
+from  an  element of the file at any selected position.  The position of an
+element is specified by its index, which is a number, greater than zero, of
+the implementation-defined integer type COUNT.  The first element, if  any,
+has  index  one;   the  index  of  the  last element, if any, is called the
+current size;  the current size is zero if  there  are  no  elements.   The
+current size is a property of the external file. 
+<P>
+An  open  direct  file has a current index, which is the index that will be
+used by the next read or write operation.  When a direct  file  is  opened,   
+the  current  index is set to one.  The current index of a direct file is a
+property of a file object, not of an external file. 
+<P>
+All three file modes are allowed for direct files.  The only allowed  modes
+for sequential files are the modes IN_FILE and OUT_FILE. 
+<P>
+<b>References:</b>  <A HREF="lrm-14-03.html#14.3">count type</A>,
+<A HREF="lrm-14-01.html#14.1">file mode</A>,
+<A HREF="lrm-14-01.html#14.1">in_file</A>,
+<A HREF="lrm-14-01.html#14.1">out_file</A>.
+<P>
+<b>Sub-topics:</b>
+<ul>
+<li><A HREF="#14.2.1">14.2.1</A> File Management  
+<li><A HREF="#14.2.2">14.2.2</A> Sequential Input-Output  
+<li><A HREF="#14.2.3">14.2.3</A> Specification of the Package Sequential_IO     
+<li><A HREF="#14.2.4">14.2.4</A> Direct Input-Output  
+<li><A HREF="#14.2.5">14.2.5</A> Specification of the Package Direct_IO   
+</ul>
+
+<H3><A NAME="14.2.1">14.2.1</A>.  File Management  </H3>
+<A HREF="#14.2"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#14.2.2"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The  procedures  and  functions  described  in this section provide for the
+control of external files;  their declarations are repeated in each of  the
+three  packages  for  sequential,  direct, and text input-output.  For text
+input-output, the  procedures  CREATE,  OPEN,  and  RESET  have  additional
+effects described in section <a href="lrm-14-03.html#14.3.1">14.3.1</a>. 
+<pre>
+    procedure CREATE(FILE : in out FILE_TYPE;
+                     MODE : in FILE_MODE := default_mode;
+                     NAME : in STRING := "";
+                     FORM : in STRING := ""); 
+
+          Establishes  a  new  external file, with the given name and form,
+          and associates this external file with the given file.  The given
+          file is left open.  The current mode of the given file is set  to
+          the  given  access  mode.   The  default  access mode is the mode
+          OUT_FILE for sequential and text input-output;  it  is  the  mode
+          INOUT_FILE  for direct input-output.  For direct access, the size
+          of the created file is implementation-dependent.  A  null  string
+          for  NAME specifies an external file that is not accessible after
+          the completion of the main program (a temporary  file).   A  null
+          string  for  FORM specifies the use of the default options of the
+          implementation for the external file. 
+
+          The exception STATUS_ERROR is raised if the given file is already
+          open.  The exception NAME_ERROR is raised if the string given  as 
+          NAME  does not allow the identification of an external file.  The
+          exception USE_ERROR is raised if, for  the  specified  mode,  the
+          environment  does  not  support creation of an external file with
+          the given name (in the absence of NAME_ERROR) and form.    
+
+    procedure OPEN(FILE : in out FILE_TYPE;
+                   MODE : in FILE_MODE;
+                   NAME : in STRING;
+                   FORM : in STRING := ""); 
+
+          Associates the given file with an existing external  file  having
+          the  given  name and form, and sets the current mode of the given
+          file to the given mode.  The given file is left open.                                                          
+
+          The exception STATUS_ERROR is raised if the given file is already
+          open.  The exception NAME_ERROR is raised if the string given  as
+          NAME  does  not allow the identification of an external file;  in
+          particular, this exception is raised if no external file with the
+          given name exists.  The exception USE_ERROR is raised if, for the
+          specified mode, the environment does not support opening  for  an
+          external  file with the given name (in the absence of NAME_ERROR)
+          and form.  
+
+    procedure CLOSE(FILE : in out FILE_TYPE); 
+
+          Severs the association between the given file and its  associated
+          external file.  The given file is left closed. 
+
+          The  exception  STATUS_ERROR  is  raised if the given file is not
+          open.  
+
+    procedure DELETE(FILE : in out FILE_TYPE); 
+
+          Deletes the external file associated with the  given  file.   The
+          given file is closed, and the external file ceases to exist. 
+
+          The  exception  STATUS_ERROR  is  raised if the given file is not
+          open.  The exception USE_ERROR is raised if (as fully defined  in
+          <a href="lrm-F.html#F">Appendix F</a>) deletion of the external file is not supported by the
+          environment.  
+
+    procedure RESET(FILE : in out FILE_TYPE; MODE : in FILE_MODE);
+    procedure RESET(FILE : in out FILE_TYPE); 
+
+          Resets  the  given  file  so  that reading from or writing to its
+          elements can be restarted from the beginning  of  the  file;   in
+          particular,  for  direct access this means that the current index
+          is set to one.  If a MODE parameter is supplied, the current mode
+          of the given file is set to the given mode. 
+
+          The exception STATUS_ERROR is raised if the  file  is  not  open.
+          The  exception  USE_ERROR  is  raised if the environment does not
+          support resetting  for  the  external  file  and,  also,  if  the
+          environment  does not support resetting to the specified mode for
+          the external file.  
+
+    function MODE(FILE : in FILE_TYPE) return FILE_MODE; 
+
+          Returns the current mode of the given file. 
+
+          The exception STATUS_ERROR is raised if the file is not open.  
+
+    function NAME(FILE : in FILE_TYPE) return STRING;   
+
+          Returns a string which  uniquely  identifies  the  external  file
+          currently associated with the given file (and may thus be used in
+          an   OPEN  operation).   If  an  environment  allows  alternative
+          specifications of the  name  (for  example,  abbreviations),  the
+          string  returned  by  the  function  should  correspond to a full
+          specification of the name. 
+
+          The exception STATUS_ERROR is raised if the  given  file  is  not
+          open.                                                                         
+
+    function FORM(FILE : in FILE_TYPE) return STRING; 
+
+          Returns   the   form  string  for  the  external  file  currently
+          associated  with  the  given  file.   If  an  environment  allows
+          alternative    specifications   of   the   form   (for   example,
+          abbreviations using default options), the string returned by  the
+          function  should  correspond to a full specification (that is, it
+          should  indicate  explicitly  all  options  selected,   including
+          default options). 
+
+          The  exception  STATUS_ERROR  is  raised if the given file is not
+          open.  
+
+    function IS_OPEN(FILE : in FILE_TYPE) return BOOLEAN; 
+
+          Returns TRUE if the file is open (that is, if  it  is  associated
+          with an external file), otherwise returns FALSE. 
+</pre>
+<P>
+<b>References:</b>  <A HREF="lrm-14-01.html#14.1">current mode</A>,
+<A HREF="lrm-14-01.html#14.1">current size</A>,
+<A HREF="lrm-14-01.html#14.1">closed file</A>,
+<A HREF="#14.2">direct access</A>,
+<A HREF="lrm-14-01.html#14.1">external file</A>,
+<A HREF="lrm-14-01.html#14.1">file</A>,
+<A HREF="lrm-14-01.html#14.1">file_mode type</A>,
+<A HREF="lrm-14-01.html#14.1">file_type type</A>,
+<A HREF="lrm-14-01.html#14.1">form string</A>,
+<A HREF="#14.2.4">inout_file</A>,
+<A HREF="lrm-14-01.html#14.1">mode</A>,
+<A HREF="lrm-14-01.html#14.1">name  string</A>,
+<A HREF="lrm-14-04.html#14.4">name_error   exception</A>,
+<A HREF="lrm-14-01.html#14.1">open  file</A>,
+<A HREF="lrm-14-01.html#14.1">out_file</A>,
+<A HREF="lrm-14-04.html#14.4">status_error exception</A>,
+<A HREF="lrm-14-04.html#14.4">use_error exception</A>.
+<P>
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-07.html#7.7.1">7.7.1&nbsp;Name and Form Parameters</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-07.html#7.7.2">7.7.2&nbsp;File Closing</a>
+
+<H3><A NAME="14.2.2">14.2.2</A>.  Sequential Input-Output  </H3>
+<A HREF="#14.2.1"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#14.2"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#14.2.3"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The operations available for sequential input and output are  described  in
+this  section.   The  exception  STATUS_ERROR  is  raised  if  any of these
+operations is attempted for a file that is not open.  
+<pre>
+    procedure READ(FILE : in FILE_TYPE; ITEM : out ELEMENT_TYPE);  
+
+          Operates on a file of mode IN_FILE.  Reads an  element  from  the
+          given  file,  and  returns  the value of this element in the ITEM
+          parameter. 
+
+          The exception MODE_ERROR is raised if the mode  is  not  IN_FILE.
+          The exception END_ERROR is raised if no more elements can be read
+          from  the  given file.  The exception DATA_ERROR is raised if the
+          element read cannot  be  interpreted  as  a  value  of  the  type
+          ELEMENT_TYPE;  however, an implementation is allowed to omit this
+          check if performing the check is too complex.  
+
+    procedure WRITE(FILE : in FILE_TYPE; ITEM : in ELEMENT_TYPE); 
+
+          Operates on a file of mode OUT_FILE.  Writes the value of ITEM to
+          the given file.   
+
+          The  exception  MODE_ERROR is raised if the mode is not OUT_FILE.
+          The exception USE_ERROR is raised if the capacity of the external
+          file is exceeded.  
+
+    function END_OF_FILE(FILE : in FILE_TYPE) return BOOLEAN; 
+
+          Operates on a file of mode IN_FILE.   Returns  TRUE  if  no  more
+          elements  can  be  read  from  the given file;  otherwise returns
+          FALSE. 
+
+          The exception MODE_ERROR is raised if the mode is not IN_FILE. 
+</pre>
+<P>
+<b>References:</b>  <A HREF="lrm-14-04.html#14.4">data_error exception</A>,
+<A HREF="lrm-14-01.html#14.1">element</A>,
+<A HREF="lrm-14-01.html#14.1">element_type</A>,
+<A HREF="lrm-14-04.html#14.4">end_error  exception</A>,
+<A HREF="lrm-14-01.html#14.1">external file</A>,
+<A HREF="lrm-14-01.html#14.1">file</A>,
+<A HREF="lrm-14-01.html#14.1">file mode</A>,
+<A HREF="lrm-14-01.html#14.1">file_type</A>,
+<A HREF="lrm-14-01.html#14.1">in_file</A>,
+<A HREF="lrm-14-04.html#14.4">mode_error  exception</A>,
+<A HREF="lrm-14-01.html#14.1">out_file</A>,
+<A HREF="lrm-14-04.html#14.4">status_error exception</A>,
+<A HREF="lrm-14-04.html#14.4">use_error exception</A>.
+<P>
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-09.html#5.9.7">5.9.7&nbsp;Direct_IO and Sequential_IO</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-07.html#7.7.3">7.7.3&nbsp;I/O on Access Types</a><H3><A NAME="14.2.3">14.2.3</A>.  Specification of the Package Sequential_IO     </H3>
+<A HREF="#14.2.2"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#14.2"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#14.2.4"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<pre>
+    with IO_EXCEPTIONS;
+    generic
+       type ELEMENT_TYPE is private;
+    package SEQUENTIAL_IO is 
+
+       type FILE_TYPE is limited private; 
+
+       type FILE_MODE is (IN_FILE, OUT_FILE);  
+
+       -- File management 
+
+       procedure CREATE(FILE : in out FILE_TYPE;
+                        MODE : in FILE_MODE := OUT_FILE;
+                        NAME : in STRING := "";
+                        FORM : in STRING := ""); 
+
+       procedure OPEN  (FILE : in out FILE_TYPE;
+                        MODE : in FILE_MODE;
+                        NAME : in STRING;
+                        FORM : in STRING := ""); 
+
+       procedure CLOSE (FILE : in out FILE_TYPE);
+       procedure DELETE(FILE : in out FILE_TYPE);
+       procedure RESET (FILE : in out FILE_TYPE; MODE : in FILE_MODE);
+       procedure RESET (FILE : in out FILE_TYPE); 
+
+       function MODE   (FILE : in FILE_TYPE) return FILE_MODE;
+       function NAME   (FILE : in FILE_TYPE) return STRING;
+       function FORM   (FILE : in FILE_TYPE) return STRING; 
+
+       function IS_OPEN(FILE : in FILE_TYPE) return BOOLEAN; 
+
+       -- Input and output operations 
+
+       procedure READ  (FILE : in FILE_TYPE; ITEM : out ELEMENT_TYPE);
+       procedure WRITE (FILE : in FILE_TYPE; ITEM : in ELEMENT_TYPE); 
+
+       function END_OF_FILE(FILE : in FILE_TYPE) return BOOLEAN; 
+ 
+       -- Exceptions 
+
+       STATUS_ERROR : exception renames IO_EXCEPTIONS.STATUS_ERROR;
+       MODE_ERROR   : exception renames IO_EXCEPTIONS.MODE_ERROR;
+       NAME_ERROR   : exception renames IO_EXCEPTIONS.NAME_ERROR;
+       USE_ERROR    : exception renames IO_EXCEPTIONS.USE_ERROR;
+       DEVICE_ERROR : exception renames IO_EXCEPTIONS.DEVICE_ERROR;
+       END_ERROR    : exception renames IO_EXCEPTIONS.END_ERROR;
+       DATA_ERROR   : exception renames IO_EXCEPTIONS.DATA_ERROR;    
+
+    private
+       -- implementation-dependent
+    end SEQUENTIAL_IO;                                                             
+</pre>
+<P>
+<b>References:</b>   <A HREF="#14.2.1">close  procedure</A>,
+<A HREF="#14.2.1">create procedure</A>,
+<A HREF="lrm-14-04.html#14.4">data_error exception</A>,
+<A HREF="#14.2.1">delete  procedure</A>,
+<A HREF="lrm-14-04.html#14.4">device_error  exception</A>,
+<A HREF="lrm-14-04.html#14.4">end_error  exception</A>,
+<A HREF="#14.2.2">end_of_file  function</A>,
+<A HREF="lrm-14-01.html#14.1">file_mode</A>,
+<A HREF="lrm-14-01.html#14.1">file_type</A>,
+<A HREF="#14.2.1">form function</A>,
+<A HREF="lrm-14-01.html#14.1">in_file</A>,
+<A HREF="lrm-14-04.html#14.4">io_exceptions</A>,
+<A HREF="#14.2.1">is_open  function</A>,
+<A HREF="#14.2.1">mode function</A>,
+<A HREF="lrm-14-04.html#14.4">mode_error exception</A>,
+<A HREF="#14.2.1">name function</A>,
+<A HREF="lrm-14-04.html#14.4">name_error exception</A>,
+<A HREF="#14.2.1">open  procedure</A>,
+<A HREF="lrm-14-01.html#14.1">out_file</A>,
+<A HREF="#14.2.2">read procedure</A>,
+<A HREF="#14.2.1">reset procedure</A>,
+<A HREF="#14.2">sequential_io package</A>,
+ and <A HREF="#14.2.2">14.2.2</A>,
+<A HREF="lrm-14-04.html#14.4">status_error exception</A>,
+<A HREF="lrm-14-04.html#14.4">use_error exception</A>,
+<A HREF="#14.2.2">write procedure</A>.
+
+<H3><A NAME="14.2.4">14.2.4</A>.  Direct Input-Output  </H3>
+<A HREF="#14.2.3"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#14.2"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#14.2.5"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The  operations available for direct input and output are described in this
+section.  The exception STATUS_ERROR is raised if any of  these  operations
+is attempted for a file that is not open. 
+<pre>
+    procedure READ(FILE : in FILE_TYPE; ITEM : out ELEMENT_TYPE;
+                                        FROM : in  POSITIVE_COUNT);
+    procedure READ(FILE : in FILE_TYPE; ITEM : out ELEMENT_TYPE); 
+
+          Operates on a file of mode IN_FILE or INOUT_FILE.  In the case of
+          the  first  form, sets the current index of the given file to the
+          index value given by the parameter FROM.  Then (for  both  forms)
+          returns,  in  the  parameter ITEM, the value of the element whose
+          position in the given file is specified by the current  index  of
+          the file;  finally, increases the current index by one.    
+
+          The  exception MODE_ERROR is raised if the mode of the given file
+          is OUT_FILE.  The exception END_ERROR is raised if the  index  to
+          be  used  exceeds  the  size of the external file.  The exception
+          DATA_ERROR is raised if the element read cannot be interpreted as
+          a value of the type ELEMENT_TYPE;  however, an implementation  is
+          allowed  to  omit  this  check  if  performing  the  check is too
+          complex.  
+
+    procedure WRITE(FILE : in FILE_TYPE; ITEM : in ELEMENT_TYPE;
+                                         TO   : in POSITIVE_COUNT);
+    procedure WRITE(FILE : in FILE_TYPE; ITEM : in ELEMENT_TYPE); 
+
+          Operates on a file of mode INOUT_FILE or OUT_FILE.  In  the  case
+          of  the first form, sets the index of the given file to the index
+          value given by the parameter TO.  Then (for both forms) gives the
+          value of the parameter ITEM to the element whose position in  the
+          given  file  is  specified  by  the  current  index  of the file;
+          finally, increases the current index by one. 
+
+          The exception MODE_ERROR is raised if the mode of the given  file
+          is IN_FILE.  The exception USE_ERROR is raised if the capacity of
+          the external file is exceeded.   
+
+    procedure SET_INDEX(FILE : in FILE_TYPE; TO : in POSITIVE_COUNT); 
+
+          Operates  on  a  file of any mode.  Sets the current index of the
+          given file to the given index value (which may exceed the current
+          size of the file).  
+
+    function INDEX(FILE : in FILE_TYPE) return POSITIVE_COUNT; 
+
+          Operates on a file of any mode.  Returns the current index of the
+          given file.                                                               
+
+    function SIZE(FILE : in FILE_TYPE) return COUNT; 
+
+          Operates on a file of any mode.  Returns the current size of  the
+          external file that is associated with the given file. 
+
+    function END_OF_FILE(FILE : in FILE_TYPE) return BOOLEAN; 
+
+          Operates  on  a file of mode IN_FILE or INOUT_FILE.  Returns TRUE
+          if the current index exceeds  the  size  of  the  external  file;
+          otherwise returns FALSE. 
+
+          The  exception MODE_ERROR is raised if the mode of the given file
+          is OUT_FILE. 
+</pre>
+<P>
+<b>References:</b>  <A HREF="#14.2">count type</A>,
+<A HREF="#14.2">current  index</A>,
+<A HREF="#14.2">current  size</A>,
+<A HREF="lrm-14-04.html#14.4">data_error  exception</A>,
+<A HREF="lrm-14-01.html#14.1">element</A>,
+<A HREF="lrm-14-01.html#14.1">element_type</A>,
+<A HREF="lrm-14-04.html#14.4">end_error exception</A>,
+<A HREF="lrm-14-01.html#14.1">external file</A>,
+<A HREF="lrm-14-01.html#14.1">file</A>,
+<A HREF="lrm-14-01.html#14.1">file  mode</A>,
+<A HREF="lrm-14-01.html#14.1">file_type</A>,
+<A HREF="lrm-14-01.html#14.1">in_file</A>,
+<A HREF="#14.2">index</A>,
+<A HREF="lrm-14-01.html#14.1">inout_file</A>,
+<A HREF="lrm-14-04.html#14.4">mode_error exception</A>,
+<A HREF="lrm-14-01.html#14.1">open file</A>,
+<A HREF="lrm-14-03.html#14.3">positive_count</A>,
+<A HREF="lrm-14-04.html#14.4">status_error exception</A>,
+<A HREF="lrm-14-04.html#14.4">use_error exception</A>.
+<P>
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-09.html#5.9.7">5.9.7&nbsp;Direct_IO and Sequential_IO</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-07.html#7.7.1">7.7.1&nbsp;Name and Form Parameters</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-07.html#7.7.3">7.7.3&nbsp;I/O on Access Types</a>
+
+<H3><A NAME="14.2.5">14.2.5</A>.  Specification of the Package Direct_IO   </H3>
+<A HREF="#14.2.4"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#14.2"><img src="lrm-up.gif" alt="[UP]"></A>
+<pre>
+    with IO_EXCEPTIONS;
+    generic
+       type ELEMENT_TYPE is private;
+    package DIRECT_IO is 
+
+       type FILE_TYPE is limited private; 
+
+       type    FILE_MODE is (IN_FILE, INOUT_FILE, OUT_FILE);
+       type    COUNT     is range 0 .. implementation defined;
+       subtype POSITIVE_COUNT is COUNT range 1 .. COUNT'LAST;  
+
+       -- File management 
+
+       procedure CREATE(FILE : in out FILE_TYPE;
+                        MODE : in FILE_MODE := INOUT_FILE;
+                        NAME : in STRING := "";
+                        FORM : in STRING := ""); 
+
+       procedure OPEN  (FILE : in out FILE_TYPE;
+                        MODE : in FILE_MODE;
+                        NAME : in STRING;
+                        FORM : in STRING := "");    
+
+       procedure CLOSE (FILE : in out FILE_TYPE);
+       procedure DELETE(FILE : in out FILE_TYPE);  
+       procedure RESET (FILE : in out FILE_TYPE; MODE : in FILE_MODE);
+       procedure RESET (FILE : in out FILE_TYPE); 
+
+       function MODE   (FILE : in FILE_TYPE) return FILE_MODE;
+       function NAME   (FILE : in FILE_TYPE) return STRING;
+       function FORM   (FILE : in FILE_TYPE) return STRING; 
+
+       function IS_OPEN(FILE : in FILE_TYPE) return BOOLEAN;                                                 
+
+       -- Input and output operations 
+
+       procedure READ (FILE : in FILE_TYPE; ITEM : out ELEMENT_TYPE; FROM :
+        POSITIVE_COUNT);
+       procedure READ (FILE : in FILE_TYPE; ITEM : out ELEMENT_TYPE);
+
+       procedure WRITE(FILE : in FILE_TYPE; ITEM : in  ELEMENT_TYPE; TO :
+        POSITIVE_COUNT);
+       procedure WRITE(FILE : in FILE_TYPE; ITEM : in ELEMENT_TYPE);
+
+       procedure SET_INDEX(FILE : in FILE_TYPE; TO : in POSITIVE_COUNT); 
+
+       function INDEX(FILE : in FILE_TYPE) return POSITIVE_COUNT;
+       function SIZE (FILE : in FILE_TYPE) return COUNT; 
+
+       function END_OF_FILE(FILE : in FILE_TYPE) return BOOLEAN; 
+
+       -- Exceptions 
+
+       STATUS_ERROR : exception renames IO_EXCEPTIONS.STATUS_ERROR;
+       MODE_ERROR   : exception renames IO_EXCEPTIONS.MODE_ERROR;
+       NAME_ERROR   : exception renames IO_EXCEPTIONS.NAME_ERROR;
+       USE_ERROR    : exception renames IO_EXCEPTIONS.USE_ERROR;
+       DEVICE_ERROR : exception renames IO_EXCEPTIONS.DEVICE_ERROR;
+       END_ERROR    : exception renames IO_EXCEPTIONS.END_ERROR;
+       DATA_ERROR   : exception renames IO_EXCEPTIONS.DATA_ERROR;    
+
+    private
+       -- implementation-dependent
+    end DIRECT_IO;  
+</pre>
+<P>
+<b>References:</b>  close  procedure  <a href="#14.2.1">14.2.1</a>,  count  type  <a href="#14.2">14.2</a>,  create procedure
+<a href="#14.2.1">14.2.1</a>, data_error exception <a href="lrm-14-04.html#14.4">14.4</a>, default_mode  <a href="#14.2.5">14.2.5</a>,  delete  procedure
+<a href="#14.2.1">14.2.1</a>,   device_error   exception  <a href="lrm-14-04.html#14.4">14.4</a>,  element_type  <a href="#14.2.4">14.2.4</a>,  end_error
+exception <a href="lrm-14-04.html#14.4">14.4</a>, end_of_file function <a href="#14.2.4">14.2.4</a>,  file_mode  <a href="#14.2.5">14.2.5</a>,  file_type
+<a href="#14.2.4">14.2.4</a>,  form  function  <a href="#14.2.1">14.2.1</a>,  in_file  <a href="#14.2.4">14.2.4</a>,  index  function <a href="#14.2.4">14.2.4</a>,
+inout_file <a href="#14.2.4">14.2.4</a> <a href="#14.2.1">14.2.1</a>,  io_exceptions  package  <a href="lrm-14-04.html#14.4">14.4</a>,  is_open  function
+<a href="#14.2.1">14.2.1</a>,  mode  function  <a href="#14.2.1">14.2.1</a>,  mode_error  exception <a href="lrm-14-04.html#14.4">14.4</a>, name function
+<a href="#14.2.1">14.2.1</a>, name_error exception <a href="lrm-14-04.html#14.4">14.4</a>, open procedure <a href="#14.2.1">14.2.1</a>, out_file  <a href="#14.2.1">14.2.1</a>,
+read  procedure  <a href="#14.2.4">14.2.4</a>,  set_index procedure <a href="#14.2.4">14.2.4</a>, size function <a href="#14.2.4">14.2.4</a>,
+status_error exception <a href="lrm-14-04.html#14.4">14.4</a>,  use_error  exception  <a href="lrm-14-04.html#14.4">14.4</a>,  write  procedure
+<a href="#14.2.4">14.2.4</a> <a href="#14.2.1">14.2.1</a>    
+<P>
+
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

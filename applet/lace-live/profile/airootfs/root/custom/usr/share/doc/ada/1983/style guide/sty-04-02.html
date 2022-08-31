@@ -1,0 +1,349 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 4.2: Visibility
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://www.software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 4: Program Structure</H2>
+
+<H3><a name="4.2">4.2     Visibility</a></H3>
+Ada's ability to enforce information hiding and separation of concerns through  
+its visibility controlling features is one of the most important advantages of  
+the language, particularly when &quot;pieces of a large system are being developed 
+separately.&quot; Subverting these features, for example by excessive reliance on  
+the use clause, is wasteful and dangerous. See also <a href="sty-05-07.html#5.7">Guideline 5.7</a>.<P>
+<b>Language Ref Manual references:</b> 
+        <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08.html#8">8&nbsp;Visibility Rules</A>
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><br>
+<img src="indent.gif"><a href="#4.2.1">4.2.1   Minimization of Interfaces</a><BR>
+<img src="indent.gif"><a href="#4.2.2">4.2.2   Nested Packages</a><BR>
+<img src="indent.gif"><a href="#4.2.3">4.2.3   Restricting Visibility</a><BR>
+<img src="indent.gif"><a href="#4.2.4">4.2.4   Hiding Tasks</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-04-04.html#4.4.2"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="4.2.1">4.2.1   Minimization of Interfaces</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Put only what is needed for the use of a package into its  
+specification. 
+<li>Minimize the number of declarations in package specifications. 
+<li>Do not include extra operations simply because they are easy to build. 
+<li>Minimize the context (<CODE>with</CODE>) clauses in a package specification. 
+<li>Reconsider subprograms which seem to require large numbers of  
+parameters. 
+<li>Do not manipulate global data within a subprogram or package merely to  
+limit the number of parameters. 
+<li>Avoid unnecessary visibility; hide the implementation details of a  
+program unit from its users. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------- 
+package Telephone_Book is
+
+   type Listing is limited private;
+   
+   procedure Set_Name (New_Name : in     String; 
+                       Current  : in out Listing);
+                       
+   procedure Insert (Additional : in     Listing); 
+   procedure Delete (Obsolete   : in     Listing);
+   
+private
+
+   type Information; 
+   type Listing is access Information;
+   
+end Telephone_Book;
+
+-------------------------------------------------------------------------
+
+package body Telephone_Book is
+
+   -- Full details of record for a listing 
+   type Information is 
+      record 
+         ... 
+         Next : Listing; 
+      end record;
+      
+   First : Listing;
+   
+   procedure Set_Name (New_Name  : in     String; 
+                       Current   : in out Listing) is separate; 
+   procedure Insert  (Additional : in     Listing) is separate; 
+   procedure Delete  (Obsolete   : in     Listing) is separate;
+   
+end Telephone_Book; 
+-------------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+For each entity in the specification, give careful consideration to whether it 
+could be moved to the body. The fewer the extraneous details, the more 
+understandable the program, package, or subprogram. It is important to 
+maintainers to know exactly what a package interface is so that they can 
+understand the effects of changes. Interfaces to a subprogram extend beyond 
+the parameters. Any modification of global data from within a package or 
+subprogram is an undocumented interface to the &quot;outside&quot; as well.<P>
+Pushing as many as possible of the context dependencies into the body makes 
+the reader's job easier, localizes the recompilation required when library 
+units change, and helps prevent a ripple effect during modifications. See also 
+<a href="#4.2.3">Guideline 4.2.3</a>.<P>
+Subprograms with large numbers of parameters often indicate poor design 
+decisions (e.g., the functional boundaries of the subprogram are 
+inappropriate, or parameters are structured poorly). Conversely, subprograms 
+with no parameters are likely to be accessing global data.<P>
+Objects visible within package specifications can be modified by any unit that 
+has visibility to them. The object cannot be protected or represented 
+abstractly by its enclosing package. Objects which must persist should be 
+declared in package bodies. Objects whose value depends on program units 
+external to their enclosing package are probably either in the wrong package 
+or are better accessed by a subprogram specified in the package specification.
+
+<H4>note</H4>
+The specifications of some packages, such as Ada bindings to existing  
+subroutine libraries, cannot easily be reduced in size. In such cases, it may  
+be beneficial to break these up into smaller packages, grouping according to  
+category (e.g., trigonometric functions).<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-01.html#6.1">6.1&nbsp;Subprogram Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-06.html#6.6">6.6&nbsp;Parameter and Result Type Profile - Overloading of Subprograms</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-01.html#7.1">7.1&nbsp;Package Structure</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-02.html#7.2">7.2&nbsp;Package Specifications and Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-03.html#7.3">7.3&nbsp;Package Bodies</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-03.html#8.3">8.3&nbsp;Visibility</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-10-01.html#10.1.1">10.1.1&nbsp;Context Clauses - With Clauses</A>
+
+
+<H3><BR><a name="4.2.2">4.2.2   Nested Packages</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Nest package specifications within another package specification only  
+for grouping operations, hiding common implementation details, or presenting  
+different views of the same abstraction.
+</UL>
+
+<H4>example</H4>
+<a href="http://archive.adaic.com/standards/83lrm/html/lrm-14.html">Chapter 14</a> of the <a href="http://archive.adaic.com/standards/83lrm/html/">Ada Language Reference Manual</a>  gives an example of desirable  
+package specification nesting. The specifications of generic packages  
+<CODE>Integer_IO</CODE>, <CODE>Float_IO</CODE>, <CODE>Fixed_IO</CODE>, and <CODE>Enumeration_IO</CODE> are nested within the  
+specification of package <CODE>Text_IO</CODE>. Each of them is a generic, grouping closely  
+related operations and needing to use hidden details of the implementation of  
+<CODE>Text_IO</CODE>.
+
+<H4>rationale</H4>
+Grouping package specifications into an encompassing package emphasizes a  
+relationship of commonality among those packages. It also allows them to share  
+common implementation details resulting from the relationship.<P>
+An abstraction occasionally needs to present different views to different  
+classes of users. Building one view upon another as an additional abstraction  
+does not always suffice, because the functionality of the operations presented  
+by the views may be only partially disjoint. Nesting specifications groups the  
+facilities of the various views, yet associates them with the abstraction they  
+present. Abusive mixing of the views by another unit would be easy to detect  
+due to the multiple use clauses or an incongruous mix of qualified names.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-02.html#7.2">7.2&nbsp;Package Specifications and Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-12-01.html#12.1">12.1&nbsp;Generic Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-14-03.html#14.3">14.3&nbsp;Text Input-Output</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-14-03.html#14.3.10">14.3.10&nbsp;Specification of the Package Text_IO</A>
+
+
+<H3><BR><a name="4.2.3">4.2.3   Restricting Visibility</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Restrict the visibility of program units as much as possible by 
+nesting them inside other program units and hiding them inside package bodies 
+(Nissen and Wallis 1984). 
+<li>Minimize the scope within which <CODE>with</CODE> clauses apply.  
+<li>Only <CODE>with</CODE> those units directly needed. 
+</UL>
+
+<H4>example</H4>
+This program is a compiler. Access to the printing facilities of Text_IO is  
+restricted to the software involved in producing the source code listing.
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------- 
+procedure Compiler is
+
+   ---------------------------------------------------------------------- 
+   package Listing_Facilities is
+   
+      procedure New_Page_Of_Listing; 
+      procedure New_Line_Of_Print; 
+      ...
+      
+   end Listing_Facilities;
+   
+   ---------------------------------------------------------------------- 
+   package body Listing_Facilities is separate;
+   
+begin  -- Compiler 
+   ... 
+end Compiler;
+
+-------------------------------------------------------------------------
+
+with Text_IO;
+
+separate (Compiler) 
+package body Listing_Facilities is
+
+   ---------------------------------------------------------------------- 
+   procedure New_Page_Of_Listing is 
+   begin 
+      ... 
+   end New_Page_Of_Listing;
+   
+   ----------------------------------------------------------------------
+   
+   procedure New_Line_Of_Print is 
+   begin 
+      ... 
+   end New_Line_Of_Print;
+   
+   ...
+   
+end Listing_Facilities; 
+-------------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+Restricting visibility of a program unit ensures that the program unit is not 
+called from some other part of the system than that which was intended. This 
+is done by nesting it inside of the only unit which uses it, or by hiding it 
+inside of a package body rather than declaring it in the package 
+specification.  This avoids errors and eases the job of maintainers by 
+guaranteeing that a local change in that unit will not have an unforeseen 
+global effect.<P>
+Restricting visibility of a library unit, by using with clauses on subunits  
+rather than on the entire parent unit, is useful in the same way. In the  
+example above, it is clear that the package <CODE>Text_IO</CODE> is used only by the  
+<CODE>Listing_Facilities</CODE> package of the compiler.
+
+<H4>note</H4>
+One way to minimize the coverage of a <CODE>with</CODE> clause is to use it only with  
+subunits that really need it. Consider making those subunits separate  
+compilation units when the need for visibility to a library unit is restricted  
+to a subprogram or two.<P>
+<b>Language Ref Manual references:</b> 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-01.html#8.1">8.1&nbsp;Declarative Region</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-02.html#8.2">8.2&nbsp;Scope of Declarations</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-03.html#8.3">8.3&nbsp;Visibility</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-10-01.html#10.1.1">10.1.1&nbsp;Context Clauses - With Clauses</A>, 
+    <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-10-02.html#10.2">10.2&nbsp;Subunits of Compilation Units</A>
+
+
+<H3><BR><a name="4.2.4">4.2.4   Hiding Tasks</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Carefully consider encapsulation of tasks.
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------- 
+package Disk_Head_Scheduler is
+
+   type Words        is ...
+   
+   type Track_Number is ...
+   
+   procedure Transmit (Track : in     Track_Number; 
+                       Data  : in     Words);
+                       
+   ... 
+end Disk_Head_Scheduler;
+
+-------------------------------------------------------------------------
+
+package body Disk_Head_Scheduler is
+
+   ... 
+   task Control is 
+      entry Sign_In (Track : in     Track_Number);
+      
+      ... 
+   end Control;
+   
+   ----------------------------------------------------------------------
+   
+   task Track_Manager is 
+      entry Transfer(Track_Number) (Data : in     Words); 
+   end Track_Manager;
+   
+   ---------------------------------------------------------------------- 
+   ...
+   
+   procedure Transmit (Track : in     Track_Number; 
+                       Data  : in     Words) is 
+   begin
+   
+      Control.Sign_In(Track); 
+      Track_Manager.Transfer(Track)(Data);
+      
+   end Transmit;
+   
+   ---------------------------------------------------------------------- 
+   ... 
+end Disk_Head_Scheduler; 
+-------------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+The decision whether to declare a task in the specification or body of an  
+enclosing package is not a simple one. There are good arguments for both.<P>
+Hiding a task specification in a package body and exporting (via subprograms) 
+only required entries reduces the amount of extraneous information in the 
+package specification. It allows your subprograms to enforce any order of 
+entry calls necessary to the proper operation of the tasks. It also allows you 
+to impose defensive task communication practices (see <a href="sty-06-02.html#6.2.2">Guideline 6.2.2</a>) and proper 
+use of conditional and timed entry calls. Finally, it allows the grouping of 
+entries into sets for export to different classes of users (e.g., producers 
+versus consumers), or the concealment of entries that should not be made 
+public at all (e.g., initialization, completion, signals). Where performance 
+is an issue and there are no ordering rules to enforce, the entries can be 
+renamed as subprograms to avoid the overhead of an extra procedure call.<P>
+An argument which can be viewed as an advantage or disadvantage is that hiding  
+the task specification in a package body hides the fact of a tasking  
+implementation from the user. If the application is such that a change to or  
+from a tasking implementation, or a reorganization of services among tasks,  
+need not concern users of the package then this is an advantage. However, if  
+the package user must know about the tasking implementation to reason about  
+global tasking behavior, then it is better not to hide the task completely.  
+Either move it to the package specification or add comments stating that there  
+is a tasking implementation, describing when a call may block, etc. Otherwise,  
+it is the package implementor's responsibility to ensure that users of the  
+package do not have to concern themselves with behaviors such as deadlock,  
+starvation, and race conditions.<P>
+Finally, keep in mind that hiding tasks behind a procedural interface prevents 
+the usage of conditional and timed entry calls and entry families, unless you 
+add parameters and extra code to the procedures to make it possible for 
+callers to direct the procedures to use these capabilities.<P>
+<b>Language Ref Manual references:</b> 
+     <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-07-02.html#7.2">7.2&nbsp;Package Specifications and Declarations</A>, 
+     <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-07.html#9.7.2">9.7.2&nbsp;Conditional Entry Calls</A>, 
+     <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-07.html#9.7.3">9.7.3&nbsp;Timed Entry Calls</A>, 
+     <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09.html#9">9&nbsp;Tasks</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

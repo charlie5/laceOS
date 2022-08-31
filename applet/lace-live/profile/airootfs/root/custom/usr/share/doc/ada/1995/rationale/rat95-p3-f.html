@@ -1,0 +1,963 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Three - Chapter F
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p3-e.html> Previous </a> |
+<a href=rat95-p3-g.html> Next </a>
+<hr>
+
+
+<h1>
+F   Information Systems
+</h1>
+
+<p>
+One of the major goals of Ada 95 is to provide the necessary language
+facilities for the development of large-scale information systems that
+previously have been produced in COBOL and 4GLs.  To a large extent, core
+language enhancements such as child units and object-oriented
+programming, and the new support for distribution, serve to meet this
+goal.  However, there are also specific requirements at the computational
+level and for report-oriented output that must be addressed in order to
+ensure applicability to financial and related Information Systems
+applications.  The major needs are
+</p>
+<ul>
+<li>
+     Exact, decimal arithmetic for quantities up to at least 18 digits of
+     precision;
+<li>
+    The ability to produce human-readable formats for such values, with
+     control over the form and placement of currency symbol, sign, digits
+     separator, and radix mark;
+<li>
+    The ability to interface with data produced by, or programs written
+     in, other languages (in particular C and COBOL).
+</ul>
+<p>
+This chapter describes the facilities and gives the reasons for the major
+decisions taken in Ada 95 to satisfy these requirements.
+</p>
+
+<h2>
+<a name=1>
+F.1  Decimal Computation
+</a>
+</h2>
+
+<p>
+A numeric model highly appropriate for information systems, especially
+for financial applications, is that supplied by the COBOL language.  In
+COBOL the programmer defines numeric items via a "picture" in terms of a
+specified number of decimal digits and the placement of the decimal
+point.  The arithmetic verbs provide exact arithmetic, with control over
+truncation versus rounding on a per-computation basis.  For example:
+<pre>
+   05 FRACTION           PIC S9V99    VALUE .25.
+   05 ALPHA              PIC S9999V9  VALUE 103.
+   05 BETA               PIC S9999V9.
+</pre>
+</p>
+<p>
+FRACTION has values in the range -9.99 through 9.99, and each of ALPHA
+and BETA is in the range -9999.9 through 9999.9.
+<pre>
+     MULTIPLY ALPHA BY FRACTION GIVING BETA ROUNDED.
+   * Now BETA = 25.8, the rounded value of 25.75
+     ADD ALPHA TO BETA.
+   * Now BETA = 128.8
+     DIVIDE BETA BY 10.
+   * Now BETA = 12.8, since truncation is the default
+</pre>
+</p>
+<p>
+It is also possible to express the above calculation more succinctly in
+COBOL:
+<pre>
+   COMPUTE BETA = (ALPHA * FRACTION + ALPHA) / 10.
+</pre>
+</p>
+<p>
+However, the effect of rounding versus truncation is now implementation
+dependent, so the result may be either 12.8 or 12.9.
+</p>
+
+<h3>
+<a name=1-1>
+F.1.1  Decimal Arithmetic through Discriminated Type
+</a>
+</h3>
+
+<p>
+In addressing the exact computational requirements, we examined several
+alternatives.  One was to rely on a private discriminated type, with
+discriminants reflecting scale and precision.  (The terminology here is
+the same as in SQL [ISO 92]: precision is the total number of decimal
+digits; scale is the number of digits after the decimal point.)  For
+example
+<pre>
+   package Computation is
+       subtype Scale_Range is
+         Integer range implementation-defined .. implementation-defined;
+       subtype Precision_Range is
+         Positive range 1 .. implementation-defined;
+       type Decimal(Precision : Precision_Range;
+                    Scale     : Scale_Range) is private;
+       ... -- Subprograms for arithmetic
+   end Computation;
+</pre>
+</p>
+<p>
+   Such an approach would have the benefit of separability from the core
+features, but its numerous drawbacks led to its rejection:
+</p>
+<ul>
+<li>  
+    Literals are unavailable for private types, hence the programmer
+     would need to perform explicit conversions either from String or
+     from a specific real type.  Such a style would be both inefficient
+     and aesthetically displeasing.  In an early version of the Ada 9X
+     mapping there was a capability to obtain numeric literals for
+     private types, but this was removed as a simplification.
+<li>
+    Non-trivial optimizations are needed to avoid time and space
+     overhead.  In COBOL precision and scale are known at compile time,
+     so the compiler can generate efficient code.  The discriminated type
+     approach lets the programmer defer specifying the precision and
+     scale until run time, but the generality comes at a price.
+<li>
+    A problem often cited with the COBOL model is the lack of typing.
+     For example, if by mistake a COBOL programmer adds a unitless
+     fraction to a salary, this error will not be detected by the
+     compiler.  To obtain compile-time protection from such an error in
+     Ada, the programmer would need to derive from type Decimal, for
+     example to declare the types Fraction and Salary.  However,
+     derivation provides more operations than make sense and hence other
+     kinds of errors could still arise (for example, multiplying a Salary
+     by a Salary to obtain a Salary).  At the same time it yields less
+     than what is needed; for example, it would be useful to be able to
+     divide two Salary values and obtain a Fraction, but this would not
+     be provided automatically.  Although both of these problems could be
+     solved by the programmer providing some additional explicit
+     declarations, programmers might be tempted to forego the type
+     derivations (and the resulting safety) and to simply declare all
+     their data of type Decimal.
+<li>
+    Specifying just precision and scale allows more values than might be
+     sensible.  For example, if we want a fraction value to be in the
+     range 0.00 .. 1.00, we need to specify Decimal(Precision=>3,
+     Scale=>2), but this allows all values in the range -9.99 .. 9.99.
+</ul>
+<p>
+Another major problem with the discriminated type approach is the error-
+prone effects of having arithmetic operators take parameters of type
+Decimal and deliver a result of type Decimal.  Division in particular is
+troublesome; languages that attempt to address the issue lead inevitably
+to anomalies.  For example, the well-known curiosity in PL/I is that the
+operation 10+1/3 overflows, since the language rules attempt to maximize
+the precision of the quotient.  Moreover, the rules for precision and
+scale of an arithmetic result would clash with the need for discriminant
+identity on assignment.  For example, consider the simple fragment:
+<pre>
+   declare
+      Salary : Decimal(Precision => 9, Scale => 2);
+               -- Values in -99_999_99.99 .. 99_999_999.99
+      Fraction : Decimal(Precision => 2, Scale => 2);
+               -- Values in -0.99 .. 0.99
+   begin
+      ...
+      Salary := Salary * Fraction;
+      ...
+   end;
+</pre>
+</p>
+<p>
+   The intuitive rule for "*" would be to define the precision of the
+result as the sum of the precisions of the operands, and similarly for
+the scale.  Thus Salary*Fraction would have precision 11 and scale 4,
+sufficient to hold any product.  But then the rules for discriminant
+matching would cause Constraint_Error to be raised by the assignment to
+Salary.
+</p>
+<p>
+   A possible solution would be to introduce special rules for
+discriminant matching in such cases, but this adds complexity.  An
+alternative would be to omit the operator forms for the arithmetic
+subprograms and instead to provide a procedural interface with an out
+parameter, thereby making the result precision and scale known at the
+point of call.  For example:
+<pre>
+   procedure Multiply
+      (Left, Right : in Decimal;
+       Result      : out Decimal;
+       Rounding    : in Boolean := False);
+</pre>
+</p>
+<p>
+   Although such an approach has been successfully applied in the Ada 83
+Decimal Arithmetic and Representation components [Brosgol 92], the other
+drawbacks led us to seek alternative solutions for Ada 95.
+</p>
+
+<h3>
+<a name=1-2>
+F.1.2  Decimal Arithmetic and Ada 83 Numeric Types
+</a>
+</h3>
+
+<p>
+The Ada 83 numeric types give us a choice among integer, floating point,
+and fixed point.  In some sense integer arithmetic provides the most
+appropriate computational model, since it matches the requirements for
+exact results.  For example, one might consider using an integer type
+Pennies to represent monetary values.  However, this would be impractical
+for several reasons: the absence of real literals is a hardship, keeping
+track of implicit scaling is awkward, and many compilers do not support
+the 64-bit integer arithmetic that would be needed for 18 digits of
+accuracy.
+</p>
+<p>
+   Floating point is unacceptable because of the inherent inexactness of
+representing decimal quantities.  Consider the following program
+fragment, where X is a floating point variable:
+<pre>
+   X := 0.0;
+   for I in 1 .. 10 loop
+      X := X + 0.10;
+   end loop;
+</pre>
+</p>
+<p>
+   After execution of the loop using typical floating point hardware, X
+will not equal 1.00.  Moreover, 64-bit floating point does not have
+enough mantissa bits to represent 18 decimal digits.
+</p>
+<p>
+   At first glance, fixed point seems no better.  The apparent
+motivations behind the fixed point facility in Ada were to deal with
+scaled data coming in from sensors in real-time applications, and to
+provide a substitute for floating point in target environments lacking
+floating point hardware.  Indeed, the inherent bias toward powers of 2
+for the attribute Small in the Ada 83 fixed point model seems at odds
+with the needs of decimal computation.
+</p>
+<p>
+   However, fixed point provides a closer fit than might be expected
+[Dewar 90b].  The Ada 83 unification of floating point and fixed point
+under the category of "approximate" computation is more artificial than
+real, since the model-number inaccuracy that is appropriate in the
+floating point case because of differences in target hardware is not
+applicable at all to fixed point.  The fixed point arithmetic operations
+"+", "-", "*", "/" are exact, and through a Small representation clause
+the programmer can specify decimal scaling.  Thus consider a COBOL
+declaration
+<pre>
+   05   SALARY PICTURE S9(6)V9(2) USAGE COMPUTATIONAL.
+</pre>
+which defines SALARY as a signed binary data item comprising 8 decimal
+digits, of which 2 are after the assumed decimal point.  This can be
+simulated in Ada:
+<pre>
+   type Dollars is delta 0.01 range -999_999.99 .. 999_999.99;
+   for Dollars'Small use 0.01;
+
+   Salary : Dollars;
+</pre>
+</p>
+<p>
+The programmer-specified Small not only provides the required decimal
+scaling, it also prevents the implementation from supplying extra
+fractional digits.  This is important in financial applications: if the
+programmer requests 2 fractional digits, it would be incorrect for a
+compiler to provide 3.
+</p>
+<p>
+   The fixed point approach immediately avoids several of the problems
+with discriminated types: we get numeric literals, compile-time known
+scales and precisions, strong typing, and the ability to specify logical
+ranges.  Moreover, the rules for the arithmetic operators are fitting.
+The "+" and "-" operators require identical operand types and deliver a
+result of the same type, which is an intuitively correct restriction.
+Adding or subtracting quantities with different scales is not a frequent
+situation; when it arises, it is reasonable to require an explicit
+conversion to indicate the rescaling.  Automatic availability of mixed-
+type "*" and "/" also makes sense.
+</p>
+<p>
+   There are, however, several problems with adopting the Ada 83 fixed
+point model unchanged for decimal arithmetic.
+</p>
+<ul>
+<li>
+    The Ada fixed point model leads to occasional surprises, even in the
+     presence of a Small representation clause.  For example, one or both
+     endpoints supplied in the definition of a fixed point type may be
+     absent from the implemented range for the type.
+<li>
+    The Ada 83 fixed point rules require conversions of real literals
+     (and named numbers of type universal_real) that appear as factors in
+     multiplication or division.  Without the programmer providing an
+     explicit declaration of an applicable "*" operator, it would be
+     illegal to write:
+<pre>
+        Worker_Salary := 1.05 * Worker_Salary;
+</pre>
+     Instead, something like the following circumlocution is required:
+<pre>
+        Worker_Salary := Dollars(Some_Type(1.05) * Worker_Salary);
+</pre>
+     The need for the programmer to supply either these explicit
+     conversions or an explicit overloading of "*", is somewhat
+     embarrassing.  In COBOL the equivalent functionality can be obtained
+     directly:
+<pre>
+        MULTIPLY WORKER-SALARY BY 1.05.
+</pre>
+<li>     
+    The previous example illustrates another serious problem: Ada fixed
+     point does not give a well-defined result for the conversion of
+     values.  That is, the language does not guarantee whether the result
+     of a fixed point conversion is to be rounded or truncated.  In fact,
+     different evaluations of the same expression in the same program
+     could yield different results, an unwelcome nondeterminism.
+<li>
+    Facilities such as edited output, and a division operation
+     delivering both a quotient and remainder, are not defined for fixed
+     point types.
+</ul>
+
+<h3>
+<a name=1-3>
+F.1.3  Decimal Arithmetic through Decimal Types
+</a>
+</h3>
+
+<p>
+Since fixed point comes reasonably close to satisfying the requirements
+for decimal arithmetic, our decision was to use that facility as the
+basis for a solution.  Ada 95 thus introduces a new class of fixed point
+types, the decimal types, distinguished syntactically by the presence of
+a positive integer digits value following the delta in a fixed point
+definition.  The delta .. digits .. syntax, suggested by David Emery
+[Emery 91], has the advantage of identifying the type immediately as a
+special kind of fixed point type (the delta) without requiring new
+reserved words.
+</p>
+<p>
+   The delta value must be a power of 10.  For example:
+<pre>
+   type Francs is delta 0.01 digits 9;
+</pre>
+</p>
+<p>
+This declaration is similar in effect to the Ada 83 fragment:
+<pre>
+   type Francs is delta 0.01 range -(10.0**9 - 1.0) .. 10.0**9 - 1.0;
+   for Francs'Small use 0.01;
+</pre>
+</p>
+<p>
+   The digits value in a decimal fixed point type definition thus implies
+a range constraint.  For a decimal type with delta D and digits N (both
+of which must be static), the implied range is - (10.0**N -
+ 1.0)*D .. (10.0**N - 1.0)*D.  Moreover, a range constraint may be
+further supplied at the definition of a decimal type or subtype, and at
+the declaration of objects.  For example:
+<pre>
+   type    Salary is delta 0.01 digits 8 range 0.00 .. 100_000.00;
+   subtype Price  is Francs              range 0.00 .. 1000.00;
+   Worker_Salary : Salary range 0.00 .. 50_000.00;
+</pre>
+</p>
+<p>
+   The ordinary fixed point operations, such as the arithmetic operators
+and fixed point attributes, are available for decimal types.  There are,
+however, several important differences:
+</p>
+<ul>
+<li>  
+    For a decimal subtype S, the conversion S(expr) where expr is of
+     some numeric type is defined to truncate (towards 0) rather than
+     having an unspecified effect.
+<li>
+    To obtain a rounded result for an expression expr having a real
+     type, the function attribute S'Round(expr) can be used.  This
+     attribute is not available for ordinary fixed point types.
+<li>
+    Other attributes apply only to decimal subtypes: for example,
+     S'Digits and S'Scale.  The former reflects the value of digits
+     supplied for the declaration of S.  The latter is the number of
+     digits after the decimal point in values of S and is related to
+     S'Delta by the equation
+<pre>
+        10.0**(-S'Scale) = S'Delta
+</pre>
+</ul>
+</p>
+<p>
+   A stylistic issue noted above, namely the inability in Ada 83 to write
+simple statements such as:
+<pre>
+   Worker_Salary := 1.05 * Worker_Salary;
+</pre>
+has been solved in Ada 95 for fixed point types in general.  The revised
+rules permit a universal_fixed value to be implicitly converted to a
+specific target type if the context uniquely establishes the target type.
+Thus there is no need to convert to Salary the product on the right side
+of the assignment.  Another new rule allows a universal_real value to be
+used as an operand to a fixed point "*" and "/"; thus there is no need to
+convert the literal 1.05 to a specific type.  Although these enhancements
+are motivated by considerations with decimal types, it makes no sense
+either from an implementation or user viewpoint to apply the new rules
+only to decimal types, and thus they have been generalized for ordinary
+fixed point types as well.
+</p>
+<p>
+   Given that decimal types come equipped with their own operations, it
+is natural to introduce a category of generic formal type that can only
+be matched by decimal subtypes.  The syntax for such a generic formal
+type is what one would expect:
+<pre>
+   type T is delta <> digits <>;
+</pre>
+</p>
+<p>
+   The actual subtype supplied for a formal decimal type must be a
+decimal subtype.  This makes sense, since an ordinary fixed point subtype
+does not have all the necessary operations.  On the other hand, there is
+a design issue whether to permit an actual decimal subtype to match a
+formal fixed point type (one given by delta <>).  Such permission would
+seem to be useful, since it would allow existing Ada 83 fixed point
+generics to be matched by Ada 95 decimal subtypes.  However, it would
+introduce some implementation difficulties, especially for those
+compilers that attempt to share the code of the template across multiple
+instances.  The fact that some operations (in particular numeric
+conversion) behave differently for decimal and ordinary fixed point would
+also cause complications if decimal subtypes were permitted to match
+formal fixed point types.  Thus the decimal fixed point types are defined
+to form a class disjoint from ordinary fixed point types with respect to
+generic matching.
+</p>
+<p>
+   Formal decimal types are exploited to provide edited output (see
+below) as well as division delivering both a quotient and a remainder.
+</p>
+<p>
+   One of the requirements for information systems applications is the
+ability to perform edited output of decimal quantities.  We considered
+introducing decimal subtype attributes for this effect; for example
+S'Image(X, Picture) would return a String based on the value of X and the
+formatting conventions of Picture.  However, this approach would have
+introduced implementation complexity out of proportion to the notational
+benefit for users.  The type of Picture is defined in an external
+package, making such an attribute rather atypical, and support would
+affect the compiler and not simply require a supplemental package.
+Instead, picture-based output is obtained via generics, as described
+below.
+
+<h3>
+<a name=1-4>
+F.1.4  Internal Representation for Decimal Objects
+</a>
+</h3>
+
+<p>
+Ada and COBOL have a somewhat different philosophy about internal data
+representation.  Through the USAGE clause the COBOL programmer furnishes
+information about how numeric items will be represented, either
+explicitly (such as BINARY, DISPLAY, PACKED-DECIMAL) or by default
+(DISPLAY).  COBOL's default representation opts for data portability
+versus computational efficiency.
+</p>
+<p>
+   Ada's approach to data representation, for types in general and not
+just decimal, is to let the compiler decide based on efficiency, and to
+let the programmer override this choice explicitly when necessary.  For
+decimal types this is achieved through the Machine_Radix attribute and
+the corresponding attribute definition clause.
+</p>
+<p>
+   An object of a decimal type, as with fixed point in general, may be
+viewed as the product of an integer mantissa (represented explicitly at
+run time) and the type's delta (managed at compile time).  The type's
+Machine_Radix determines the representation of the mantissa: a value of 2
+implies binary, while a value of 10 implies decimal.  The compiler will
+choose an implementation-defined machine radix by default, which the
+programmer can override with an explicit attribute definition clause.
+Consider the following example, where the implementation's default for
+all decimal types is binary machine radix:
+<pre>
+   type Money_2  is delta 0.01 digits 18;
+   type Money_10 is delta 0.01 digits 18;
+   for Money_10'Machine_Radix use 10;
+</pre>
+</p>
+<p>
+An object of type Money_2 is represented in binary; on typical machines
+it will occupy 64 bits (including a sign).
+</p>
+<p>
+   An object of type Money_10 is represented in decimal; it will take 18
+digits (and a sign).  The exact representation is unspecified, and in
+fact different machines have different formats for packed decimal
+concerning how the sign is encoded.  If a decimal type's machine radix is
+10, then the compiler may also generate packed-decimal instructions for
+arithmetic computation.  Whether it chooses to do so, rather than
+converting to/from binary and using binary arithmetic, depends on which
+is more efficient.
+</p>
+<p>
+   The only difference in behavior between decimal and binary machine
+radix, aside from performance, is that some intermediate results might
+overflow in one case but not the other.  For example, if Money_10 values
+are represented in 19 digits (an odd number is typical for packed
+decimal, since the sign can be stored in the same byte as a digit), and
+Money_2 values occupy 64 bits, then a computation such as (100.0 *
+Money)/100.0 will overflow if Money has type Money_10, but not if Money
+has type Money_2, where Money is 10.0**18 - 1.0.
+</p>
+<p>
+   Implementations using packed decimal are encouraged to exploit subtype
+digits constraints for space economization.  For example:
+<pre>
+   Pay : Money_10 digits 9;
+</pre>
+</p>
+<p>
+The compiler can and should represent Pay in 9 digits rather than 18 as
+would be needed in general for Money_10.
+</p>
+<p>
+   Ada does not provide the equivalent of DISPLAY usage for decimal data,
+since computation on character strings would be inefficient.  If the
+programmer wishes to store decimal data in an external file in a portable
+fashion, the recommended approach is to convert via the To_Display
+function in Interfaces.COBOL.Decimal_Conversions; see B.3.
+</p>
+
+<h3>
+<a name=1-5>
+F.1.5  Compliance
+</a>
+</h3>
+
+<p>
+The decimal type facility is part of the core language; thus the syntax
+for decimal types and for formal generic decimal types must be supported
+by all implementations.  However, since a compiler needs to implement
+ordinary fixed point only for values of Small that are powers of 2, it
+may reject the declaration of a decimal type and also the declaration of
+a generic unit with a formal decimal type parameter.  To be compliant
+with the Information Systems Annex a compiler must implement decimal
+types and must also allow digits values up to at least 18.
+</p>
+<p>
+   We had considered requiring support for decimal types (but without the
+18 digit capacity) for all implementations.  However, this was judged a
+heavy implementation burden for a facility whose usage is fairly
+specialized.
+</p>
+
+<h2>
+<a name=2>
+F.2  Edited Output
+</a>
+</h2>
+
+<p>
+A facility essential for financial and other Information Systems
+applications and long established in COBOL is the ability for the
+programmer to dictate the appearance of numeric data as character
+strings, for example for reports or for display to human readers.  Known
+as edited output, such a facility allows control over the placement and
+form of various elements:
+</p>
+<ul>
+<li>  
+    The sign;
+<li>
+    The radix mark, which separates the integer part of the number from
+     the fraction;
+<li>
+    The digits separator, which separates groups of digits to improve
+     readability;
+<li>
+    The currency symbol;
+<li>
+    The treatment of leading zeros, for example whether they should
+     appear explicitly as '0' characters, as blank space, or as a string
+     of occurrences of a "check protection" character.
+</ul>
+</p>
+<p>
+   COBOL's approach is to associate a "picture string" with the target
+data item for the edited output string.  When a numeric value is moved to
+that target item, the associated picture determines the form of the
+output string.  For example:
+<pre>
+   05 OUTPUT-FIELD PIC S$,ZZ9.99.
+   05 DATA-1       PIC S9999V99   VALUE -1234.56.
+   ...
+   MOVE DATA-1 TO OUTPUT-FIELD.
+</pre>
+</p>
+<p>
+   The contents of OUTPUT-FIELD after the move are "-$bb1,234.56" where
+'b' denotes the blank character.
+</p>
+
+<h3>
+<a name=2-1>
+F.2.1  General Approach
+</a>
+</h3>
+
+<p>
+Textual I/O for decimal types is obtained in the same fashion as for
+other numeric types, by generic instantiation.  The generic package
+Decimal_IO in Text_IO supplies Get and Put procedures for a decimal type
+with analogous effects to Get and Put in Text_IO.Fixed_IO for an ordinary
+fixed point type.  Supplementing these facilities is a child package
+Text_IO.Editing in the Information Systems Annex, which provides several
+facilities:
+</p>
+<ul>
+<li>  
+    A private type Picture and associated operations.  A Picture object
+     encodes the formatting information supplied in a "picture string"
+     concerning the placement of so-called "editing characters" in an
+     output string;
+<li>
+    Constants for the default localization elements.  These elements
+     comprise the currency string, and the characters for fill of leading
+     zeros, for digits separation, and for the radix mark;
+<li>
+    A generic package Decimal_Output allowing COBOL-style edited output
+     for decimal types.
+</ul>
+<p>
+   The Decimal_Output package supplies an Image function and several Put
+procedures, each taking an Item parameter (of the decimal type), a Pic
+parameter (of type Picture), and parameters for the localization effects.
+The default values for the localization parameters can be supplied as
+generic parameters; if not, then the default values declared in the
+enclosing package Text_IO.Editing are used.
+</p>
+<p>
+   An alternative that we considered for the picture parameter was to
+have it directly as a String, but this would make optimizations
+difficult.  Hence package Editing supplies a private type Picture,
+conversion functions between String and Picture, and a function Valid
+that checks a string for well-formedness.  Since picture strings are
+dynamically computable, the approach provides substantial flexibility.
+For example, an interactive program such as a spreadsheet could obtain
+the picture string at run time from the user.  On the other hand, if the
+programmer only needs static picture strings, the compiler can exploit
+this and produce optimized inline expansions of calls of the edited
+output subprograms.
+</p>
+<p>
+   An example of a typical usage style is as follows:
+<pre>
+   with Text_IO.Editing;
+   procedure Example is
+      use Text_IO.Editing;
+      type Salary is delta 0.01 digits 9;
+      package Salary_Output is new Decimal_Output(Salary);
+      S     : Salary;
+      S_Pic : constant Picture := To_Picture("$*_***_**9.99");
+   begin
+      S := 12345.67
+      Salary_Output.Put(S, S_Pic);  -- Produces "$***12,345.67"
+   end Example;
+</pre>
+</p>
+<p>
+   We recognize that someone coming to Ada from COBOL may find the style
+somewhat unusual.  In COBOL, performing edited output involves simply
+defining a picture and doing a MOVE, whereas in Ada 95 it is necessary to
+instantiate a generic, convert a string to a private type, and invoke a
+subprogram.  However, this is principally a training and transition
+issue, which experience has shown to be solvable via an appropriate
+pedagogical style.  Moreover, generics and private types are features of
+Ada that all programmers will need to understand and employ.  Since these
+features apply naturally to the problem of edited output, there is little
+point in trying to disguise this.
+</p>
+
+<h3>
+<a name=2-2>
+F.2.2  Relationship to COBOL Edited Output
+</a>
+</h3>
+
+<p>
+There are several reasons for basing the Ada 95 edited output facility
+directly on COBOL.  First, the programmer population toward whom Ada 95's
+information systems support is targeted comprises largely COBOL users.
+Second, although enhanced edited output mechanisms have appeared in
+modern spreadsheet utilities, their proprietary nature makes commercial
+products an unappealing candidate as a source of specific features.
+</p>
+<p>
+   Still there was the issue of whether to adopt COBOL's "picture"
+approach as closely as possible, or to use it more loosely as the basis
+for a more comprehensive but possibly incompatible facility.  We have
+taken the former approach for several reasons:
+</p>
+<ul>
+<li>  
+    To redesign the edited output facility from starting principles
+     would have required a detailed review of the entire history behind
+     the current COBOL standard's approach, an effort that would have
+     been outside the scope of the Ada 9X project.
+<li>
+    Basing the Ada 95 edited output rules directly on COBOL obviously
+     reduces the learning curve for COBOL programmers.
+</ul>
+<p>
+   As a result the rules for picture string formation and interpretation
+for edited output are identical to those in ISO standard COBOL, except
+for the following:
+</p>
+<ul>
+<li>  
+    In Ada the picture characters for currency symbol, digits separator,
+     and radix mark are not overridable.  '$' and '#' are the currency
+     symbols, '_' is the digits separator and '.' is the radix mark.  No
+     other characters can be used for these purposes in the picture
+     string.
+<li>
+    On the other hand, Ada provides more flexibility than COBOL in the
+     run-time localization of currency symbol, digits separator, radix
+     mark, and "fill character" (also known as the "check protection
+     character").  The programmer can arrange localization by passing
+     explicit parameters to the edited output subprograms, or by
+     instantiating the generic Decimal_Output package with values to be
+     used as defaults for the localization elements.
+<li>
+    The currency symbol can be localized to a multi-character string;
+     each of the other localization elements can be localized to any
+     single character.  The first (or only) occurrence of '$' in a
+     picture string represents as many positions in the edited output
+     result as there are characters in the current currency string.
+     Subsequent occurrences of the symbol represent just one position in
+     the edited output string.
+<li>
+    Ada allows a multi-character currency substring of the picture
+     string to stand for a substring with the same length in the edited
+     output string, if '#' is the currency symbol.  This "length
+     invariant" property can be useful in programs that need to deal with
+     different currencies.
+<li>
+    Ada also allows the use of parentheses for negative quantities in
+     the edited output string.  The angle bracket characters '<' and '>'
+     in the picture string denote positions where '(' and ')' can appear
+     in the edited output.  (The parentheses characters themselves have
+     other meaning in picture strings, surrounding a count indicating
+     repetition of the preceding picture character as in COBOL.  The
+     angle brackets were chosen since they look enough like parentheses
+     to remind the user of their effect.)
+<li>
+    Ada allows the currency symbol to the right of the number as well as
+     to the left.
+</ul>
+<p>
+   There are several reasons why we have not adopted the COBOL-style
+permission to provide a single-character replacement in the picture
+string for the '$' as currency symbol, or to interchange the roles of '.'
+and ',' in picture strings:
+</p>
+<ul>
+<li>  
+    It would have introduced considerable complexity into Ada, as well
+     as confusion between run-time and compile-time character
+     interpretation, since picture strings are dynamically computable in
+     Ada, in contrast with COBOL.
+<li>
+    Ada's rules for real literals provide a standard and natural
+     interpretation of '_' as digits separator and '.' for radix mark; it
+     is not essential to allow these to be localized in picture strings,
+     since Ada does not allow them to be localized in real literals.
+<li>
+         The COBOL restriction for the currency symbol in a picture string to
+     be replaced by a single character currency symbol is a compromise
+     solution.  In any event a mechanism is needed to localize the edited
+     output to be a multi-character currency string.  Allowing a single-
+     character localization for the picture character, and a multiple-
+     character localization for the currency string, would be an
+     unwelcome complication.
+</ul>
+<p>
+   The enhancement of the picture string form to allow parentheses for
+negative quantities is not in the current COBOL standard, but it is a
+real need in many financial applications.  Thus the additional rules were
+judged to be worth the cost.
+</p>
+<p>
+   The approach to currency symbol localization is consistent with the
+directions that the ISO COBOL standardization group (WG4) is taking
+[Sales 92].  Thus we are attempting to preserve compatibility not just
+with the existing COBOL standard but also with the version currently
+under development.
+</p>
+<p>
+   In COBOL, the BLANK WHEN 0 clause for a numeric edited item interacts
+with edited output.  For example, if OUTPUT-ITEM is defined as follows:
+<pre>
+   05   OUTPUT-ITEM  PIC -9999.99 BLANK WHEN 0.
+   ...
+   MOVE 0 to OUTPUT-ITEM.
+</pre>
+then OUTPUT-ITEM will contain a string of 8 blanks.  In the absence of
+the BLANK WHEN 0 clause, OUTPUT-ITEM would contain "b0000.00".  The
+effect of the BLANK WHEN 0 clause is considered in Ada to be part of the
+Picture value; thus the function To_Picture takes not just a picture
+string but also a Boolean value reflecting whether a 0 value is to be
+treated as all blanks.
+</p>
+<p>
+   The edited output rules in the Ada standard are given by a combination
+of BNF (for "well-formed picture strings") and expansion rules that
+define the edited output of a non-terminal in terms of the edited output
+for the right sides of the rules.  We had considered defining the rules
+instead by a direct reference to the COBOL standard, but that would have
+had two undesirable consequences.  First, it would have required the
+reader to be familiar with a rather complicated section of a document
+(the COBOL standard) that would not necessarily be easily accessible.
+Second, the reference would become obsolete when the COBOL standard is
+revised.
+</p>
+
+<h3>
+<a name=2-3>
+F.2.3  Example
+</a>
+</h3>
+
+<p>
+The following example illustrates edited output with localization:
+<pre>
+   with Text_IO.Editing;
+   procedure Example is
+      use Text_IO.Editing;
+      type Money is delta 0.01 digits 8;
+      package Money_Output is new Decimal_Output(Money);
+
+      package Money_Output_FF is
+         new Decimal_Output(
+            Money,
+            Default_Currency   => "FF",
+            Default_Fill       => '*',
+            Default_Separator  => '.',
+            Default_Radix_Mark => ',');
+
+      Amount     : Money range 0.0 .. Money'Last;
+      Amount_Pic : constant Picture := To_Picture("$$$$_$$9.99");
+
+   begin
+      Amount := 1234.56;
+
+      Money_Output.Put(Item => Amount,
+                       Pic  => Amount_Pic );
+      -- Outputs the string "bb$1,234.56"
+      -- where 'b' designates the space character
+
+      Money_Output_FF.Put(Item => Amount,
+                          Pic  => Amount_Pic );
+      -- Outputs the string "bbFF1.234,56"
+
+      Money_Output.Put(Item       => Amount,
+                       Pic        => Amount_Pic,
+                       Currency   => "CHF",
+                       Fill       => '*',
+                       Separator  => ',',
+                       Radix_Mark => '.' );
+      -- Outputs the string "bbCHF1,234.56"
+
+      Money_Output.Put(Item       => Amount,
+                       Pic        => To_Picture("####_##9.99")
+                       Currency   => "CHF",
+                       Fill       => '*',
+                       Separator  => ',',
+                       Radix_Mark => '.' );
+      -- Outputs the string "CHF1,234.56"
+
+   end Example;
+</pre>
+</p>
+
+<h2>
+<a name=3>
+F.3  Requirements Summary
+</a>
+</h2>
+
+<p>
+The facilities of the Information Systems Annex relate to the
+requirements in 10.1 (Handling Currency Quantities for Information
+Systems), 10.2 (Compatibility with Other Character Sets), 10.3
+(Interfacing with Data Base Systems), and 10.4 (Common Functions).
+</p>
+<p>
+   The requirement
+<pre>
+     R10.1-A(1) - Decimal-Based Types
+</pre>
+is satisfied by the Ada 95 decimal fixed point type facility.
+</p>
+<p>
+   The study topic
+<pre>
+     S10.1-A(2) - Specification of Decimal Representation
+</pre>
+is met in part by the Machine_Radix attribute definition clause.
+</p>
+<p>
+   The study topic
+<pre>
+     S10.2-A(1) - Alternate Character Set Support
+</pre>
+is satisfied in part by the permission of an implementation to localize
+the declaration of type Character.
+</p>
+<p>
+   The study topic
+<pre>
+     S10.3-A(1) - Interfacing with Data Base Systems
+</pre>
+is satisfied in part by the provision of decimal types and also the
+package Interfaces.COBOL (see B.3).
+</p>
+<p>
+   The study topic
+<pre>
+     S10.4-A(2) - String Manipulation Functions
+</pre>
+is met in part by the edited output facilities.
+</p>
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p3-e.html> Previous </a> |
+<a href=rat95-p3-g.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

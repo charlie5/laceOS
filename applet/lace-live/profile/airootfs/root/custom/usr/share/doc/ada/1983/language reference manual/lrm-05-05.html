@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 5.5: Loop Statements</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="5.5">5.5</A>.  Loop Statements  </H2>
+<A HREF="lrm-05-04.html#5.4"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-05.html#5"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-05-06.html#5.6"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+A  loop  statement includes a sequence of statements that is to be executed
+repeatedly, zero or more times. 
+<pre>
+    loop_statement ::=
+       [loop_simple_name:]   
+          [iteration_scheme] loop
+             sequence_of_statements
+           end loop [loop_simple_name]; 
+
+    iteration_scheme ::= while condition
+       | for loop_parameter_specification 
+
+    loop_parameter_specification ::=
+       identifier in [reverse] discrete_range 
+</pre>
+<P>
+If a loop statement has a loop simple name, this simple name must be  given
+both at the beginning and at the end. 
+<P>
+A  loop  statement without an iteration scheme specifies repeated execution
+of the sequence of statements.  Execution of the loop statement is complete
+when the loop is left  as  a  consequence  of  the  execution  of  an  exit
+statement, or as a consequence of some other transfer of control (see <a href="lrm-05-01.html#5.1">5.1</a>). 
+<P>
+For  a  loop  statement  with  a  while  iteration scheme, the condition is
+evaluated before each execution of the  sequence  of  statements;   if  the
+value  of the condition is TRUE, the sequence of statements is executed, if
+FALSE the execution of the loop statement is complete. 
+<P>
+For a loop statement with  a  for  iteration  scheme,  the  loop  parameter
+specification  is  the  declaration  of  the  loop parameter with the given
+identifier.  The loop parameter is an object whose type is the base type of
+the discrete range (see <a href="lrm-03-06.html#3.6.1">3.6.1</a>).  Within the  sequence  of  statements,  the
+loop parameter is a constant.  Hence a loop parameter is not allowed as the
+(left-hand  side)  variable of an assignment statement.  Similarly the loop
+parameter must not be given as an out or in out parameter of a procedure or
+entry call statement, or as an in out parameter of a generic instantiation. 
+<P>
+For the execution of a loop statement with a for iteration scheme, the loop
+parameter specification is first elaborated.  This elaboration creates  the
+loop parameter and evaluates the discrete range. 
+<P>
+If  the discrete range is a null range, the execution of the loop statement   
+is complete.  Otherwise, the sequence of statements is  executed  once  for
+each  value  of the discrete range (subject to the loop not being left as a
+consequence of the execution of an exit statement or as  a  consequence  of
+some  other  transfer  of  control).   Prior  to  each  such iteration, the
+corresponding  value  of  the  discrete  range  is  assigned  to  the  loop
+parameter.   These  values  are  assigned  in  increasing  order unless the
+reserved word reverse is present, in which case the values are assigned  in
+decreasing order.    
+<P>
+Example of a loop statement without an iteration scheme: 
+<pre>
+    loop
+       GET(CURRENT_CHARACTER);
+       exit when CURRENT_CHARACTER = '*';
+    end loop;                                                                                      
+</pre>
+<P>
+Example of a loop statement with a while iteration scheme: 
+<pre>
+    while BID(N).PRICE &lt; CUT_OFF.PRICE loop
+       RECORD_BID(BID(N).PRICE);
+       N := N + 1;
+    end loop;  
+</pre>
+<P>
+Example of a loop statement with a for iteration scheme: 
+<pre>
+    for J in BUFFER'RANGE loop     --  legal even with a null range
+       if BUFFER(J) /= SPACE then
+          PUT(BUFFER(J));
+       end if;
+    end loop;  
+</pre>
+<P>
+Example of a loop statement with a loop simple name: 
+<pre>
+    SUMMATION:
+       while NEXT /= HEAD loop       -- see <a href="lrm-03-08.html#3.8">3.8</a>
+          SUM  := SUM + NEXT.VALUE;
+          NEXT := NEXT.SUCC;
+       end loop SUMMATION;  
+</pre>
+<P>
+Notes: 
+<P>
+The scope of a loop parameter extends from the loop parameter specification
+to  the end of the loop statement, and the visibility rules are such that a
+loop parameter is only visible within the sequence  of  statements  of  the  loop. 
+<P>
+The  discrete  range  of  a  for  loop  is evaluated just once.  Use of the
+reserved word reverse does not  alter  the  discrete  range,  so  that  the
+following  iteration  schemes  are  not  equivalent;   the first has a null
+range. 
+<pre>
+    for J in reverse 1 ..  0
+    for J in 0 .. 1
+</pre>
+<P>
+Loop names are also used in exit statements, and in expanded  names  (in  a
+prefix of the loop parameter).  
+<P>
+<b>References:</b>   <A HREF="lrm-06-04.html#6.4.1">actual  parameter</A>,
+<A HREF="lrm-05-02.html#5.2">assignment statement</A>,
+<A HREF="lrm-03-03.html#3.3">base type</A>,
+<A HREF="lrm-03-05.html#3.5">bound of a range</A>,
+<A HREF="lrm-05-03.html#5.3">condition</A>,
+<A HREF="lrm-03-02.html#3.2.1">constant</A>,
+<A HREF="lrm-08-07.html#8.7">context  of overload  resolution</A>,
+<A HREF="lrm-04-06.html#4.6">conversion</A>,
+<A HREF="lrm-03-01.html#3.1">declaration</A>,
+<A HREF="lrm-03-06.html#3.6.1">discrete range</A>,
+<A HREF="lrm-03-01.html#3.1">elaboration</A>,
+<A HREF="lrm-09-05.html#9.5">entry call  statement</A>,
+<A HREF="lrm-04-05.html#4.5">evaluation</A>,
+<A HREF="lrm-05-07.html#5.7">exit statement</A>,
+<A HREF="lrm-04-01.html#4.1.3">expanded  name</A>,
+<A HREF="lrm-03-05.html#3.5.3">false boolean value</A>,
+<A HREF="lrm-12-03.html#12.3">generic actual parameter</A>,
+<A HREF="lrm-12-03.html#12.3">generic  instantiation</A>,
+<A HREF="lrm-05-09.html#5.9">goto  statement</A>,
+<A HREF="lrm-02-03.html#2.3">identifier</A>,
+<A HREF="lrm-03-05.html#3.5.4">integer  type</A>,
+<A HREF="lrm-03-05.html#3.5">null range</A>,
+<A HREF="lrm-03-02.html#3.2.1">object</A>,
+<A HREF="lrm-04-01.html#4.1">prefix</A>,
+<A HREF="lrm-06-04.html#6.4">procedure call</A>,
+<A HREF="lrm-11.html#11">raising  of  exceptions</A>,
+<A HREF="lrm-02-09.html#2.9">reserved  word</A>,
+<A HREF="lrm-05-08.html#5.8">return  statement</A>,
+<A HREF="lrm-08-02.html#8.2">scope</A>,
+<A HREF="lrm-05-01.html#5.1">sequence of statements</A>,
+<A HREF="lrm-04-01.html#4.1">simple name</A>,
+<A HREF="lrm-09-07.html#9.7.1">terminate  alternative</A>,
+<A HREF="lrm-03-05.html#3.5.3">true  boolean  value</A>,
+ and <A HREF="lrm-03-05.html#3.5.4">3.5.4</A>,
+<A HREF="lrm-08-03.html#8.3">visibility</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-03-12.html#3.12">3.12&nbsp;Loop Statements</a>
+<p>
+
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-01.html#5.1.1">5.1.1&nbsp;Loop Names</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-05.html#5.5.1">5.5.1&nbsp;Range Values</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-06.html#5.6.1">5.6.1&nbsp;Nesting</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-06.html#5.6.2">5.6.2&nbsp;Slices</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-06.html#5.6.4">5.6.4&nbsp;Loops</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-06.html#5.6.6">5.6.6&nbsp;Recursion and Iteration Bounds</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-04.html#7.4.2">7.4.2&nbsp;Delay Statements</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

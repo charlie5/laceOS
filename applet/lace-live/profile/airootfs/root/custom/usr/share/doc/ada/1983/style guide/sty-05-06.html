@@ -1,0 +1,669 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 5.6: Statements
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 5: Programming Practices</H2>
+
+<H3><a name="5.6">5.6     Statements</a></H3>
+Careless or convoluted use of statements can make a program hard to read and 
+maintain even if its global structure is well organized. You should strive for 
+simple and consistent use of statements to achieve clarity of local program 
+structure. Some of the guidelines in this section counsel use or avoidance of 
+particular statements. As pointed out in the individual guidelines, rigid 
+adherence to those guidelines would be excessive, but experience has shown 
+that they generally lead to code with improved reliability and 
+maintainability.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><br>
+<a href="#5.6.1">5.6.1   Nesting</a><BR>
+<a href="#5.6.2">5.6.2   Slices</a><BR>
+<a href="#5.6.3">5.6.3   Case Statements</a><BR>
+<a href="#5.6.4">5.6.4   Loops</a><BR>
+<a href="#5.6.5">5.6.5   Exit Statements</a><BR>
+<a href="#5.6.6">5.6.6   Recursion and Iteration Bounds</a><BR>
+<a href="#5.6.7">5.6.7   Goto Statements</a><BR>
+<a href="#5.6.8">5.6.8   Return Statements</a><BR>
+<a href="#5.6.9">5.6.9   Blocks</a><BR>
+<a href="#5.6.10">5.6.10  Aggregates</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-05-10.html#5.10.6"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05.html#5">5&nbsp;Statements</A>
+
+
+<H3><BR><a name="5.6.1">5.6.1   Nesting</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Minimize the depth of nested expressions (Nissen and Wallis 1984). 
+<li>Minimize the depth of nested control structures (Nissen and Wallis  
+1984). 
+<li>Try simplification heuristics (see <a href="#5.6.1_note">note</a>). 
+</UL>
+
+<H4>instantiation</H4>
+<UL TYPE=square>
+<li> Do not nest expressions or control structures beyond a nesting level 
+of five. 
+</UL>
+
+<H4>example</H4>
+The following section of code:
+<table border cellpadding=6><tr><td><pre>if not Condition_1 then
+
+   if Condition_2 then 
+      Action_A; 
+   else  -- not Condition_2 
+      Action_B; 
+   end if;
+   
+else  -- Condition_1 
+   Action_C; 
+end if;</pre></td></tr></table>
+<P>
+can be rewritten more clearly and with less nesting as:
+<table border cellpadding=6><tr><td><pre>if Condition_1 then 
+   Action_C; 
+elsif Condition_2 then 
+   Action_A;
+   
+else  -- not (Condition_1 or Condition_2) 
+   Action_B; 
+end if;</pre></td></tr></table>
+
+<H4>rationale</H4>
+Deeply nested structures are confusing, difficult to understand, and difficult 
+to maintain. The problem lies in the difficulty of determining what part of a 
+program is contained at any given level. For expressions, this is important in 
+achieving the correct placement of balanced grouping symbols and in achieving 
+the desired operator precedence. For control structures, the question involves 
+what part is controlled. Specifically, is a given statement at the proper 
+level of nesting, i.e., is it too deeply or too shallowly nested, or is the 
+given statement associated with the proper choice, e.g., for if or case 
+statements?  Indentation helps, but it is not a panacea. Visually inspecting 
+alignment of indented code (mainly intermediate levels) is an uncertain job at 
+best. To minimize the complexity of the code, keep the maximum number of 
+nesting levels between three and five.
+
+<H4><a name="5.6.1_note">note</a></H4>
+Ask yourself the following questions to help you simplify the code:
+<UL TYPE=square>
+<li>Can some part of the expression be put into a constant or variable?  
+<li>Does some part of the lower nested control structures represent a  
+significant, and perhaps reusable computation that I can factor into a  
+subprogram?  
+<li>Can I convert these nested if statements into a case statement?  
+<li>Am I using <CODE>else if</CODE> where I could be using <CODE>elsif</CODE>?  
+<li>Can I reorder the conditional expressions controlling this nested  
+structure?  
+<li>Is there a different design that would be simpler? 
+</UL>
+
+<H4>exceptions</H4>
+If deep nesting is required frequently, there may be overall design decisions  
+for the code that should be changed. Some algorithms require deeply nested  
+loops and segments controlled by conditional branches. Their continued use can  
+be ascribed to their efficiency, familiarity, and time proven utility. When  
+nesting is required, proceed cautiously and take special care with the choice  
+of identifiers and loop and block names. <P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-01.html#5.1">5.1&nbsp;Simple and Compound Statements - Sequences of Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-03.html#5.3">5.3&nbsp;If Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-04.html#5.4">5.4&nbsp;Case Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-05.html#5.5">5.5&nbsp;Loop Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-06.html#5.6">5.6&nbsp;Block Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-05.html#9.5">9.5&nbsp;Entries, Entry Calls, and Accept Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-07.html#9.7">9.7&nbsp;Select Statements</A>
+
+
+<H3><BR><a name="5.6.2">5.6.2   Slices</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use slices rather than a loop to copy part of an array. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>First  : constant Index := Index'First; 
+Second : constant Index := Index'Succ(First); 
+Third  : constant Index := Index'Succ(Second);
+
+type Vector is array (Index range &lt;&gt;) of Element;
+
+subtype Column_Vector is Vector (Index); 
+type    Square_Matrix is array  (Index) of Column_Vector;
+
+subtype Small_Range  is Index range First .. Third; 
+subtype Diagonals    is Vector (Small_Range); 
+type    Tri_Diagonal is array  (Index) of Diagonals;
+
+Markov_Probabilities : Square_Matrix; 
+Diagonal_Data        : Tri_Diagonal;
+
+...
+
+-- Remove diagonal and off diagonal elements. 
+Diagonal_Data(Index'First)(First) := Null_Value; 
+Diagonal_Data(Index'First)(Second .. Third) := 
+      Markov_Probabilities(Index'First)(First .. Second);
+      
+for I in Second .. Index'Pred(Index'Last) loop 
+   Diagonal_Data(I) := 
+         Markov_Probabilities(I)(Index'Pred(I) .. Index'Succ(I)); 
+end loop;
+
+Diagonal_Data(Index'Last)(First .. Second) := 
+      Markov_Probabilities(Index'Last) 
+         (Index'Pred(Index'Last) .. Index'Last); 
+Diagonal_Data(Index'Last)(Third) := Null_Value;</pre></td></tr></table>
+
+<H4>rationale</H4>
+An assignment statement with slices is simpler and clearer than a loop, and 
+helps the reader see the intended action. Slice assignment can be faster than 
+a loop if a block move instruction is available.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-06.html#3.6.2">3.6.2&nbsp;Operations of Array Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-01.html#4.1.2">4.1.2&nbsp;Slices</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-02.html#5.2">5.2&nbsp;Assignment Statement</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-05.html#5.5">5.5&nbsp;Loop Statements</A>
+
+
+<H3><BR><a name="5.6.3">5.6.3   Case Statements</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Never use an others choice in a case statement. 
+<li>Do not use ranges of enumeration literals in case statements. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>type Color is (Red, Green, Blue, Purple); 
+Car_Color : Color := Red;
+
+...
+
+case Car_Color is 
+   when Red .. Blue =&gt; ... 
+   when Purple      =&gt; ... 
+end case;  -- Car_Color</pre></td></tr></table>
+<P>
+Now consider a change in the type:<P>
+<IMG SRC="indent.gif"><CODE>type Color is (Red, Yellow, Green, Blue, Purple);</CODE><P>
+This change may have an unnoticed and undesired effect in the case statement.  
+If the choices had been enumerated explicitly, as <CODE>when Red | Green | Blue =&gt;</CODE>  
+instead of <CODE>when Red .. Blue =&gt;</CODE>, then the case statement would have not have  
+compiled. This would have forced the maintainer to make a conscious decision  
+about what to do in the case of <CODE>Yellow</CODE>.
+
+<H4>rationale</H4>
+All possible values for an object should be known and should be assigned  
+specific actions. Use of an others clause may prevent the developer from  
+carefully considering the actions for each value. A compiler warns the user  
+about omitted values, if an others clause is not used.  <P>
+Each possible value should be explicitly enumerated. Ranges can be dangerous  
+because of the possibility that the range could change and the case statement  
+may not be reexamined.
+
+<H4>exception</H4>
+It is acceptable to use ranges for possible values only when the user is  
+certain that new values will never be inserted among the old ones, as for  
+example, in the range of ASCII characters: <CODE>'a' .. 'z'.</CODE>
+
+<H4>note</H4>
+Ranges that are needed in case statements can use constrained subtypes to  
+enhance maintainability.  It is easier to maintain because the declaration of  
+the range can be placed where it is logically part of the abstraction, not  
+buried in a case statement in the executable code.
+<table border cellpadding=6><tr><td><pre>subtype Lower_Case is Character range       'a' ..      'z'; 
+subtype Upper_Case is Character range       'A' ..      'Z'; 
+subtype Control    is Character range ASCII.Nul .. ASCII.Us; 
+subtype Numbers    is Character range       '0' ..      '9';
+
+... 
+case Input_Char is 
+   when Lower_Case =&gt;         Capitalize(Input_Char); 
+   when Upper_Case =&gt;         null; 
+   when Control    =&gt;         raise Invalid_Input; 
+   when Numbers    =&gt;         null; 
+   ... 
+end case;</pre></td></tr></table>
+
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-03.html#3.3.2">3.3.2&nbsp;Subtype Declarations</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.1">3.5.1&nbsp;Enumeration Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-04.html#5.4">5.4&nbsp;Case Statements</A>
+
+
+<H3><BR><a name="5.6.4">5.6.4   Loops</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use for loops whenever possible.
+<li> Use while loops when the number of iterations cannot be calculated 
+before entering the loop, but a simple continuation condition can be applied 
+at the top of the loop. 
+<li>Use plain loops with exit statements for more complex situations. 
+<li>Avoid exit statements in while and for loops. 
+<li>Minimize the number of ways to exit a loop. 
+</UL>
+
+<H4>example</H4>
+To iterate over all elements of an array:
+<table border cellpadding=6><tr><td><pre>for 1 in Array_Name'Range loop 
+   ... 
+end loop;</pre></td></tr></table>
+
+To iterate over all elements in a linked list:
+<table border cellpadding=6><tr><td><pre>Pointer := Head_Of_List; 
+while Pointer /= null loop 
+   ... 
+   Pointer := Pointer.Next; 
+end loop;</pre></td></tr></table>
+<P>
+Situations requiring a &quot;loop and a half&quot; arise often. For this use:
+<table border cellpadding=6><tr><td><pre>P_And_Q_Processing: 
+   loop 
+      P; 
+      exit P_And_Q_Processing when Condition_Dependent_On_P; 
+      Q; 
+   end loop P_And_Q_Processing;</pre></td></tr></table>
+<P>
+rather than:
+<table border cellpadding=6><tr><td><pre>P; 
+while not Condition_Dependent_On_P loop 
+   Q; 
+   P; 
+end loop;</pre></td></tr></table>
+
+<H4>rationale</H4>
+A for loop is bounded, so it cannot be an &quot;infinite loop.&quot; This is enforced by 
+the Ada language which requires a finite range in the loop specification and 
+which does not allow the loop counter of a for loop to be modified by a 
+statement executed within the loop. This yields a certainty of understanding 
+for the reader and the writer not associated with other forms of loops. A for 
+loop is also easier to maintain because the iteration range can be expressed 
+using attributes of the data structures upon which the loop operates, as shown 
+in the example above where the range changes automatically whenever the 
+declaration of the array is modified. For these reasons, it is best to use the 
+for loop whenever possible; that is, whenever simple expressions can be used 
+to describe the first and last values of the loop counter.<P>
+The while loop has become a very familiar construct to most programmers. At a 
+glance it indicates the condition under which the loop continues. Use the 
+while loop whenever it is not possible to use the for loop, but there is a 
+simple boolean expression describing the conditions under which the loop 
+should continue, as shown in the example above.<P>
+The plain loop statement should be used in more complex situations, even if it  
+is possible to contrive a solution using a for or while loop in conjunction  
+with extra flag variables or exit statements. The criteria in selecting a loop  
+construct is to be as clear and maintainable as possible. It is a bad idea to  
+use an exit statement from within a for or while loop because it is misleading  
+to the reader after having apparently described the complete set of loop  
+conditions at the top of the loop. A reader who encounters a plain loop  
+statement expects to see exit statements.<P>
+There are some familiar looping situations which are best achieved with the 
+plain loop statement. For example, the semantics of the Pascal repeat until 
+loop, where the loop is always executed at least once before the termination 
+test occurs, are best achieved by a plain loop with a single exit at the end 
+of the loop. Another common situation is the &quot;loop and a half&quot; construct, 
+shown in the example above, where a loop must terminate somewhere within the 
+sequence of statements of the body. Complicated &quot;loop and a half&quot; constructs 
+simulated with while loops often require the introduction of flag variables, 
+or duplication of code before and during the loop, as shown in the example. 
+Such contortions make the code more complex and less reliable.<P>
+Minimize the number of ways to exit a loop in order to make the loop more  
+understandable to the reader. It should be rare that you need more than two  
+exit paths from a loop. When you do, be sure to use exit statements for all of  
+them, rather than adding an exit statement to a for or while loop.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-05.html#5.5">5.5&nbsp;Loop Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-07.html#5.7">5.7&nbsp;Exit Statements</A>
+
+
+<H3><BR><a name="5.6.5">5.6.5   Exit Statements</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li> Use exit statements to enhance the readability of loop termination 
+code (NASA 1987). 
+<li>Use <CODE>exit when ...</CODE> rather than <CODE>if ... then exit</CODE> whenever possible (NASA  1987). 
+<li>Review exit statement placement. 
+</UL>
+
+<H4>example</H4>
+
+See the examples in Guidelines <a href="sty-05-01.html#5.1.1">5.1.1</a> and <a href="#5.6.4">5.6.4</a>.
+
+<H4>rationale</H4>
+It is more readable to use exit statements than to try to add boolean flags to 
+a while loop condition to simulate exits from the middle of a loop. Even if 
+all exit statements would be clustered at the top of the loop body, the 
+separation of a complex condition into multiple exit statements can simplify 
+and make it more readable and clear. The sequential execution of two exit 
+statements is often more clear than the short-circuit control forms.<P>
+The <CODE>exit when</CODE> form is preferable to the <CODE>if ... then, exit</CODE> form because it 
+makes the word <CODE>exit</CODE> more visible by not nesting it inside of any control 
+construct.  The <CODE>if ... then exit</CODE> form is needed only in the case where other 
+statements, in addition to the exit statement, must be executed conditionally. 
+For example:
+<table border cellpadding=6><tr><td><pre>if Status = Done then
+
+   Shut_Down; 
+   return;
+   
+end if;</pre></td></tr></table>
+
+Loops with many scattered exit statements can indicate fuzzy thinking as  
+regards the loop's purpose in the algorithm. Such an algorithm might be coded  
+better some other way, e.g., with a series of loops. Some rework can often  
+reduce the number of exit statements and make the code clearer.<P>
+See also Guidelines <a href="sty-05-01.html#5.1.3">5.1.3</a> and <a href="#5.6.4">5.6.4</a>.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-03.html#5.3">5.3&nbsp;If Statements</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-07.html#5.7">5.7&nbsp;Exit Statements</A>
+
+
+<H3><BR><a name="5.6.6">5.6.6   Recursion and Iteration Bounds</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Consider specifying bounds on loops. 
+<li>Consider specifying bounds on recursion. 
+</UL>
+
+<H4>example</H4>
+Establishing an iteration bound:
+<table border cellpadding=6><tr><td><pre>Safety_Counter := 0;
+
+Process_List: 
+   loop 
+      exit when Current_Item = null;
+      
+      ... 
+      Current_Item := Current_Item.Next;
+      
+      ... 
+      Safety_Counter := Safety_Counter + 1; 
+      if Safety_Counter &gt; 1_000_000 then 
+         raise Safety_Error; 
+      end if;
+      
+   end loop Process_List;</pre></td></tr></table>
+
+Establishing a recursion bound:
+<table border cellpadding=6><tr><td><pre>procedure Depth_First (Root           : in     Tree; 
+                       Safety_Counter : in     Recursion_Bound 
+                                      := Recursion_Bound'Last) is 
+begin 
+   if Root /= null then
+   
+      if Safety_Counter = 0 then 
+         raise Recursion_Error; 
+      end if;
+      
+      Depth_First 
+           (Root.Left_Branch,   Safety_Counter - 1); -- recursive call 
+      Depth_First 
+           (Root.Right_Branch,  Safety_Counter - 1); -- recursive call
+           
+      ... -- normal subprogram body 
+   end if;
+   
+end Depth_First;</pre></td></tr></table>
+
+Following are examples of this subprogram's usage. One call specifies a 
+maximum recursion depth of 50. The second takes the default (one thousand). 
+The third uses a computed bound:
+<table border cellpadding=6><tr><td><pre>Depth_First(Root, 50); 
+Depth_First(Root); 
+Depth_First(Root, Current_Tree_Height);</pre></td></tr></table>
+
+<H4>rationale</H4>
+Recursion, and iteration using structures other than <CODE>for</CODE> statements, can be 
+infinite because the expected terminating condition does not arise. Such 
+faults are sometimes quite subtle, may occur rarely, and may be difficult to 
+detect because an external manifestation might be absent or substantially 
+delayed.<P>
+By including counters and checks on the counter values, in addition to the 
+loops themselves, you can prevent many forms of infinite loops. The inclusion 
+of such checks is one aspect of the technique called Safe Programming 
+(Anderson and Witty 1978).<P>
+The bounds of these checks do not have to be exact, just realistic. Such 
+counters and checks are not part of the primary control structure of the 
+program but a benign addition functioning as an execution-time &quot;safety net&quot; 
+allowing error detection and possibly recovery from potential infinite loops 
+or infinite recursion.
+
+<H4>note</H4>
+If a loop uses the <CODE>for</CODE> iteration scheme (<a href="#5.6.4">Guideline 5.6.4</a>), it follows this  guideline.
+
+<H4>exceptions</H4>
+Embedded control applications have loops that are intended to be infinite. 
+Only a few loops within such applications should qualify as exceptions to this 
+guideline. The exceptions should be deliberate (and documented) policy 
+decisions.<P>
+This guideline is most important to safety critical systems. For other 
+systems, it may be overkill.<P>
+<b>Language Ref Manual references:</b> 
+        <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-05.html#5.5">5.5&nbsp;Loop Statements</A>, 
+        <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-01.html#6.1">6.1&nbsp;Subprogram Declarations</A>, 
+        <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-06-04.html#6.4">6.4&nbsp;Subprogram Calls</A>
+
+
+<H3><BR><a name="5.6.7">5.6.7   Goto Statements</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Do not use goto statements. 
+</UL>
+
+<H4>rationale</H4>
+A goto statement is an unstructured change in the control flow. Worse, the  
+label does not require an indicator of where the corresponding goto  
+statement(s) are. This makes code unreadable and makes its correct execution  
+suspect.<P>
+Other languages use goto statements to implement loop exits and exception 
+handling. Ada's support of these constructs makes the goto statement 
+extremely rare.
+
+<H4>note</H4>
+If you should ever use a goto statement, highlight both it and the label with  
+blank space. Indicate at the label where the corresponding goto statement(s)  
+may be found.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-02-07.html#2.7">2.7&nbsp;Comments</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-09.html#5.9">5.9&nbsp;Goto Statements</A>
+
+
+<H3><BR><a name="5.6.8">5.6.8   Return Statements</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Minimize the number of returns from a subprogram (NASA 1987). 
+<li>Highlight returns with comments or white space to keep them from being  lost in other code.  
+</UL>
+
+<H4>example</H4>
+The following code fragment is longer and more complex than necessary:
+<table border cellpadding=6><tr><td><pre>if Pointer /= null then
+
+   if Pointer.Count &gt; 0 then 
+      return True;
+      
+   else  -- Pointer.Count = 0 
+      return False; 
+   end if;
+   
+else  -- Pointer = null 
+   return False; 
+end if;</pre></td></tr></table>
+
+It should be replaced with the shorter, more concise, and clearer equivalent  
+line:<P>
+<IMG SRC="indent.gif"><CODE>return Pointer /= null and then Pointer.Count &gt; 0;</CODE>
+
+<H4>rationale</H4>
+Excessive use of returns can make code confusing and unreadable. Only use 
+return statements where warranted. Too many returns from a subprogram may be 
+an indicator of cluttered logic. If the application requires multiple returns, 
+use them at the same level (i.e., as in different branches of a case 
+statement), rather than scattered throughout the subprogram code. Some rework 
+can often reduce the number of return statements to one and make the code more 
+clear.
+
+<H4>exception</H4>
+Do not avoid return statements if it detracts from natural structure and code  
+readability. <P>
+<b>Language Ref Manual references:</b> 
+        <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-02-07.html#2.7">2.7&nbsp;Comments</A>, 
+        <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-08.html#5.8">5.8&nbsp;Return Statements</A>
+
+
+<H3><BR><a name="5.6.9">5.6.9   Blocks</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use blocks to localize the scope of declarations. 
+<li>Use blocks to perform local renaming. 
+<li>Use blocks to define local exception handlers. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>with Motion; 
+with Accelerometer_Device; 
+...
+
+   --------------------------------------------------------------------- 
+   function Maximum_Velocity return Motion.Velocity is
+   
+      Cumulative : Motion.Velocity := 0.0;
+      
+   begin  -- Maximum_Velocity
+   
+      -- Initialize the needed devices 
+      ...
+      
+      Calculate_Velocity_From_Sample_Data: 
+         declare 
+            Current       : Motion.Acceleration := 0.0; 
+            Accelerometer : Accelerometer_Device.Interface; 
+            Time_Delta    : Duration;
+            
+         begin  -- Calculate_Velocity_From_Sample_Data 
+            for I in 1 .. Accelerometer_Device.Sample_Limit loop
+            
+               Get_Samples_And_Ignore_Invalid_Data: 
+                  begin 
+                     Accelerometer.Value(Current, Time_Delta); 
+                  exception 
+                     when Numeric_Error | Constraint_Error =&gt; 
+                        null; -- Continue trying
+                        
+                     when Accelerometer_Device.Failure =&gt; 
+                        raise Accelerometer_Device_Failed; 
+                  end Get_Samples_And_Ignore_Invalid_Data;
+                  
+               exit when Motion.&quot;&lt;&quot;(Current, 0.0); -- Slowing down
+               
+               Update_Velocity: 
+                  declare 
+                     use Motion; -- for infix operators and exceptions;
+                     
+                  begin 
+                     Cumulative := Cumulative + Current * Time_Delta;
+                     
+                  exception 
+                     when Numeric_Error | Constraint_Error =&gt; 
+                        raise Maximum_Velocity_Exceeded; 
+                  end Update_Velocity;
+                  
+            end loop; 
+         end Calculate_Velocity_From_Sample_Data;
+         
+      return Cumulative;
+      
+   end Maximum_Velocity; 
+   --------------------------------------------------------------------- 
+...</pre></td></tr></table>
+
+<H4>rationale</H4>
+Blocks break up large segments of code and isolate details relevant to each  
+subsection of code.  Variables that are only used in a particular section of  
+code are clearly visible when a declarative block delineates that code.<P>
+Renaming may simplify the expression of algorithms and enhance readability for 
+a given section of code.  But it is confusing when a <CODE>rename</CODE> clause is visually 
+separated from the code to which it applies.  The declarative region allows 
+the renames to be immediately visible when the reader is examining code which 
+uses that abbreviation.  <a href="sty-05-07.html#5.7.1">Guideline 5.7.1</a> discusses a similar guideline 
+concerning the `use' clause.<P>
+Local exception handlers can catch exceptions close to the point of origin and  
+allow them to either be handled, propagated, or converted.<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-05-06.html#5.6">5.6&nbsp;Block Statements</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-04.html#8.4">8.4&nbsp;Use Clauses</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-05.html#8.5">8.5&nbsp;Renaming Declarations</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-11-02.html#11.2">11.2&nbsp;Exception Handlers</A>
+
+
+<H3><BR><a name="5.6.10">5.6.10  Aggregates</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use an aggregate instead of a sequence of assignments to assign values  
+to all components of a record. 
+<li> Use an aggregate instead of a temporary variable when building a 
+record to pass as an actual parameter. 
+<li>Use positional association only when there is a conventional ordering  
+of the arguments. 
+</UL>
+
+<H4>example</H4>
+It is better to use aggregates:
+<table border cellpadding=6><tr><td><pre>Set_Position((X, Y));
+
+Employee_Record :=  (Number     =&gt; 42, 
+                     Age        =&gt; 51, 
+                     Department =&gt; Software_Engineering);</pre></td></tr></table>
+
+than to use consecutive assignments or temporary variables:
+<table border cellpadding=6><tr><td><pre>Temporary_Position.X := 100; 
+Temporary_Position.Y := 200; 
+Set_Position(Temporary_Position);
+
+Employee_Record.Number     := 42; 
+Employee_Record.Age        := 51; 
+Employee_Record.Department := Software_Engineering;</pre></td></tr></table>
+
+<H4>rationale</H4>
+Using aggregates during maintenance is beneficial. If a record structure is 
+altered, but the corresponding aggregate is not, the compiler flags the 
+missing field in the aggregate assignment. It would not be able to detect the 
+fact that a new assignment statement should have been added to a list of 
+assignment statements.<P>
+Aggregates can also be a real convenience in combining data items into a 
+record or array structure required for passing the information as a parameter. 
+Named component association makes aggregates more readable.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-03.html#4.3.1">4.3.1&nbsp;Record Aggregates</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

@@ -1,0 +1,302 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 7.2: Numeric Types and Expressions
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://www.software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 7: Portability</H2>
+
+<H3><a name="7.2">7.2     Numeric Types and Expressions</a></H3>
+A great deal of care was taken with the design of the Ada features related to  
+numeric computations to ensure that the language could be used in embedded  
+systems and mathematical applications where precision was important. As far as  
+possible, these features were made portable. However, there is an inevitable  
+tradeoff between maximally exploiting the available precision of numeric  
+computation on a particular machine and maximizing the portability of Ada  
+numeric constructs. This means that these Ada features, particularly numeric  
+types and expressions, must be used with great care if full portability of the  
+resulting program is to be guaranteed.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><BR>
+<a href="#7.2.1">7.2.1   Predefined Numeric Types</a><BR>
+<a href="#7.2.2">7.2.2   Ada Model</a><BR>
+<a href="#7.2.3">7.2.3   Analysis</a><BR>
+<a href="#7.2.4">7.2.4   Accuracy Constraints</a><BR>
+<a href="#7.2.5">7.2.5   Comments</a><BR>
+<a href="#7.2.6">7.2.6   Precision of Constants</a><BR>
+<a href="#7.2.7">7.2.7   Subexpression Evaluation</a><BR>
+<a href="#7.2.8">7.2.8   Relational Tests</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-07-08.html#7.8.2"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="7.2.1">7.2.1   Predefined Numeric Types</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li> Do not use the predefined numeric types in package <CODE>Standard</CODE>. Use range 
+and digits declarations and let the implementation do the derivation 
+implicitly from the predefined types. 
+<li>For programs that require greater accuracy than that provided by the  
+global assumptions, define a package that declares a private type and  
+operations as needed; see Pappas (1985) for a full explanation and examples. 
+</UL>
+
+<H4>example</H4>
+The second and third examples below are not representable as subranges of  
+<CODE>Integer</CODE> on a machine with a 16-bit word. The first example below allows a 
+compiler to choose a multiword representation if necessary.<P>
+Use<BR>
+<pre>    type    Second_Of_Day is             range 0 .. 86_400;</pre>
+
+rather than<BR>
+<pre>    type    Second_Of_Day is new Integer range 1 .. 86_400;</pre>
+
+or<BR>
+<pre>    subtype Second_Of_Day is     Integer range 1 .. 86_400;</pre>
+
+<H4>rationale</H4>
+An implementor is free to define the range of the predefined numeric types. 
+Porting code from an implementation with greater accuracy to one of lesser is 
+a time consuming and error-prone process. Many of the errors are not reported 
+until run-time.<P>
+This applies to more than just numerical computation. An easy-to-overlook 
+instance of this problem occurs if you neglect to use explicitly declared 
+types for integer discrete ranges (array sizes, loop ranges, etc.) (see 
+Guidelines <a href="sty-05-05.html#5.5.1">5.5.1</a>
+and <a href="sty-05-05.html#5.5.2">5.5.2</a>).
+If you do not provide an explicit type when specifying index 
+constraints and other discrete ranges, a predefined integer type is assumed.
+
+<H4>exceptions</H4>
+Any indexing into the predefined String type requires that the index at least  
+be a subtype of the predefined Integer type.  The predefined packages also use  
+the various predefined types.
+
+<H4>note</H4>
+There is an alternative which this guideline permits. 
+As <a href="sty-07-01.html#7.1.5">Guideline 7.1.5</a> suggests, 
+implementation dependencies can be encapsulated in packages intended for that 
+purpose.  This could include the definition of a 32-bit integer type.  It 
+would then be possible to derive additional types from that 32-bit type.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.4">3.5.4&nbsp;Integer Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.7">3.5.7&nbsp;Floating Point Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.9">3.5.9&nbsp;Fixed Point Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-08-06.html#8.6">8.6&nbsp;The Package Standard</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-C.html#C">C&nbsp;Predefined Language Environment</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-F.html#F">F&nbsp;Implementation-Dependent Characteristics</A>
+
+
+<H3><BR><a name="7.2.2">7.2.2   Ada Model</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Know the Ada model for floating point types and arithmetic. 
+</UL>
+
+<H4>rationale</H4>
+Declarations of Ada floating point types give users control over both the 
+representation and arithmetic used in floating point operations. Portable 
+properties of Ada programs are derived from the models for floating point 
+numbers of the subtype and the corresponding safe numbers. The relative 
+spacing and range of values in a type are determined by the declaration. 
+Attributes can be used to specify the transportable properties of an Ada 
+floating point type.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.7">3.5.7&nbsp;Floating Point Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5.7">4.5.7&nbsp;Accuracy of Operations with Real Operands</A>
+
+
+<H3><BR><a name="7.2.3">7.2.3   Analysis</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Carefully analyze what accuracy and precision you really need. 
+</UL>
+rationale<P>
+Floating point calculations are done with the equivalent of the  
+implementation's predefined floating point types. The effect of extra &quot;guard&quot; 
+digits in internal computations can sometimes lower the number of digits that  
+must be specified in an Ada declaration. This may not be consistent over  
+implementations where the program is intended to be run. It may also lead to  
+the false conclusion that the declared types are sufficient for the accuracy  
+required.<P>
+The numeric type declarations should be chosen to satisfy the lowest precision  
+(smallest number of digits) that will provide the required accuracy. Careful  
+analysis will be necessary to show that the declarations are adequate.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.7">3.5.7&nbsp;Floating Point Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5.7">4.5.7&nbsp;Accuracy of Operations with Real Operands</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-13-07.html#13.7.3">13.7.3&nbsp;Representation Attributes of Real Types</A>
+
+
+<H3><BR><a name="7.2.4">7.2.4   Accuracy Constraints</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Do not press the accuracy limits of the machine(s). 
+</UL>
+
+<H4>rationale</H4>
+The Ada floating point model is intended to facilitate program portability,  
+which is often at the expense of efficiency in using the underlying machine  
+arithmetic. Just because two different machines use the same number of digits  
+in the mantissa of a floating point number does not imply they will have the  
+same arithmetic properties. Some Ada implementations may give slightly better  
+accuracy than required by Ada because they make efficient use of the machine.  
+Do not write programs that depend on this.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5.7">4.5.7&nbsp;Accuracy of Operations with Real Operands</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-F.html#F">F&nbsp;Implementation-Dependent Characteristics</A>
+
+
+<H3><BR><a name="7.2.5">7.2.5   Comments</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Comment the analysis and derivation of the numerical aspects of a  
+program. 
+</UL>
+
+<H4>rationale</H4>
+Decisions and background about why certain precisions are required in a 
+program are important to program revision or porting. The underlying numerical 
+analysis leading to the program should be commented.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-02-07.html#2.7">2.7&nbsp;Comments</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.4">3.5.4&nbsp;Integer Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-05.html#3.5.6">3.5.6&nbsp;Real Types</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5.7">4.5.7&nbsp;Accuracy of Operations with Real Operands</A>
+
+
+<H3><BR><a name="7.2.6">7.2.6   Precision of Constants</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Use named numbers or universal real expressions rather than constants  
+of any particular type. 
+</UL>
+
+<H4>rationale</H4>
+For a given radix (number base), there is a loss of accuracy for some rational 
+and all irrational numbers when represented by a finite sequence of digits. 
+Ada has named numbers and expressions of type universal_real that provide 
+maximal accuracy of representation in the source program. These numbers and 
+expressions are converted to finite representations at compile time. By using 
+universal real expressions and numbers, the programmer can automatically delay 
+the conversion to machine types until the point where it can be done with the 
+minimum loss of accuracy.<P>
+note<P>
+See also <a href="sty-03-02.html#3.2.5">Guideline 3.2.5</a>.<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-02-04.html#2.4">2.4&nbsp;Numeric Literals</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-02.html#3.2">3.2&nbsp;Objects and Named Numbers</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-01.html#4.1">4.1&nbsp;Universal Expressions</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-09.html#4.9">4.9&nbsp;Static Expressions and Static Subtypes</A>
+
+
+<H3><BR><a name="7.2.7">7.2.7   Subexpression Evaluation</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Anticipate values of subexpressions to avoid exceeding the range of  
+their type. Use derived types, subtypes, factoring, and range constraints on  
+numeric types as described in Guidelines <a href="sty-03-04.html#3.4.1">3.4.1</a>,
+<a href="sty-05-03.html#5.3.1">5.3.1</a>,
+and <a href="sty-05-05.html#5.5.3">5.5.3</a>. 
+</UL>
+
+<H4>rationale</H4>
+The Ada language does not require that an implementation perform range checks  
+on subexpressions within an expression. Even if the implementation on your  
+program's current target does not perform these checks, your program may be  
+ported to an implementation that does.<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-03.html#3.3">3.3&nbsp;Types and Subtypes</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-03.html#3.3.2">3.3.2&nbsp;Subtype Declarations</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-03-04.html#3.4">3.4&nbsp;Derived Types</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-04.html#4.4">4.4&nbsp;Expressions</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5">4.5&nbsp;Operators and Expression Evaluation</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5.7">4.5.7&nbsp;Accuracy of Operations with Real Operands</A>
+
+
+<H3><BR><a name="7.2.8">7.2.8   Relational Tests</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li> Use <CODE>&lt;=</CODE> and <CODE>&gt;=</CODE> to do relational tests on
+real valued arguments, avoiding the <CODE>&lt;</CODE>, <CODE>&gt;</CODE>,
+<CODE>=</CODE>, and <CODE>/=</CODE> operations. 
+<li>Use values of type attributes in comparisons and checking for small values. 
+</UL>
+
+<H4>example</H4>
+The following examples test for (1) absolute &quot;equality&quot; in storage, (2)<BR>
+absolute &quot;equality&quot; in computation, (3) relative &quot;equality&quot;
+in storage, and (4) relative &quot;equality&quot; in computation.
+<table border cellpadding=6><tr><td><pre>abs (X - Y) &lt;= Float_Type'Small                -- (1)
+
+abs (X - Y) &lt;= Float_Type'Base'Small           -- (2)
+
+abs (X - Y) &lt;= abs X * Float_Type'Epsilon      -- (3)
+
+abs (X - Y) &lt;= abs X * Float_Type'Base'Epsilon -- (4)</pre></td></tr></table>
+<P>
+And specifically for &quot;equality&quot; to zero:
+<table border cellpadding=6><tr><td><pre>abs X &lt;= Float_Type'Small                      -- (1)
+
+abs X &lt;= Float_Type'Base'Small                 -- (2)
+
+abs X &lt;= abs X * Float_Type'Epsilon            -- (3)
+
+abs X &lt;= abs X * Float_Type'Base'Epsilon       -- (4)</pre></td></tr></table>
+
+<H4>rationale</H4>
+Strict relational comparisons ( <CODE>&lt;</CODE>, <CODE>&gt;</CODE>,
+<CODE>=</CODE>, <CODE>/=</CODE> ) are a general problem in real 
+valued computations. Because of the way Ada comparisons are defined in terms 
+of model intervals, it is possible for the values of the Ada comparisons
+<CODE>A &lt; B</CODE> and <CODE>A = B</CODE> to depend on the implementation,
+while <CODE>A &lt;= B</CODE> evaluates uniformly 
+across implementations. Note that for real values in Ada,
+&quot;<CODE>A &lt;= B</CODE>&quot; is not the 
+same as &quot;<CODE>not (A &gt; B)</CODE>&quot;.
+Further explanation can be found in Cohen (1986) pp.227-233.
+<P>
+Type attributes are the primary means of symbolically accessing the 
+implementation of the Ada numeric model. When the characteristics of the model 
+numbers are accessed symbolically, the source code is portable. The 
+appropriate model numbers of any implementation will then be used by the 
+generated code.<P>
+Although zero is technically not a special case, it is often overlooked 
+because it looks like the simplest and, therefore, safest case.  But in 
+reality, each time comparisons involve small values, evaluate the situation to 
+determine which technique is appropriate.<P>
+note<P>
+Regardless of language, real valued computations have inaccuracy.  That the  
+corresponding mathematical operations have algebraic properties usually  
+introduces some confusion.  This guideline explains how Ada deals with the  
+problem that most languages face.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-04-05.html#4.5.2">4.5.2&nbsp;Relational Operators and Membership Tests</A>
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

@@ -1,0 +1,411 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>The prefixed notation</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-2-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-2-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>2.3 The prefixed notation</H1>
+<div class="Normal" style="margin-bottom: 0.4em">As mentioned in the 
+Introduction (see Section <A HREF="Rat-1-3-1.html">1.3.1</A>), the Ada 
+95 object oriented model has been criticized for not being really OO 
+since the notation for applying a subprogram (method) to an object emphasizes 
+the subprogram and not the object. Thus given</div>
+<div class="SwissExamples"><B>package</B>&nbsp;P&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;T&nbsp;<B>is&nbsp;tagged</B>&nbsp;...&nbsp;;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Op(X:&nbsp;T;&nbsp;...&nbsp;);<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;P;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then we usually have 
+to write</div>
+<div class="SwissExamples">P.Op(Y,&nbsp;...&nbsp;);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>subprogram&nbsp;first</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">in order to apply the 
+operation to an object <SPAN Class="swiss">Y</SPAN> of type <SPAN Class="swiss">T</SPAN> 
+whereas an OO person would expect to write&nbsp;</div>
+<div class="SwissExamples">Y.Op(&nbsp;...&nbsp;);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>object&nbsp;first</I></SPAN></div>
+<div class="Normal">Some hard line OO languages such as Smalltalk take 
+the view that everything is an object and that all activities are operations 
+upon some object. Thus adding 2 and 3 can be seen as sending a message 
+to 2 instructing 3 to be added to it. This is clearly an extreme view.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Older languages take 
+the view that subprograms are dominant and that they act upon parameters 
+which might be raw numbers such as 2 or denote objects such as a circle. 
+Ada 95 primarily takes this view which reflects its Pascal foundation 
+over 20 years ago. Thus if <SPAN Class="swiss">Area</SPAN> is a function 
+which returns the area of a circle then we write</div>
+<div class="SwissExamples">A&nbsp;:=&nbsp;Area(A_Circle);</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, when we come 
+to tasks and protected objects Ada takes the OO view in which the identity 
+of the object comes first. Thus given a task <SPAN Class="swiss">Actor</SPAN> 
+with an entry <SPAN Class="swiss">Start</SPAN> we call the entry by writing</div>
+<div class="SwissExamples">Actor.Start(&nbsp;...&nbsp;);</div>
+<div class="Normal">So Ada 95 already uses the object notation although 
+it only applies to concurrent objects such as tasks. Other objects and, 
+in particular, objects of tagged types have to use the subprogram notation.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A major irritation 
+of the subprogram notation is that it is usually necessary to name the 
+package containing the declaration of the subprogram thus</div>
+<div class="SwissExamples">P.Op(Y,&nbsp;...&nbsp;);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>package&nbsp;P&nbsp;mentioned</I></SPAN></div>
+<div class="Normal">There are two situations when <SPAN Class="swiss">P</SPAN> 
+need not be mentioned &ndash; one is where the procedure call is actually 
+inside the package <SPAN Class="swiss">P</SPAN>, the other is where we 
+have a use clause for <SPAN Class="swiss">P</SPAN> (and even that sometimes 
+does not give the required visibility). But these are special cases.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 2005 we can 
+replace <SPAN Class="swiss">P.Op(Y, ... );</SPAN> by the so-called prefixed 
+notation<A NAME="I1073"></A></div>
+<div class="SwissExamples">Y.Op(&nbsp;...&nbsp;);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>package&nbsp;P&nbsp;never&nbsp;mentioned</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">provided that</div>
+<div class="Bulleted"><SPAN Class="swiss">T</SPAN> is a tagged type,</div>
+<div class="Bulleted"><SPAN Class="swiss">Op</SPAN> is a primitive (dispatching) 
+or class wide operation of <SPAN Class="swiss">T</SPAN>,</div>
+<div class="Bulleted"><SPAN Class="swiss">Y</SPAN> is the first parameter 
+of <SPAN Class="swiss">Op</SPAN>.&nbsp;</div>
+<div class="Normal">The reason there is never any need to mention the 
+package is that, by starting from the object, we can identify its type 
+and thus the primitive operations of the type. Note that a class wide 
+operation can be called in this way only if it is declared at the same 
+place as the primitive operations of <SPAN Class="swiss">T</SPAN> (or 
+one of its ancestors). The parameter <SPAN Class="swiss">Y</SPAN> need 
+not be simply the name of an object. It can be anything allowed as a 
+parameter such as a dereference or a function call. But the type <SPAN Class="swiss">T</SPAN> 
+must be tagged.</div>
+<div class="Normal">There are many advantages of the prefixed notation 
+as we shall see but perhaps the most important is ease of maintenance 
+from not having to mention the package containing the declaration of 
+the operation. Having to name the package is often tricky because in 
+complicated situations involving several levels of inheritance it may 
+not be obvious where the operation is declared. This happens especially 
+when operations are declared implicitly and when class-wide operations 
+are involved. Moreover if we change the structure for some reason then 
+operations might move.</div>
+<div class="Normal">As a simple example consider a hierarchy of plane 
+geometrical object types. All objects have a position given by the two 
+coordinates <I>x</I> and <I>y</I> (this is the position of the centre 
+of gravity of the object). There will be other specific properties according 
+to the type such as the radius of a circle. In addition there might be 
+general properties such as the area of the object, its distance from 
+the origin and moment of inertia about its centre.</div>
+<div class="Normal">There are a number of ways in which such a hierarchy 
+might be structured. We might have a package declaring a root abstract 
+type and then another package with several derived types.</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Root&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Object&nbsp;<B>is&nbsp;abstract&nbsp;tagged</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X_Coord:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y_Coord:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Area(O:&nbsp;Object)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is&nbsp;abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;MI(O:&nbsp;Object)&nbsp;<B>return</B>&nbsp;Float<B>&nbsp;is&nbsp;abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Distance(O:&nbsp;Object)&nbsp;<B>return</B>&nbsp;Float;<BR>
+<B>end</B>&nbsp;Root;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;<B>body</B>&nbsp;Root&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Distance(O:&nbsp;Object)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Sqrt(O.X_Coord**2&nbsp;+&nbsp;O.Y_Coord**2);<BR>
+&nbsp;&nbsp;&nbsp;<B>end</B>&nbsp;Distance;<BR>
+<B>end</B>&nbsp;Root;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This package declares 
+the root type and two abstract operations <SPAN Class="swiss">Area</SPAN> 
+and <SPAN Class="swiss">MI</SPAN> (moment of inertia) and a concrete 
+operation <SPAN Class="swiss">Distance</SPAN>. We might then have</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Root;<BR>
+<B>package</B>&nbsp;Shapes&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Circle&nbsp;<B>is&nbsp;new&nbsp;</B>Root.Object&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Radius:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Area(C:&nbsp;Circle)&nbsp;<B>return</B>&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;MI(C:&nbsp;Circle)&nbsp;<B>return</B>&nbsp;Float;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Triangle&nbsp;<B>is&nbsp;new</B>&nbsp;Root.Object&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A,&nbsp;B,&nbsp;C:&nbsp;Float;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>lengths&nbsp;of&nbsp;sides</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Area(T:&nbsp;Triangle)&nbsp;<B>return</B>&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;MI(T:&nbsp;Triangle)&nbsp;<B>return</B>&nbsp;Float;</div>
+<div class="SwissExamples">--&nbsp;<SPAN Class="roman"><I>and&nbsp;so&nbsp;on&nbsp;for&nbsp;other&nbsp;types&nbsp;such&nbsp;as&nbsp;Square</I></SPAN></div>
+<div class="SwissExamples"><B>end</B>&nbsp;Shapes;</div>
+<div class="Normal">(In the following discussion we will assume that 
+use clauses are not being used. This is quite realistic because many 
+projects forbid use clauses.)</div>
+<div class="Normal" style="margin-bottom: 0.4em">Having declared some 
+objects such as <SPAN Class="swiss">A_Circle</SPAN> and <SPAN Class="swiss">A_Triangle</SPAN> 
+we can then apply the operations <SPAN Class="swiss">Area</SPAN>, <SPAN Class="swiss">Distance</SPAN>, 
+and <SPAN Class="swiss">MI</SPAN>. In Ada 95 we write</div>
+<div class="SwissExamples">A&nbsp;:=&nbsp;Shapes.Area(A_Circle);<BR>
+D&nbsp;:=&nbsp;Shapes.Distance(A_Triangle);<BR>
+M&nbsp;:=&nbsp;Shapes.MI(A_Square);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Observe that the operation 
+<SPAN Class="swiss">Distance</SPAN> is inherited and so is implicitly 
+declared in the package <SPAN Class="swiss">Shapes</SPAN> for all types 
+even though there is no mention of it in the text of the package <SPAN Class="swiss">Shapes</SPAN>. 
+However, if we were using Ada 2005 and the prefixed notation then we 
+could simply write&nbsp;</div>
+<div class="SwissExamples">A&nbsp;:=&nbsp;A_Circle.Area;<BR>
+D&nbsp;:=&nbsp;A_Triangle.Distance;<BR>
+M&nbsp;:=&nbsp;A_Square.MI;</div>
+<div class="Normal">and there is no mention of the package <SPAN Class="swiss">Shapes</SPAN> 
+at all.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A clever friend then 
+points out that by its nature <SPAN Class="swiss">Distance</SPAN> is 
+the same for all types so it would be safer to avoid the risk of it getting 
+changed by making it class wide. So we change the declaration of <SPAN Class="swiss">Distance</SPAN> 
+in the package <SPAN Class="swiss">Root</SPAN> thus&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Distance(O:&nbsp;Object'Class)&nbsp;<B>return</B>&nbsp;Float;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and recompile our program. 
+But the Ada 95 version won't recompile. Why? Because class wide operations 
+are not inherited. So there is only one function <SPAN Class="swiss">Distance</SPAN> 
+and it is declared in the package <SPAN Class="swiss">Root</SPAN>. So 
+all our calls of <SPAN Class="swiss">Distance</SPAN> have to be changed 
+to&nbsp;</div>
+<div class="SwissExamples">D&nbsp;:=&nbsp;Root.Distance(A_Triangle);</div>
+<div class="Normal">However, if we had been using the prefixed notation 
+then there would have been nothing to change.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Our manager might then 
+read about the virtues of child packages and tell us to restructure the 
+whole thing as follows&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Geometry&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Object&nbsp;<B>is&nbsp;abstract</B>&nbsp;...</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>functions&nbsp;Area,&nbsp;MI,&nbsp;Distance</I></SPAN><BR>
+<B>end</B>&nbsp;Geometry;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Geometry.Circles&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Circle<B>&nbsp;is&nbsp;new</B>&nbsp;Object&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Radius:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>functions&nbsp;Area,&nbsp;MI</I></SPAN><BR>
+<B>end</B>&nbsp;Geometry.Circles;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Geometry.Triangles&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Triangle<B>&nbsp;is&nbsp;new</B>&nbsp;Object&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A,&nbsp;B,&nbsp;C:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>functions&nbsp;Area,&nbsp;MI</I></SPAN><BR>
+<B>end</B>&nbsp;Geometry.Triangles;</div>
+<div class="SwissExamples">--&nbsp;<SPAN Class="roman"><I>and&nbsp;so&nbsp;on</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">This is of course a 
+much more beautiful structure and avoids having to write <SPAN Class="swiss">Root.Object</SPAN> 
+when doing the extensions. But, horrors, our assignments in Ada 95 now 
+have to be changed to</div>
+<div class="SwissExamples">A&nbsp;:=&nbsp;Geometry.Circles.Area(A_Circle);<BR>
+D&nbsp;:=&nbsp;Geometry.Distance(A_Triangle);<BR>
+M&nbsp;:=&nbsp;Geometry.Squares.MI(A_Square);</div>
+<div class="Normal" style="margin-bottom: 0.4em">But the lucky programmer 
+using Ada 2005 can still write&nbsp;</div>
+<div class="SwissExamples">A&nbsp;:=&nbsp;A_Circle.Area;<BR>
+D&nbsp;:=&nbsp;A_Triangle.Distance;<BR>
+M&nbsp;:=&nbsp;A_Square.MI;</div>
+<div class="Normal">and have a refreshing coffee (or a relaxing martini) 
+while we are toiling with the editor.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Some time later the 
+program might be extended to accommodate triangles that are specialized 
+to be equilateral. This might be done by&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Geometry.Triangles.Equilateral&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;&nbsp;Equilateral_Triangle&nbsp;<B>new</B>&nbsp;Triangle&nbsp;<B>with&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">This type of course 
+inherits all the operations of the type <SPAN Class="swiss">Triangle</SPAN>. 
+We might now realize that the object <SPAN Class="swiss">A_Triangle</SPAN> 
+of type <SPAN Class="swiss">Triangle</SPAN> was equilateral anyway and 
+so it would be better to change it to be of type <SPAN Class="swiss">Equilateral_Triangle</SPAN>. 
+The lucky Ada 2005 programmer will only have to change the declaration 
+of the object but the poor Ada 95 programmer will have to change the 
+calls on all its primitive operations such as&nbsp;</div>
+<div class="SwissExamples">A&nbsp;:=&nbsp;Geometry.Triangles.Area(A_Triangle);</div>
+<div class="Normal" style="margin-bottom: 0.4em">to the corresponding 
+</div>
+<div class="SwissExamples">A&nbsp;:=&nbsp;Geometry.Triangles.Equilateral.Area(A_Triangle);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Other advantages of 
+the <SPAN Class="swiss">prefixed</SPAN> notation were mentioned in the 
+Introduction. One is that it unifies the notation for calling a function 
+with a single parameter and directly reading a component of the object. 
+Thus we can write uniformly&nbsp;</div>
+<div class="SwissExamples">X&nbsp;:=&nbsp;A_Circle.X_Coord;<BR>
+A&nbsp;:=&nbsp;A_Circle.Area;</div>
+<div class="Normal">Of course if we were foolish and had a <I>visible</I> 
+component <SPAN Class="swiss">Area</SPAN> as well as a function <SPAN Class="swiss">Area</SPAN> 
+then we could not call the function in this way.</div>
+<div class="Normal" style="margin-bottom: 0.4em">But now suppose we 
+decide to make the root type private so that the coordinates cannot be 
+changed inadvertently. Moreover we decide to provide functions to read 
+them. So we have&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Geometry&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Object&nbsp;<B>is&nbsp;abstract&nbsp;tagged&nbsp;private;</B><BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Area(O:&nbsp;Object)&nbsp;<B>return</B>&nbsp;Float&nbsp;<B>is&nbsp;abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;MI(O:&nbsp;Object)&nbsp;<B>return</B>&nbsp;Float<B>&nbsp;is&nbsp;abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Distance(O:&nbsp;Object'Class)&nbsp;<B>return</B>&nbsp;Float;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;X_Coord(O:&nbsp;Object'Class)&nbsp;<B>return</B>&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Y_Coord(O:&nbsp;Object'Class)&nbsp;<B>return</B>&nbsp;Float;</div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Object&nbsp;<B>is&nbsp;tagged</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X_Coord:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y_Coord:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="SwissExamples"><B>end</B>&nbsp;Geometry;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Using Ada 95 we would 
+now have to change statements such as&nbsp;</div>
+<div class="SwissExamples">X&nbsp;:=&nbsp;A_Triangle.X_Coord;<BR>
+Y&nbsp;:=&nbsp;A_Triangle.Y_Coord;</div>
+<div class="Normal" style="margin-bottom: 0.4em">into&nbsp;</div>
+<div class="SwissExamples">X&nbsp;:=&nbsp;Geometry.X_Coord(A_Triangle);<BR>
+Y&nbsp;:=&nbsp;Geometry.Y_Coord(A_Triangle);</div>
+<div class="Normal" style="margin-bottom: 0.4em">or (if we had not been 
+wise enough to make the functions class wide) perhaps even&nbsp;</div>
+<div class="SwissExamples">X&nbsp;:=&nbsp;Geometry.Triangles.Equilateral.X_Coord(A_Triangle);<BR>
+Y&nbsp;:=&nbsp;Geometry.Triangles.Equilateral.Y_Coord(A_Triangle);</div>
+<div class="Normal">whereas in Ada 2005 we do not have to make any changes 
+at all.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Another advantage mentioned 
+in the Introduction is that when using access types explicit dereferencing 
+is not necessary. Suppose we have&nbsp;</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Pointer&nbsp;<B>is&nbsp;access&nbsp;all</B>&nbsp;Geometry.Object'Class;<BR>
+...<BR>
+This_One:&nbsp;Pointer&nbsp;:=&nbsp;A_Circle'Access;</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 95 (assuming 
+that <SPAN Class="swiss">X_Coord</SPAN> is a visible component) we have 
+to write&nbsp;</div>
+<div class="SwissExamples">Put(This_One.X_Coord);&nbsp;...<BR>
+Put(This_One.Y_Coord);&nbsp;...<BR>
+Put(Geometry.Area(This_One.<B>all</B>));</div>
+<div class="Normal" style="margin-bottom: 0.4em">whereas in Ada 2005 
+we can uniformly write&nbsp;</div>
+<div class="SwissExamples">Put(This_One.X_Coord);&nbsp;...<BR>
+Put(This_One.Y_Coord);&nbsp;...<BR>
+Put(This_One.Area);</div>
+<div class="Normal">and of course this remains unchanged if we make the 
+coordinates into functions whereas the Ada 95 statements will need to 
+be changed.</div>
+<div class="Normal">There are other structural changes that can occur 
+during program development which are much easier to cope with using the 
+prefix notation. For example, a class wide operation might be moved. 
+And in the case of multiple interfaces to be described in the next section 
+an operation might be moved from one interface to another.</div>
+<div class="Normal">It is clear that the prefixed notation has significant 
+benefits both in terms of program clarity and for program maintenance.</div>
+<div class="Normal">Other variations on the rules for the use of the 
+notation were considered. One was that the mechanism should apply to 
+untagged types as well but this was rejected on the grounds that it might 
+add to rather than reduce confusion in some cases. In any event, untagged 
+types do not have class wide types so they are intrinsically simpler. 
+It would have been particularly confusing to permit the notation to apply 
+to access types especially an access type <SPAN Class="swiss">A</SPAN> 
+referring to a tagged type <SPAN Class="swiss">T</SPAN>. If the access 
+type and the tagged type both had the same or similar operations <SPAN Class="swiss">Op</SPAN> 
+then ambiguities or errors could easily arise.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It is of course important 
+to note that the first parameter of an operation plays a special role 
+since in order to take advantage of the prefixed notation we have to 
+ensure that the first parameter is a controlling parameter. Treating 
+the first parameter specially can appear odd in some circumstances such 
+as when there is symmetry among the parameters. Thus suppose we have 
+a set package for creating and manipulating sets of integers&nbsp;</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Sets&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Set&nbsp;<B>is&nbsp;tagged&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Empty&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Unit(N:&nbsp;Integer)&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Union(S,&nbsp;T:&nbsp;Set)&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Intersection(S,&nbsp;T:&nbsp;Set)&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Size(S:&nbsp;Set)&nbsp;<B>return</B>&nbsp;Integer;<BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Sets;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then we can apply the 
+function <SPAN Class="swiss">Union</SPAN> in the traditional way&nbsp;</div>
+<div class="SwissExamples">A,&nbsp;B,&nbsp;C:&nbsp;Set;<BR>
+...<BR>
+C&nbsp;:=&nbsp;Sets.Union(A,&nbsp;B);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The object oriented 
+addict can also write&nbsp;</div>
+<div class="SwissExamples">C&nbsp;:=&nbsp;A.Union(B);</div>
+<div class="Normal">but this destroys the obvious symmetry and is rather 
+like sending 3 to be added to 2 mentioned at the beginning of this discussion.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Hopefully the mature 
+programmer will use the OO notation wisely. Maybe its existence will 
+encourage a more uniform style in which the first parameter is always 
+a controlling operand wherever possible. Of course it cannot be used 
+for functions which are tag indeterminate such as&nbsp;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Empty&nbsp;<B>return</B>&nbsp;Set;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Unit(N:&nbsp;Integer)&nbsp;<B>return</B>&nbsp;Set;</div>
+<div class="Normal">since there are no controlling parameters. If a subprogram 
+has just one parameter (which is controlling) such as <SPAN Class="swiss">Size</SPAN> 
+then the call just becomes <SPAN Class="swiss">X.Size</SPAN> and no parentheses 
+are necessary.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Remember that the prefix 
+does not have to be simply the name of an object such as <SPAN Class="swiss">A_Circle</SPAN> 
+or an implicit dereference such as <SPAN Class="swiss">This_One</SPAN>, 
+it could be a function call so we might write&nbsp;</div>
+<div class="SwissExamples">N&nbsp;:=&nbsp;Sets.Empty.Size;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>N&nbsp;=&nbsp;0</I></SPAN><BR>
+M&nbsp;:=&nbsp;Sets.Unit(99).Size;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>M&nbsp;=&nbsp;1</I></SPAN></div>
+<div class="Normal">with the obvious results as indicated.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-2-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-2-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>

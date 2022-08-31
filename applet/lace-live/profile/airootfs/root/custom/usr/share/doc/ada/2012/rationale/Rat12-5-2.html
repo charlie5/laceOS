@@ -1,0 +1,283 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Scheduling</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.Indented1 {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-5-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-5-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>5.2 Scheduling</H1>
+<div class="Normal">Ada 83 was remarkably silent about the scheduling 
+of tasks. It muttered about tasks being implemented on multiprocessors 
+or using interleaved execution on a single processor. But it said nothing 
+about how such interleaving might be achieved. It also indicated that 
+a single Ada task might be implemented using several actual processors 
+if the effect would be the same.<A NAME="I1371"></A><A NAME="I1372"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 83 introduced the 
+pragma <SPAN Class="swiss">Priority</SPAN> and stated<A NAME="I1373"></A><A NAME="I1374"></A></div>
+<div class="Indented1">if two task with different priorities are both 
+eligible for execution ... then it cannot be the case that the task with 
+the lower priority is executing while the task with the higher priority 
+is not.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The Rationale for Ada 
+83 says that this rule requires preemptive scheduling. But it says nothing 
+about what happens if several tasks have the same priority. It does however 
+have a dire warning</div>
+<div class="Indented1">Priorities are provided as a tool for indicating 
+relevant degrees of urgency and on no account should their manipulation 
+be used as a technique for attempting to obtain mutual exclusion.&nbsp;</div>
+<div class="Normal">So, apart from the existence of priorities, implementations 
+were free to use whatever scheduling algorithms they liked such as Round 
+Robin time slicing or simply running until blocked.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There was also a bit 
+of a mystery about the delay statement. On the one hand Ada 83 says</div>
+<div class="Indented1">suspends execution of the task for at least the 
+duration specified.&nbsp;</div>
+<div class="Normal">The words &quot;at least&quot; caused much confusion. 
+The intent was simply a reminder that a task might not get the processor 
+back at the end of the interval because another task might have become 
+eligible for execution meanwhile. It did not mean that the implementation 
+could willy-nilly delay execution for a longer time.<A NAME="I1375"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Another mystery surrounded 
+the meaning of</div>
+<div class="SwissExamples"><B>delay</B>&nbsp;0.0;</div>
+<div class="Normal">Ada 83 did state that delay with a negative value 
+is equivalent to a delay statement with a zero value. But it did not 
+say what a delay with a zero value meant. The Rationale remained mute 
+on the topic as well.</div>
+<div class="Normal">However, a general convention seemed to arise that 
+<B>delay</B><SPAN Class="swiss">&nbsp;0.0;</SPAN> indicated that the task 
+was willing to relinquish the processor and so force a scheduling point.</div>
+<div class="Normal">Ada 95 brought some clarity to the situation in the 
+new Real-Time Systems annex by introducing the pragma <SPAN Class="swiss">Task_Dispatching_Policy</SPAN> 
+and the standard argument of <SPAN Class="swiss">FIFO_Within_Priorities</SPAN>. 
+But the core language did not clarify the effect of a delay of zero. 
+It does say that a delay causes a task to be blocked but if the expiration 
+time has already passed, the task is not blocked. So clearly a negative 
+delay does not block. However, it still has the note that a negative 
+delay is equivalent to delay zero so we could deduce that delay zero 
+does not block and so cannot force scheduling.<A NAME="I1376"></A><A NAME="I1377"></A></div>
+<div class="Normal">But help is at hand in the Real-Time Systems annex 
+where it clearly states that even if a delay does not result in blocking, 
+nevertheless the task goes to the end of the ready queue for its active 
+priority. But that is only for the standard policy of <SPAN Class="swiss">FIFO_Within_Priorities</SPAN>. 
+If a malevolent vendor introduces a curious policy called perhaps <SPAN Class="swiss">Dodgy_Scheduling</SPAN> 
+then it need not follow this rule.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 2005 added further 
+policies namely</div>
+<div class="Indented1"><SPAN Class="swiss">Non_Preemptive_FIFO_Within_Priorities</SPAN><A NAME="I1378"></A></div>
+<div class="Indented1"><SPAN Class="swiss">Round_Robin_Within_Priorities</SPAN><A NAME="I1379"></A></div>
+<div class="Indented1"><SPAN Class="swiss">EDF_Across_Priorities</SPAN><A NAME="I1380"></A> 
+</div>
+<div class="Normal">In the case of <SPAN Class="swiss">Non_Preemptive_FIFO_Within_Priorities</SPAN> 
+a non-blocking delay also sends the task to the end of the ready queue 
+for its active priority. However, a non-blocking delay has absolutely 
+no effect in the case of <SPAN Class="swiss">Round_Robin_Within_Priorities</SPAN> 
+and <SPAN Class="swiss">EDF_Across_Priorities</SPAN>.</div>
+<div class="Normal">The introduction of non-preemptive dispatching revealed 
+a shortcoming that is cured in Ada 2012. The problem is that in such 
+a system there is a need to be able to indicate that a task is willing 
+to be preempted by a task of a higher priority but not by one of the 
+same priority. So somehow we need to say <SPAN Class="swiss">Yield_To_Higher</SPAN>.<A NAME="I1381"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Moreover, some felt 
+that it was time to get rid of this strange habit of writing <B>delay</B><SPAN Class="swiss">&nbsp;0.0;</SPAN> to indicate a scheduling point. Those restricted to the Ravenscar 
+profile, had been forced to write something really gruesome such as</div>
+<div class="SwissExamples"><B>delay&nbsp;until</B><SPAN Class="swiss">&nbsp;Ada.Real_Time.Time_First;</SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">Accordingly, the procedure 
+<SPAN Class="swiss">Yield</SPAN> is added to the package <SPAN Class="swiss">Ada.Dispatching</SPAN> 
+so that it becomes<A NAME="I1382"></A></div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Dispatching&nbsp;<B>is</B><A NAME="I1383"></A><A NAME="I1384"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Dispatching);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Yield;<BR>
+&nbsp;&nbsp;&nbsp;Dispatching_Policy_Error:&nbsp;<B>exception</B>;<BR>
+<B>end</B>&nbsp;Ada.Dispatching;</div>
+<div class="Normal">Calling <SPAN Class="swiss">Yield</SPAN> is exactly 
+equivalent to <B>delay</B><SPAN Class="swiss">&nbsp;0.0;</SPAN> and similarly 
+causes a bounded error if called from within a protected operation.</div>
+<div class="Normal" style="margin-bottom: 0.4em">There is also a new 
+child package thus</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Dispatching.Non_Preemptive&nbsp;<B>is</B><A NAME="I1385"></A><A NAME="I1386"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Non_Preemptive);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Yield_To_Higher;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Yield_To_Same_Or_Higher&nbsp;<B>renames</B>&nbsp;Yield;<BR>
+<B>end</B>&nbsp;Ada.Dispatching.Non_Preemptive;</div>
+<div class="Normal">Calling <SPAN Class="swiss">Yield_To_Higher</SPAN> 
+provides the additional facility required for non-preemptive scheduling. 
+Note that, unlike <SPAN Class="swiss">Yield</SPAN>, it can be called 
+from within a protected operation and does not cause a bounded error.</div>
+<div class="Normal">The pedantic programmer can call the precisely named 
+<SPAN Class="swiss">Yield_To_Same_Or_Higher</SPAN> which simply renames 
+<SPAN Class="swiss">Yield</SPAN> in the parent package.</div>
+<div class="Normal">Incidentally, note that since <SPAN Class="swiss">Yield</SPAN> 
+has a side effect, <SPAN Class="swiss">Ada.Dispatching</SPAN> has been 
+downgraded to preelaborable whereas it was pure in Ada 2005.</div>
+<div class="Normal">We now turn to consider an interaction between suspension 
+objects introduced in Ada 95 and EDF scheduling introduced in Ada 2005.<A NAME="I1387"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Remember that suspension 
+objects are manipulated by the following package</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Synchronous_Task_Control&nbsp;<B>is</B><A NAME="I1388"></A><A NAME="I1389"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Suspension_Object&nbsp;<B>is&nbsp;limited&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_True(S:&nbsp;<B>in&nbsp;out</B>&nbsp;Suspension_Object);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_False(S:&nbsp;<B>in&nbsp;out</B>&nbsp;Suspension_Object);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Current_State(S:&nbsp;Suspension_Object)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Suspend_Until_True&nbsp;(S:&nbsp;<B>in&nbsp;out</B>&nbsp;Suspension_Object);<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Ada.Synchronous_Task_Control;</div>
+<div class="Normal">The state of a suspension object can be set by calls 
+of <SPAN Class="swiss">Set_True</SPAN> and <SPAN Class="swiss">Set_False</SPAN>. 
+The key feature is that the procedure <SPAN Class="swiss">Suspend_Until_True</SPAN> 
+enables a task to be suspended until the suspension object is set true 
+by some other task. Thus this provides a neat mechanism for signalling 
+between tasks.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Earliest Deadline First 
+(EDF) scheduling is manipulated by the following child package of <SPAN Class="swiss">Ada.Dispatching</SPAN> 
+introduced in Ada 2005 (with use clauses added to save space)</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Real_Time;&nbsp;<B>with</B>&nbsp;Ada.Task_Identification;<BR>
+<B>use</B>&nbsp;Ada.Real_Time;&nbsp;<B>use</B>&nbsp;Ada.Task_Identification;<BR>
+<B>package</B>&nbsp;Ada.Dispatching.EDF&nbsp;<B>is</B><A NAME="I1390"></A><A NAME="I1391"></A></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;Deadline&nbsp;<B>is</B>&nbsp;Ada.Real_Time.Time;<BR>
+&nbsp;&nbsp;&nbsp;Default_Deadline:&nbsp;<B>constant</B>&nbsp;Deadline&nbsp;:=&nbsp;Time_Last;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Set_Deadline(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;D:&nbsp;<B>in</B>&nbsp;Deadline;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TT:&nbsp;<B>in</B>&nbsp;Task_Id&nbsp;:=&nbsp;Current_Task);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Delay_Until_And_Set_Deadline(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Delay_Until_Time:&nbsp;<B>in</B>&nbsp;Time;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Deadline_Offset:&nbsp;<B>in</B>&nbsp;Time_Span);<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Get_Deadline(T:&nbsp;Task_Id&nbsp;:=&nbsp;Current_Task)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Deadline;<BR>
+<B>end</B>&nbsp;Ada.Dispatching.EDF;</div>
+<div class="Normal">The procedure <SPAN Class="swiss">Delay_Until_And_Set_Deadline</SPAN> 
+is the key feature. It enables a task to be blocked until the time given 
+by the parameter <SPAN Class="swiss">Delay_Until_Time</SPAN> and sets 
+the deadline so that it is <SPAN Class="swiss">Deadline_Offset</SPAN> 
+after that.</div>
+<div class="Normal" style="margin-bottom: 0.4em">But what is missing 
+in Ada 2005 is the ability for a sporadic task triggered by a suspension 
+object to have its deadline set in a similar manner. This is remedied 
+in Ada 2012 by the addition of the following child package</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Real_Time;<BR>
+<B>package</B>&nbsp;Ada.Synchronous_Task_Control.EDF&nbsp;<B>is</B><A NAME="I1392"></A><A NAME="I1393"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Suspend_Until_True_And_Set_Deadline(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S:&nbsp;<B>in&nbsp;out</B>&nbsp;Suspension_Object;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TS:&nbsp;<B>in</B>&nbsp;Ada.Real_Time.Span);<BR>
+<B>end</B>&nbsp;Ada.Synchronous_Task_Control.EDF;</div>
+<div class="Normal">This enables a task to be blocked until the suspension 
+object <SPAN Class="swiss">S</SPAN> is set true; it then becomes ready 
+with a deadline of <SPAN Class="swiss">Ada.Real_Time.Clock + TS</SPAN>.}</div>
+<div class="Normal">The other new feature concerning scheduling in Ada 
+2012 is the addition of a package <SPAN Class="swiss">Ada.Synchronous_Barriers</SPAN>. 
+This enables many tasks to be blocked and to be released together.</div>
+<div class="Normal">The rationale for needing this facility is explained 
+in the AI concerned. As general purpose computing is moving to parallel 
+architectures and eventually to massively parallel machines, there is 
+a need to efficiently schedule many tasks using barrier primitives. The 
+POSIX OS interface provides a barrier primitive where <I>N</I> tasks 
+wait on a barrier and are released simultaneously when all are ready 
+to execute.</div>
+<div class="Normal">There are many situations where the release of <I>N</I> 
+tasks is required to execute an algorithm in parallel. Often the calculation 
+is relatively small for each task on each iteration but the number of 
+tasks is relatively high. As an example consider the solution of partial 
+differential equations where one task is allocated to each node of a 
+grid; there might easily be several thousand nodes. Such an example is 
+outlined in <A HREF="Rat12-0-3.html#R7">[7]</A>. The cost of linearly 
+scheduling and releasing them could remove almost all gains made through 
+parallelization in the first place.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The new package is</div>
+<div class="SwissExamples"><B>package</B>&nbsp;Ada.Synchronous_Barriers&nbsp;<B>is</B><A NAME="I1394"></A><A NAME="I1395"></A><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Synchronous_Barriers);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>subtype</B>&nbsp;Barrier_Limit&nbsp;<B>is</B>&nbsp;<B>range</B>&nbsp;1&nbsp;..&nbsp;<SPAN Class="roman"><I>implementation-defined</I></SPAN>;<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Synchronous_Barrier&nbsp;&nbsp;(Release_Threshold:&nbsp;Barrier_Limit)&nbsp;<B>is&nbsp;limited&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Wait_For_Release(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The_Barrier:&nbsp;<B>in&nbsp;out</B>&nbsp;Synchronous_Barrier;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Notified:&nbsp;<B>out</B>&nbsp;Boolean);<BR>
+<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end</B>&nbsp;Ada.Synchronous_Barriers;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The type <SPAN Class="swiss">Synchronous_Barrier</SPAN> 
+has a discriminant whose value indicates the number of tasks to be waited 
+for. When an object of the type is declared its internal counter is set 
+to zero. Thus we might write</div>
+<div class="SwissExamples">SB:&nbsp;Synchronous_Barrier(Release_Threshold&nbsp;=&gt;&nbsp;100);}</div>
+<div class="Normal" style="margin-bottom: 0.4em">When a task calls the 
+procedure <SPAN Class="swiss">Wait_For_Release</SPAN> thus</div>
+<div class="SwissExamples">Wait_For_Release(SB,&nbsp;My_Flag);</div>
+<div class="Normal" style="margin-bottom: 0.4em">then the task is blocked 
+and the internal counter in <SPAN Class="swiss">SB</SPAN> is incremented. 
+If the counter is then equal to the release threshold for that object 
+(100 in this example), then all the tasks are released. Just one task 
+will have the parameter <SPAN Class="swiss">Notified</SPAN> set to true 
+(the mechanism for selecting the chosen task is not defined). This specially 
+chosen task is then expected to do some work on behalf of all the others. 
+Typically all the tasks will be of the same task type so the code of 
+that type might have</div>
+<div class="SwissExamples">Wait_For_Release(SB,&nbsp;My_Flag);<BR>
+<B>if</B>&nbsp;My_Flag&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Gosh,&nbsp;I&nbsp;am&nbsp;the&nbsp;chosen&nbsp;one</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;stuff</I></SPAN><BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal">Once all the tasks are released, the counter in <SPAN Class="swiss">SB</SPAN> 
+is reset to zero so that the synchronous barrier can be used again.</div>
+<div class="Normal">Care is needed regarding finalization, aborting tasks 
+and other awkward activities. For example, if a synchronous barrier is 
+finalized, then any tasks blocked on it are released and <SPAN Class="swiss">Program_Error</SPAN> 
+is raised at the point of the call of <SPAN Class="swiss">Wait_For_Release</SPAN>.</div>
+<div class="Normal">Many embedded real-time programs, such as those conforming 
+to the Ravenscar profile, run forever. However, there are soft multitasking 
+programs which are hosted on systems such as Windows or Linux and these 
+require closing down in an orderly manner. There are also programs that 
+have mode changes in which the set of tasks involved can be changed dramatically. 
+In such situations it is important that synchronous barriers are finalized 
+neatly.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-5-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-5-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

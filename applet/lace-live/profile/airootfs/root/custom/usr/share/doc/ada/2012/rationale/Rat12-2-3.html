@@ -1,0 +1,655 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Preconditions and postconditions</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.Indented1 {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>2.3 Preconditions and postconditions</H1>
+<div class="Normal">We will look first at the simple case when inheritance 
+is not involved and then look at more general cases. Specific preconditions 
+and postconditions are applied using the aspects Pre and Post respectively 
+whereas class wide conditions are applied using the aspects Pre'Class 
+and Post'Class. <A NAME="I1248"></A><A NAME="I1249"></A><A NAME="I1250"></A><A NAME="I1251"></A><A NAME="I1252"></A><A NAME="I1253"></A><A NAME="I1254"></A><A NAME="I1255"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">To apply a specific 
+precondition <SPAN Class="swiss">Before</SPAN> and/or a specific postcondition 
+<SPAN Class="swiss">After</SPAN> to a procedure <SPAN Class="swiss">P</SPAN> 
+we write</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(P1:&nbsp;<B>in</B>&nbsp;T1;&nbsp;P2:<B>&nbsp;in&nbsp;out</B>&nbsp;T2;&nbsp;P3:&nbsp;<B>out</B>&nbsp;T3)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre&nbsp;=&gt;&nbsp;Before,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Post&nbsp;=&gt;&nbsp;After;</div>
+<div class="Normal">where <SPAN Class="swiss">Before</SPAN> and <SPAN Class="swiss">After</SPAN> 
+are expressions of a Boolean type (that is of type <SPAN Class="swiss">Boolean</SPAN> 
+or a type derived from it).</div>
+<div class="Normal">The precondition <SPAN Class="swiss">Before</SPAN> 
+and the postcondition <SPAN Class="swiss">After</SPAN> can involve the 
+parameters <SPAN Class="swiss">P1</SPAN> and <SPAN Class="swiss">P2</SPAN> 
+and <SPAN Class="swiss">P3</SPAN> and any visible entities such as other 
+variables, constants and functions. Note that <SPAN Class="swiss">Before</SPAN> 
+can involve the <B>out</B> parameter <SPAN Class="swiss">P3</SPAN> inasmuch 
+as one can always read any constraints on an <B>out</B> parameter such 
+as the bounds if it were an array.</div>
+<div class="Normal">The attribute <SPAN Class="swiss">X'Old</SPAN> will 
+be found useful in postconditions; it denotes the value of <SPAN Class="swiss">X</SPAN> 
+on entry to <SPAN Class="swiss">P</SPAN>. <SPAN Class="swiss">Old</SPAN> 
+is typically applied to parameters of mode <B>in out</B> such as <SPAN Class="swiss">P2</SPAN> 
+but it can be applied to any visible entity such as a global variable. 
+This can be useful for monitoring global variables which are updated 
+by the call of <SPAN Class="swiss">P</SPAN>. But note that <SPAN Class="swiss">'Old</SPAN> 
+can only be used in postconditions and not in arbitrary text and it cannot 
+be applied to objects of a limited type. <A NAME="I1256"></A><A NAME="I1257"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Perhaps surprisingly 
+<SPAN Class="swiss">'Old</SPAN> can also be applied to parameters of 
+mode <B>out</B>. For example, in the case of a parameter of a record 
+type that is updated as a whole, nevertheless we might want to check 
+that a particular component has not changed. Thus in updating some personal 
+details, such as address and occupation, we might want to ensure that 
+the person's date of birth and sex are not tampered with by writing</div>
+<div class="SwissExamples">Post&nbsp;=&gt;&nbsp;P.Sex&nbsp;=&nbsp;P.Sex'Old&nbsp;<B>and</B>&nbsp;P.Dob&nbsp;=&nbsp;P.Dob'Old</div>
+<div class="Normal">In the case of an array, we can write <SPAN Class="swiss">A(I)'Old</SPAN> 
+which means the original value of <SPAN Class="swiss">A(I)</SPAN>. But 
+<SPAN Class="swiss">A(I'Old)</SPAN> is different since it is the component 
+of the final value of <SPAN Class="swiss">A</SPAN> but indexed by the 
+old value of <SPAN Class="swiss">I</SPAN>.</div>
+<div class="Normal">Remember that the result of a function is an object 
+and so <SPAN Class="swiss">'Old</SPAN> can be applied to it. Note carefully 
+the difference between <SPAN Class="swiss">F(X)'Old</SPAN> and <SPAN Class="swiss">F(X'Old)</SPAN>. 
+The former applies <SPAN Class="swiss">F</SPAN> to <SPAN Class="swiss">X</SPAN> 
+on entry to the subprogram and saves it. The latter saves <SPAN Class="swiss">X</SPAN> 
+and applies <SPAN Class="swiss">F</SPAN> to it when the postcondition 
+is evaluated. These could be different because the function <SPAN Class="swiss">F</SPAN> 
+might also involve global variables which have changed.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Generally <SPAN Class="swiss">'Old</SPAN> 
+can be applied to anything but there are restrictions on its use in certain 
+conditional structures in which it can only be applied to statically 
+determined objects. This is illustrated by the following (based on an 
+example in the AARM)</div>
+<div class="SwissExamples">Table:&nbsp;<B>array</B>&nbsp;(1&nbsp;..&nbsp;10)&nbsp;<B>of</B>&nbsp;Integer&nbsp;:=&nbsp;...&nbsp;;<BR>
+<B>procedure</B>&nbsp;P(I:&nbsp;<B>in&nbsp;out</B>&nbsp;Natural)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Post&nbsp;=&gt;&nbsp;I&nbsp;&gt;&nbsp;0&nbsp;<B>and&nbsp;then</B>&nbsp;Table(I)'Old&nbsp;=&nbsp;1;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal">The programmer's intent is that the postcondition 
+uses a short circuit form to avoid evaluating Table(I) f I is not positive 
+on exit from the procedure. But, 'Old is evaluated and stored on entry 
+and this could raise Constraint_Error because I might for example be 
+zero. This is a conundrum since the compiler cannot know whether the 
+value of Table(I) will be needed and also I can change so it cannot know 
+which I anyway. So such structures are forbidden.</div>
+<div class="Normal" style="margin-bottom: 0.4em">(The collector of Ada 
+curiosities might be amused to note that we can write</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;dlo&nbsp;<B>is</B>&nbsp;Character;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then in a postcondition 
+we could have</div>
+<div class="SwissExamples">dlo'('I')'old</div>
+<div class="Normal">which is palindromic. If the subtype were <SPAN Class="swiss">blo</SPAN> 
+rather than <SPAN Class="swiss">dlo</SPAN> then the expression would 
+be mirror reflective!</div>
+<div class="Normal">I am grateful to Jean-Pierre Rosen for this example.)</div>
+<div class="Normal">In the case of a postcondition applying to a function 
+<SPAN Class="swiss">F</SPAN>, the result of the function is denoted by 
+the attribute <SPAN Class="swiss">F'Result</SPAN>. Again this attribute 
+can only be used in postconditions. <A NAME="I1258"></A><A NAME="I1259"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Some trivial examples 
+of declarations of a procedure <SPAN Class="swiss">Pinc</SPAN> and function 
+<SPAN Class="swiss">Finc</SPAN> to perform an increment are</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Pinc(X:&nbsp;<B>in&nbsp;out</B>&nbsp;Integer)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Post&nbsp;=&gt;&nbsp;X&nbsp;=&nbsp;X'Old+1;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Finc(X:&nbsp;Integer)&nbsp;<B>return</B>&nbsp;Integer<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Post&nbsp;=&gt;&nbsp;Finc'Result&nbsp;=&nbsp;X'Old+1;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Preconditions and postconditions 
+are controlled by the pragma <SPAN Class="swiss">Assertion_Policy</SPAN>. 
+They are enabled by <A NAME="I1260"></A><A NAME="I1261"></A></div>
+<div class="SwissExamples"><B>pragma</B>&nbsp;Assertion_Policy(Check);</div>
+<div class="Normal">and disabled by using parameter <SPAN Class="swiss">Ignore</SPAN>. 
+It is the value in effect at the point of the subprogram declaration 
+that matters. So we cannot have a situation where the policy changes 
+during the call so that preconditions are switched on but postconditions 
+are off or vice versa.</div>
+<div class="Normal" style="margin-bottom: 0.4em">And so the overall 
+effect of calling <SPAN Class="swiss">P</SPAN> with checks enabled is 
+roughly that, after evaluating any parameters at the point of call, it 
+as if the body were</div>
+<div class="SwissExamples"><B>if&nbsp;not</B>&nbsp;Before&nbsp;<B>then</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>check&nbsp;precondition</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>raise</B>&nbsp;Assertion_Error;<BR>
+<B>end&nbsp;if</B>;</div>
+<div class="SwissExamples">evaluate&nbsp;and&nbsp;store&nbsp;any&nbsp;<SPAN Class="swiss">'Old</SPAN>&nbsp;stuff;</div>
+<div class="SwissExamples">call&nbsp;actual&nbsp;body&nbsp;of&nbsp;P;</div>
+<div class="SwissExamples"><B>if&nbsp;not</B>&nbsp;After&nbsp;<B>then</B>&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;check&nbsp;postcondition</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>raise</B>&nbsp;Assertion_Error;<BR>
+<B>end&nbsp;if</B>;</div>
+<div class="SwissExamples">copy&nbsp;back&nbsp;any&nbsp;by-copy&nbsp;parameters;</div>
+<div class="SwissExamples">return&nbsp;to&nbsp;point&nbsp;of&nbsp;call;</div>
+<div class="Normal">Occurrances of <SPAN Class="swiss">Assertion_Error</SPAN> 
+are propagated and so raised at the point of call; they cannot be handled 
+inside <SPAN Class="swiss">P</SPAN>. Of course, if the evaluation of 
+<SPAN Class="swiss">Before</SPAN> or <SPAN Class="swiss">After</SPAN> 
+themselves raise some exception then that will similarly be propagated 
+to the point of call.</div>
+<div class="Normal">Note that conditions <SPAN Class="swiss">Pre</SPAN> 
+and <SPAN Class="swiss">Post</SPAN> can also be applied to entries.</div>
+<div class="Normal">Before progressing to the problems of inheritance 
+it is worth reconsidering the purpose of pre- and postconditions.</div>
+<div class="Bulleted">A precondition <SPAN Class="swiss">Before</SPAN> 
+is an obligation on the caller to ensure that it is true before the subprogram 
+is called and it is a guarantee to the implementer of the body that it 
+can be relied upon on entry to the body.</div>
+<div class="Bulleted">A postcondition <SPAN Class="swiss">After</SPAN> 
+is an obligation on the implementer of the body to ensure that it is 
+true on return from the subprogram and it is a guarantee to the caller 
+that it can be relied upon on return.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The symmetry is neatly 
+illustrated by the diagram below</div>
+<div class="Indented1"><TABLE frame="border" rules="all" border="2" cellpadding="4"><TR><TH align="left"><TH align="left">Pre<TH align="left">Post
+<TR><TD align="left">Call writer<TD align="left">obligation<TD align="left">guarantee
+<TR><TD align="left">Body writer<TD align="left">guarantee<TD align="left">obligation
+</table></div>
+<div class="Normal" style="margin-bottom: 0.4em">The simplest form of 
+inheritance occurs with derived types that are not tagged. Suppose we 
+declare the procedure <SPAN Class="swiss">Pinc</SPAN> as above with the 
+postcondition shown and supply a body</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Pinc(X:&nbsp;<B>in&nbsp;out</B>&nbsp;Integer)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;X&nbsp;:=&nbsp;X+1;<BR>
+<B>end</B>&nbsp;Pinc;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then declare a 
+type</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Apples<B>&nbsp;is&nbsp;new</B>&nbsp;Integer;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then the procedure 
+<SPAN Class="swiss">Pinc</SPAN> is inherited by the type <SPAN Class="swiss">Apples</SPAN>. 
+So if we then write</div>
+<div class="SwissExamples">No_Of_Apples:&nbsp;Apples;<BR>
+...<BR>
+Pinc(No_Of_Apples);</div>
+<div class="Normal">what actually happens is that the code of the procedure 
+<SPAN Class="swiss">Pinc</SPAN> originally written for <SPAN Class="swiss">Integer</SPAN> 
+is called and so the postcondition is inherited automatically.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If the user now wants 
+to add a precondition to <SPAN Class="swiss">Pinc</SPAN> that the number 
+of apples is not negative then a completely new subprogram has to be 
+declared which overrides the old one thus</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Pinc(X:&nbsp;<B>in&nbsp;out</B>&nbsp;Apples)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre&nbsp;=&gt;&nbsp;X&nbsp;&gt;=&nbsp;0,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Post&nbsp;=&gt;&nbsp;X&nbsp;=&nbsp;X'Old+1;</div>
+<div class="Normal">and a new body has to be supplied (which will of 
+course in this curious case be essentially the same as the old one). 
+So we cannot inherit an operation and change its conditions at the same 
+time.</div>
+<div class="Normal">We now turn to tagged types and first continue to 
+consider the specific conditions <SPAN Class="swiss">Pre</SPAN> and <SPAN Class="swiss">Post</SPAN>. 
+As a perhaps familiar example, consider the hierarchy consisting of a 
+type <SPAN Class="swiss">Object</SPAN> and then direct descendants <SPAN Class="swiss">Circle</SPAN>, 
+<SPAN Class="swiss">Square</SPAN> and <SPAN Class="swiss">Triangle</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Suppose the type <SPAN Class="swiss">Object</SPAN> 
+is</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Object&nbsp;<B>is&nbsp;tagged</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X_Coord,&nbsp;Y_Coord:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and we declare a function 
+<SPAN Class="swiss">Area</SPAN> thus</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Area(O:&nbsp;Object)&nbsp;<B>return</B>&nbsp;Float<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre&nbsp;=&gt;&nbsp;O.X_Coord&nbsp;&gt;&nbsp;0.0,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Post&nbsp;=&gt;&nbsp;Area'Result&nbsp;=&nbsp;0.0;</div>
+<div class="Normal">This imposes a requirement on the caller that the 
+function is called only with objects with positive <I>x</I>-coordinate 
+(for some obscure reason), and a requirement on the implementer of the 
+body that the area is zero (raw objects are just points and have no area).</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we now declare a 
+type <SPAN Class="swiss">Circle</SPAN> as</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Circle&nbsp;<B>is&nbsp;new</B>&nbsp;Object&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;<B>record</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Radius:&nbsp;Float;<BR>
+&nbsp;&nbsp;&nbsp;<B>end&nbsp;record</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and override the inherited 
+function <SPAN Class="swiss">Area</SPAN> then the <SPAN Class="swiss">Pre</SPAN> 
+and <SPAN Class="swiss">Post</SPAN> conditions on <SPAN Class="swiss">Area</SPAN> 
+for <SPAN Class="swiss">Object</SPAN> are not inherited and we have to 
+supply new ones, perhaps</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Area(C:&nbsp;Circle)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre&nbsp;=&gt;&nbsp;C.X_Coord&nbsp;&ndash;&nbsp;C.Radius&nbsp;&gt;&nbsp;0.0,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Post&nbsp;=&gt;&nbsp;Area'Result&nbsp;&gt;&nbsp;3.1&nbsp;*&nbsp;C.Radius**2&nbsp;<B>and</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Area'Result&nbsp;&lt;&nbsp;3.2&nbsp;*&nbsp;C.Radius**2;</div>
+<div class="Normal">The conditions ensure that all of the circle is in 
+the right half-plane and that the area is about right!</div>
+<div class="Normal">So the rules so far are exactly as for the untagged 
+case. If an operation is not overridden then it inherits the conditions 
+from its ancestor but if it is overridden then those conditions are lost 
+and new ones have to be supplied. And if no new ones are supplied then 
+they are by default taken to be <SPAN Class="swiss">True</SPAN>.</div>
+<div class="Normal">In conclusion, the conditions <SPAN Class="swiss">Pre</SPAN> 
+and <SPAN Class="swiss">Post</SPAN> are very much part of the actual 
+body. One consequence of this is that an abstract subprogram cannot have 
+<SPAN Class="swiss">Pre</SPAN> and <SPAN Class="swiss">Post</SPAN> conditions 
+because an abstract subprogram has no body.</div>
+<div class="Normal">We now turn to the class wide conditions <SPAN Class="swiss">Pre'Class</SPAN> 
+and <SPAN Class="swiss">Post'Class</SPAN> which are subtly different. 
+The first point is that the class wide ones apply to all descendants 
+as well even if the operations are overridden. In the case of <SPAN Class="swiss">Post'Class</SPAN> 
+if an overridden operation has no condition given then it is taken to 
+be <SPAN Class="swiss">True</SPAN> (as in the case of <SPAN Class="swiss">Post</SPAN>). 
+But in the case of <SPAN Class="swiss">Pre'Class</SPAN>, if an overridden 
+operation has no condition given then it is only taken to be <SPAN Class="swiss">True</SPAN> 
+if no other <SPAN Class="swiss">Pre'Class</SPAN> applies (no other is 
+inherited). We will now look at the consequences of these rules. <A NAME="I1262"></A><A NAME="I1263"></A><A NAME="I1264"></A><A NAME="I1265"></A><A NAME="I1266"></A><A NAME="I1267"></A><A NAME="I1268"></A><A NAME="I1269"></A></div>
+<div class="Normal">It might be that we want certain conditions to hold 
+throughout the hierarchy, perhaps that all objects concerned have a positive 
+<I>x</I>-coordinate and nonnegative area. In that case we can use class 
+wide conditions.</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Area(O:&nbsp;Object)&nbsp;<B>return</B>&nbsp;Float<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre'Class&nbsp;=&gt;&nbsp;O.X_Coord&nbsp;&gt;&nbsp;0.0,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Post'Class&nbsp;=&gt;&nbsp;Area'Result&nbsp;&gt;=&nbsp;0.0;</div>
+<div class="Normal">Now when we declare <SPAN Class="swiss">Area</SPAN> 
+for <SPAN Class="swiss">Circle</SPAN>, <SPAN Class="swiss">Pre'Class</SPAN> 
+and <SPAN Class="swiss">Post'Class</SPAN> from <SPAN Class="swiss">Object</SPAN> 
+will be inherited by the function <SPAN Class="swiss">Area</SPAN> for 
+<SPAN Class="swiss">Circle</SPAN>. Note that within a class wide condition 
+a formal parameter of type <SPAN Class="swiss">T</SPAN> is interpreted 
+as of <SPAN Class="swiss">T'Class</SPAN>. Thus <SPAN Class="swiss">O</SPAN> 
+is of type <SPAN Class="swiss">Object'Class</SPAN> and thus applies to 
+<SPAN Class="swiss">Circle</SPAN>. The inherited postcondition is simply 
+that the area is not negative and uses the attribute <SPAN Class="swiss">'Result</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we do not supply 
+conditions for the overriding <SPAN Class="swiss">Area</SPAN> for <SPAN Class="swiss">Circle</SPAN> 
+and simply write</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>function</B>&nbsp;Area(C:&nbsp;Circle)&nbsp;<B>return</B>&nbsp;Float;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then the precondition 
+inherited from <SPAN Class="swiss">Object</SPAN> still applies. In the 
+case of the postcondition not only is the postcondition from <SPAN Class="swiss">Object</SPAN> 
+inherited but there is also an implicit postcondition of <SPAN Class="swiss">True</SPAN>. 
+So the applicable conditions for <SPAN Class="swiss">Area</SPAN> for 
+<SPAN Class="swiss">Circle</SPAN> are</div>
+<div class="SwissExamples">Pre'Class&nbsp;for&nbsp;Object</div>
+<div class="SwissExamples">Post'Class&nbsp;for&nbsp;Object<BR>
+True</div>
+<div class="Normal" style="margin-bottom: 0.4em">Suppose on the other 
+hand that we give explicit <SPAN Class="swiss">Pre'Class</SPAN> and <SPAN Class="swiss">Post'Class</SPAN> 
+for <SPAN Class="swiss">Area</SPAN> for <SPAN Class="swiss">Circle</SPAN> 
+thus</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>function</B>&nbsp;Area(C:&nbsp;Circle)&nbsp;<B>return</B>&nbsp;Float<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre'Class&nbsp;=&gt;&nbsp;...&nbsp;,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Post'Class&nbsp;=&gt;&nbsp;...&nbsp;;</div>
+<div class="Normal" style="margin-bottom: 0.4em">We then find that the 
+applicable conditions for <SPAN Class="swiss">Area</SPAN> for <SPAN Class="swiss">Circle</SPAN> 
+are</div>
+<div class="SwissExamples">Pre'Class&nbsp;for&nbsp;Object<BR>
+Pre'Class&nbsp;for&nbsp;Circle</div>
+<div class="SwissExamples">Post'Class&nbsp;for&nbsp;Object<BR>
+Post'Class&nbsp;for&nbsp;Circle</div>
+<div class="Normal">Incidentally, it makes a lot of sense to declare 
+the type <SPAN Class="swiss">Object</SPAN> as abstract so that we cannot 
+declare pointless objects. In that case <SPAN Class="swiss">Area</SPAN> 
+might as well be abstract as well. Although we cannot give conditions 
+<SPAN Class="swiss">Pre</SPAN> and <SPAN Class="swiss">Post</SPAN> for 
+an abstract operation we can still give the class wide conditions <SPAN Class="swiss">Pre'Class</SPAN> 
+and <SPAN Class="swiss">Post'Class</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If the hierarchy extends 
+further, perhaps <SPAN Class="swiss">Equilateral_Triangle</SPAN> is derived 
+from <SPAN Class="swiss">Triangle</SPAN> which itself is derived from 
+<SPAN Class="swiss">Object</SPAN>, then we could add class wide conditions 
+to <SPAN Class="swiss">Area</SPAN> for <SPAN Class="swiss">Triangle</SPAN> 
+and these would also apply to <SPAN Class="swiss">Area</SPAN> for <SPAN Class="swiss">Equilateral_Triangle</SPAN>. 
+And we might add specific conditions for <SPAN Class="swiss">Equilateral_Triangle</SPAN> 
+as well. So we would then find that the following apply to <SPAN Class="swiss">Area</SPAN> 
+for <SPAN Class="swiss">Equilateral_Triangle</SPAN></div>
+<div class="SwissExamples">Pre'Class&nbsp;for&nbsp;Object<BR>
+Pre'Class&nbsp;for&nbsp;Triangle<BR>
+Pre&nbsp;for&nbsp;Equilateral&nbsp;Triangle</div>
+<div class="SwissExamples">Post'Class&nbsp;for&nbsp;Object<BR>
+Post'Class&nbsp;for&nbsp;Triangle<BR>
+Post&nbsp;for&nbsp;Equilateral_Triangle</div>
+<div class="Normal">The postconditions are quite straightforward, all 
+apply and all must be true on return from the function <SPAN Class="swiss">Area</SPAN>. 
+The compiler can see all these postconditions when the code for <SPAN Class="swiss">Area</SPAN> 
+is compiled and so they are all checked in the body. Note that any default 
+<SPAN Class="swiss">True</SPAN> makes no difference because <SPAN Class="swiss">B</SPAN> 
+<B>and</B> <SPAN Class="swiss">True</SPAN> is the same as <SPAN Class="swiss">B</SPAN>.</div>
+<div class="Normal">However, the rules regarding preconditions are perhaps 
+surprising. The specific precondition <SPAN Class="swiss">Pre</SPAN> 
+for <SPAN Class="swiss">Equilateral_Triangle</SPAN> must be true (checked 
+in the body) but so long as just one of the class wide preconditions 
+<SPAN Class="swiss">Pre'Class</SPAN> for <SPAN Class="swiss">Object</SPAN> 
+and <SPAN Class="swiss">Triangle</SPAN> is true then all is well. Note 
+that class wide preconditions are checked at the point of call. Do not 
+get confused over the use of the word apply. They all apply but only 
+the ones seen at the point of call are actually checked.</div>
+<div class="Normal">The reason for this state of affairs concerns dispatching 
+and especially redispatching. Consider the case of Ada airlines which 
+has Basic, Nice and Posh passengers. Basic passengers just get a seat. 
+Nice passengers also get a meal and Posh passengers also get a limo. 
+The types <SPAN Class="swiss">Reservation</SPAN>, <SPAN Class="swiss">Nice_Reservation</SPAN>, 
+and <SPAN Class="swiss">Posh_Reservation</SPAN> form a hierarchy with 
+<SPAN Class="swiss">Nice_Reservation</SPAN> being extended from <SPAN Class="swiss">Reservation</SPAN> 
+and so on. The facilities are assigned when a reservation is made by 
+calling an appropriate procedure <SPAN Class="swiss">Make</SPAN> thus</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Make(R:&nbsp;<B>in&nbsp;out</B>&nbsp;Reservation)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Select_Seat(R);<BR>
+<B>end</B>&nbsp;Make;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Make(NR:&nbsp;<B>in&nbsp;out</B>&nbsp;Nice_Reservation)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Make(Reservation(NR));<BR>
+&nbsp;&nbsp;&nbsp;Order_Meal(NR);<BR>
+<B>end</B>&nbsp;Make;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Make(PR:&nbsp;<B>in&nbsp;out</B>&nbsp;Posh_Reservation)&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;Make(Nice_Reservation(PR));<BR>
+&nbsp;&nbsp;&nbsp;Arrange_Limo(PR);<BR>
+<B>end</B>&nbsp;Make;</div>
+<div class="Normal">Each <SPAN Class="swiss">Make</SPAN> calls its ancestor 
+in order to avoid duplication of code and to ease maintenance.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A variation involving 
+redispatching introduces two different procedures <SPAN Class="swiss">Order_Meal</SPAN>, 
+one for Nice passengers and one for Posh passengers. We then need to 
+ensure that Posh passengers get a posh meal rather than a nice meal. 
+We write</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Make(NR:&nbsp;<B>in&nbsp;out</B>&nbsp;Nice_Reservation)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Make(Reservation(NR));<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>&nbsp;now&nbsp;redispatch&nbsp;to&nbsp;appropriate&nbsp;Order_Meal</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;Order_Meal(Nice_Reservation'Class(NR));<BR>
+<B>end</B>&nbsp;Make;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose we have 
+a precondition <SPAN Class="swiss">Pre'Class</SPAN> on <SPAN Class="swiss">Order_Meal</SPAN> 
+for Nice passengers and one on <SPAN Class="swiss">Order_Meal</SPAN> 
+for Posh passengers. The call of <SPAN Class="swiss">Order_Meal</SPAN> 
+sees that it is for <SPAN Class="swiss">Nice_Reservation'Class</SPAN> 
+and so the code includes a test of <SPAN Class="swiss">Pre'Class</SPAN> 
+on <SPAN Class="swiss">Nice_Reservation</SPAN>. It does not necessarily 
+know of the existence of the type <SPAN Class="swiss">Posh_Reservation</SPAN> 
+and cannot check <SPAN Class="swiss">Pre'Class</SPAN> on that <SPAN Class="swiss">Order_Meal</SPAN>. 
+At a later date we might add Supersonic passengers (RIP Concorde) and 
+this can be done without recompiling the rest of the system so it certainly 
+cannot do anything about checking <SPAN Class="swiss">Pre'Class</SPAN> 
+on <SPAN Class="swiss">Order_Meal</SPAN> for <SPAN Class="swiss">Supersonic_Reservation</SPAN> 
+which does not exist when the call is compiled. So when we eventually 
+get to the body of one of the procedures <SPAN Class="swiss">Order_Meal</SPAN> 
+all we know is that some <SPAN Class="swiss">Pre'Class</SPAN> on <SPAN Class="swiss">Order_Meal</SPAN> 
+has been checked somewhere. And that is all that the writer of the code 
+of <SPAN Class="swiss">Order_Meal</SPAN> can rely upon. Note that nowhere 
+does the compiled code actually &quot;or&quot; a lot of preconditions 
+together.</div>
+<div class="Normal">In summary, class wide preconditions are checked 
+at the point of call. Class wide postconditions and both specific pre- 
+and postconditions are checked in the actual body.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A small point to remember 
+is that a class wide operation such as</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Do_It(X:&nbsp;<B>in&nbsp;out</B>&nbsp;T'Class);</div>
+<div class="Normal">is not a primitive operation of <SPAN Class="swiss">T</SPAN> 
+and so although we can specify <SPAN Class="swiss">Pre</SPAN> and <SPAN Class="swiss">Post</SPAN> 
+for <SPAN Class="swiss">Do_It</SPAN> we cannot specify <SPAN Class="swiss">Pre'Class</SPAN> 
+and <SPAN Class="swiss">Post'Class</SPAN> for <SPAN Class="swiss">Do_It</SPAN>.</div>
+<div class="Normal">We noted above that the aspects <SPAN Class="swiss">Pre</SPAN> 
+and <SPAN Class="swiss">Post</SPAN> cannot be specified for an abstract 
+subprogram because it doesn't have a body. They cannot be given for a 
+null procedure either, since we want all null procedures to be identical 
+and do nothing and that includes no conditions.</div>
+<div class="Normal">We now turn to the question of multiple inheritance 
+and progenitors.</div>
+<div class="Normal">In the case of multiple inheritance we have to consider 
+the so-called Liskov Substitution Principle (LSP). The usual consequence 
+of LSP is that in the case of preconditions they are combined with &quot;or&quot; 
+(thus weakening) and the rule for postconditions is that they are combined 
+with &quot;and&quot; (thus strengthening). But the important thing is 
+that a relevant concrete operation can be substituted for the corresponding 
+operations of all its relevant ancestors. <A NAME="I1270"></A><A NAME="I1271"></A><A NAME="I1272"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada, a type <SPAN Class="swiss">T</SPAN> 
+can have one parent and several progenitors. Thus we might have</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T&nbsp;<B>is&nbsp;new</B>&nbsp;P&nbsp;<B>and</B>&nbsp;G1&nbsp;<B>and</B>&nbsp;G2&nbsp;<B>with</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">where <SPAN Class="swiss">P</SPAN> 
+is the parent and <SPAN Class="swiss">G1</SPAN> and <SPAN Class="swiss">G2</SPAN> 
+are progenitors. Remember that a progenitor cannot have components and 
+cannot have concrete operations (apart possibly for null procedures). 
+So the operations of the progenitors have to be abstract or null and 
+cannot have <SPAN Class="swiss">Pre</SPAN> and <SPAN Class="swiss">Post</SPAN> 
+conditions. However, they can have <SPAN Class="swiss">Pre'Class</SPAN> 
+and <SPAN Class="swiss">Post'Class</SPAN> conditions. It is possible 
+that the same operation <SPAN Class="swiss">Op</SPAN> is primitive for 
+more than one of these. Thus the progenitors <SPAN Class="swiss">G1</SPAN> 
+and <SPAN Class="swiss">G2</SPAN> might both have an operation <SPAN Class="swiss">Op</SPAN> 
+thus</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Op(X:&nbsp;G1)&nbsp;<B>is&nbsp;abstract</B>;<BR>
+<B>procedure</B>&nbsp;Op(X:&nbsp;G2)&nbsp;<B>is&nbsp;abstract</B>;</div>
+<div class="Normal">If they are conforming (as they are in this case) 
+then the one concrete operation <SPAN Class="swiss">Op</SPAN> of the 
+type <SPAN Class="swiss">T</SPAN> derived from both <SPAN Class="swiss">G1</SPAN> 
+and <SPAN Class="swiss">G2</SPAN> will implement both of these. (If they 
+don't conform then they are simply overloadings and two operations of 
+<SPAN Class="swiss">T</SPAN> are required). Hence the one <SPAN Class="swiss">Op</SPAN> 
+for <SPAN Class="swiss">T</SPAN> can be substituted for the <SPAN Class="swiss">Op</SPAN> 
+of both <SPAN Class="swiss">G1</SPAN> and <SPAN Class="swiss">G2</SPAN> 
+and LSP is satisfied.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose both abstract 
+operations have pre- and postconditions. Take postconditions first, we 
+might have</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Op(X:&nbsp;G1)&nbsp;<B>is&nbsp;abstract</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Post'Class&nbsp;=&gt;&nbsp;After1;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Op(X:&nbsp;G2)&nbsp;<B>is&nbsp;abstract</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Post'Class&nbsp;=&gt;&nbsp;After2;</div>
+<div class="Normal">Users of the <SPAN Class="swiss">Op</SPAN> of <SPAN Class="swiss">G1</SPAN> 
+will expect the postcondition <SPAN Class="swiss">After1</SPAN> to be 
+satisfied by any implementation of that <SPAN Class="swiss">Op</SPAN>. 
+So if using the <SPAN Class="swiss">Op</SPAN> of <SPAN Class="swiss">T</SPAN> 
+which implements the abstract <SPAN Class="swiss">Op</SPAN> of <SPAN Class="swiss">G1</SPAN>, 
+it follows that <SPAN Class="swiss">Op</SPAN> of <SPAN Class="swiss">T</SPAN> 
+must satisfy the postcondition <SPAN Class="swiss">After1</SPAN>. By 
+a similar argument regarding <SPAN Class="swiss">G2</SPAN>, it must also 
+satisfy the postcondition <SPAN Class="swiss">After2</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It thus follows that 
+the effective postcondition on the concrete <SPAN Class="swiss">Op</SPAN> 
+of <SPAN Class="swiss">T</SPAN> is as if we had written</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Op(X:&nbsp;T)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Post'Class&nbsp;=&gt;&nbsp;After1&nbsp;<B>and</B>&nbsp;After2;</div>
+<div class="Normal" style="margin-bottom: 0.4em">But of course we don't 
+actually have to write that since we simply write</div>
+<div class="SwissExamples"><B>overriding&nbsp;procedure</B>&nbsp;OP(X:&nbsp;T);</div>
+<div class="Normal">and it automatically inherits both postconditions 
+and the compiler inserts the appropriate code in the body. Remember that 
+if we don't give a condition then it is <SPAN Class="swiss">True</SPAN> 
+by default but anding in <SPAN Class="swiss">True</SPAN> makes no difference.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we do provide another 
+postcondition thus</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>procedure</B>&nbsp;OP(X:&nbsp;T)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Post'Class&nbsp;=&gt;&nbsp;After_T;</div>
+<div class="Normal">then the overall class wide postcondition to be checked 
+before returning will be <SPAN Class="swiss">After1</SPAN> <B>and</B> 
+<SPAN Class="swiss">After2</SPAN> <B>and</B> <SPAN Class="swiss">After_T</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now consider preconditions. 
+Suppose the declarations of the two versions of <SPAN Class="swiss">Op</SPAN> 
+are</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Op(X:&nbsp;G1)&nbsp;<B>is&nbsp;abstract</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre'Class&nbsp;=&gt;&nbsp;Before1;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Op(X:&nbsp;G2)&nbsp;<B>is&nbsp;abstract</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre'Class&nbsp;=&gt;&nbsp;Before2;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Assuming that there 
+is no corresponding <SPAN Class="swiss">Op</SPAN> for <SPAN Class="swiss">P</SPAN>, 
+we must provide a concrete operation for <SPAN Class="swiss">T</SPAN> 
+thus</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>procedure</B>&nbsp;Op(X:&nbsp;T)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre'Class&nbsp;=&gt;&nbsp;Before_T;</div>
+<div class="Normal">This means that at a point of call of <SPAN Class="swiss">Op</SPAN> 
+the precondition to be checked is <SPAN Class="swiss">Before_T</SPAN> 
+<B>or</B>&nbsp;exam[Before1] <B>or</B> <SPAN Class="swiss">Before2</SPAN>. 
+As long as this is satisfied it does not matter that <SPAN Class="swiss">Before1</SPAN> 
+and <SPAN Class="swiss">Before2</SPAN> might have been different.</div>
+<div class="Normal">If we do not provide an explicit <SPAN Class="swiss">Pre'Class</SPAN> 
+then the condition to be checked at the point of call is <SPAN Class="swiss">Before1</SPAN> 
+<B>or</B> <SPAN Class="swiss">Before2</SPAN>.</div>
+<div class="Normal">An interesting case arises if a progenitor (say <SPAN Class="swiss">G1</SPAN>) 
+and the parent have a conforming operation. Thus suppose <SPAN Class="swiss">P</SPAN> 
+itself has the operation</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Op(X:&nbsp;P);</div>
+<div class="Normal">and moreover that the operation is not abstract. 
+Then (ignoring preconditions for the moment) this <SPAN Class="swiss">Op</SPAN> 
+for <SPAN Class="swiss">P</SPAN> is inherited by <SPAN Class="swiss">T</SPAN> 
+and thus provides a satisfactory implementation of <SPAN Class="swiss">Op</SPAN> 
+for <SPAN Class="swiss">G1</SPAN> and all is well.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose that <SPAN Class="swiss">Op</SPAN> 
+for <SPAN Class="swiss">P</SPAN> has a precondition thus</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;OP(X:&nbsp;P)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre'Class&nbsp;=&gt;&nbsp;Before_P;</div>
+<div class="Normal">and that <SPAN Class="swiss">Before_P</SPAN> and 
+<SPAN Class="swiss">Before1</SPAN> are not the same. If we do not provide 
+an explicit overriding for <SPAN Class="swiss">Op</SPAN>, it would be 
+possible to call the body of <SPAN Class="swiss">Op</SPAN> for <SPAN Class="swiss">P</SPAN> 
+when the precondition it knows about, <SPAN Class="swiss">Before_P</SPAN>, 
+is <SPAN Class="swiss">False</SPAN> (since <SPAN Class="swiss">Before1</SPAN> 
+being <SPAN Class="swiss">True</SPAN> would be sufficient to allow the 
+call to proceed). This would effectively mean that no class wide preconditions 
+could be trusted within the subprogram body and that would be totally 
+unacceptable. So in this case there is a rule that an explicit overriding 
+is required for <SPAN Class="swiss">Op</SPAN> for <SPAN Class="swiss">T</SPAN>.</div>
+<div class="Normal">If <SPAN Class="swiss">Op</SPAN> for <SPAN Class="swiss">P</SPAN> 
+is abstract then a concrete <SPAN Class="swiss">Op</SPAN> for <SPAN Class="swiss">T</SPAN> 
+must be provided and the situation is just as in the case for the <SPAN Class="swiss">Op</SPAN> 
+for <SPAN Class="swiss">G1</SPAN> and <SPAN Class="swiss">G2</SPAN>.</div>
+<div class="Normal">If <SPAN Class="swiss">T</SPAN> itself is declared 
+as abstract (and <SPAN Class="swiss">P</SPAN> is not abstract and <SPAN Class="swiss">Op</SPAN> 
+for <SPAN Class="swiss">P</SPAN> is concrete) then the inherited <SPAN Class="swiss">Op</SPAN> 
+for <SPAN Class="swiss">T</SPAN> is abstract.</div>
+<div class="Normal">(These rules are similar to those for functions returning 
+a tagged type when the type is extended; it has to be overridden unless 
+the type is abstract in which case the inherited operation is abstract.)</div>
+<div class="Normal">We finish this somewhat mechanical discussion of 
+the rules by pointing out that if silly inappropriate preconditions are 
+given then we will get a silly program.</div>
+<div class="Normal">At the end of the day, the real point is that programmers 
+should not write preconditions that are not sensible and sensibly related 
+to each other. Because of the generality, the compiler cannot tell so 
+stupid things are hard to prohibit. There is no defence against stupid 
+programmers.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A concrete example 
+using simple numbers might help. Suppose we have a tagged type <SPAN Class="swiss">T1</SPAN> 
+and an operation <SPAN Class="swiss">Solve</SPAN> which takes a parameter 
+of type <SPAN Class="swiss">T1</SPAN> and perhaps finds the solution 
+to an equation defined by the components of <SPAN Class="swiss">T1</SPAN>. 
+<SPAN Class="swiss">Solve</SPAN> delivers the answer in a parameter <SPAN Class="swiss">A</SPAN> 
+with a parameter <SPAN Class="swiss">D</SPAN> giving the number of significant 
+digits required in the answer. Also we impose a precondition on the number 
+of digits <SPAN Class="swiss">D</SPAN> thus</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T1&nbsp;<B>is&nbsp;tagged&nbsp;record</B>&nbsp;...</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Solve(X:&nbsp;<B>in</B>&nbsp;T1;&nbsp;A:&nbsp;<B>out</B>&nbsp;Float;&nbsp;D:&nbsp;<B>in</B>&nbsp;Integer)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre'Class&nbsp;=&gt;&nbsp;D&nbsp;&lt;&nbsp;5;</div>
+<div class="Normal">The intent here is that the version of <SPAN Class="swiss">Solve</SPAN> 
+for the type <SPAN Class="swiss">T1</SPAN> always works if the number 
+of significant digits asked for is less than 5.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose we declare 
+a type <SPAN Class="swiss">T2</SPAN> derived from <SPAN Class="swiss">T1</SPAN> 
+and that we override the inherited <SPAN Class="swiss">Solve</SPAN> with 
+a new version that works if the number of significant digits asked for 
+is less than 10</div>
+<div class="SwissExamples"><B>type</B>&nbsp;T2&nbsp;<B>is&nbsp;new</B>&nbsp;T1&nbsp;<B>with</B>&nbsp;...</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>procedure</B>&nbsp;Solve(X:&nbsp;<B>in</B>&nbsp;T2;&nbsp;A:&nbsp;<B>out</B>&nbsp;Float;&nbsp;D:&nbsp;<B>in</B>&nbsp;Integer)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre'Class&nbsp;=&gt;&nbsp;D&nbsp;&lt;&nbsp;10;</div>
+<div class="Normal" style="margin-bottom: 0.4em">And so on with a type 
+<SPAN Class="swiss">T3</SPAN></div>
+<div class="SwissExamples"><B>type</B>&nbsp;T3&nbsp;<B>is&nbsp;new</B>&nbsp;T2&nbsp;<B>with</B>&nbsp;...</div>
+<div class="SwissExamples"><B>overriding</B><BR>
+<B>procedure</B>&nbsp;Solve(X:&nbsp;<B>in</B>&nbsp;T3;&nbsp;A:&nbsp;<B>out</B>&nbsp;Float;&nbsp;D:&nbsp;<B>in</B>&nbsp;Integer)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Pre'Class&nbsp;=&gt;&nbsp;D&nbsp;&lt;&nbsp;15;</div>
+<div class="Normal">Thus we have a hierarchy of algorithms <SPAN Class="swiss">Solve</SPAN> 
+with increasing capability.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Now suppose we have 
+a dispatching call</div>
+<div class="SwissExamples">An_X:&nbsp;T1'Class&nbsp;:=&nbsp;...&nbsp;;<BR>
+<SPAN Class="swiss">Solve</SPAN>(An_X,&nbsp;Answer,&nbsp;Digs);</div>
+<div class="Normal">this will dispatch to one of the <SPAN Class="swiss">Solve</SPAN> 
+procedures but we do not know which one. The only precondition that applies 
+is that on the <SPAN Class="swiss">Solve</SPAN> for <SPAN Class="swiss">T1</SPAN> 
+which is <SPAN Class="swiss">D &lt; 5</SPAN>. That is fine because <SPAN Class="swiss">D 
+&lt; 5</SPAN> implies <SPAN Class="swiss">D &lt; 10</SPAN> and <SPAN Class="swiss">D 
+&lt; 15</SPAN> and so on. Thus the preconditions work because the hierarchy 
+weakens them.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Similarly, if we have</div>
+<div class="SwissExamples">An_X:&nbsp;T2'Class&nbsp;:=&nbsp;...&nbsp;;<BR>
+Solve(An_X,&nbsp;Answer,&nbsp;Digs);</div>
+<div class="Normal">then it will dispatch to a <SPAN Class="swiss">Solve</SPAN> 
+for one of <SPAN Class="swiss">T2</SPAN>, <SPAN Class="swiss">T3</SPAN>, 
+..., but not to the <SPAN Class="swiss">Solve</SPAN> for <SPAN Class="swiss">T1</SPAN>. 
+The applicable preconditions are <SPAN Class="swiss">D &lt; 5</SPAN> 
+and <SPAN Class="swiss">D &lt; 10</SPAN> and these are notionally ored 
+together which means <SPAN Class="swiss">D &lt; 10</SPAN> is actually 
+required. To see this suppose we supply <SPAN Class="swiss">D = Digs 
+= 7</SPAN>. Then <SPAN Class="swiss">D &lt; 5</SPAN> is <SPAN Class="swiss">False</SPAN> 
+but <SPAN Class="swiss">D &lt; 10</SPAN> is <SPAN Class="swiss">True</SPAN> 
+so by oring <SPAN Class="swiss">False</SPAN> and <SPAN Class="swiss">True</SPAN> 
+we get <SPAN Class="swiss">True</SPAN>, so the call works.</div>
+<div class="Normal" style="margin-bottom: 0.4em">On the other hand if 
+we write</div>
+<div class="SwissExamples">An_X:&nbsp;T2&nbsp;:=&nbsp;...&nbsp;;<BR>
+Solve(An_X,&nbsp;Answer,&nbsp;Digs);</div>
+<div class="Normal">then no dispatching is involved and the <SPAN Class="swiss">Solve</SPAN> 
+for <SPAN Class="swiss">T2</SPAN> is called. But both class wide preconditions 
+<SPAN Class="swiss">D &lt; 5</SPAN> and <SPAN Class="swiss">D &lt; 10</SPAN> 
+apply and so again the resulting ored precondition that is required is 
+<SPAN Class="swiss">D &lt; 10</SPAN>.</div>
+<div class="Normal">Now it should be clear that if the preconditions 
+do not form a weakening hierarchy then we will be in trouble. Thus if 
+the preconditions were <SPAN Class="swiss">D &lt; 15</SPAN> for <SPAN Class="swiss">T1</SPAN>, 
+<SPAN Class="swiss">D &lt; 10</SPAN> for <SPAN Class="swiss">T2</SPAN>, 
+and <SPAN Class="swiss">D &lt; 5</SPAN> for <SPAN Class="swiss">T3</SPAN>, 
+then dispatching from the root will only check <SPAN Class="swiss">D 
+&lt; 15</SPAN>. However, we could end up calling the <SPAN Class="swiss">Solve</SPAN> 
+for <SPAN Class="swiss">T2</SPAN> which expects the precondition <SPAN Class="swiss">D 
+&lt; 10</SPAN> and this might not be satisfied.</div>
+<div class="Normal">Care is thus needed with preconditions that they 
+are sensibly related.</div>
+<div class="Normal">Finally, note that pre- and postconditions are allowed 
+on generic units but not on instances. See Section <A HREF="Rat12-9-5.html">9.5</A> 
+of the Epilogue.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-2-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

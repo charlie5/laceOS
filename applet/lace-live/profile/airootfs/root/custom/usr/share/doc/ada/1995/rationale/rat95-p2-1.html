@@ -1,0 +1,372 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Two - Chapter 1
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2.html> Previous </a> |
+<a href=rat95-p2-2.html> Next </a>
+<hr>
+
+<h1>
+1   Introduction
+</h1>
+
+<p>
+This second part of the rationale is arranged to generally correspond to
+the sections in the Ada 95 Reference Manual [RM95].  Thus the discussion
+on exceptions which is covered in section 11 of [RM95] will be found in
+Chapter 11 of this part.  The only exception to this is that the material
+covered by sections 3 and 4 of [RM95] is subdivided differently.  Chapter
+3 of this volume covers types and expressions in general whereas Chapter
+4 concentrates on the object oriented features such as type extension and
+class-wide types.
+</p>
+<p>
+In a similar way the chapters of the third part correspond to the
+annexes of [RM 95]; thus chapter C discusses the Systems Programming
+Annex which is annex C of [RM 95].
+</p>
+<p>
+   Each chapter of this second part starts with a brief summary of the
+changes, there are then a number of sections addressing the various
+topics, and finally there is a summary of the requirements addressed by
+the chapter.
+</p>
+<p>
+   This first chapter briefly covers the following general issues
+</p>
+<ul>
+<li>
+    The description of Ada 95 uses more defined terms and there is less
+     reliance on informal English.
+<li>
+    The syntax is expanded to bring more rules into the syntax and to
+     increase clarity.
+<li>
+    The categorization of errors is revised and includes the
+     introduction of the concept of bounded errors.
+</ul>
+<p>
+However, before getting down to detail it is appropriate to start with a
+few words about the approach adopted in the development of Ada 95.
+</p>
+
+<h2>
+<a name=1>
+1.1  Overall Approach
+</a>
+</h2>
+
+<p>
+Ada 95 is based on a building block approach.  Rather than providing a
+number of new language features to directly solve each identified
+application problem, the extra capability of Ada 95 is provided by a few
+primitive language building blocks.  In combination, these building
+blocks enable programmers to solve more application problems efficiently
+and productively.
+</p>
+<p>
+   Thus in the case of the object oriented area, much of the capability
+is provided by the interweaving of the properties of type extension, the
+child libraries and generic packages.  Great care has been taken to
+ensure that the additional building blocks work together in a cohesive
+and helpful manner.  Nevertheless implementation and understandability
+considerations have sometimes caused some restrictions to be imposed.  An
+example is that type extension of a formal generic parameter is not
+permitted in a generic body (which would either break the contract model
+or pose an intolerable pervasive implementation burden).
+</p>
+<p>
+   An area of particular difficulty in tasking is the provision of mutual
+exclusion (which is done in implementation terms by imposing semaphores
+and locks at appropriate places).  Much of the difficulty with Ada 83
+tasking lay in the composition of facilities to provide general paradigms
+and especially the provision of guarded services.  Attempts to solve such
+problems often resulted in race conditions precisely because the
+facilities did not compose properly.  The only solution was paradigm
+inversion whereby the high level tasking model was used to provide, in
+essence, some low-level semaphore which could then be used in a medieval
+fashion.  The introduction of protected types, barriers and the requeue
+statement with two distinct levels of locking is designed to overcome
+these difficulties.  Together, these building blocks may be used to
+program natural and efficient solutions to problems involving a myriad of
+real-time paradigms, including asynchronous communication, efficient
+mutual exclusion, barrier synchronization, counting semaphores, and
+broadcast of a signal.  To have provided separate features to solve each
+of these problems would have resulted in a baroque language which would
+have run into difficulties whenever a problem immediately outside the
+original goals was encountered.
+</p>
+<p>
+  As mentioned in I.3 (in part one), there are four main areas where it
+was felt that users needed additional functionality: Interfacing to other
+systems, Programming by Extension (OOP), Programming in the Large
+(Program Libraries), and Tasking.  Broadly speaking these needs are met
+in Ada 95 by the following main features and are largely discussed in the
+chapters indicated.
+</p>
+<p>
+<ul>
+<li>
+Interfacing:     by new forms of access types, pragmas and interface
+     packages (Chapters 3 and B).
+<li>
+Programming by Extension:     by type extension and class-wide types
+     (Chapter 4).
+<li>
+Programming in the Large:  by child library units (Chapter 10).
+<li>
+Tasking:  by protected objects (Chapter 9).
+</ul>
+<p>
+Chapters 3, 4, 9 and 10 constitute the bulk of this part of the rationale
+mainly because they contain a number of quite long examples.  The changes
+described in the other chapters are more concerned with supporting detail
+and less pervasive improvements.
+</p>
+
+<h2>
+<a name=2>
+1.2  The Reference Manual
+</a>
+</h2>
+
+<p>
+The Ada 83 Reference Manual [RM83] is a remarkable document in that it is
+one of the few definitions of a programming language that is regularly
+read by normal programmers.  It achieves this by using natural English
+wherever possible.
+</p>
+<p>
+   A corollary of this success is, however, that it has not proved to be
+quite so precise as desired by compiler writers.  Of course, there are
+many more programmers than compiler writers and so the importance of the
+programmer should not be underestimated.  However, it is vital that the
+compiler writer be given as precise a description of the language as is
+reasonably possible.  At the end of the day, provided that the compiler
+is correct, then any misunderstanding of some subtle point on the part of
+the programmer will generally give rise to an appropriate message from
+the compiler.  Furthermore, textbooks and other material such as this
+rationale are available to give pedagogic information to the programmer.
+</p>
+<p>
+   The Ada 95 Reference Manual [RM95] thus continues the tradition of
+readability and accessibility of the Ada 83 document wherever possible
+but achieves greater precision by the careful introduction of more
+specific terminology.  Different typography is also used to distinguish
+normal English words from defined terms and syntax thereby increasing
+clarity but retaining readability.
+</p>
+<p>
+   In addition to the definitive standard, the Annotated Ada Reference
+Manual [AARM] is an annotated form containing much additional information
+aimed largely at compiler writers, language lawyers and others with a
+need for additional detailed information.  This contains such matters as
+advice for implementers, rationale on fine detail, further awkward
+examples and so on.  Both forms of the reference manual as well as this
+rationale and other material are available in machine readable form on
+the sw-eng.falls-church.va.us host in the public/ada9x/rm9x directory.
+</p>
+
+<h2>
+<a name=3>
+1.3  Syntax
+</a>
+</h2>
+
+<p>
+The syntax is expressed in the same notation as for Ada 83.  However, the
+diligent reader will observe a considerable number of changes to the
+description of the syntax.  Apart from those changes required by the new
+parts of the language, the changes have been made in order to increase
+clarity of the exposition.
+</p>
+<p>
+   This increased clarity has been achieved at the cost of introducing
+rather more new syntax rules than the increased size of the language
+would suggest.  However, the extra clarity achieved brings major benefits
+not only in understanding the syntax itself but also by some reduction in
+the need for English text to explain rules which are now expressed by the
+syntax.
+</p>
+<p>
+   Examples of more notable changes (other than those corresponding to
+completely new material) are as follows
+</p>
+<ul>
+<li>
+    The rules for the characters used in the program text have been
+     completely rewritten in a more structured manner.  The previous
+     rules were not hierarchical and contained a curious imbalance
+     between upper and lower case letters which is no longer appropriate.
+<li>
+    The category integer is now called numeral.  The term integer was
+     somewhat inappropriate for what is simply a syntactic sequence of
+     digits not specifically related to the integer types.
+<li>
+    Reserved words are no longer considered as identifiers.  A
+     consequence is that the syntax now explicitly includes those
+     attributes which double as reserved words, namely Delta, Digits,
+     Range and Access (the last being a further such attribute in Ada
+     95).
+<li>
+    Categories such as defining_identifier are introduced for those
+     occurrences of identifiers which define an entity.  Usage
+     occurrences use direct_name or selector_name according to the
+     visibility rules.  The term simple_name is no longer used.  In Ada
+     83 the term simple_name was used confusingly for just some usage
+     occurrences.
+<li>
+    The category type_declaration now properly includes both task and
+     protected types.  Surprisingly, task type declarations were excluded
+     in Ada 83 probably because of a lack of reconsideration of the rules
+     subsequent to the introduction of task types in around 1980.
+<li>
+    The category type_mark is replaced by subtype_mark because all names
+     of types are now considered to actually denote the first named
+     subtype.
+<li>
+    Scalar and composite constraints are now distinguished.
+<li>
+    A real change is that the category name is broadened to include
+     function_call and type_conversion in accordance with changes to the
+     concept of a name.  This causes a number of consequential changes to
+     other definitions such as primary and prefix.
+<li>
+    The one previous category aggregate has now been replaced by some
+     nine syntax rules thereby bringing into the syntax the various
+     distinctions between array and record aggregates and their various
+     rules which were previously expressed by English text.
+<li>
+    The new category handled_sequence_of_statements avoids much
+     repetition in a number of other rules, and clarifies the region of
+     text in which a given handler applies.
+<li>
+    The categories body_stub and renaming_declaration are both broken
+     down into named subcategories for ease of exposition.
+<li>
+    The previous category generic_parameter_declaration which
+     confusingly reused other categories from other contexts is now
+     replaced by some twenty individual categories describing the various
+     classes of generic parameters in a hierarchical manner.
+</ul>
+<p>
+The statistically minded might be interested to observe that Ada 83 is
+described by 180 rules whereas Ada 95 has about 270.  However, the rules
+introduced for clarity account for about 50 of this increase and so in
+real terms the syntax for Ada 95 is about one seventh bigger than Ada 83.
+A major part of this increase is simply due to the introduction of
+protected types.
+</p>
+
+<h2>
+<a name=4>
+1.4  Classification of Errors
+</a>
+</h2>
+
+<p>
+The classification of errors in Ada 95 is somewhat different to that in
+Ada 83.  The primary reason for the new classification is to be more
+realistic and practical regarding the possible consequences of undefined
+behavior.  The effect is often to indicate that the range of possible
+outcomes of a program execution is less than the Ada 83 rules led one to
+believe (in practice there is little change).
+</p>
+<p>
+The most significant new classification is the introduction of the
+category called bounded errors.  The general idea is that the behavior is
+not fully determined but nevertheless falls within well-defined bounds.
+Many errors which were previously classed as erroneous (which implied
+completely undefined behavior) are now simply bounded errors.  An obvious
+example is the consequence of evaluating an uninitialized scalar
+variable; this could result in the raising of Program_Error or
+Constraint_Error or the production of a value not in the subtype, see
+[RM95 4.4, 11.6].
+</p>
+<p>
+A rather different approach is taken regarding unportable behavior.  A
+program whose behavior depends upon some order of evaluation is no longer
+classed as incorrect but simply as being not portable.  As a consequence
+the category of error called incorrect order dependences is deleted.
+</p>
+<p>
+   There are also cases where the language has been changed so that a
+run-time error in Ada 83 is now detected during compilation in Ada 95.
+Thus static subtype matching is required in some situations as described
+in 3.9.
+</p>
+<p>
+   The language also allows a compiler to have different modes of
+operation according to the detection of suspicious situations such as too
+many warnings.  This specifically meets one of the requirements for early
+detection of errors where possible.
+</p>
+
+<h2>
+<a name=5>
+1.5  Requirements Summary
+</a>
+</h2>
+
+<p>
+The requirements
+<pre>
+     R 2.1-A(1) - Incorporate Approved Commentaries
+
+     R 2.1-A(2) - Review Other Presentation Suggestions
+</pre>
+are both addressed by the extra attention given to terminology and by the
+incorporation of improved text recommended by the Ada Rapporteur Group.
+</p>
+<p>
+   The requirements
+<pre>
+     R 2.1-B(1) - Maintain Format of Existing Standard
+
+     R 2.1-C(1) - Machine-Readable Version of the Standard
+</pre>
+have also been met as explained in 1.2.  Furthermore, the requirement
+<pre>
+     R 2.2-B(1) - Understandability
+</pre>
+is also addressed by the greatly improved terminology as well as by the
+revisions to the syntax described in 1.3.  However, it should be noted
+that, as expressed in [DoD 90], this particular requirement was perhaps
+slanted more at certain specific language features rather than clarity of
+description in general.
+</p>
+<p>
+In the case of error detection the requirement and study topic
+<pre>
+     R 2.3-A(2) - Limit Consequences of Erroneous Execution
+
+     S 2.3-A(1) - Improve Early Detection of Errors
+</pre>
+are addressed by the introduction of the concept of bounded errors and
+more compilation checking such as static subtype matching.
+</p>
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2.html> Previous </a> |
+<a href=rat95-p2-2.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

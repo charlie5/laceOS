@@ -1,0 +1,271 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Iterating and updating containers</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>8.3 Iterating and updating containers</H1>
+<div class="Normal" style="margin-bottom: 0.4em">This topic was largely 
+covered in Chapter <A HREF="Rat12-6.html">6</A>, &ldquo;<A HREF="Rat12-6.html">Iterators, 
+Pools, etc.</A>&rdquo; on iterators and pools which introduced the generic 
+package <SPAN Class="swiss">Ada.Iterator.Interfaces</SPAN> whose specification 
+is <A NAME="I1624"></A><A NAME="I1625"></A><A NAME="I1626"></A><A NAME="I1627"></A></div>
+<div class="SwissExamples"><B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Cursor;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;Has_Element(Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Boolean;<BR>
+<B>package</B>&nbsp;Ada.Iterator_Interfaces&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Pure(Iterator_Interfaces);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Forward_Iterator&nbsp;<B>is&nbsp;limited&nbsp;interface</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;First(Object:&nbsp;Forward_Iterator)&nbsp;<B>return</B>&nbsp;Cursor&nbsp;<B>is</B>&nbsp;<B>abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Next(Object:&nbsp;Forward_Iterator;&nbsp;Position:&nbsp;Cursor)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Cursor&nbsp;<B>is</B>&nbsp;<B>abstract</B>;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Reversible_Iterator&nbsp;<B>is&nbsp;limited&nbsp;interface&nbsp;and</B>&nbsp;Forward_Iterator;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Last(Object:&nbsp;Reversible_Iterator)&nbsp;<B>return</B>&nbsp;Cursor&nbsp;<B>is</B>&nbsp;<B>abstract</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Previous(Object:&nbsp;Reversible_Iterator;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Cursor&nbsp;<B>is</B>&nbsp;<B>abstract</B>;</div>
+<div class="SwissExamples"><B>end</B>&nbsp;Ada.Iterator_Interfaces;</div>
+<div class="Normal">This generic package is used by both existing and 
+new container packages. For illustration we consider the list container 
+<SPAN Class="swiss">Ada.Containers.Doubly_Linked_Lists</SPAN>. Here is 
+its specification giving all new and changed material in full (marked 
+<SPAN Class="swiss">--&nbsp;</SPAN><SPAN Class="roman"><I>12</I></SPAN>) and 
+identifying most existing entities by comment only.</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Iterator_Interfaces;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>12</I></SPAN><BR>
+<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Element_Type&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;function</B>&nbsp;&quot;=&quot;&nbsp;(Left,&nbsp;Right:&nbsp;Element_Type)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean&nbsp;<B>is</B>&nbsp;&lt;&gt;;<BR>
+<B>package</B>&nbsp;Ada.Containers.Doubly_Linked_Lists&nbsp;<B>is</B><BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborate(Doubly_Linked_Lists);<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Remote_Types(Doubly_Linked_Lists)&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>12</I></SPAN></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;List&nbsp;<B>is&nbsp;tagged&nbsp;private</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>12</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Constant_Indexing&nbsp;=&gt;&nbsp;Constant_Reference,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Variable_Indexing&nbsp;=&gt;&nbsp;Reference,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default_Iterator&nbsp;=&gt;&nbsp;Iterate,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Iterator_Element&nbsp;=&gt;&nbsp;Element_Type;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(List);<BR>
+&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Cursor&nbsp;<B>is&nbsp;private</B>;<BR>
+&nbsp;&nbsp;&nbsp;<B>pragma</B>&nbsp;Preelaborable_Initialization(Cursor);<BR>
+&nbsp;&nbsp;&nbsp;Empty_List:&nbsp;<B>constant</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;No_Element:&nbsp;<B>constant</B>&nbsp;Cursor;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Has_Element(Position:&nbsp;Cursor)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>return</B>&nbsp;Boolean;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>moved&nbsp;12</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;<B>package</B>&nbsp;List_Iterator_Interfaces&nbsp;<B>is</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>12</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>new</B>&nbsp;Ada.Iterator_Interfaces(Cursor,&nbsp;Has_Element);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>functions&nbsp;&quot;=&quot;,&nbsp;Length,&nbsp;Is_Empty,&nbsp;Clear,&nbsp;Element</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>procedures&nbsp;Replace_,&nbsp;Query_,&nbsp;Update_Element</I></SPAN></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Constant_Reference_Type&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>12</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Element:&nbsp;<B>not&nbsp;null&nbsp;access&nbsp;constant</B>&nbsp;Element_Type)&nbsp;<B>is</B>&nbsp;<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Implicit_Dereference&nbsp;=&gt;&nbsp;Element;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>type</B>&nbsp;Reference_Type&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>12</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Element:&nbsp;<B>not&nbsp;null&nbsp;access</B>&nbsp;Element_Type)&nbsp;<B>is</B>&nbsp;<B>private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Implicit_Dereference&nbsp;=&gt;&nbsp;Element;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Constant_Reference&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>12</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>aliased&nbsp;in</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Constant_Reference_Type;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Reference&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>12</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>aliased&nbsp;in&nbsp;out</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Position:&nbsp;<B>in</B>&nbsp;Cursor)&nbsp;<B>return</B>&nbsp;Reference_Type;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Assign(Target:&nbsp;<B>in&nbsp;out</B>&nbsp;List;&nbsp;Source:&nbsp;<B>in</B>&nbsp;List);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>12</I></SPAN></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Copy(Source:&nbsp;List)&nbsp;<B>return</B>&nbsp;List;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>12</I></SPAN></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Move,&nbsp;Insert,&nbsp;Prepend,&nbsp;Append,</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Delete,&nbsp;Delete_First,&nbsp;Delete_Last,</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Reverse_Elements,&nbsp;Swap,&nbsp;Swap_Links,&nbsp;Splice,</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>First,&nbsp;First_Element,&nbsp;Last,&nbsp;Last_Element,</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Next,&nbsp;Previous,&nbsp;Find,&nbsp;Reverse_Find,</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>Contains,&nbsp;Iterate,&nbsp;Reverse_Iterate</I></SPAN></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Iterate(Container:&nbsp;<B>in</B>&nbsp;List)&nbsp;<B>return</B>&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>12</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;List_Iterator_Interfaces.Reversible_Iterator'Class;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Iterate&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>12</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Container:&nbsp;<B>in</B>&nbsp;List;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Start:&nbsp;in&nbsp;Cursor)&nbsp;<B>return</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;List_Iterator_Interfaces.Reversible_Iterator'Class;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>generic&nbsp;package&nbsp;Generic_Sorting</I></SPAN></div>
+<div class="SwissExamples"><B>private</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;--&nbsp;<SPAN Class="roman"><I>not&nbsp;specified&nbsp;by&nbsp;the&nbsp;language</I></SPAN><BR>
+<B>end</B>&nbsp;Ada.Containers.Doubly_Linked_Lists;</div>
+<div class="Normal">Note that the function <SPAN Class="swiss">Has_Element</SPAN> 
+has been moved. In Ada 2005 it was declared towards the end between <SPAN Class="swiss">Contains</SPAN> 
+and <SPAN Class="swiss">Iterate</SPAN>. It has been moved so that it 
+can be used as an actual parameter in the declaration of <SPAN Class="swiss">List_Iterator_Interfaces</SPAN> 
+using the instantiation of <SPAN Class="swiss">Ada.Iterator_Interfaces</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It will be recalled 
+from Section <A HREF="Rat12-6-3.html">6.3</A> on iteration that in Ada 
+2012 we can simply write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;The_List.Iterate&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>do&nbsp;something&nbsp;via&nbsp;cursor&nbsp;C</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">or even</div>
+<div class="SwissExamples"><B>for</B>&nbsp;E&nbsp;<B>of</B>&nbsp;The_List&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;to&nbsp;Element&nbsp;E</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">rather than the laborious 
+and error prone</div>
+<div class="SwissExamples">C:&nbsp;The_List.Cursor;<BR>
+E:&nbsp;Twin;<BR>
+F:&nbsp;Forward_Iterator'Class&nbsp;:=&nbsp;The_List.Iterate;<BR>
+...<BR>
+C&nbsp;:=&nbsp;F.First;<BR>
+<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;<B>exit&nbsp;when&nbsp;not</B>&nbsp;The_List.Has_Element(C);<BR>
+&nbsp;&nbsp;&nbsp;E&nbsp;:=&nbsp;The_List.Element(C);<BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;to&nbsp;E</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;C&nbsp;:=&nbsp;F.Next(C);<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note that in the case 
+of</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;The_List.Iterate&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;via&nbsp;cursor&nbsp;C</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">we are not permitted 
+to assign to <SPAN Class="swiss">C</SPAN> since that would upset the 
+mechanism of the loop. There is an analogy with the traditional loop 
+statement. If we write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;K&nbsp;<B>in</B>&nbsp;A'Range&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;A(K)&nbsp;:=&nbsp;0;<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">then the language prevents us from making a direct 
+assignment to the loop parameter <SPAN Class="swiss">K</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;E&nbsp;<B>of</B>&nbsp;The_List&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;something&nbsp;to&nbsp;Element&nbsp;E</I></SPAN><BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">then we can change the element <SPAN Class="swiss">E</SPAN> 
+unless <SPAN Class="swiss">The_List</SPAN> has been declared as constant.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It will be recalled 
+that subprograms <SPAN Class="swiss">Replace_Element</SPAN>, <SPAN Class="swiss">Query_Element</SPAN> 
+and <SPAN Class="swiss">Update_Element</SPAN> are defined for all containers 
+in Ada 2005. <SPAN Class="swiss">Query_Element</SPAN> and <SPAN Class="swiss">Update_Element</SPAN> 
+permit <I>in situ</I> operations. Thus in order to find the value of 
+some component <SPAN Class="swiss">Q</SPAN> of an element of <SPAN Class="swiss">The_List</SPAN> 
+identified by cursor <SPAN Class="swiss">C</SPAN> we can write either</div>
+<div class="SwissExamples">X&nbsp;:=&nbsp;Element(C).Q;</div>
+<div class="Normal" style="margin-bottom: 0.4em">or we can first declare 
+a slave procedure</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Get_Q(E:&nbsp;<B>in</B>&nbsp;Element_Type)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;X&nbsp;:=&nbsp;E.Q;<BR>
+<B>end</B>&nbsp;Get_Q;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then call <SPAN Class="swiss">Query_Element</SPAN> 
+thus<A NAME="I1628"></A></div>
+<div class="SwissExamples">Query_Element(C,&nbsp;Get_Q'Access);</div>
+<div class="Normal">The advantage of the former is that it is easy but 
+it could be slow because it copies the whole element which could be enormous. 
+The advantage of the latter is that it does not copy the element; its 
+disadvantage is that it is somewhat incomprehensible.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 2012, we can 
+do much better. The type <SPAN Class="swiss">List</SPAN> now has new 
+functions <SPAN Class="swiss">Reference</SPAN> and <SPAN Class="swiss">Constant_Reference</SPAN>, 
+so we can write for example<A NAME="I1629"></A><A NAME="I1630"></A></div>
+<div class="SwissExamples">X&nbsp;:=&nbsp;The_List.Constant_Reference(C).Q;</div>
+<div class="Normal">This works because the function <SPAN Class="swiss">Constant_Reference</SPAN> 
+returns a value of <SPAN Class="swiss">Constant_Reference_Type</SPAN> 
+and this moreover has aspect <SPAN Class="swiss">Implicit_Dereference</SPAN> 
+whose value is <SPAN Class="swiss">Element</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, we can simplify 
+this even more because the type <SPAN Class="swiss">List</SPAN> has aspects 
+<SPAN Class="swiss">Constant_Indexing</SPAN> and <SPAN Class="swiss">Variable_Indexing</SPAN> 
+which refer to the functions <SPAN Class="swiss">Constant_Reference</SPAN> 
+and <SPAN Class="swiss">Reference</SPAN>. The result is that we can simply 
+write</div>
+<div class="SwissExamples">X&nbsp;:=&nbsp;The_List(C).Q;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>gosh&nbsp;that's&nbsp;better</I></SPAN></div>
+<div class="Normal">which is a lot better than calling <SPAN Class="swiss">Query_Element</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Similarly, if we just 
+want to update the component <SPAN Class="swiss">Q</SPAN> of some element 
+given by a cursor <SPAN Class="swiss">C</SPAN>, then in Ada 2005 we either 
+have to create a whole new element with the new value for <SPAN Class="swiss">Q</SPAN> 
+and then use <SPAN Class="swiss">Replace_Element</SPAN> thus<A NAME="I1631"></A></div>
+<div class="SwissExamples">Temp:&nbsp;E_Type&nbsp;:=&nbsp;Element(C);<BR>
+...<BR>
+Temp.Q&nbsp;:=&nbsp;X;</div>
+<div class="SwissExamples">Replace_Element(The_List,&nbsp;C,&nbsp;Temp);</div>
+<div class="Normal" style="margin-bottom: 0.4em">or declare a slave 
+procedure and use <SPAN Class="swiss">Update_Element</SPAN> thus<A NAME="I1632"></A></div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Put_Q(E:&nbsp;<B>in&nbsp;out</B>&nbsp;Element_Type)&nbsp;<B>is</B><BR>
+<B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;E.Q&nbsp;:=&nbsp;X;<BR>
+<B>end</B>&nbsp;Put_Q;</div>
+<div class="SwissExamples">Update_Element(The_List,&nbsp;C,&nbsp;Put_Q'Access);</div>
+<div class="Normal">Again the first is slow, the second is gruesome (well, 
+they are both gruesome really).</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Ada 2012 we simply 
+write</div>
+<div class="SwissExamples">The_List(C).Q&nbsp;:=&nbsp;X;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>gosh&nbsp;again</I></SPAN></div>
+<div class="Normal">which implicitly uses the aspect <SPAN Class="swiss">Variable_Indexing</SPAN> 
+to call the function <SPAN Class="swiss">Reference</SPAN> which gives 
+access to the element.</div>
+<div class="Normal">It will be remembered that there are dire warnings 
+in Ada 2005 about tampering with elements and cursors. Thus we must not 
+use <SPAN Class="swiss">Update_Element</SPAN> (that is via <SPAN Class="swiss">Put_Q</SPAN> 
+in the example above) to do other things such as add new elements.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Although tampering 
+is still possible in Ada 2012; the new features discourage it. Thus if 
+we write</div>
+<div class="SwissExamples">The_List(C).Q&nbsp;:=&nbsp;X;</div>
+<div class="Normal">rather than calling <SPAN Class="swiss">Update_Element</SPAN> 
+then no tampering can occur (unless <SPAN Class="swiss">X</SPAN> is some 
+gruesome function).</div>
+<div class="Normal" style="margin-bottom: 0.4em">Similarly if we write</div>
+<div class="SwissExamples"><B>for</B>&nbsp;C&nbsp;<B>in</B>&nbsp;My_Container&nbsp;<B>loop</B><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+&nbsp;&nbsp;&nbsp;Delete(My_Container,&nbsp;Position&nbsp;=&gt;&nbsp;C);&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>illegal</I></SPAN><BR>
+&nbsp;&nbsp;&nbsp;...<BR>
+<B>end&nbsp;loop</B>;</div>
+<div class="Normal">then we are prevented from madness since the parameter 
+<SPAN Class="swiss">Position</SPAN> of <SPAN Class="swiss">Delete</SPAN> 
+is of mode <B>in out</B> and this is not matched by the loop parameter 
+<SPAN Class="swiss">C</SPAN> which is a constant. However, if we write 
+the loop out using <SPAN Class="swiss">First</SPAN> and <SPAN Class="swiss">Next</SPAN> 
+as illustrated earlier then we could get into trouble.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-2.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-8-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

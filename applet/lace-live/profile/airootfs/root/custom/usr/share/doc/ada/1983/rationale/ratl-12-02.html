@@ -1,0 +1,565 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 12.2: Informal Presentation of Generic Units</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 12: Generic Units</H2>
+
+<H3><a name="12.2">12.2 Informal Presentation of Generic Units</a></H3>
+
+A generic unit is a program unit: it is either a generic subprogram or
+a generic  package. The  declaration of  a generic  unit starts with a
+generic formal  part which  defines  compilation-time  generic  formal
+parameters; the  generic formal  part  is  followed  by  a  subprogram
+declaration (for  a generic  subprogram) or  by a  package declaration
+(for a generic package).
+<p>
+A generic  subprogram is  not an  ordinary subprogram:  for example it
+cannot  be  called;  it  is  rather  a  template  for  all  (ordinary)
+subprograms that  can  be  obtained  by  associating  specific  actual
+parameters with  the generic  formal parameters.  Similarly a  generic
+package is a template for (ordinary) packages.
+<p>
+A specific  program unit  that corresponds  to  a  given  template  is
+created by  a declaration called a generic instantiation. This has the
+effect of  creating a named instance. In the case of a subprogram, for
+example, this  named instance  can then  be called  in the  usual way.
+Thus,  apart   from  parameterization,   generic  declaration  is  for
+nongeneric program units what a type declaration is for data objects:
+   
+<p>
+<center><table border cellpadding=6><tr><th align=left></th><th align=left><CODE>data objects</CODE></th><th align=left><CODE>program units</CODE></th></tr>
+<tr><td>
+<table><tr><th align=left><pre>
+defining the template:
+
+defining an instance:
+</pre></th></tr></table>
+</td><td>
+<table><tr><td>
+<pre>
+type declaration
+
+object declaration
+</pre></td></tr></table>
+</td><td>
+<table><tr><td>
+<pre>
+generic declaration
+
+generic instantiation
+</pre></td></tr></table></tr></table></center>
+<p>
+&nbsp;
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#12.2.1">12.2.1 Generic Formal Parts</a><BR>
+<a href="#12.2.2">12.2.2 Generic Instantiations</a><BR>
+<a href="#12.2.3">12.2.3 Private Types as Generic Formal Types</a><BR>
+<a href="#12.2.4">12.2.4 Other Forms of Generic Formal Types</a><BR>
+<a href="#12.2.5">12.2.5 Default Parameters</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="12.2.1">12.2.1 Generic Formal Parts</a></H3>
+
+A generic  formal part  starts with  the  reserved  word  generic  and
+includes declarations  of generic  formal  parameters.  These  can  be
+formal objects  (variables and constants, as in the case of parameters
+of subprograms);  but they  can also be generic formal subprograms and
+generic formal types. For example, the generic formal part
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type ITEM is private;
+</pre></td></tr></table>
+<p>
+declares the  generic formal  type ITEM.  We find  this generic formal
+part in the declaration of the following generic procedure:
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type ITEM is private;
+procedure EXCHANGE(LEFT, RIGHT :  in out ITEM);
+
+procedure EXCHANGE(LEFT, RIGHT :  in out ITEM) is
+  OLD_LEFT :  constant ITEM  :=  LEFT;
+begin
+  LEFT   :=  RIGHT;
+  RIGHT :=  OLD_LEFT;
+end;
+</pre></td></tr></table>
+<p>
+In this example, LEFT and RIGHT are the ordinary (that is, nongeneric)
+parameters: each  procedure obtained by instantiation of this template
+will have  these parameters, which are subject to dynamic replacement.
+In contrast,  the type  ITEM given  in the  generic formal  part is  a
+generic formal parameter which is to be substituted for at compilation
+time. This  generic parameter  may appear  in the  body of the generic
+subprogram; here  it is  used  in  the  declaration  of  the  constant
+OLD_LEFT.
+
+<H3><BR><a name="12.2.2">12.2.2 Generic Instantiations</a></H3>
+
+A generic  instantiation creates  an instance  of a  generic  unit  by
+replacement of  the generic  parameters. A  generic instantiation is a
+declaration and  it associates a name with the corresponding instance.
+Usually, there  will be  several different  instantiations of  a given
+generic unit:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure SWAP_INT is new EXCHANGE(ITEM =&gt;  INTEGER);
+procedure SWAP_CHAR   is new EXCHANGE(ITEM =&gt;  CHARACTER);
+procedure SWAP_COLOR  is new EXCHANGE(ITEM =&gt;  COLOR);
+</pre></td></tr></table>
+<p>
+Each resultant  program unit  is an  ordinary procedure, applicable to
+actual parameters  of the  corresponding type. The resulting procedure
+specifications are as follows:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure SWAP_INT (LEFT, RIGHT :  in out INTEGER);
+procedure SWAP_CHAR   (LEFT, RIGHT :  in out CHARACTER);
+procedure SWAP_COLOR  (LEFT, RIGHT :  in out COLOR);
+</pre></td></tr></table>
+<p>
+In each  case, the  name of the generic procedure has been replaced by
+the name  given in  the instantiation,  the formal  type by the actual
+type, and  everything else  remains the  same - the names and modes of
+the formal  parameters of  the instantiation  are the same as those of
+the generic procedure.
+<p>
+The fact  that these  procedures are obtained by generic instantiation
+does not preclude overloading of their names:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure SWAP is new EXCHANGE(ITEM =&gt;  INTEGER);
+procedure SWAP is new EXCHANGE(ITEM =&gt;  CHARACTER);
+procedure SWAP is new EXCHANGE(ITEM =&gt;  COLOR);
+</pre></td></tr></table>
+<p>
+Calls of these procedures will be as usual; for example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+SWAP(I, J);             -- for integers
+SWAP(SHADE, TINT);          -- for colors
+</pre></td></tr></table>
+<p>
+In general, a generic instantiation for a procedure has the form
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure identifier is
+  new name [(generic_association {, generic_association})];
+</pre></td></tr></table>
+<p>
+The syntax  of generic  associations is  similar to  that of parameter
+associations for  subprogram calls.  Note that both named associations
+and positional  associations are possible, as usual. Thus our previous
+example can be written equivalently in positional form as:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure SWAP is new EXCHANGE(INTEGER);
+procedure SWAP is new EXCHANGE(CHARACTER);
+procedure SWAP is new EXCHANGE(COLOR);
+</pre></td></tr></table>
+<p>
+A program  unit obtained  by generic  instantiation can be viewed as a
+copy of the corresponding generic unit where each formal parameter has
+been replaced  by the corresponding actual parameter. For example, the
+declaration of SWAP_INT produces a procedure equivalent to
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure SWAP_INT(LEFT, RIGHT :  in out INTEGER) is
+  OLD_LEFT :  constant INTEGER  :=  LEFT;
+begin
+  LEFT    :=  RIGHT;
+  RIGHT :=  OLD_LEFT;
+end;
+</pre></td></tr></table>
+<p>
+A generic  instantiation need  not appear in the same declarative part
+as the  corresponding generic declaration - it may appear at any point
+where the name of the generic unit is visible.
+<p>
+The rule  followed for  the identification  of names  within a generic
+unit  is   similar  to   that  used  for  subprograms:  All  non-local
+identifiers of  the body  of a  generic unit  are  identified  in  the
+context of the generic declaration. In contrast, the actual parameters
+given in  the generic  associations must be interpreted in the context
+of the generic instantiation.
+<p>
+Note that this rule differs from a simple textual substitution. In the
+latter case  all  identifiers,  including  non-local  ones,  would  be
+interpreted in the context of the instantiation. Hence it would not be
+possible in general to obtain the effect of generic program units by a
+simple (context-free)  macro facility;  and this  was our  reason  for
+referring  to   context-sensitive  macro  expansion,  earlier  in  the
+introduction.
+<p>
+To summarize,  the generic  parameter names  (and the name of the unit
+itself) are  the only  unresolved identifiers in the body of a generic
+program unit.  For any  generic instantiation,  replacements  must  be
+provided for  all generic  parameters. These  replacements are  to  be
+interpreted in the context of the instantiation.
+
+<H3><BR><a name="12.2.3">12.2.3 Private Types as Generic Formal Types</a></H3>
+
+In  the   simple  EXCHANGE  example  presented  so  far,  very  little
+information is  needed about  the type  given as  a generic parameter:
+within the  body of this generic procedure, the only operation assumed
+available for  objects of  the type is assignment. Hence this template
+can be applied to any type for which assignment is available; that is,
+to any type except a limited type.
+<p>
+In general  when a  generic formal type is specified as being private,
+no operations  are assumed  to be available aside from assignment, the
+predefined  comparison   for  equality  and  inequality,  and  certain
+attributes such  as SIZE.  Furthermore, if  the generic formal type is
+declared  as  limited  private,  then  not  even  assignment  and  the
+comparison for equality and inequality are available.
+<p>
+For such  types - whether limited or not - each operation that is used
+within the  generic body  must be  specified by another generic formal
+parameter,  namely,  a  generic  formal  subprogram.  As  an  example,
+consider the generic function:
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type ELEM is limited private;
+  with function "&#42;" (LEFT, RIGHT :  ELEM) return ELEM;
+function SQUARING(X :  ELEM) return ELEM;
+
+function SQUARING(X :  ELEM) return ELEM is
+begin
+  return X &#42; X;
+end;
+</pre></td></tr></table>
+<p>
+Since nothing  is known  a priori about the type ELEM, it would not be
+possible to  write X &#42; X if the specification of "&#42;" were not provided
+explicitly by  a  generic  formal  parameter  (this  specification  is
+prefixed by  the reserved  word with  to distinguish  it syntactically
+from the generic function itself and thus to show that we are still in
+the generic formal part):
+<p>
+<PRE>    with function "&#42;" (LEFT, RIGHT :  ELEM) return ELEM;</PRE>
+<p>
+Instances of  SQUARING are  created  by  supplying  the  corresponding
+actual parameters. For example, for the instantiation
+<p>
+<PRE>    function SQUARE is new SQUARING(INTEGER, "&#42;");</PRE>
+<p>
+the operation "&#42;" used in the body is the operation defined as
+<p>
+<PRE>    function "&#42;" (LEFT, RIGHT :  INTEGER) return INTEGER;</PRE>
+<p>
+that  is,   the  normal   integer  multiplication.  Thus  the  generic
+instantiation produces a function body equivalent to the following:
+<p>
+<table border cellpadding=6><tr><td><pre>
+function SQUARE(X :  INTEGER) return INTEGER is
+begin
+  return X &#42; X;
+end;
+</pre></td></tr></table>
+<p>
+Of course, other instantiations are possible. For example, we may want
+to use  SQUARING for  matrices, to  extend the  existing component-by-
+component multiplication
+<p>
+<PRE>    function MULT(X, Y :  MATRIX) return MATRIX;</PRE>
+<p>
+Thus with the generic instantiation
+<p>
+<PRE>    function SQUARE is new SQUARING(ELEM =&gt;  MATRIX,  "&#42;" =&gt;  MULT);</PRE>
+<p>
+we obtain  a function that performs component-by-component squaring of
+a matrix.
+
+<H3><BR><a name="12.2.4">12.2.4 Other Forms of Generic Formal Types</a></H3>
+
+Types are by far the most useful form of generic formal parameter. For
+this reason, the language provides (beyond formal private types) forms
+of formal type that correspond to major families of types in Ada. Many
+of these  formal types  appear as  type patterns  formed with  the box
+symbol. For example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type BASE   is (&lt;&gt;);            -- discrete
+type INT is range &lt;&gt;;           -- integer
+type FIXED  is delta &lt;&gt;;             -- fixed point
+type MASS   is digits &lt;&gt;;            -- floating point
+</pre></td></tr></table>
+<p>
+In each  case, the  box symbolizes  what is  not there,  what is  left
+unspecified. So  for example,  the type INT will stand for any integer
+type, with  any possible  range; the  type BASE  will  stand  for  any
+discrete type, whether an enumeration or an integer type.
+<p>
+Each formal  type specifies minimum requirements for the corresponding
+actual types,  and the  specification and body of the generic unit can
+rely on these minimal assumptions. For example, for a formal type such
+as BASE,  we can  count on  the  availability  of  all  properties  of
+discrete types:
+<ul>
+<li>assignment:&nbsp;&nbsp;:=
+
+<li>comparison for equality and inequality:&nbsp;&nbsp;=&nbsp;/=
+
+<li>ordering relations:&nbsp;&nbsp;&lt;&nbsp;&nbsp;&lt;=&nbsp;&nbsp;&gt;&nbsp;&nbsp;&gt;=
+
+<li>attributes:&nbsp;&nbsp;FIRST, LAST, SUCC, PRED, ...
+
+<li>use for array indexing
+</ul>
+
+Similarly for  a  formal  type  such  as  INT  we  can  count  on  the
+availability of  all properties  of discrete  types, and  also on  the
+additional properties of integer types:
+<ul>
+<li>binary adding operators:&nbsp;&nbsp;+&nbsp;&nbsp;-
+
+<li>unary adding operators:&nbsp;&nbsp;+&nbsp;&nbsp;-
+
+<li>multiplying operators:&nbsp;&nbsp;&#42;&nbsp;&nbsp;/&nbsp;&nbsp;mod&nbsp;&nbsp;rem
+
+<li>highest precedence operators:&nbsp;&nbsp;&#42;&#42;&nbsp;&nbsp;abs
+</ul>
+
+For a  given instantiation,  the actual  type will have to satisfy the
+minimum  requirements   established  by  the  formal  type.  Thus  any
+enumeration type and any integer type will match the formal type BASE;
+on the other hand, only an integer type will match the formal type INT
+(not an enumeration type).
+<p>
+As an  example, consider  the treatment  of sets.  In <a href="ratl-BIB.html#languages">Pascal</a>, sets are
+dealt with  by means of a specific language feature. In Ada a specific
+feature is unnecessary since sets can be defined by a generic package:
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type BASE is (&lt;&gt;);      -- any discrete type
+package ON_SETS is
+  type SET is array (BASE) of BOOLEAN;
+
+  EMPTY :  constant SET :=  (BASE =&gt;  FALSE);
+  FULL   :  constant SET :=  (BASE =&gt;  TRUE);
+
+  type SEQUENCE is array (POSITIVE range &lt;&gt;) of BASE;
+
+  function SET_OF(S :  SEQUENCE) return SET;
+  function "+" (LEFT :  SET;  RIGHT :  SET)         return SET; -- set union
+  function "+" (LEFT :  SET;  RIGHT :  BASE)    return SET;     -- element insertion
+  -- other set operations:
+end ON_SETS;
+</pre></td></tr></table>
+<p>
+The declaration of the formal type BASE requires the actual type to be
+discrete and  we are  clearly using this assumption when using BASE as
+index subtype  for the  type SET;  and similarly  when using BASE as a
+choice for the aggregates that give the values of EMPTY and FULL.
+<p>
+We can  now use ordinary set operations with a chosen discrete type by
+instantiation  of   this  generic   package.  For   example,  for  the
+enumeration type:
+<p>
+<PRE>    type DAY is (MON, TUE, WED, THU, FRI, SAT, SUN);</PRE>
+<p>
+we can create the instance
+<p>
+<PRE>    package DAY_SETS is new ON_SETS(BASE =&gt;  DAY);</PRE>
+<p>
+and then
+<p>
+<table border cellpadding=6><tr><td><pre>
+use DAY_SETS;
+S :  SET;
+...
+S :=  SET_OF((SUN, TUE, WED));
+S :=  S + SAT;
+...
+S :=  S + SET_OF((MON, THU));
+</pre></td></tr></table>
+<p>
+The actual  parameter of  SET_OF is a SEQUENCE - an array of values of
+the base  type, indexed  by the positive numbers 1, 2, and 3 - and the
+function constructs  the corresponding  set. The  next statements then
+use set addition. A sketch of the generic body is given below:
+<p>
+<table border cellpadding=6><tr><td><pre>
+package body ON_SETS is
+  ...
+  function SET_OF(S :  SEQUENCE) return SET is
+    RESULT :  SET :=  EMPTY;
+  begin
+    for N in S'RANGE loop
+      RESULT(S(N)) :=  TRUE;
+    end loop;
+    return RESULT;
+  end;
+
+  function "+" (LEFT :  SET;  RIGHT :  SET) return SET is
+  begin
+    return LEFT or RIGHT;
+  end;
+
+  function "+" (LEFT :  SET;  RIGHT :  BASE) return SET is
+    RESULT :  SET :=  LEFT;
+  begin
+    RESULT(RIGHT) :=  TRUE;
+    return RESULT;
+  end;
+  ...
+end ON_SETS;
+</pre></td></tr></table>
+<p>
+On top  of these  type patterns with boxes we can construct other type
+patterns  by   means  of   array  type  definitions  and  access  type
+definitions.  For  example,  a  generic  sorting  procedure  could  be
+specified as:
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type ITEM   is private;
+  type INDEX  is (&lt;&gt;);
+  type ROW     is array (INDEX range &lt;&gt;) of ITEM;
+  with function "&lt;" (LEFT, RIGHT :  ITEM) return BOOLEAN;
+procedure SORT(R :  in out ROW);
+</pre></td></tr></table>
+<p>
+An  instantiation   would  have   to  meet  the  minimum  requirements
+established by this generic formal part. For example, consider:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type MEETING  is ...             -- some record type
+type AGENDA   is array (DAY range &lt;&gt;) of MEETING;
+function LESS_IMPORTANT(X, Y :  MEETING) return BOOLEAN;
+
+procedure ORDER is
+  new SORT(ITEM   =&gt;  MEETING,
+          INDEX =&gt;  DAY,
+          ROW    =&gt;  AGENDA,
+          "&lt;"       =&gt;  LESS_IMPORTANT);
+
+MY_WEEK :  AGENDA(MON .. FRI);
+  ...
+ORDER(MY_WEEK);
+</pre></td></tr></table>
+<p>
+The  matching   types  are   clearly  shown  by  the  named  parameter
+associations. Consider  for example  the definition of the formal type
+ROW:
+<p>
+<PRE>    array (INDEX range &lt;&gt;) of ITEM;</PRE>
+<p>
+After replacing  ITEM by MEETING, and INDEX by DAY, we obtain the type
+definition
+<p>
+<PRE>    array (DAY range &lt;&gt;) of MEETING;</PRE>
+<p>
+which is exactly the way AGENDA is defined, so that AGENDA matches ROW
+correctly. Similarly, the function LESS_IMPORTANT matches the operator
+"&lt;", once we have replaced ITEM by MEETING.
+<p>
+The types  used in  this example  are certainly not the usual types we
+find in  ordinary programming, and yet the instantiation works because
+we have  limited our  required assumptions  to the minimum. We did not
+assume anything about ITEM, apart from the ability to assign, which is
+needed for  sorting; the  only assumption that we made about the index
+type was  that it  was discrete  (assuming an  integer type would have
+been overspecification);  finally we assumed the existence of an order
+relation for  ITEMS. Had  we assumed more than is strictly needed (for
+example, real  items, integer  indices) the  instantiation would  have
+failed.
+
+<H3><BR><a name="12.2.5">12.2.5 Default Parameters</a></H3>
+
+Default  values  can  be  defined  for  generic  parameters  that  are
+subprograms. Thus an alternative form of definition for SQUARING might
+be
+<p>
+<table border cellpadding=6><tr><td><pre>
+generic
+  type ELEM is private;
+  with function "&#42;" (LEFT, RIGHT :  ELEM) return ELEM is &lt;&gt;;
+function SQUARING(X :  ELEM) return ELEM;
+
+function SQUARING(X :  ELEM) return ELEM is
+begin
+  return X &#42; X;
+end;
+</pre></td></tr></table>
+<p>
+The specification  of the formal function "&#42;" indicates, by means of a
+box, that  a corresponding  actual parameter  need not  be present  in
+instantiations of  the generic  function SQUARING. For example, we can
+write:
+<p>
+<PRE>    function SQUARE is new SQUARING(INTEGER);</PRE>
+<p>
+As usual,  the box  stands for  what is missing - in this case it is a
+function whose specification is obtained by replacing ELEM by INTEGER:
+<p>
+<PRE>    function "&#42;" (LEFT, RIGHT :  INTEGER) return INTEGER;</PRE>
+<p>
+and since  there is  such an  operation for  the  type  INTEGER,  this
+integer multiplication  is used  - by default - in place of the actual
+parameter.
+<p>
+This form of default corresponds to very good programming practice: We
+have a natural notation, such as "&#42;" for multiplication, and we expect
+users to  make natural  use of  this notation.  With this  form we can
+specify the  box  for  the  corresponding  formal  parameter  so  that
+instantiations will select by default the "natural" operation.
+<p>
+Naturally, we can always override the default by providing an explicit
+actual parameter:
+<p>
+<PRE>    function SQUARE is new SQUARING(ELEM =&gt;  MATRIX,  "&#42;" =&gt;  MULT);</PRE>
+<p>
+There is  another form  of default,  which names  the  default  actual
+subprogram; for example:
+<p>
+<PRE>    with procedure STEP(X :  in out INTEGER) is INCREMENT;</PRE>
+<p>
+where the  procedure INCREMENT  is a procedure visible at the place of
+the formal  parameter declaration,  and whose  profile matches that of
+the formal procedure:
+<p>
+<PRE>    procedure INCREMENT(N :  in out INTEGER);</PRE>
+<p>
+For this  second form  of default, the actual parameter is to be found
+in the  context of the generic declaration, whereas in the case of the
+box, the  default was  to be  found in  the  context  of  the  generic
+instantiation.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-12-03.html#12.3"><b>NEXT</b></a>
+&#128; <a href="ratl-12-01.html#12.1"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-12.html#12"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>

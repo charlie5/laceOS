@@ -1,0 +1,330 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 11.4: Exception Handling</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="11.4">11.4</A>.  Exception Handling  </H2>
+<A HREF="lrm-11-03.html#11.3"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-11.html#11"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-11-05.html#11.5"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+When  an  exception  is  raised,  normal program execution is abandoned and  
+control is transferred to an exception  handler.   The  selection  of  this
+handler  depends on whether the exception is raised during the execution of
+statements or during the elaboration of declarations. 
+<P>
+<b>References:</b>  <A HREF="lrm-03-01.html#3.1">declaration</A>,
+<A HREF="lrm-03-01.html#3.1">elaboration</A>,
+ and <A HREF="lrm-03-09.html#3.9">3.9</A>,
+<A HREF="lrm-11.html#11">exception</A>,
+<A HREF="lrm-11-02.html#11.2">exception handler</A>,
+<A HREF="lrm-11-03.html#11.3">raising of exceptions</A>,
+<A HREF="lrm-05.html#5">statement</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-14-02.html#14.2.1">14.2.1&nbsp;Declaration of Exceptions</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-14-02.html#14.2.7">14.2.7&nbsp;Order of Exceptions</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-14-03.html#14.3">14.3&nbsp;Examples</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-14-04.html#14.4">14.4&nbsp;Tasks and Exceptions</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-14-04.html#14.4.1">14.4.1&nbsp;Exceptions During Task Activation</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-14-04.html#14.4.2">14.4.2&nbsp;Exceptions Raised During Communication Between Tasks</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-14-04.html#14.4.3">14.4.3&nbsp;Abnormal Situations in an Accept Statement</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-14-04.html#14.4.4">14.4.4&nbsp;Example of Exceptions in a Rendezvous</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-14-05.html#14.5">14.5&nbsp;Technical Issues</a>
+<p>
+
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-04-03.html#4.3.1">4.3.1&nbsp;Using Exceptions to Help Define an Abstraction</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-08.html#5.8.1">5.8.1&nbsp;Handling Versus Avoiding Exceptions</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-08.html#5.8.2">5.8.2&nbsp;Handlers for others</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-08.html#5.8.3">5.8.3&nbsp;Propagation</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-08.html#5.8.4">5.8.4&nbsp;Localizing the Cause of an Exception</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-02.html#6.2.2">6.2.2&nbsp;Defensive Task Communication</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-03.html#6.3.4">6.3.4&nbsp;Abnormal Termination</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-05.html#7.5">7.5&nbsp;Exceptions</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-08-02.html#8.2.7">8.2.7&nbsp;Exceptions</a>
+<p>
+<b>Sub-topics:</b>
+<ul>
+<li><A HREF="#11.4.1">11.4.1</A> Exceptions Raised During the Execution of Statements     
+<li><A HREF="#11.4.2">11.4.2</A> Exceptions Raised During the Elaboration of Declarations  
+</ul>
+
+
+<H3><A NAME="11.4.1">11.4.1</A>.  Exceptions Raised During the Execution of Statements     </H3>
+<A HREF="#11.4"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#11.4.2"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+The  handling  of  an  exception  raised  by the execution of a sequence of
+statements depends on whether the innermost frame or accept statement  that
+encloses the sequence of statements is a frame or an accept statement.  The
+case  where  an accept statement is innermost is described in section <a href="lrm-11-05.html#11.5">11.5</a>.
+The case where a frame is innermost is presented here.                                                    
+<P>
+Different actions take place, depending on whether or not this frame has  a
+handler  for  the  exception, and on whether the exception is raised in the
+sequence of statements of the frame or in that of an exception handler. 
+<P>
+If an exception is raised in the sequence of statements of a frame that has
+a handler for the exception, execution of the sequence of statements of the
+frame is abandoned and control is transferred  to  the  exception  handler.
+The  execution  of  the sequence of statements of the handler completes the
+execution of the frame (or its elaboration if the frame is a package body). 
+<P>
+If an exception is raised in the sequence of statements  of  a  frame  that
+does  not  have  a handler for the exception, execution of this sequence of 
+statements is abandoned.  The next action depends  on  the  nature  of  the
+frame: 
+<ol>
+<li>For a subprogram body, the same exception is raised again at the point
+of  call  of the subprogram, unless the subprogram is the main program
+itself, in which case execution of the main program is abandoned. 
+<br><br>
+<li>For a block statement, the same exception is raised again  immediately
+after  the  block  statement  (that is, within the innermost enclosing
+frame or accept statement).<br><br> 
+<li>For a package body that is a declarative item, the same  exception  is
+raised  again  immediately  after  this  declarative  item (within the
+enclosing declarative part). If the package body is that of a subunit,
+the exception is raised again at the place of the  corresponding  body
+stub.  If the package is a library unit, execution of the main program
+is abandoned.<br><br> 
+<li>For a task body, the task becomes completed. 
+</ol>
+An exception that is raised again (as in the above cases (a), (b), and (c))
+is  said  to  be propagated, either by the execution of the subprogram, the
+execution of the block statement, or the elaboration of the  package  body.
+No  propagation  takes place in the case of a task body.  If the frame is a
+subprogram or a  block  statement  and  if  it  has  dependent  tasks,  the
+propagation  of  an  exception  takes  place  only after termination of the
+dependent tasks. 
+<P>
+Finally, if an exception is raised in the  sequence  of  statements  of  an
+exception  handler,  execution of this sequence of statements is abandoned.
+Subsequent actions (including propagation, if any) are as in the cases  (a)
+to (d) above, depending on the nature of the frame. 
+<P>
+Example: 
+<pre>
+    function FACTORIAL (N : POSITIVE) return FLOAT is
+    begin
+       if N = 1 then
+          return 1.0;
+       else
+          return FLOAT(N) * FACTORIAL(N-1);
+       end if;
+    exception   
+       when NUMERIC_ERROR =&gt; return FLOAT'SAFE_LARGE;
+    end FACTORIAL; 
+</pre>
+<P>
+If  the  multiplication  raises  NUMERIC_ERROR,  then  FLOAT'SAFE_LARGE  is
+returned by the handler.   This  value  will  cause  further  NUMERIC_ERROR
+exceptions  to be raised by the evaluation of the expression in each of the
+remaining invocations of the function, so that for large values  of  N  the
+function will ultimately return the value FLOAT'SAFE_LARGE.                                                 
+<P>
+Example: 
+<pre>
+    procedure P is
+       ERROR : exception;
+       procedure R; 
+
+       procedure Q is
+       begin
+          R;
+          ...            --  error situation (2)
+       exception
+          ...
+          when ERROR =&gt;  --  handler E2
+          ...
+       end Q; 
+
+       procedure R is
+       begin
+          ...            --  error situation (3)
+       end R; 
+
+    begin
+       ...               --  error situation (1)
+       Q;
+       ...
+    exception
+       ...
+       when ERROR =&gt;     --  handler E1
+       ...
+    end P; 
+</pre>
+<P>
+The following situations can arise: 
+<ul>
+<li> (1)<br>  
+If the exception ERROR is raised in the sequence of statements of  the
+outer  procedure  P,  the  handler  E1  provided  within  P is used to
+complete the execution of P.<br><br> 
+<li> (2)<br>
+If the exception ERROR is raised in the sequence of statements  of  Q,
+the  handler E2 provided within Q is used to complete the execution of
+Q.  Control will be returned to the point of call of Q upon completion
+of the handler.<br><br>
+<li> (3)<br>
+If the exception ERROR is raised in the body of R, called  by  Q,  the  
+execution  of  R  is abandoned and the same exception is raised in the
+body of Q.  The handler E2 is then used to complete the  execution  of
+Q, as in situation (2). 
+</ul>
+<P>
+Note  that  in  the  third  situation, the exception raised in R results in
+(indirectly) transferring control to a handler that is part of Q and  hence
+not  enclosed by R.  Note also that if a handler were provided within R for
+the exception choice others, situation (3) would cause  execution  of  this
+handler, rather than direct termination of R.    
+<P>
+Lastly,  if ERROR had been declared in R, rather than in P, the handlers E1
+and E2  could  not  provide  an  explicit  handler  for  ERROR  since  this
+identifier would not be visible within the bodies of P and Q.  In situation
+(3), the exception could however be handled in Q by providing a handler for
+the exception choice others.                                                    
+<P>
+Notes: 
+<P>
+The  language  does  not define what happens when the execution of the main
+program is abandoned after an unhandled exception. 
+<P>
+The predefined exceptions are those that can be  propagated  by  the  basic
+operations and the predefined operators. 
+<P>
+The  case of a frame that is a generic unit is already covered by the rules
+for subprogram and package bodies, since the sequence of statements of such
+a frame is not executed but is the template for the corresponding sequences
+of  statements  of  the  subprograms  or  packages  obtained   by   generic
+instantiation. 
+<P>
+<b>References:</b>   <A HREF="lrm-09-05.html#9.5">accept  statement</A>,
+<A HREF="lrm-03-03.html#3.3.3">basic operation</A>,
+<A HREF="lrm-05-06.html#5.6">block statement</A>,
+<A HREF="lrm-10-02.html#10.2">body stub</A>,
+<A HREF="lrm-09-04.html#9.4">completion</A>,
+<A HREF="lrm-03-09.html#3.9">declarative item</A>,
+<A HREF="lrm-03-09.html#3.9">declarative part</A>,
+<A HREF="lrm-09-04.html#9.4">dependent task</A>,
+<A HREF="lrm-03-01.html#3.1">elaboration</A>,
+ and <A HREF="lrm-03-09.html#3.9">3.9</A>,
+<A HREF="lrm-11.html#11">exception</A>,
+<A HREF="lrm-11-02.html#11.2">exception handler</A>,
+<A HREF="lrm-11-02.html#11.2">frame</A>,
+<A HREF="lrm-12-03.html#12.3">generic  instantiation</A>,
+<A HREF="lrm-12.html#12">generic unit</A>,
+<A HREF="lrm-10-01.html#10.1">library unit</A>,
+<A HREF="lrm-10-01.html#10.1">main program</A>,
+<A HREF="lrm-11-01.html#11.1">numeric_error exception</A>,
+<A HREF="lrm-07.html#7">package</A>,
+<A HREF="lrm-07-01.html#7.1">package body</A>,
+<A HREF="lrm-04-05.html#4.5">predefined operator</A>,
+<A HREF="lrm-06-01.html#6.1">procedure</A>,
+<A HREF="lrm-05-01.html#5.1">sequence  of statements</A>,
+<A HREF="lrm-05.html#5">statement</A>,
+<A HREF="lrm-06.html#6">subprogram</A>,
+<A HREF="lrm-06-03.html#6.3">subprogram body</A>,
+<A HREF="lrm-06-04.html#6.4">subprogram call</A>,
+<A HREF="lrm-10-02.html#10.2">subunit</A>,
+<A HREF="lrm-09.html#9">task</A>,
+<A HREF="lrm-09-01.html#9.1">task body</A>.
+<P>
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-08.html#5.8.1">5.8.1&nbsp;Handling Versus Avoiding Exceptions</a>
+
+  
+<H3><A NAME="11.4.2">11.4.2</A>.  Exceptions Raised During the Elaboration of Declarations  </H3>
+<A HREF="#11.4.1"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#11.4"><img src="lrm-up.gif" alt="[UP]"></A>
+<P>
+If an exception is raised during the elaboration of the declarative part of
+a given frame, this elaboration is abandoned.  The next action  depends  on
+the nature of the frame: 
+<ol>
+<li>For a subprogram body, the same exception is raised again at the point
+of  call  of the subprogram, unless the subprogram is the main program
+itself, in which case execution of the main program is abandoned.<br><br> 
+<li>For a block statement, the same exception is raised again  immediately
+after the block statement. <br><br>
+<li>For a package body that is a declarative item, the same  exception  is
+raised again immediately after this declarative item, in the enclosing
+declarative  part.   If  the  package  body  is that of a subunit, the
+exception is raised again at the place of the corresponding body stub.
+If the package is a library unit, execution of  the  main  program  is
+abandoned.<br><br> 
+<li>For a task  body,  the  task  becomes  completed,  and  the  exception
+TASKING_ERROR  is  raised  at  the point of activation of the task, as
+explained in section <a href="lrm-09-03.html#9.3">9.3</a>.<br><br> 
+Similarly, if an exception is raised during the  elaboration  of  either  a
+package  declaration  or a task declaration, this elaboration is abandoned;
+the next action depends on the nature of the declaration.   
+<li>For a package declaration or a task declaration, that is a declarative
+item, the exception is raised again immediately after the  declarative
+item  in the enclosing declarative part or package specification.  For
+the declaration of a  library  package,  the  execution  of  the  main
+program is abandoned. 
+</ol>
+An  exception that is raised again (as in the above cases (a), (b), (c) and
+(e)) is said to be propagated, either by the execution of the subprogram or
+block statement, or by the elaboration of  the  package  declaration,  task
+declaration or package body.                                                           
+<P>
+Example  of an exception in the declarative part of a block statement (case (b)): 
+<pre>
+    procedure P is
+       ...
+    begin
+       declare
+          N : INTEGER := F;  --  the function F may raise ERROR
+       begin
+          ...
+       exception
+          when ERROR =&gt;      --  handler E1
+       end;
+       ...
+    exception
+       when ERROR =&gt;         --  handler E2
+    end P; 
+
+    --  if the exception ERROR is raised in the declaration of N, it is handled by E2 
+</pre>
+<P>
+<b>References:</b>  <A HREF="lrm-09-03.html#9.3">activation</A>,
+<A HREF="lrm-05-06.html#5.6">block statement</A>,
+<A HREF="lrm-10-02.html#10.2">body stub</A>,
+<A HREF="lrm-09-04.html#9.4">completed task</A>,
+<A HREF="lrm-03-09.html#3.9">declarative item</A>,
+<A HREF="lrm-03-09.html#3.9">declarative part</A>,
+<A HREF="lrm-03-01.html#3.1">elaboration</A>,
+ and <A HREF="lrm-03-09.html#3.9">3.9</A>,
+<A HREF="lrm-11.html#11">exception</A>,
+<A HREF="lrm-11-02.html#11.2">frame</A>,
+<A HREF="lrm-10-01.html#10.1">library unit</A>,
+<A HREF="lrm-10-01.html#10.1">main program</A>,
+<A HREF="lrm-07-01.html#7.1">package body</A>,
+<A HREF="lrm-07-01.html#7.1">package declaration</A>,
+<A HREF="lrm-07-01.html#7.1">package specification</A>,
+<A HREF="lrm-06.html#6">subprogram</A>,
+<A HREF="lrm-06-03.html#6.3">subprogram body</A>,
+<A HREF="lrm-06-04.html#6.4">subprogram call</A>,
+<A HREF="lrm-10-02.html#10.2">subunit</A>,
+<A HREF="lrm-09.html#9">task</A>,
+<A HREF="lrm-09-01.html#9.1">task  body</A>,
+<A HREF="lrm-09-01.html#9.1">task declaration</A>,
+<A HREF="lrm-11-01.html#11.1">tasking_error exception</A>.
+<P>
+
+<b>Style Guide references:</b> 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-08.html#5.8.1">5.8.1&nbsp;Handling Versus Avoiding Exceptions</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

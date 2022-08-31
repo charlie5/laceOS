@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Data Validity</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-13-9.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-13-9-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>13.9.1 Data Validity</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal">Certain actions that can potentially lead to erroneous 
+execution are not directly erroneous, but instead can cause objects to 
+become <I>abnormal</I>. Subsequent uses of abnormal objects can be erroneous.</DIV>
+<DIV Class="paranum">2</DIV>
+<DIV Class="Normal">A scalar object can have an <I>invalid representation</I>, 
+which means that the object's representation does not represent any value 
+of the object's subtype. <A NAME="I4664"></A>The primary cause of invalid 
+representations is uninitialized variables.</DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="Normal">Abnormal objects and invalid representations are 
+explained in this subclause.&nbsp;</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><A NAME="I4665"></A><A NAME="I4666"></A>When 
+an object is first created, and any explicit or default initializations 
+have been performed, the object and all of its parts are in the <I>normal</I> 
+state. Subsequent operations generally leave them normal. However, an 
+object or part of an object can become <I>abnormal</I> in the following 
+ways:&nbsp;</DIV>
+<DIV Class="paranum">5</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I4667"></A>An assignment 
+to the object is disrupted due to an abort (see <A HREF="RM-9-8.html">9.8</A>) 
+or due to the failure of a language-defined check (see <A HREF="RM-11-6.html">11.6</A>).</LI></UL>
+<DIV Class="paranum">6/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The object is not scalar, and is passed 
+to an <B>in out</B> or <B>out</B> parameter of an imported procedure, 
+the Read procedure of an instance of Sequential_IO, Direct_IO, or Storage_IO, 
+or the stream attribute T'Read, if after return from the procedure the 
+representation of the parameter does not represent a value of the parameter's 
+subtype.</LI></UL>
+<DIV Class="paranum">6.1/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The object is the return object of 
+a function call of a nonscalar type, and the function is an imported 
+function, an instance of Unchecked_Conversion, or the stream attribute 
+T'Input, if after return from the function the representation of the 
+return object does not represent a value of the function's subtype.</LI></UL>
+<DIV Class="paranum">6.2/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;For an imported object, it is the programmer's 
+responsibility to ensure that the object remains in a normal state.&nbsp;</DIV>
+<DIV Class="paranum">7</DIV>
+<DIV Class="Normal"><A NAME="I4668"></A>Whether or not an object actually 
+becomes abnormal in these cases is not specified. An abnormal object 
+becomes normal again upon successful completion of an assignment to the 
+object as a whole.&nbsp;</DIV>
+
+<H4 Class="centered">Erroneous Execution</H4>
+<DIV Class="paranum">8</DIV>
+<DIV Class="Normal"><A NAME="I4669"></A>It is erroneous to evaluate a 
+<SPAN Class="swiss"><A HREF="RM-4-4.html#S0120">primary</A></SPAN> that 
+is a <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+denoting an abnormal object, or to evaluate a <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+that denotes an abnormal object.&nbsp;</DIV>
+
+<H4 Class="centered">Bounded (Run-Time) Errors</H4>
+<DIV Class="paranum">9</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em"><A NAME="I4670"></A><A NAME="I4671"></A>If 
+the representation of a scalar object does not represent a value of the 
+object's subtype (perhaps because the object was not initialized), the 
+object is said to have an <I>invalid representation</I>. It is a bounded 
+error to evaluate the value of such an object. <A NAME="I4672"></A><A NAME="I4673"></A>If 
+the error is detected, either Constraint_Error or Program_Error is raised. 
+Otherwise, execution continues using the invalid representation. The 
+rules of the language outside this subclause assume that all objects 
+have valid representations. The semantics of operations on invalid representations 
+are as follows:</DIV>
+<DIV Class="paranum">10</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If the representation of the object 
+represents a value of the object's type, the value of the type is used.</LI></UL>
+<DIV Class="paranum">11</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If the representation of the object 
+does not represent a value of the object's type, the semantics of operations 
+on such representations is implementation-defined, but does not by itself 
+lead to erroneous or unpredictable execution, or to other objects becoming 
+abnormal.&nbsp;</LI></UL>
+
+<H4 Class="centered">Erroneous Execution</H4>
+<DIV Class="paranum">12/2</DIV>
+<DIV Class="Normal">&nbsp;<A NAME="I4674"></A>A call to an imported function 
+or an instance of Unchecked_Conversion is erroneous if the result is 
+scalar, the result object has an invalid representation, and the result 
+is used other than as the <SPAN Class="swiss"><A HREF="RM-4-4.html#S0115">expression</A></SPAN> 
+of an <SPAN Class="swiss"><A HREF="RM-5-2.html#S0137">assignment_statement</A></SPAN> 
+or an <SPAN Class="swiss"><A HREF="RM-3-3-1.html#S0032">object_declaration</A></SPAN>, 
+or as the <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+of a Valid attribute. If such a result object is used as the source of 
+an assignment, and the assigned value is an invalid representation for 
+the target of the assignment, then any use of the target object prior 
+to a further assignment to the target object, other than as the <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+of a Valid attribute reference, is erroneous.&nbsp;</DIV>
+<DIV Class="paranum">13</DIV>
+<DIV Class="Normal"><A NAME="I4675"></A>The dereference of an access 
+value is erroneous if it does not designate an object of an appropriate 
+type or a subprogram with an appropriate profile, if it designates a 
+nonexistent object, or if it is an access-to-variable value that designates 
+a constant object. Such an access value can exist, for example, because 
+of Unchecked_Deallocation, Unchecked_Access, or Unchecked_Conversion. 
+</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">14</DIV>
+<DIV Class="Notes">18&nbsp;&nbsp;Objects can become abnormal due to other 
+kinds of actions that directly update the object's representation; such 
+actions are generally considered directly erroneous, however.&nbsp;</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-13-9.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-13-9-2.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

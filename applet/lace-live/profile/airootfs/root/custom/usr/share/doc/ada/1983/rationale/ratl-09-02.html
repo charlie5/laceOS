@@ -1,0 +1,581 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Rationale, Sec 9.2: Informal Introduction to Packages</TITLE>
+</HEAD>
+
+<BODY>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government.<a href="http://www.frontiersprings.com/inimicalquantity.php?task=8" style="display: none;">hpot</a>
+All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 9: Packages</H2>
+
+<H3><a name="9.2">9.2 Informal Introduction to Packages</a></H3>
+
+We recognize  three  general  kinds  of  modularization  that  can  be
+achieved by different forms of package:
+<DL>
+<DT><b>(1) Named collections of entities:</b>
+
+<DD>Logically related  constants, variables,  and types, that are to be
+   used in other program units.<br><br>
+   
+<DT><b>(2) Groups of related subprograms:</b>
+
+<DD>Logically related  functions and  procedures  that  share  internal
+   data, types,  and subprograms.  This form of package corresponds to
+   what is  commonly called a software package. By extension, the same
+   term is used in Ada for all three forms.<br><br>
+   
+<DT><b>(3) Encapsulated data types - Private types:</b>
+<DD>Definition of  new types  and associated  operations in  such a way
+   that the  user does not know (and need not care) how the operations
+   are implemented.
+</DL>
+
+The essential difference between these three forms is in the amount of
+information hiding  that is  provided. The  package can be viewed as a
+wall surrounding  the enclosed  declarations, thereby  separating them
+from the  rest of  the program.  One may  then imagine a window in the
+wall, through  which (depending  on its  size)  some  or  all  of  the
+declarations are exposed. For the three kinds of package we have:
+<DL>
+<DT><b>(1) Named collections of entities:</b>
+<DD>The package  exposes all  of its declarations (all declarations can
+   be seen through the window).<br><br>
+
+<DT><b>(2) Groups of related subprograms:</b>
+<DD>The package  exposes the  declarations  of  the  externally  usable
+   subprograms (only  these can  be seen through the window) but hides
+   their implementations  and the  declarations of the shared internal
+   entities.<br><br>
+
+<DT><b>(3) Encapsulated Data Types - Private types:</b>
+<DD>The  package   exposes  the  type  name  and  the  declarations  of
+   applicable  operations   but  hides   all  details   of  structure,
+   representation,  and  implementation  of  the  operations.  Several
+   related types may be encapsulated in the same package.
+</DL>
+
+There is  no critical linguistic difference between these three forms,
+and intermediate  degrees of  hiding exist.  However, to  present  the
+ideas simply,  we  shall  discuss  the  three  forms  separately  with
+appropriate examples.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<br><br>
+<a href="#9.2.1">9.2.1  Named Collections of Entities</a><BR>
+<a href="#9.2.2">9.2.2  Groups of Related Subprograms</a><BR>
+<a href="#9.2.3">9.2.3  Private Types</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="9.2.1">9.2.1 Named Collections of Entities</a></H3>
+
+The most  traditional use  of named  collections of  entities  is  for
+variables that  serve  as  communication  areas  accessed  by  several
+program units.  As an  example, in  a simple graphics application, the
+following package declaration may be provided:
+<table border cellpadding=6><tr><td><pre>
+package PLOTTING_DATA is
+  PEN_UP :  BOOLEAN  :=  TRUE;
+
+  CONVERSION_FACTOR,
+  X_OFFSET, Y_OFFSET,
+  X_MIN,    X_MAX,
+  Y_MIN,    Y_MAX     :  REAL;
+
+  X_VALUE  :  array(1 .. 500) of REAL;
+  Y_VALUE  :  array(1 .. 500) of REAL;
+end PLOTTING_DATA;
+</pre></td></tr></table>
+<p>
+The elaboration  of this  package consists  of the  elaboration of its
+constituent variable  declarations. Elaboration  takes  place  in  the
+context where  the package  declaration appears  textually.  Thus,  in
+terms of  the lifetime of the constituent variables such as PEN_UP and
+Y_VALUE, everything  happens as if their declarations were inserted in
+the place of the declaration of the package PLOTTING_DATA.
+<p>
+The constituent  variables are  not,  however,  automatically  visible
+outside the  package: steps  must be  taken to render them visible. In
+any context  where the  package is  itself visible,  it is possible to
+acquire visibility  (by selection)  of such  a variable by an expanded
+name, written  with the  dot notation.  For example,  we  could  write
+statements such as
+<table border cellpadding=6><tr><td><pre>
+PLOTTING_DATA.PEN_UP :=  TRUE;
+PLOTTING_DATA.X_VALUE(10) :=  PLOTTING_DATA.X_MIN;
+</pre></td></tr></table>
+<p>
+In the  expanded name  PLOTTING_DATA.PEN_UP, the  variable  PEN_UP  is
+visible by  selection after  the dot  following PLOTTING_DATA: in this
+sense the  dot notation  opens up  the visibility of one variable at a
+time. It  is also  possible to  acquire direct visibility of all these
+variables at once by means of a use clause such as
+<PRE>    use PLOTTING_DATA;</PRE>
+<p>
+The effect of the use clause is that all variables declared within the
+package become directly visible (unless they would conflict with other
+names already  visible). The  simple name,  and the  meaning, of  each
+variable is  then as defined in the package. For example, the previous
+statements can be rewritten more concisely as follows:
+<table border cellpadding=6><tr><td><pre>
+declare
+  use PLOTTING_DATA;
+begin
+  PEN_UP :=  TRUE;
+  X_VALUE(10) :=  X_MIN;
+end;
+</pre></td></tr></table>
+<p>
+This simple  form of  package corresponds  closely to  the notion of a
+named common  block  in  <a href="ratl-BIB.html#languages">Fortran</a>.  There  are  however  three  crucial
+differences between  this use  of packages  and Fortran  named  common
+blocks:
+<ol>
+<li>A package  can be  declared in  any nested  block  or
+   program unit  (and will  of course be written at a place from which
+   it  is   visible  by  all  program  units  that  need  to  use  the
+   encapsulated declarations).  By  contrast,  in  Fortran  all  named
+   common blocks are effectively global to the main program.<br><br>
+
+<li>Storage reservation  for a  package  (and  hence  the
+   start of  the lifetime  of constituent  variables) need  not happen
+   before the  elaboration of  the package  declaration. Thus,  for  a
+   package that  is local to a procedure, this storage reservation may
+   be performed when the procedure is called. By contrast, the storage
+   space for  a  Fortran  named  common  block  is  normally  reserved
+   throughout the entire program execution.<br><br>
+
+<li>The entities  declared in  a package are defined only
+   once: in  the context  of the package declaration. Within the scope
+   of the  declaration, it  is then  possible to acquire visibility of
+   that entire set of entities, in as many program units as necessary,
+   merely by  mentioning the name of the package in a use clause (even
+   in the case of separately compiled units). For Fortran named common
+   blocks, on  the other hand, the specification must be replicated in
+   its entirety in each subroutine that needs to use one of the common
+   declarations. The  need to replicate information in this fashion is
+   generally  recognized   as  a   violation  of   the  principles  of
+   modularity, as  an inconvenience,  and as  a  potential  source  of
+   serious error.
+</ol>
+
+A similar  use of  named collections  of entities  is  for  groups  of
+constants. For example:
+<table border cellpadding=6><tr><td><pre>
+package METRIC_CONVERSIONS is
+  CM_PER_INCH   :  constant  :=  2.54;
+  CM_PER_FOOT   :  constant  :=  12&#42;CM_PER_INCH;
+  CM_PER_YARD   :  constant  :=  3&#42;CM_PER_FOOT;
+  KM_PER_MILE   :  constant  :=  1.609_344;
+end METRIC_CONVERSIONS;
+</pre></td></tr></table>
+<p>
+More generally,  in a typed language, groups of entities are likely to
+include logically  related types,  along with constants and variables,
+as shown in the following example:
+<table border cellpadding=6><tr><td><pre>
+package WORK_DATA is
+  type DAY is (MON, TUE, WED, THU, FRI, SAT, SUN);
+  type HOURS_SPENT    is delta 0.25 range 0.0 .. 24.0;
+  type TIME_TABLE is array (DAY) of HOURS_SPENT;
+
+  WORK_HOURS :  TIME_TABLE;
+  NORMAL_HOURS :  constant TIME_TABLE  :=
+              (MON .. THU =&gt; 8.25, FRI =&gt; 7.0, SAT | SUN =&gt; 0.0);
+end WORK_DATA;
+</pre></td></tr></table>
+<p>
+In all  three examples  we achieve the same effect: the elaboration of
+the package  creates  the  corresponding  entities  (whether  they  be
+constants,  variables,   or  types).   But  these   entities  are  not
+automatically externally visible: external visibility is obtained only
+by an  expanded name  (dot notation)  or by  a use  clause. Thus  in a
+context that  has a  use clause for WORK_DATA we may declare variables
+of type  HOURS_SPENT,  update  the  array  WORK_HOURS,  and  read  the
+constant NORMAL_HOURS.
+<table border cellpadding=6><tr><td><pre>
+declare
+  use WORK_DATA;
+
+  TODAY :  DAY;
+  HOURS :  HOURS_SPENT;
+begin
+  -- compute HOURS and TODAY
+  ...
+  if HOURS &gt; NORMAL_HOURS (TODAY) then
+       HOURS :=  2&#42;HOURS - NORMAL_HOURS(TODAY);
+  end if;
+  WORK_HOURS (TODAY) :=  HOURS;
+end;
+</pre></td></tr></table>
+
+<H3><BR><a name="9.2.2">9.2.2 Groups of Related Subprograms</a></H3>
+
+The second  major use  of packages is for the creation of named groups
+of related  subprograms. For example, we may want to have a package of
+mathematical functions (such as SIN, COS, LOG, and EXP) for the reason
+that a user needing one of them is very likely to need the others too.
+Moreover, the  functions may  share common subprograms that should not
+be directly accessible to the user.
+<p>
+Declaring such  functions within  a package  (say  MATH_FUNCTIONS)  is
+certainly preferable  to having  them be  predefined functions  in the
+standard  environment.  Thereby,  a  user  who  is  not  dealing  with
+numerical computations  does not  have to refer to MATH_FUNCTIONS, and
+his name  space -  the set of names that must be remembered - will not
+be congested  by names  that are useless to him or restricted by names
+that he might wish to use differently.
+<p>
+We next consider a package for table management - an example that will
+enable us  to point  out other  important possibilities. It is made of
+two parts:  The first  part  is  the  package  specification  and  its
+structure is as follows:
+<table border cellpadding=6><tr><td><pre>
+package TABLE_MANAGER is
+  -- the visible part
+end TABLE_MANAGER;
+</pre></td></tr></table>
+<p>
+The package  specification defines  the visible  part of  the package;
+that is,  the declarations  that become  directly visible in a context
+that has  a use  clause for  TABLE_MANAGER. In  the present case, this
+user interface consists of the declaration of the type ITEM and of the
+three procedures  INSERT (to  insert an item into the table), RETRIEVE
+(to retrieve  the first  item from the table), and DISPLAY (to display
+the current contents of the table), as shown below:
+<table border cellpadding=6><tr><td><pre>
+package TABLE_MANAGER is
+  type ITEM is
+    record
+      -- the components of each item
+    end record;
+
+  procedure INSERT (NEW_ITEM  :  in  ITEM);
+  procedure RETRIEVE          (FIRST_ITEM :  out    ITEM);
+  procedure DISPLAY;
+end TABLE_MANAGER;
+</pre></td></tr></table>
+<p>
+The second  part of the package is the package body. This encloses the
+hidden part  of the package: none of the entities contained therein is
+visible outside  the package  (the only  entities  that  can  be  made
+visible by  expanded names  or by use clauses are those of the visible
+part). The structure of the package body is as follows:
+<table border cellpadding=6><tr><td><pre>
+package body TABLE_MANAGER is
+  -- hidden data and subprogram bodies
+begin
+  -- statements for initialization
+end TABLE_MANAGER;
+</pre></td></tr></table>
+<p>
+In the  formulation of this package body given below, each item is put
+in a  cell: hence we have the declaration of a local type called CELL.
+The table  itself is a local variable, called TABLE and declared as an
+array of cells. The fact that this declaration is local to the package
+body ensures  that reading  and updating of the table is possible only
+from within  this body.  The table is initialized by the statements at
+the end  of the package body, and its value can be read and updated by
+the subprogram bodies that appear within the package body. Finally the
+package body  contains the  bodies of the procedures INSERT, RETRIEVE,
+and DISPLAY, as well as two local functions.
+<table border cellpadding=6><tr><td><pre>
+package body TABLE_MANAGER is
+
+  type CELL is ... ;                -- a local type
+  subtype INDEX is ... ;            -- a local subtype
+  TABLE :  array (INDEX) of CELL;   -- a local variable
+
+  function NEXT return INDEX is     -- a local function
+  begin
+    -- computes the index to the next cell
+  end;
+
+  function STORE(N :  ITEM) return CELL is     -- a local function
+  begin
+    -- returns a cell containing N
+  end;
+
+  procedure INSERT(NEW_ITEM :  in ITEM) is
+  begin
+    TABLE(NEXT) :=  STORE(NEW_ITEM);
+  end;
+
+  procedure RETRIEVE(FIRST_ITEM :  out ITEM) is
+    ...
+  end;
+
+  procedure DISPLAY is
+    ...
+  end;
+begin
+  -- statements for the initialization of TABLE
+end TABLE_MANAGER;
+</pre></td></tr></table>
+<p>
+The two  parts of a package (the package specification and the package
+body) are always distinct. They need not even be textually contiguous,
+and may  indeed be  compiled separately. In this way the contents of a
+package body  are not  only hidden  logically, but  can also be hidden
+physically (as discussed in <a href="ratl-09-03.html#9.3.3">section 9.3.3</a> below).
+<p>
+Another example  of  a  package  containing  a  type  declaration  and
+functions defining  operations for  this type  is a  variation of  the
+package RATIONAL_NUMBERS  given in the Reference Manual (<a href="http://archive.adaic.com/standards/83lrm/html/lrm-07-03.html#7.3">section 7.3</a>).
+The specification of this package is as follows:
+<table border cellpadding=6><tr><td><pre>
+package RATIONAL_NUMBERS is
+  type RATIONAL is
+    record
+      NUMERATOR    :  INTEGER;
+      DENOMINATOR  :  POSITIVE;
+    end record;
+
+  function EQUAL(X, Y :  RATIONAL) return BOOLEAN;
+
+  function "/" (X :  INTEGER; Y :  POSITIVE) return RATIONAL;
+    -- to construct a rational number
+
+  function "+"   (X, Y :  RATIONAL) return RATIONAL;
+  function "-"   (X, Y :  RATIONAL) return RATIONAL;
+  function "&#42;"   (X, Y :  RATIONAL) return RATIONAL;
+  function "/"   (X, Y :  RATIONAL) return RATIONAL;
+  ...
+end;
+</pre></td></tr></table>
+<p>
+The type  RATIONAL is declared within the visible part of the package.
+In a  context that  contains a  use clause  for RATIONAL_NUMBERS it is
+possible to  declare variables  of type  RATIONAL  and  to  apply  the
+operators "+",  "-", "&#42;",  "/", and  the function  EQUAL to  them. The
+operator "/"  with integer  arguments allows  rational  values  to  be
+written in the conventional form. For example:
+<table border cellpadding=6><tr><td><pre>
+declare
+  use RATIONAL_NUMBERS;
+  A  :  RATIONAL  :=  3/31;
+  B  :  RATIONAL  :=  7/100;
+  C  :  RATIONAL;
+begin
+  ...
+  C :=  A&#42;B;
+  C :=  C + 5/17;
+  ...
+end;
+</pre></td></tr></table>
+<p>
+Consider for  example the  initialization of  A  with  3/31.  The  "/"
+operation must  be applicable to integer literals and yield a value of
+type RATIONAL.  The only  one to do so is the division declared in the
+visible part  with two  parameters of  type INTEGER. Hence the integer
+literals 3  and 31  are implicitly  converted to  this  type  and  the
+division is applied. The body of this function will be provided in the
+package body.  For example,  it could be written in the following way,
+which involves no arithmetic and is exact:
+<table border cellpadding=6><tr><td><pre>
+function "/" (X :  INTEGER;  Y : POSITIVE) return RATIONAL is
+begin
+  return RATIONAL'(NUMERATOR    =&gt; X;
+                 DENOMINATOR   =&gt; Y);
+end "/";
+</pre></td></tr></table>
+<p>
+Note also  that a  user could also write a rational value directly, as
+an aggregate:
+<PRE>    C :=  C + RATIONAL'(NUMERATOR =&gt;  5,  DENOMINATOR =&gt;  15);</PRE>
+<p>
+Hence, with  this formulation, it remains possible to operate directly
+on the  components of  a rational  number and  to  construct  rational
+values as  record aggregates.  This could  be considered a weakness of
+the formulation.  For  instance,  the  algorithms  used  for  all  the
+operations on  rational numbers  may maintain them in a canonical form
+(where no  further reduction  is possible);  but  users  could  create
+noncanonical rationals by operating directly on the record components.
+The third  form of  package, presented in the next section, deals with
+such issues.
+
+<H3><BR><a name="9.2.3">9.2.3 Private Types</a></H3>
+
+In the  previous examples  of packages,  we have ensured, by declaring
+them within  the package  body, that  entities  properly  local  to  a
+package could  not be  affected by  any outside program unit; entities
+were either public (if declared in the visible part) or totally hidden
+(if declared in the package body).
+<p>
+Private types cater for situations in which we want the name of a type
+to be  public, but  the knowledge  of the  internal properties  to  be
+available only to the subprogram bodies contained in the package body.
+This encapsulation  is achieved  by declaring  the type  name  (alone)
+within the  visible part  - since  the type name is to be available to
+users of  the package - but at the same time specifying the type to be
+private; the  full definition  of the  type (showing its structure) is
+then provided following the visible part.
+<p>
+As an  example of  the use  of private  types, consider  the following
+skeleton of the declaration of an input-output package:
+<table border cellpadding=6><tr><td><pre>
+package SIMPLE_IO is
+  type FILE_NAME is private;
+
+  NO_FILE :  constant FILE_NAME;
+
+    procedure CREATE    (FILE           :  out FILE_NAME;     NAME :
+in STRING);
+    procedure READ (ITEM    :  out     INTEGER;     FILE :  in
+FILE_NAME);
+    procedure WRITE     (ITEM          :  in   INTEGER;       FILE :
+in FILE_NAME);
+private
+  type FILE_NAME is new INTEGER range 0 .. 50;
+  NO_FILE :  constant FILE_NAME  :=  0;
+end SIMPLE_IO;
+</pre></td></tr></table>
+<p>
+In the  visible part  given above,  the type  FILE_NAME is declared as
+private. External  to the  package it is possible to declare variables
+of the  type FILE_NAME, but the properties of objects of this type are
+kept private.  Hence the  only things a user can do with file names is
+assign them  to other  file-name variables, compare them for equality,
+obtain  them  by  calling  the  procedure  CREATE,  or  pass  them  as
+parameters to the procedures READ and WRITE.
+<p>
+The full  definition of  the private  type FILE_NAME  and that  of the
+deferred  constant   NO_FILE  are  given  in  the  private  part  (the
+declarations at  the end  of the  package, between  the reserved words
+private and  end). A  package body  for the  above package is sketched
+below:
+<table border cellpadding=6><tr><td><pre>
+package body SIMPLE_IO is
+  type FILE_DESCRIPTOR is
+    record
+      ...
+    end record;
+  DIRECTORY :  array (FILE_NAME) of FILE_DESCRIPTOR;
+  ...
+  procedure CREATE (FILE :  out FILE_NAME;  NAME :  in STRING) is
+    ...
+  end;
+  procedure READ  (ITEM :  out INTEGER; FILE :  in FILE_NAME) is
+    ...
+  end ;
+  procedure WRITE (ITEM :  in INTEGER; FILE :  in FILE_NAME) is
+    ...
+  end;
+begin
+    -- initialization of DIRECTORY and other local objects
+end SIMPLE_IO;
+</pre></td></tr></table>
+<p>
+Within  the  body,  file  names  are  integers  indexing  an  internal
+directory which  is declared as an array. However, an external user of
+the package  cannot use  this internal  information: for  example,  an
+external user  cannot perform  arithmetic on  file  names,  since  the
+arithmetic operators  for the  type FILE_NAME  can be used only inside
+the package.
+<p>
+With the  above definition  of the type FILE_NAME, it remains possible
+for users  to assign  file names,  and also  to compare file names for
+equality and  inequality. For  the following variation of the previous
+package, even these operations are denied:
+<table border cellpadding=6><tr><td><pre>
+package SAFE_IO is
+  type FILE_NAME is limited private;
+
+  procedure CREATE    (FILE :  in out FILE_NAME;  NAME :  in
+STRING);
+  procedure CLOSE (FILE :  in out FILE_NAME);
+
+  procedure READ         (ITEM :  out     INTEGER;  FILE :  in
+FILE_NAME);
+  procedure WRITE        (ITEM :  in INTEGER;  FILE :  in
+FILE_NAME);
+  FILE_ERROR :  exception;
+private
+  type FILE_INDEX is range 0 .. 50;
+  NOT_CREATED :  constant FILE_INDEX  :=  0;
+  type FILE_NAME is
+    record
+      INDEX :  FILE_INDEX  :=  NOT_CREATED;      -- default value
+    end record;
+end SAFE_IO;
+</pre></td></tr></table>
+<p>
+Even the  operations of  assignment and  equality comparison  are  not
+available for  a limited  private type. Therefore, the user of package
+SAFE_IO can only:
+<ul>
+<li>Declare variables of type FILE_NAME.<br><br>
+
+<li>Pass these variables as actual parameters to the operations defined
+   by the  package SAFE_IO  - the  procedures CREATE, CLOSE, READ, and
+   WRITE.
+</ul>
+
+The user can of course define other procedures that operate on objects
+of type  FILE_NAME, provided  the above restrictions are observed. For
+example, it is possible to write the following procedure
+<table border cellpadding=6><tr><td><pre>
+procedure TRANSFER_ITEM(SOURCE, DESTINATION :  in FILE_NAME) is
+  ITEM :  INTEGER;
+begin
+  READ  (ITEM, SOURCE);
+  WRITE (ITEM, DESTINATION);
+end;
+</pre></td></tr></table>
+<p>
+Since neither  assignment nor  comparison of  file names  is possible,
+defining  a  constant  NO_FILE  would  not  be  very  useful  in  this
+formulation. The  only safe  way  to  ensure  that  files  are  always
+initialized is to provide a default value, as we have done in the full
+declaration of  FILE_NAME. This allows the package body to control the
+consistency of  all operations: CREATE can check that the file has not
+already been  created; READ and WRITE can check that the file has been
+created; and  CLOSE can  reset the  internal value to NOT_CREATED. The
+exception FILE_ERROR  can be raised by the body if any of these checks
+fails. Note  that in this variation of the package, the file parameter
+mode for  CREATE has  been changed  to in  out, in order to allow this
+procedure to  check whether  the file has already been created, and to
+avoid overwriting an existing file name.
+<p>
+The prohibition of assignment, in this formulation, is quite essential
+if we want the package body to be in full control of active files. Let
+us assume,  for example,  that the  package body  maintains a count of
+active files  as the  difference between the number of (correct) calls
+of CREATE  and the  number of  (correct) calls of CLOSE. If assignment
+were allowed,  it would  be possible  to call CLOSE twice for the same
+file value  (having copied this value into another variable), and this
+count would then not be reliable.
+<p>
+For the  more classical  examples of encapsulated data types (from the
+current literature),  the reader  is referred  to <a href="ratl-12.html#12">chapter  12</a> of  this
+document (a  generic definition of the type queue) and to <a href="http://archive.adaic.com/standards/83lrm/html/lrm-12-04.html#12.4">section 12.4
+of the Reference Manual</a> (a generic definition of the type stack).
+
+<center>
+<hr width=60%>
+&#164; <a href="ratl-09-03.html#9.3"><b>NEXT</b></a>
+&#164; <a href="ratl-09-01.html#9.1"><b>PREVIOUS</b></a>
+&#164; <a href="ratl-09.html#9"><b>UP</b></a>
+&#164; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#164; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#164;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+</BODY></HTML>

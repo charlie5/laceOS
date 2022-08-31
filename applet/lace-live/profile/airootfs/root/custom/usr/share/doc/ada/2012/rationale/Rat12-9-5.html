@@ -1,0 +1,345 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Postscript</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-9-4-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>9.5 Postscript</H1>
+<div class="Normal">It should also be noticed that a few corrections 
+and improvements have been made since Ada 2012 was approved as a standard. 
+The more important of these will now be discussed.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A new form of expression, 
+the raise expression, is added (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0022-1.TXT">AI12-22</A>). 
+This means that by analogy with<A NAME="I1703"></A></div>
+<div class="SwissExamples"><B>if</B>&nbsp;X&nbsp;&lt;&nbsp;Y&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;Z&nbsp;:=&nbsp;+1;<BR>
+<B>elsif</B>&nbsp;X&nbsp;&gt;&nbsp;Y&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;Z&nbsp;:=&nbsp;-1;<BR>
+<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;<B>raise</B>&nbsp;Error;<BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal" style="margin-bottom: 0.4em">we can also write</div>
+<div class="SwissExamples">Z&nbsp;:=&nbsp;(<B>if</B>&nbsp;X&lt;Y&nbsp;<B>then</B>&nbsp;1&nbsp;<B>elsif</B>&nbsp;X&gt;Y&nbsp;<B>then</B>&nbsp;-1&nbsp;<B>else&nbsp;raise</B>&nbsp;Error);</div>
+<div class="Normal">A raise expression is a new form of <SPAN Class="swiss">relation</SPAN> 
+so the syntax for <SPAN Class="swiss">relation</SPAN> (see Section <A HREF="Rat12-3-6.html">3.6</A> 
+of the chapter on Expressions) is extended as follows<A NAME="I1704"></A></div>
+<div class="SwissExamples"><SPAN Class="swiss">relation</SPAN>&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="swiss">simple_expression</SPAN>&nbsp;[<SPAN Class="swiss">relational_operator</SPAN>&nbsp;<SPAN Class="swiss">simple_expression</SPAN>]<BR>
+&nbsp;&nbsp;|&nbsp;<SPAN Class="swiss">simple_expression</SPAN>&nbsp;[<SPAN Class="roman"><B>not</B></SPAN>]&nbsp;<SPAN Class="roman"><B>in</B></SPAN>&nbsp;<SPAN Class="swiss">membership_choice_list</SPAN><BR>
+&nbsp;&nbsp;|&nbsp;<SPAN Class="swiss">raise_expression</SPAN></div>
+<div class="SwissExamples"><SPAN Class="swiss">raise_expression</SPAN>&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="roman"><B>raise</B></SPAN>&nbsp;<SPAN Class="roman"><I>exception</I>_</SPAN><SPAN Class="swiss">name</SPAN>&nbsp;[<SPAN Class="roman"><B>with</B></SPAN>&nbsp;<SPAN Class="roman"><I>string</I>_</SPAN><SPAN Class="swiss">expression</SPAN>]</div>
+<div class="Normal">Since a raise expression is a relation it has the 
+same precedence and so will need to be in parentheses in some contexts. 
+But as illustrated above it does not need parentheses when used in a 
+conditional expression which itself will have parentheses.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Raise expressions are 
+useful in pre- and postconditions. Thus if we have</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Push(S:&nbsp;<B>in&nbsp;out</B>&nbsp;Stack;&nbsp;X:&nbsp;<B>in</B>&nbsp;Item)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pre&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;Is_Full(S);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and the precondition 
+is false then <SPAN Class="swiss">Assertion _Error</SPAN> is raised. 
+But we can now alternatively write</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Push(S:&nbsp;<B>in&nbsp;out</B>&nbsp;Stack;&nbsp;X:&nbsp;<B>in</B>&nbsp;Item)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pre&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;Is_Full(S)<B>&nbsp;or&nbsp;else&nbsp;raise</B>&nbsp;Stack_Error;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and of course we can 
+also add a message thus</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pre&nbsp;=&gt;&nbsp;<B>not</B>&nbsp;Is_Full(S)&nbsp;<B>or&nbsp;else&nbsp;raise</B>&nbsp;Stack_Error&nbsp;<B>with</B>&nbsp;&quot;wretched&nbsp;stack&nbsp;is&nbsp;full&quot;;</div>
+<div class="Normal">On a closely related topic the new syntax for membership 
+tests (also see Section <A HREF="Rat12-3-6.html">3.6</A> of the chapter 
+on Expressions) has been found to cause ambiguities (<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0039-1.TXT">AI12-39</A>).</div>
+<div class="Normal" style="margin-bottom: 0.4em">Thus</div>
+<div class="SwissExamples">A&nbsp;<B>in</B>&nbsp;B&nbsp;<B>and</B>&nbsp;C</div>
+<div class="Normal" style="margin-bottom: 0.4em">could be interpreted 
+as either of the following</div>
+<div class="SwissExamples">(A&nbsp;<B>in</B>&nbsp;B)&nbsp;<B>and</B>&nbsp;C&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>or</I></SPAN><BR>
+A&nbsp;<B>in</B>&nbsp;(B&nbsp;<B>and</B>&nbsp;C)</div>
+<div class="Normal" style="margin-bottom: 0.4em">This is cured by changing 
+the syntax for relation yet again to</div>
+<div class="SwissExamples"><SPAN Class="swiss">relation</SPAN>&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="swiss">simple_expression</SPAN>&nbsp;[<SPAN Class="swiss">relational_operator</SPAN>&nbsp;<SPAN Class="swiss">simple_expression</SPAN>]<BR>
+&nbsp;&nbsp;|&nbsp;<SPAN Class="swiss">simple_expression</SPAN>&nbsp;[<SPAN Class="roman"><B>not</B></SPAN>]&nbsp;<SPAN Class="roman"><B>in</B></SPAN>&nbsp;<SPAN Class="swiss">membership_choice_list</SPAN><BR>
+&nbsp;&nbsp;|&nbsp;<SPAN Class="swiss">raise_expression</SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">and changing</div>
+<div class="SwissExamples"><SPAN Class="swiss">membership_choice</SPAN>&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="swiss">choice_expression</SPAN>&nbsp;|&nbsp;<SPAN Class="swiss">range</SPAN>&nbsp;|&nbsp;<SPAN Class="swiss">subtype_mark</SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">to</div>
+<div class="SwissExamples"><SPAN Class="swiss">membership_choice</SPAN>&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<SPAN Class="swiss">choice_simple_expression</SPAN>&nbsp;|&nbsp;<SPAN Class="swiss">range</SPAN>&nbsp;|&nbsp;<SPAN Class="swiss">subtype_mark</SPAN></div>
+<div class="Normal">Thus a <SPAN Class="swiss">membership_choice</SPAN> 
+no longer uses a <SPAN Class="swiss">choice_expression</SPAN>. However, 
+the form <SPAN Class="swiss">choice_expression</SPAN> is still used in 
+<SPAN Class="swiss">discrete_choice</SPAN>.</div>
+<div class="Normal">A curious difficulty has been found in attempting 
+to use the seemingly innocuous package <SPAN Class="swiss">Ada.Locales</SPAN> 
+described in Section <A HREF="Rat12-7-4.html">7.4</A> of the chapter 
+on the Predefined Library. <A NAME="I1705"></A><A NAME="I1706"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">The types <SPAN Class="swiss">Language_Code</SPAN> 
+and <SPAN Class="swiss">Country_Code</SPAN> were originally declared 
+as</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Language_Code&nbsp;<B>is&nbsp;array</B>&nbsp;(1&nbsp;..&nbsp;3)&nbsp;<B>of</B>&nbsp;Character&nbsp;<B>range</B>&nbsp;'a'&nbsp;..&nbsp;'z';</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Country_Code&nbsp;<B>is&nbsp;array</B>&nbsp;(1&nbsp;..&nbsp;2)&nbsp;<B>of</B>&nbsp;Character&nbsp;<B>range</B>&nbsp;'A'&nbsp;..&nbsp;'Z';</div>
+<div class="Normal" style="margin-bottom: 0.4em">The problem is that 
+a value of these types is not a string and cannot easily be converted 
+into a string because of the range constraints and so cannot be a simple 
+parameter of a subprogram such as <SPAN Class="swiss">Put</SPAN>. If 
+<SPAN Class="swiss">LC</SPAN> is of type <SPAN Class="swiss">Language_Code</SPAN> 
+then we have to write something tedious such as</div>
+<div class="SwissExamples">Put(LC(1));&nbsp;&nbsp;Put(LC(2));&nbsp;&nbsp;Put(LC(3));</div>
+<div class="Normal" style="margin-bottom: 0.4em">Accordingly, these 
+types are changed so that they are derived from the type <SPAN Class="swiss">String</SPAN> 
+and the constraints on the letters are then imposed by dynamic predicates. 
+So we have</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Language_Code&nbsp;<B>is&nbsp;new</B>&nbsp;String(1&nbsp;..&nbsp;3)<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Dynamic_Predicate&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<B>for&nbsp;all</B>&nbsp;E&nbsp;<B>of</B>&nbsp;Language_Code&nbsp;=&gt;&nbsp;E&nbsp;<B>in</B>&nbsp;'a'&nbsp;..&nbsp;'z');</div>
+<div class="Normal">with a similar construction for <SPAN Class="swiss">Country_Code</SPAN> 
+(<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0037-1.TXT">AI12-37</A>).</div>
+<div class="Normal">Readers might like to contemplate whether this is 
+an excellent illustration of some of the new features of Ada 2012 or 
+simply an illustration of static strong or maybe string typing going 
+astray.</div>
+<div class="Normal"><A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0045-1.TXT">AI12-45</A> 
+notes that pre- and postconditions are allowed on generic units but they 
+are not allowed on instances. See Section <A HREF="Rat12-2-3.html">2.3</A> 
+of the chapter on Contracts and Aspects where this topic should have 
+been mentioned.</div>
+<div class="Normal">Another modification in this area is addressed by 
+<A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0044-1.TXT">AI12-44</A> 
+which states that type invariants are not checked on <B>in</B> parameters 
+of functions but are checked on <B>in</B> parameters of procedures. See 
+Section <A HREF="Rat12-2-4.html">2.4</A> of the chapter on Contracts 
+and Aspects. This change was necessary to avoid infinite recursion which 
+would arise if an invariant itself called a function with a parameter 
+of the type. Note also that a class wide invariant could not be used 
+at all without this modification.</div>
+<div class="Normal" style="margin-bottom: 0.4em">A further aspect, <SPAN Class="swiss">Predicate_Failure,</SPAN> 
+is defined by <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0054-2.TXT">AI12-54-2</A>. 
+<A NAME="I1707"></A><A NAME="I1708"></A>The expected type of the expression 
+defined by this aspect is <SPAN Class="swiss">String</SPAN> and gives 
+the message to be associated with a failure. So we can write</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Open_File_Type&nbsp;<B>is</B>&nbsp;File_Type<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Dynamic_Predicate&nbsp;=&gt;&nbsp;Is_Open(Open_File_Type),<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Predicate_Failure&nbsp;=&gt;&nbsp;&nbsp;&quot;File&nbsp;not&nbsp;open&quot;;</div>
+<div class="Normal">If the predicate fails then <SPAN Class="swiss">Assertion_Error</SPAN> 
+is raised with the message <SPAN Class="swiss">&quot;File not open&quot;</SPAN>. 
+See Section <A HREF="Rat12-2-5.html">2.5</A> of the chapter on Contracts 
+and Aspects.</div>
+<div class="Normal" style="margin-bottom: 0.4em">We can also use a raise 
+expression and thereby ensure that a more appropriate exception is raised. 
+If we write</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Predicate_Failure&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>raise</B>&nbsp;Status_Error&nbsp;<B>with</B>&nbsp;&quot;File&nbsp;not&nbsp;open&quot;;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then <SPAN Class="swiss">Status_Error</SPAN> 
+is raised rather than <SPAN Class="swiss">Assertion_Error</SPAN> with 
+the given message. We could of course explicitly mention <SPAN Class="swiss">Assertion_Error</SPAN> 
+thus by writing</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Predicate_Failure&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>raise</B>&nbsp;Assertion_Error&nbsp;<B>with</B>&nbsp;&quot;A&nbsp;message&quot;;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Finally, we could omit 
+any message and just write</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Predicate_Failure&nbsp;=&gt;&nbsp;<B>raise</B>&nbsp;Status_Error;</div>
+<div class="Normal">in which case the message is null.</div>
+<div class="Normal">A related issue is discussed in <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0071-1.TXT">AI12-71</A>. 
+If several predicates apply to a subtype which has been declared by a 
+refined sequence then the predicates are evaluated in the order in which 
+they occur. This is especially important if different exceptions are 
+specified by the use of <SPAN Class="swiss">Predicate_Failure</SPAN> 
+since without this rule the wrong exception might be raised. The same 
+applies to a combination of predicates, null exclusions and old-fashioned 
+subtypes.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This can be illustrated 
+by an extension of the above example. Suppose we have</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Open_File_Type&nbsp;<B>is</B>&nbsp;File_Type<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Dynamic_Predicate&nbsp;=&gt;&nbsp;Is_Open(Open_File_Type),<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Predicate_Failure&nbsp;=&gt;&nbsp;<B>raise</B>&nbsp;Status_Error;</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Read_File_Type&nbsp;<B>is</B>&nbsp;Open_File_Type<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Dynamic_Predicate&nbsp;=&gt;&nbsp;&nbsp;Mode(Real_File_Type)&nbsp;=&nbsp;In_File,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Predicate_Failure&nbsp;=&gt;&nbsp;<B>raise</B>&nbsp;Mode_Error&nbsp;<B>with</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;Can't&nbsp;read&nbsp;file:&nbsp;&quot;&nbsp;&amp;&nbsp;Name(Read_File_Type);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The subtype <SPAN Class="swiss">Read_File_Type</SPAN> 
+refines <SPAN Class="swiss">Open_File_Type</SPAN>. If the predicate for 
+it were evaluated first and the file was not open then the call of <SPAN Class="swiss">Mode</SPAN> 
+would raise <SPAN Class="swiss">Status_Error</SPAN> which we would not 
+want to happen if we wrote</div>
+<div class="SwissExamples"><B>if</B>&nbsp;F&nbsp;<B>in</B>&nbsp;Read_File_Type&nbsp;<B>then</B>&nbsp;...</div>
+<div class="Normal" style="margin-bottom: 0.4em">Care is needed with 
+membership tests. The whole purpose of a membership test (and similarly 
+the <SPAN Class="swiss">Valid</SPAN> attribute) is to find out whether 
+a condition is satisfied. So if we write</div>
+<div class="SwissExamples"><B>if</B>&nbsp;X&nbsp;<B>in</B>&nbsp;S&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;this</I></SPAN><BR>
+<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;that</I></SPAN><BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal">we expect the membership test to be true or false. 
+However, if the evaluation of <SPAN Class="swiss">S</SPAN> itself raises 
+some exception then the purpose of the test is violated.</div>
+<div class="Normal" style="margin-bottom: 0.4em">It is important to 
+understand these related topics. Another example might clarify. Suppose 
+we have a very simple predicate as in Section <A HREF="Rat12-2-5.html">2.5</A> 
+of the chapter on Contracts and Aspects such as</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Winter&nbsp;<B>is</B>&nbsp;Month<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;&nbsp;Winter&nbsp;<B>in</B>&nbsp;Dec&nbsp;|&nbsp;Jan&nbsp;|&nbsp;Feb;</div>
+<div class="Normal" style="margin-bottom: 0.4em">where</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Month&nbsp;<B>is</B>&nbsp;(Jan,&nbsp;Feb,&nbsp;Mar,&nbsp;Apr,&nbsp;...,&nbsp;Nov,&nbsp;Dec);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and we declare a variable 
+<SPAN Class="swiss">W</SPAN> thus</div>
+<div class="SwissExamples">W:&nbsp;Winter&nbsp;:=&nbsp;Jan;</div>
+<div class="Normal" style="margin-bottom: 0.4em">If we now do</div>
+<div class="SwissExamples">W&nbsp;:=&nbsp;Mar;</div>
+<div class="Normal" style="margin-bottom: 0.4em">then <SPAN Class="swiss">Assertion_Error</SPAN> 
+will be raised because the value <SPAN Class="swiss">Mar</SPAN> is not 
+within the subtype <SPAN Class="swiss">Winter</SPAN> (we assume that 
+the assertion policy is <SPAN Class="swiss">Check</SPAN>). If, however, 
+we would rather have <SPAN Class="swiss">Constraint_Error</SPAN> raised 
+then we can modify the declaration of <SPAN Class="swiss">Winter</SPAN> 
+to</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Winter&nbsp;<B>is</B>&nbsp;Month<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;&nbsp;Winter&nbsp;<B>in</B>&nbsp;Dec&nbsp;|&nbsp;Jan&nbsp;|&nbsp;Feb,<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Predicate_Failure&nbsp;=&gt;&nbsp;<B>raise</B>&nbsp;Constraint_Error;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then obeying</div>
+<div class="SwissExamples">W&nbsp;:=&nbsp;Mar;</div>
+<div class="Normal">will raise <SPAN Class="swiss">Constraint_Error</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">On the other hand suppose 
+we declare a variable <SPAN Class="swiss">M</SPAN> thus</div>
+<div class="SwissExamples">M:&nbsp;Month&nbsp;:=&nbsp;Mar;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then do a membership 
+test</div>
+<div class="SwissExamples"><B>if</B>&nbsp;M&nbsp;<B>in</B>&nbsp;Winter&nbsp;<B>then</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;this&nbsp;if&nbsp;M&nbsp;is&nbsp;a&nbsp;winter&nbsp;month</I></SPAN><BR>
+<B>else</B><BR>
+&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>do&nbsp;this&nbsp;if&nbsp;M&nbsp;is&nbsp;not&nbsp;a&nbsp;winter&nbsp;month</I></SPAN><BR>
+<B>end&nbsp;if</B>;</div>
+<div class="Normal">then of course no exception is raised since this 
+is a membership test and not a predicate check.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Note however, that 
+we could write something odd such as</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Winter2&nbsp;<B>is</B>&nbsp;Month<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Dynamic_Predicate&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<B>if</B>&nbsp;Winter2&nbsp;<B>in</B>&nbsp;Dec&nbsp;|&nbsp;Jan&nbsp;|&nbsp;Feb&nbsp;<B>then&nbsp;true&nbsp;else&nbsp;raise</B>&nbsp;E);</div>
+<div class="Normal" style="margin-bottom: 0.4em">then the very evaluation 
+of the predicate might raise the exception <SPAN Class="swiss">E</SPAN> 
+so that</div>
+<div class="SwissExamples">M&nbsp;<B>in</B>&nbsp;Winter2</div>
+<div class="Normal">will either be true or raise the exception <SPAN Class="swiss">E</SPAN> 
+but will never be false. Note that in this silly example the predicate 
+has to be a dynamic one because a static predicate cannot include a raise 
+expression.</div>
+<div class="Normal">So this should clarify the reasons for introducing 
+<SPAN Class="swiss">Predicate_Failure</SPAN>. It enables us to give a 
+different behaviour for when the predicate is used in a membership test 
+as opposed to when it is used in a check and it also allows us to add 
+a message.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Finally, it should 
+be noted that the predicate expression might involve the evaluation of 
+some subexpression perhaps through the call of some function. We might 
+have a predicate describing those months that have 30 days thus</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Month30&nbsp;<B>is</B>&nbsp;Month<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Static_Predicate&nbsp;=&gt;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Month30&nbsp;<B>in</B>&nbsp;Sep&nbsp;|&nbsp;Apr&nbsp;|&nbsp;Jun&nbsp;|&nbsp;Nov;</div>
+<div class="Normal" style="margin-bottom: 0.4em">which mimics the order 
+in the nursery rhyme. However, suppose we decide to declare a function 
+<SPAN Class="swiss">Days30</SPAN> to do the check so that the subtype 
+becomes</div>
+<div class="SwissExamples"><B>subtype</B>&nbsp;Month30&nbsp;<B>is</B>&nbsp;Month<BR>
+&nbsp;&nbsp;&nbsp;<B>with</B>&nbsp;Dynamic_Predicate&nbsp;=&gt;&nbsp;Days30(Month30);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and for some silly 
+reason we code the function incorrectly so that it raises an exception 
+(perhaps it accidentally runs into its <B>end</B> and always raises <SPAN Class="swiss">Program_Error</SPAN>). 
+In this situation if we write</div>
+<div class="SwissExamples">M&nbsp;<B>in</B>&nbsp;Month30</div>
+<div class="Normal">then we will indeed get <SPAN Class="swiss">Program_Error</SPAN> 
+and not false.</div>
+<div class="Normal">Perhaps this whole topic can be summarized by simply 
+saying that a membership test is not a check. Indeed a membership test 
+is often useful in ensuring that a subsequent check will not fail as 
+was discussed in Section <A HREF="Rat12-6-4.html">6.4</A> of the chapter 
+on Iterators, Pools etc.</div>
+<div class="Normal">On a rather different topic, <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0028-1.TXT">AI12-28</A> 
+discusses the import of variadic C functions (that is functions with 
+a variable number of parameters). In Ada 95, it was expected that such 
+functions would use the same calling conventions as normal C functions; 
+however, that is not true for some targets today. Accordingly, this AI 
+adds additional conventions to describe variadic C functions so that 
+the Ada compiler can compile the correct calling sequence.<A NAME="I1709"></A></div>
+<div class="Normal">Finally, an important modification is made to the 
+topic of dispatching domains by <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI12s/AI12-0033-1.TXT">AI12-33</A>. 
+See Section <A HREF="Rat12-5-3.html">5.3</A> of the chapter on Tasking 
+and Real-Time. <A NAME="I1710"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">As defined originally, 
+a dispatching domain consists of a set of processors whose CPU values 
+are contiguous. However, this is unrealistic since CPUs are often grouped 
+together in other ways. Accordingly, the package <SPAN Class="swiss">System.Multiprocessors.Dispatching_Domains</SPAN> 
+is extended by the addition of a type <SPAN Class="swiss">CPU_Set</SPAN> 
+and two further functions thus <A NAME="I1711"></A><A NAME="I1712"></A></div>
+<div class="SwissExamples"><B>type</B>&nbsp;CPU_Set&nbsp;<B>is&nbsp;array</B>&nbsp;(CPU&nbsp;<B>range</B>&nbsp;&lt;&gt;)&nbsp;<B>of</B>&nbsp;Boolean;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Create(Set:&nbsp;CPU_Set)&nbsp;<B>return</B>&nbsp;Dispatching_Domain;<BR>
+<B>function</B>&nbsp;Get_CPU_Set(Domain:&nbsp;Dispatching_Domain)&nbsp;<B>return</B>&nbsp;CPU_Set;</div>
+<div class="Normal" style="margin-bottom: 0.4em">So if we want to create 
+a domain consisting of processors 2, 4, and 8 we can write</div>
+<div class="SwissExamples">My_Set:&nbsp;CPU_Set(2&nbsp;..&nbsp;8)&nbsp;:=<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(2&nbsp;|&nbsp;4&nbsp;|&nbsp;8&nbsp;=&gt;&nbsp;<B>true</B>,&nbsp;<B>others</B>&nbsp;=&gt;&nbsp;<B>false</B>);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and then</div>
+<div class="SwissExamples">My_Domain:&nbsp;Dispatching_Domain&nbsp;:=&nbsp;Create(My_Set);</div>
+<div class="Normal">and so on. The function <SPAN Class="swiss">Get_CPU_Set</SPAN> 
+can be applied to any domain and returns the appropriate array representing 
+the set of CPUs. Note that this function can be applied to any domain 
+and not just to one created from a <SPAN Class="swiss">CPU_Set</SPAN>.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-9-4-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

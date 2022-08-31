@@ -1,0 +1,950 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Two - Chapter 7
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-6.html> Previous </a> |
+<a href=rat95-p2-8.html> Next </a>
+<hr>
+
+<h1>
+7   Packages
+</h1>
+
+<p>
+There are a number of important changes to the language addressed in this
+chapter.  Many of these are associated with tagged types such as the
+addition of private extensions.  Another important change is the
+introduction of controlled types which are implemented using tagged
+types.  In summary the changes are
+</p>
+<ul>
+<li>
+    A private type may be marked as tagged.  The rules regarding private
+     types and discriminants are considerably relaxed.
+<li>
+    Private extensions are introduced in order to allow type extension
+     of tagged types where the extension part is private.
+<li>
+    A deferred constant can be of any type, not just a private type.
+<li>
+    The property of being limited is now separated from that of being
+     private.  They are both view properties.
+<li>
+    Controlled types are added.  These permit finalization and the user
+     definition of assignment.
+</ul>
+<p>
+An important change regarding library packages is that they can have a
+body only when one is required; this is discussed in 10.4.
+</p>
+
+<h2>
+<a name=1>
+7.1  Private Types and Extensions
+</a>
+</h2>
+
+<p>
+To allow for the extension of private types, the modifier tagged may be
+specified in a private type declaration.  A tagged private type must be
+implemented with a tagged record type, or by deriving from some other
+tagged type.
+</p>
+<p>
+We considered allowing a tagged private type to be derived from an
+untagged type.  However, this added potential implementation complexity
+because the parent type might not have a layout optimized for referencing
+components added in later extensions.  There is a simple work-around; the
+tagged private type can be implemented as a tagged record type with a
+single component of the desired parent type.
+</p>
+<p>
+   In Ada 95, we consider a private type to be a composite type outside
+the scope of its full type declaration.  This is primarily a matter of
+presentation.
+</p>
+<p>
+  Although a private tagged type must be implemented as a tagged type,
+the reverse is not the case.  A private untagged type can be implemented
+as a tagged or untagged type.  In other words if the partial view is
+tagged then the full view must be tagged; if the partial view is untagged
+then the full view may or may not be tagged.  We thus have to be careful
+when saying that a type is tagged, strictly we should talk about the view
+being tagged.  The relationship between the full and partial view of a
+type is discussed further in 7.3 when we also consider limited types.
+ </p>
+<p>
+  A good example of the use of a tagged type to implement a private type
+which is not tagged is given by the type Unbounded_String in the package
+Ada.Strings.Unbounded.  The sample implementation discussed in A.2.6
+shows how Unbounded_String is controlled and thus derived from
+Finalization.Controlled.
+</p>
+<p>
+   We have generalized discriminants so that a derived type declaration
+may include a discriminant part.  Therefore, it is now permissible for a
+private type with discriminants to be implemented by a derived type
+declaration.  This was not possible in Ada 83.
+</p>
+<p>
+   In addition, a discriminant part may be provided in a task or
+protected type declaration.  As a consequence, a limited private type
+with discriminants may be implemented as a task or protected type.
+</p>
+<p>
+   Another improvement mentioned in II.12 is that a private type without
+discriminants may now be implemented as any definite type including a
+discriminated record type with defaulted discriminants.
+</p>
+<p>
+   A tagged (parent) type may be extended with a private extension part.
+This allows one type to visibly extend another, while keeping the names
+and types of the components in the extension part private to the package
+where the extension is defined.
+</p>
+<p>
+   For a private extension in the visible part, a corresponding record
+extension must be defined in the private part.  Note that the record
+extension part may be simply
+<pre>
+   with null record
+</pre>
+which uses an abbreviated form of syntax for null records.  This
+abbreviated form was introduced precisely because null extensions are
+fairly common.
+</p>
+<p>
+   An extension aggregate is only allowed where the full view of the
+extended type is visible even if the extension part is null.  Note that a
+private extension may always be (view) converted to its parent type.  See
+also 3.6.1 for the case where the ancestor part is abstract.
+</p>
+<p>
+   The interplay between type extension and visibility is illustrated by
+the following somewhat contrived example
+<pre>
+   package P1 is
+      type T is tagged
+         record
+            A: Type_A;
+         end record;
+      type T1 is new T with private;
+   private
+      type T1 is new T with
+         record
+            B: Type_B;
+         end record;
+   end P1;
+
+   with P1; use P1;
+   package P2 is
+      type T2 is new T1 with
+         record
+            C: Type_C;
+         end record;
+   end P2;
+
+   with P2; use T2
+   package body P1 is
+
+      X1: T1;     -- can write X1.B
+      X2: T2;     -- cannot write X2.B
+      XX: T1 renames T1(X2);
+      ...
+      XX.B :=     -- changes B component of X2
+
+   end P1;
+</pre>
+</p>
+<p>
+   The type T has a component A.  The type T1 is extended from T with the
+additional component B but the extension is not visible outside the
+private part and body of P1.  The type T2 is in turn extended from T1
+with a further component C.  However, although T2 has a component B it is
+not visible for any view of T2, since the declaration of T2 sees only the
+partial view of its parent T1.  So the B component of T2 is not visible
+in the package body P1 even though that component of its parent is indeed
+visible from there.  But of course we can do a view conversion of an
+object of the type T2 and then obtain access to the component B provided
+we are at a place that has the full view of T1.
+</p>
+<p>
+   It is important that the invisible B component of T2 be invisible for
+all views since otherwise we would run into a problem if the additional
+component of T2 were also called B (this is allowed because the existing
+B component is not visible at the point where the additional component is
+declared and the potential clash could not be known to the writer of P2).
+But if there were a view such that all components of T2 were visible
+(such as perhaps might be expected in the body of P1) then X2.B would be
+ambiguous.
+</p>
+<p>
+   The important general principle is that the view we get of a type is
+the view relating to the declaration of it that is visible to us rather
+than simply where we are looking from.
+</p>
+
+
+<h3>
+<a name=1-1>
+7.1.1  Private Operations
+</a>
+</h3>
+
+<p>
+A tagged type may have primitive operations declared in a private part.
+These operations will then not be available to all views of the type
+although nevertheless they will always be in the dispatch table.  We
+noted in 3.6.2 that an abstract type can never have private abstract
+operations.
+</p>
+<p>
+   A private operation can be overridden even if the overriding operation
+actually occurs at a place where the private operation is not visible.
+Consider
+<pre>
+   package P is
+      type A is tagged ...;
+   private
+      procedure Op(X: A);
+   end P;
+
+   package P.Child is
+      type B is new A with ...;
+      procedure Op(X: B);
+   private
+      -- the old Op would have been visible here
+   end P.Child;
+</pre>
+</p>
+<p>
+   The type A has a private dispatching operation Op.  The type B is an
+extension of A and declares an operation Op.  This overrides the private
+inherited operation of the same name despite the fact that the private
+operation is not visible at the point of the declaration of the new
+operation.  But the key point is that within the private part of the
+child package, the old Op would have become visible and this is still
+within the region where it is possible to add primitive operations for B.
+It is not possible for both operations to be primitive and visible at the
+same place and it would be impossible for them to share the same slot in
+the dispatch table.  Accordingly the new operation overrides the old.
+Moreover, they must conform.  For a practical example see 13.5.1.
+</p>
+<p>
+   On the other hand if the new operation is declared at a point such
+that the visibility of the two never clash in this way such as in the
+following
+<pre>
+   package P is
+      type A is tagged ...;
+      procedure Curious(X: A'Class);
+   private
+      procedure Op(X: A);  -- first one
+   end P;
+
+   with P; use P;
+   package Outside is
+      type B is new A with ...;
+      procedure Op(X: B);  -- second one
+   end Outside;
+</pre>
+then the two operations do not clash and occupy different slots in the
+dispatch table.  Moreover they need not conform since they are quite
+independent.  So in fact B does actually have both operations; it
+inherits the private one from A and has its own different one.  We will
+dispatch to one or the other according to how a dispatching call is made.
+The first one is of course a dispatching operation of A'Class whereas the
+second is a dispatching operation of B'Class.  The procedure Curious
+might be
+<pre>
+   procedure Curious(X: A'Class) is
+   begin
+      Op(X);   -- dispatch to first Op
+   end Curious;
+</pre>
+and then
+<pre>
+   Object: B;
+   ...
+   Curious(Object);
+</pre>
+will call the inherited hidden operation of B which will apply itself to
+the part of B inherited from A.  This hidden operation is of course just
+that inherited from A; it cannot be changed and hence can know nothing of
+the additional components of B.
+</p>
+<p>
+   Note further that we could declare a further type extension from B at
+a place where the operation of A is also visible.  This could be in the
+private part of a child of P or in a package inner to the body of P.  For
+example
+<pre>
+   with Outside; use Outside;
+   package P.Child is
+
+   private
+      type C is new B with ...;
+
+   end P.Child;
+</pre>
+</p>
+<p>
+   In such a case C inherits both operations from B in the sense that
+they both occupy slots in the dispatch table.  But again the operation
+acquired indirectly from A is totally invisible; it does not matter that
+the operation of A is visible at this point; all that matters is that C
+cannot see the corresponding operation of B.  This is another example of
+the principle mentioned at the end of the previous section that the view
+we get of a type is the view relating to the declaration of it that is
+visible to us rather than where we are looking from; or in other words
+the history of how B got its operations is irrelevant.
+</p>
+
+<h2>
+<a name=2>
+7.2  Deferred Constants
+</a>
+</h2>
+
+<p>
+In Ada 83, deferred constants were only permitted in the visible part of
+a package and only if their type was private and was declared in the same
+visible part [RM83 7.4(4)].
+</p>
+<p>
+   In Ada 95, this restriction is relaxed, so that a deferred constant of
+any type may be declared immediately within the visible part of a
+package, provided that the full constant declaration is given in the
+private part of the package.  This eliminates the anomaly that prevented
+a constant of a composite type with a component of a private type from
+being declared, if the composite type was declared in the same visible
+part as the private type.
+</p>
+<p>
+   Another advantage of deferred constants is that in some cases, the
+initial value depends on attributes of objects or types that are declared
+in the private part.  For example, one might want to export an access to
+constant value designating a variable in the private part.  This prevents
+the external user from changing the value although the package of course
+can change the value.  This is another example of having two different
+views of an entity; in this case a constant view and a variable view.
+<pre>
+      type Int_Ptr is access constant Integer;
+      The_Ptr: constant Int_Ptr;  -- deferred constant
+   private
+      Actual_Int: aliased Integer;
+       -- is a variable so we do not need an initial value
+       The_Ptr: constant Int_Ptr := Actual_Int'Access;
+       -- full definition of deferred constant
+</pre>
+</p>
+<p>
+Note that a deferred constant can also be completed by an Import pragma
+thereby indicating that the object is external to the Ada program.  See
+Part Three for details.
+</p>
+<p>
+   A small point regarding deferred constants is that they no longer have
+to be declared with just a subtype mark; a subtype indication including
+an explicit constraint is allowed.  Such a constraint must statically
+match that in the full constant declaration.
+</p>
+
+<h2>
+<a name=3>
+7.3  Limited Types
+</a>
+</h2>
+
+<p>
+As in Ada 83, a limited type is one for which assignment is not allowed
+(user-defined assignment is not allowed either, see 7.4).  However, the
+property of being limited is no longer tied to private types.  Any record
+type can be declared as limited by the inclusion of limited in its
+definition.  Thus the type Outer in 6.4.3 is limited.  Task and protected
+types are also limited and a type is limited if it has any components
+that are limited.  Only a limited type can have access discriminants.
+Finally, a derived type is limited if its parent is limited.
+</p>
+<p>
+   Limited is a sort of view property in that whether a type is limited
+or not may depend upon from where it is viewed.  This is obvious with a
+limited private type where the full view might not be limited.  However,
+it can occur even in the nonprivate case.  Consider
+<pre>
+   package P is
+      type T is limited private;
+      type A is array (...) of T;
+   private
+      type T is new Integer;
+      -- at this point A becomes nonlimited
+   end P;
+</pre>
+where the type A starts off being limited because its components are
+limited.  However, after the full declaration of T, its components are no
+longer limited and so A becomes nonlimited.
+</p>
+<p>
+   Note that in the case of a tagged type, it must have limited in its
+definition (or that of its ancestor) if it has limited components.  This
+prevents a tagged type from the phenomenon of becoming nonlimited.
+Otherwise one might extend from a limited view with a limited component
+(such as a task) and then in the full view try to do assignment as in the
+following variation of the previous example.
+<pre>
+   package P is
+      type T is limited private;
+      type R is tagged  -- illegal, must have explicit limited
+         record
+            X: T;
+         end record;
+   private
+      type T is new Integer;
+      -- at this point R would become nonlimited
+   end P;
+
+   package Q is
+      type T2 is new R with
+         record
+            A: Some_Task;
+         end record;
+   end Q;
+</pre>
+</p>
+<p>
+The problem is that the body of P would see a nonlimited view of T and
+hence assignment would be defined for T'Class and so it would be possible
+to do an assignment on the type T2 by a dispatching operation in the body
+of P.
+</p>
+<p>
+   So, in the case of a tagged private type (that is a type for which
+both partial and full views are tagged), both partial and full views must
+be limited or not together; it is not possible for the partial view to be
+limited and the full view not to be limited.  On the other hand if the
+partial view is untagged and limited then the full view can be any
+combination including tagged and nonlimited.  The various possibilities
+are illustrated in Table 7-1; only those combinations marked as OK are
+legal.
+<pre>
+  +----------------------------------------------------------+
+  |              |                partial view               |
+  |  full view   |        untagged     |      tagged         |
+  |              | limited  |nonlimited| limited  |nonlimited|
+  +-----------------------------------------------+----------+
+  | untagged     |    O     |          |          |          |
+  |      limited |     K    |          |          |          |
+  |--------------+----------+----------+----------+----------|
+  | untagged     |    O     |    O     |          |          |
+  |   nonlimited |     K    |     K    |          |          |
+  |--------------+----------+----------+----------+----------|
+  | tagged       |    O     |          |    O     |          |
+  |      limited |     K    |          |     K    |          |
+  |--------------+----------+----------+----------+----------|
+  | tagged       |    O     |    O     |          |    O     |
+  |   nonlimited |     K    |     K    |          |     K    |
+  +----------------------------------------------------------+
+
+                    Table 7-1: Full and Partial Views
+</pre>
+</p>
+<p>
+   A consequence of the rules is that, in the case of type extension, if
+the parent type is not limited, then the extension part cannot have any
+limited components.  (Note that the rules regarding actual and formal
+generic parameters are somewhat different; the actual type corresponding
+to a formal limited tagged type does not have to be limited.  This is
+because type extension is not permitted in the generic body.)
+</p>
+<p>
+   There was a pathological situation in Ada 83 whereby a function could
+return a local task (all one could do with it outside was apply the
+attributes Terminated and Callable); this was a nuisance because all the
+storage for the local task could not be properly relinquished on the
+return.
+</p>
+<p>
+   In Ada 95 there is an accessibility check that prevents such
+difficulties.  In essence we are not allowed to return a local object of
+a limited type (there are some subtle exceptions for which see [RM95
+6.5]).
+</p>
+<p>
+   An important consequence of a function result being treated as an
+object is that it can be renamed.  This means that we can "remember" the
+result of a function even in the case of a limited type.  For example,
+the function Text_IO.Current_Output returns the current default output
+file.  In Ada 83 it was difficult to remember this and then reset the
+default value back after having used some other file as current output in
+the meantime; it could be done but only with a contorted use of
+parameters.  In Ada 95 we can write
+<pre>
+   Old_File: File_Type renames Current_Output;
+   ...
+   Set_Output(Old_File);
+</pre>
+and the renaming holds onto the object which behaves much as an in
+parameter.  But see also Part Three for a more general solution to the
+problem of remembering a current file.
+</p>
+
+<h2>
+<a name=4>
+7.4  Controlled Types
+</a>
+</h2>
+
+<p>
+To preserve abstraction, while providing automatic reclamation of
+resources, Ada 95 provides controlled types that have initialization and
+finalization operations associated with them.  A number of different
+approaches were considered and rejected during the evolution of Ada 95.
+The final solution has the merit of allowing user-defined assignment and
+also solves the problem of returning limited types mentioned in the
+previous section.
+</p>
+<p>
+   The general principle is that there are three distinct primitive
+activities concerning the control of objects
+</p>
+<ul>
+<li>
+    initialization after creation,
+<li>
+    finalization before destruction (includes overwriting),
+<li>
+    adjustment after assignment.
+</ul>
+<p>
+and the user is given the ability to provide appropriate procedures which
+are called to perform whatever is necessary at various points in the life
+of an object.  These procedures are Initialize, Finalize and Adjust and
+take the object as an in out parameter.
+</p>
+<p>
+   To see how this works, consider
+<pre>
+   declare
+      A: T;        -- create A, Initialize(A)
+   begin
+      A := E;      -- Finalize(A), copy value, Adjust(A)
+      ...
+   end;            -- Finalize(A)
+</pre>
+</p>
+<p>
+   After A is declared and any normal default initialization carried out,
+the Initialize procedure is called.  On the assignment, Finalize is first
+called to tidy up the old object about to be overwritten and thus
+destroyed, the physical copy is then made and finally Adjust is called to
+do whatever might be required for the new copy.  At the end of the block
+Finalize is called once more before the object is destroyed.  Note, of
+course, that the user does not have to physically write the calls of the
+three control procedures, they are called automatically by the compiled
+code.
+</p>
+<p>
+   In the case of a nested structure where inner components might
+themselves be controlled, the rules are that components are initialized
+and adjusted before the object as a whole and on finalization everything
+is done in the reverse order.
+</p>
+<p>
+   There are many other situations where the control procedures are
+invoked such as when calling allocators, evaluating aggregates and so on;
+for details the reader should consult [RM95].
+</p>
+<p>
+   In order for a type to be controlled it has to be derived from one of
+two tagged types declared in the library package Ada.Finalization whose
+specification is given in [RM95 7.6] and which is repeated here for
+convenience
+<pre>
+   package Ada.Finalization is
+
+      pragma Preelaborate(Finalization);
+
+      type Controlled is abstract tagged private;
+
+      procedure Initialize(Object: in out Controlled);
+      procedure Adjust(Object: in out Controlled);
+      procedure Finalize(Object: in out Controlled);
+
+      type Limited_Controlled is abstract tagged limited private;
+
+      procedure Initialize(Object: in out Limited_Controlled);
+      procedure Finalize(Object: in out Limited_Controlled);
+
+   private
+      ...
+   end Ada.Finalization;
+</pre>
+</p>
+<p>
+   There are distinct abstract types for nonlimited and limited types.
+Naturally enough the Adjust procedure does not exist in the case of
+limited types because they cannot be copied.
+</p>
+<p>
+   Although the types Controlled and Limited_Controlled are abstract,
+nevertheless the procedures Initialize, Adjust and Finalize are not
+abstract.  However they all do nothing which will often prove to be
+appropriate.
+</p>
+<p>
+   A typical declaration of a controlled type might take the form
+<pre>
+   type T is new Controlled with ...
+</pre>
+and the user would then provide new versions of the controlling
+procedures as required.  Note incidentally that the form of an extension
+aggregate mentioned in 3.6.1 where the ancestor part is a subtype name is
+useful for controlled types since we can write
+<pre>
+   X: T := (Controlled with ...);
+</pre>
+whereas we cannot use an expression as the ancestor part because its type
+is abstract.
+</p>
+<p>
+   The capabilities provided take a building block approach and give the
+programmer fine control of resources.  In particular they allow the
+implementor of an abstraction to ensure that proper cleanup is performed
+prior to the object becoming permanently inaccessible.
+</p>
+<p>
+   The ability to associate automatic finalization actions with an
+abstraction is extremely important for Ada, given the orientation toward
+information hiding, coupled with the many ways that a scope may be exited
+in Ada (exception, exit, return, abort, asynchronous transfer of control,
+etc).  In many cases, the need for finalization is more of a safety or
+reliability issue than a part of the visible specification of an
+abstraction.  Most users of an abstraction should not need to know
+whether the abstraction uses finalization.
+</p>
+<p>
+   A related observation concerns the use of controlled types as generic
+parameters.  We can write a package which adds some properties to an
+arbitrary controlled type in the manner outlined in 4.6.2.  Typically we
+will call the Finalize of the parent as part of the Finalize operation of
+the new type.  Consider
+<pre>
+   generic
+      type Parent is abstract new Limited_Controlled with private;
+   package P is
+      type T is new Parent with private;
+      ...
+   private
+      type T is new Parent with
+         record
+            -- additional components
+         end record;
+      procedure Finalize(Object: in out T);
+   end P;
+
+
+   package body P is
+      ...
+      procedure Finalize(Object: in out T) is
+      begin
+         ...  -- operations to finalize the additional components
+         Finalize(Parent(Object));  -- finalize the parent
+      end Finalize;
+   end P;
+</pre>
+</p>
+<p>
+This will always work even if the implementation of the actual type
+corresponding to Parent has no overriding Finalize itself since the
+inherited null version from Limited_Controlled will then be harmlessly
+called.  See also 12.5.
+</p>
+<p>
+   The approach we have adopted enables the implementation difficulties
+presented by, for example, exceptions to be overcome.  Thus suppose an
+exception is raised in the middle of a sequence of declarations of
+controlled objects.  Only those already elaborated will need to be
+finalized and some mechanism is required in order to record this.  Such a
+mechanism can conveniently be implemented using links which are
+components of the private types Controlled and Limited_Controlled; these
+components are of course quite invisible to the user.  Incidentally, this
+illustrates that an abstract type need not be null.
+</p>
+<p>
+   The following example is of a generic package that defines a sparse
+array type.  The array is extended automatically as new components are
+assigned into it.  Empty_Value is returned on dereferencing a never-
+assigned component.  On scope exit, automatic finalization calls
+Finalize, which reclaims any storage allocated to the sparse array.
+<pre>
+   with Ada.Finalization; use Ada;
+   generic
+      type Index_Type is (<>);
+        -- index type must be some discrete type
+      type Element_Type is private;
+        -- component type for sparse array
+      Empty_Value : in Element_Type;
+        -- value to return for never-assigned components
+   package Sparse_Array_Pkg is
+      -- this generic package defines a sparse array type
+      type Sparse_Array_Type is
+          new Finalization.Limited_Controlled with private;
+
+      procedure Set_Element(Arr: in out Sparse_Array_Type;
+                            Index: in Index_Type;
+                            Value: in Element_Type);
+        -- set value of an element
+        -- extend array as necessary
+
+      function Element(Arr: Sparse_Array_Type;
+                       Index: Index_Type) return Element_Type;
+        -- return element of array
+        -- return Empty_Value if never assigned
+
+      procedure Finalize(Arr: in out Sparse_Array_Type);
+        -- reset array to be completely empty
+
+      -- use default Initialize implementation (no action)
+      -- no Adjust for limited types
+
+   private
+      -- implement using a B-tree-like representation
+      type Array_Chunk;
+        -- type completed in package body
+      type Array_Chunk_Ptr is access Array_Chunk;
+      type Sparse_Array_Type is
+         new Finalization.Limited_Controlled with
+
+         record
+            Number_Of_Levels: Natural := 0;
+            Root_Chunk      : Array_Chunk_Ptr;
+         end record;
+   end Sparse_Array_Pkg;
+
+   package body Sparse_Array_Pkg is
+      type Array_Chunk is ...
+        -- complete the incomplete type definition
+      procedure Set_Element( ...
+
+      function Element(Arr: Sparse_Array_Type;
+                       Index: Index_Type) return Element_Type is
+      begin
+         if Arr.Root_Chunk = null then
+            -- entire array is empty
+            return Empty_Value;
+         else
+            -- look up to see if Index appears
+            -- in array somewhere
+            ...
+         end if;
+      end Element;
+
+      procedure Finalize(Arr: in out Sparse_Array_Type) is
+      begin
+         if Arr.Root_Chunk /= null then
+            -- release all chunks of array
+            ...
+            -- reinitialize array back to initial state
+            Arr.Root_Chunk := null;
+            Arr.Number_Of_Levels := 0;
+         end if;
+      end Finalize;
+   end Sparse_Array_Pkg;
+</pre>
+</p>
+<p>
+   Since the sparse array type is derived from a library level tagged
+type (Ada.Finalization.Limited_Controlled), the generic unit must also be
+instantiated at the library level.  However, an object of the sparse
+array type defined in the instantiation may be declared in any scope.
+When that scope is exited, for whatever reason, the storage dynamically
+allocated to the array will be reclaimed, via an implicit call on
+Sparse_Array_Type.Finalize.
+</p>
+<p>
+   Such a sparse array type may safely be used by subprograms of a long-
+running program, without concern for progressive loss of storage.  When
+such subprograms return, the storage will always be reclaimed, whether
+completed by an exception, return, abort, or asynchronous transfer of
+control.
+</p>
+<p>
+   Our next example illustrates user-defined assignment.  Incidentally,
+it should be noted that many of the cases where user-defined assignment
+was felt to be necessary in Ada 83 no longer apply because the ability to
+redefine "=" has been generalized.  Many Ada 83 applications using
+limited types did so in order to redefine "=" and as a consequence lost
+predefined assignment.  Their need for user-defined assignment was simply
+to get back the predefined assignment.
+</p>
+<p>
+   An instance where user-defined assignment would be appropriate occurs
+in the implementation of abstract sets using linked lists where a deep
+copy is required as mentioned in 4.4.3.
+</p>
+<p>
+   The general idea is that the set is implemented as a record containing
+one inner component which is controlled; this controlled component is an
+access to a linked list containing the various elements.  Whenever the
+controlled component is assigned it makes a new copy of the linked list.
+Note that the type Linked_Set as a whole cannot be controlled because it
+is derived directly from Abstract_Sets.Set.  However, assigning a value
+of the Linked_Set causes the inner component to be assigned and then
+invokes the procedure Adjust on the inner component.  The implementation
+might be as follows
+<pre>
+   with Abstract_Sets;
+   with Ada.Finalization; use Ada.Finalization;
+   package Linked_Sets is
+
+      type Linked_Set is new Abstract_Sets.Set with private;
+
+      ...  -- the various operations on Linked_Set
+
+   private
+
+      type Node;
+      type Ptr is access Node;
+      type Node is
+         record
+            Element: Set_Element;
+            Next: Ptr;
+         end record;
+
+      function Copy(P: Ptr) return Ptr;  -- deep copy
+
+      type Inner is new Controlled with
+         record
+            The_Set: Ptr;
+         end record;
+
+      procedure Adjust(Object: in out Inner);
+
+      type Linked_Set is new Abstract_Sets.Set with
+         record
+            Component: Inner;
+         end record;
+
+   end Linked_Sets;
+
+   package body Linked_Sets is
+
+      function Copy(P: Ptr) return Ptr is
+      begin
+         if P = null then
+            return null;
+         else
+            return new Node'(P.Element, Copy(P.Next));
+         end if;
+      end Copy;
+
+      procedure Adjust(Object: in out Inner) is
+      begin
+         Object.The_Set := Copy(Object.The_Set);
+      end Adjust;
+
+      ...
+
+   end Linked_Sets;
+</pre>
+</p>
+<p>
+   The types Node and Ptr form the usual linked list containing the
+elements; Node is of course not tagged or controlled.  The function Copy
+performs a deep copy of the list passed as parameter.  The type Inner is
+controlled and contains a single component referring to the linked list.
+The procedure Adjust for Inner performs a deep copy on this single
+component.  The visible type Linked_Set is then simply a record
+containing a component of the controlled type Inner.  As mentioned above,
+performing an assignment on the type Linked_Set causes Adjust to be
+called on its inner component thereby making the deep copy.  But none of
+this is visible to the user of the package Linked_Sets.  Observe that we
+do not need to provide a procedure Initialize and that we have not
+bothered to provide Finalize although it would be appropriate to do so in
+order to discard the unused space.
+</p>
+<p>
+   Finally, we show a canonical example of the use of initialization and
+finalization and access discriminants for the completely safe control of
+resources.  Consider the following:
+<pre>
+   type Handle(Resource: access Some_Thing) is
+            new Finalization.Limited_Controlled with null record;
+
+   procedure Initialize(H: in out Handle) is
+   begin
+      Lock(H.Resource);
+   end Initialize;
+
+   procedure Finalize(H: in out Handle) is
+   begin
+      Unlock(H.Resource);
+   end Finalize;
+
+   ...
+
+   procedure P(T: access Some_Thing) is
+      H: Handle(T);
+   begin
+      ... -- process T safely
+   end P;
+</pre>
+</p>
+<p>
+   The declaration of H inside the procedure P causes Initialize to be
+called which in turn calls Lock with the object referred to by the handle
+as parameter.  The general idea is that since we know that Finalize will
+be called no matter how we leave the procedure P (including because of an
+exception or abort) then we will be assured that the unlock operation
+will always be done.  This is a useful technique for ensuring that
+typical pairs of operations are performed correctly such as opening and
+closing files.  Note that we have to declare the handle locally because
+that is where the locking is required and hence an access discriminant
+has to be used in order to avoid accessibility problems.  We have to have
+a handle in the first place so that its declaration is tied to the vital
+finalization.
+</p>
+<p>
+   Some examples of the use of finalization with asynchronous transfer of
+control will be found in 9.4.
+</p>
+
+<h2>
+<a name=5>
+7.5  Requirements Summary
+</a>
+</h2>
+
+<p>
+The major study topic
+<pre>
+     S4.2-A(2) - Preservation of Abstraction
+</pre>
+is directly addressed and satisfied by the introduction of controlled
+types as discussed in 7.4.
+</p>
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p2-6.html> Previous </a> |
+<a href=rat95-p2-8.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

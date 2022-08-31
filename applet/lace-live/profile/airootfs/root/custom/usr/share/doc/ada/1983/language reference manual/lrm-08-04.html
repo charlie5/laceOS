@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 8.4: Use Clauses</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="8.4">8.4</A>.  Use Clauses  </H2>
+<A HREF="lrm-08-03.html#8.3"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-08.html#8"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-08-05.html#8.5"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+A  use clause achieves direct visibility of declarations that appear in the
+visible parts of named packages. 
+<pre>
+    use_clause ::= use package_name {, package_name}; 
+</pre>
+<P>
+For each use clause, there is a certain region of text called the scope  of
+the use clause.  This region starts immediately after the use clause.  If a
+use  clause  is a declarative item of some declarative region, the scope of
+the clause extends to the end of the declarative region.  If a  use  clause
+occurs  within a context clause of a compilation unit, the scope of the use
+clause extends to the end of the declarative  region  associated  with  the
+compilation unit. 
+<P>
+In  order to define which declarations are made directly visible at a given
+place by use clauses, consider the set of packages named by all use clauses
+whose scopes enclose this place, omitting from this set any  packages  that
+enclose  this  place.  A declaration that can be made directly visible by a
+use clause (a potentially visible  declaration)  is  any  declaration  that 
+occurs  immediately  within  the  visible  part of a package of the set.  A
+potentially visible declaration is actually made directly visible except in
+the following two cases: 
+<ul>
+<li>A potentially visible declaration is not made directly visible if  the
+place  considered  is within the immediate scope of a homograph of the  
+declaration.<br><br> 
+<li>Potentially visible declarations that have the same identifier are not
+made directly visible unless each of them  is  either  an  enumeration
+literal  specification  or  the  declaration  of  a  subprogram  (by a
+subprogram   declaration,   a   renaming   declaration,   a    generic
+instantiation, or an implicit declaration). 
+</ul>
+<P>
+The elaboration of a use clause has no other effect.
+<P>
+Note: 
+<P>
+The  above rules guarantee that a declaration that is made directly visible
+by a use clause cannot hide an otherwise directly visible declaration.  The
+above rules are formulated in terms of the set of packages  named  by  use
+clauses.                                         
+<P>
+Consequently,  the  following  lines  of  text  all  have  the  same effect
+(assuming only one package P). 
+<pre>
+    use P;
+    use P; use P, P; 
+</pre>
+<P>
+Example of conflicting names in two packages: 
+<pre>
+    procedure R is
+       package TRAFFIC is
+          type COLOR is (RED, AMBER, GREEN);
+          ...
+       end TRAFFIC; 
+
+       package WATER_COLORS is                    
+          type COLOR is (WHITE, RED, YELLOW, GREEN, BLUE, BROWN, BLACK);
+          ...
+       end WATER_COLORS; 
+
+     use TRAFFIC;       --  COLOR, RED, AMBER, and GREEN are directly visible
+     use WATER_COLORS;  --  two homographs of GREEN are directly visible
+                        --  but COLOR is no longer directly visible
+
+     subtype LIGHT is TRAFFIC.COLOR;      -- Subtypes are used to resolve
+     subtype SHADE is WATER_COLORS.COLOR; -- the conflicting type name COLOR
+
+       SIGNAL : LIGHT;
+       PAINT  : SHADE;
+    begin
+       SIGNAL := GREEN;  --  that of TRAFFIC
+       PAINT  := GREEN;  --  that of WATER_COLORS
+    end R; 
+</pre>
+<P>
+Example of name identification with a use clause: 
+<pre>
+       package D is
+          T, U, V : BOOLEAN;
+       end D; 
+
+       procedure P is
+          package E is
+             B, W, V : INTEGER;
+          end E; 
+
+          procedure Q is
+             T, X : REAL;
+             use D, E;
+          begin
+             --  the name T means Q.T, not D.T
+             --  the name U means D.U
+             --  the name B means E.B
+             --  the name W means E.W
+             --  the name X means Q.X
+             --  the name V is illegal : either D.V or E.V must be used
+             ...  
+          end Q;
+       begin
+          ...
+       end P;                                                                       
+</pre>
+<P>
+<b>References:</b>  <A HREF="lrm-10-01.html#10.1">compilation unit</A>,
+<A HREF="lrm-10-01.html#10.1">context clause</A>,
+<A HREF="lrm-03-01.html#3.1">declaration</A>,
+<A HREF="lrm-03-09.html#3.9">declarative  item</A>,
+<A HREF="lrm-08-01.html#8.1">declarative  region</A>,
+<A HREF="lrm-08-03.html#8.3">direct  visibility</A>,
+<A HREF="lrm-03-01.html#3.1">elaboration</A>,
+ and <A HREF="lrm-03-09.html#3.9">3.9</A>,
+<A HREF="lrm-03-01.html#3.1">elaboration  has  no  other  effect</A>,
+<A HREF="lrm-03-05.html#3.5.1">enumeration literal  specification</A>,
+<A HREF="lrm-08-01.html#8.1">extends</A>,
+<A HREF="lrm-08-03.html#8.3">hiding</A>,
+<A HREF="lrm-08-03.html#8.3">homograph</A>,
+<A HREF="lrm-02-03.html#2.3">identifier</A>,
+<A HREF="lrm-08-02.html#8.2">immediate scope</A>,
+<A HREF="lrm-04-01.html#4.1">name</A>,
+<A HREF="lrm-08-01.html#8.1">occur  immediately  within</A>,
+<A HREF="lrm-07.html#7">package</A>,
+<A HREF="lrm-08-02.html#8.2">scope</A>,
+<A HREF="lrm-06-01.html#6.1">subprogram declaration</A>,
+<A HREF="lrm-07-02.html#7.2">visible part</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-11-03.html#11.3.2">11.3.2&nbsp;Naming Conventions: Expanded Names and Use Clauses</a>
+<p>
+
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-06.html#5.6.9">5.6.9&nbsp;Blocks</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-07.html#5.7.1">5.7.1&nbsp;The Use Clause</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-07.html#5.7.2">5.7.2&nbsp;The Renames Clause</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

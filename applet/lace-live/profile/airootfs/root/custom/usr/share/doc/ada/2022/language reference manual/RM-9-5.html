@@ -1,0 +1,402 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Intertask Communication</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.8em; margin-bottom: 0.6em}
+    DIV.Indented1 {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.8em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 4.3em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.8em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.8em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    DIV.Indented2Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 5.8em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Indented2Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 5.8em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    DIV.WideHanging-Body {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 7.8em; margin-top: 0em; margin-bottom: 0.6em}
+    DIV.WideHanging-Term {float: left; font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.8em; margin-top: 0em; margin-bottom: 0em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B> (Ada 202x Draft 33)</SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-5-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>9.5 Intertask Communication</H1>
+<div class="paranum"><a name="p1">1</a></div>
+<div class="Normal"><A NAME="I4492"></A><A NAME="I4493"></A>The primary 
+means for intertask communication is provided by calls on entries and 
+protected subprograms. Calls on protected subprograms allow coordinated 
+access to shared data objects. Entry calls allow for blocking the caller 
+until a given condition is satisfied (namely, that the corresponding 
+entry is open &mdash; see <A HREF="RM-9-5-3.html">9.5.3</A>), and then 
+communicating data or control information directly with another task 
+or indirectly via a shared protected object.</div>
+
+<H4 Class="centered">Static Semantics</H4>
+<div class="paranum"><a name="p2">2/3</a></div>
+<div class="Normal" style="margin-bottom: 0.4em"><A NAME="I4494"></A>When 
+a <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> or 
+<SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> denotes 
+an entry, protected subprogram, or a prefixed view of a primitive subprogram 
+of a limited interface whose first parameter is a controlling parameter, 
+the <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> or 
+<SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> determines 
+a <I>target object</I>, as follows:&nbsp;</div>
+<div class="paranum"><a name="p3">3/3</a></div>
+<div class="Bulleted">If it is a <SPAN Class="swiss"><A HREF="RM-4-1.html#S0092">direct_name</A></SPAN> 
+or expanded name that denotes the declaration (or body) of the operation, 
+then the target object is implicitly specified to be the current instance 
+of the task or protected unit immediately enclosing the operation; <A NAME="I4495"></A>a 
+call using such a name is defined to be an <I>internal call</I>;</div>
+<div class="paranum"><a name="p4">4/3</a></div>
+<div class="Bulleted">If it is a <SPAN Class="swiss"><A HREF="RM-4-1-3.html#S0098">selected_component</A></SPAN> 
+that is not an expanded name, then the target object is explicitly specified 
+to be the  object denoted by the <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+of the <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN>; 
+<A NAME="I4496"></A>a call using such a name is defined to be an <I>external 
+call</I>;&nbsp;</div>
+<div class="paranum"><a name="p5">5/3</a></div>
+<div class="Bulleted">If the <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+is a dereference (implicit or explicit) of an access-to-protected-subprogram 
+value, then the target object is determined by the <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+of the Access <SPAN Class="swiss"><A HREF="RM-4-1-4.html#S0100">attribute_reference</A></SPAN> 
+that produced the access value originally; a call using such a name is 
+defined to be an <I>external call</I>;</div>
+<div class="paranum"><a name="p6">6</a></div>
+<div class="Bulleted">If the <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+denotes a <SPAN Class="swiss"><A HREF="RM-8-5-4.html#S0242">subprogram_renaming_declaration</A></SPAN>, 
+then the target object is as determined by the <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+of the renamed entity.</div>
+<div class="paranum"><a name="p6.1">6.1/3</a></div>
+<div class="Normal">&nbsp;A call on an entry or a protected subprogram either 
+uses a <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+that determines a target object implicitly, as above, or is a call on 
+(a non-prefixed view of) a primitive subprogram of a limited interface 
+whose first parameter is a controlling parameter, in which case the target 
+object is identified explicitly by the first parameter. This latter case 
+is an <I>external call</I>.</div>
+<div class="paranum"><a name="p7">7</a></div>
+<div class="Normal"><A NAME="I4497"></A><A NAME="I4498"></A><A NAME="I4499"></A>A 
+corresponding definition of target object applies to a <SPAN Class="swiss"><A HREF="RM-9-5-4.html#S0265">requeue_statement</A></SPAN> 
+(see <A HREF="RM-9-5-4.html">9.5.4</A>), with a corresponding distinction 
+between an <I>internal requeue</I> and an <I>external requeue</I>.</div>
+
+<H4 Class="centered">Legality Rules</H4>
+<div class="paranum"><a name="p7.1">7.1/3</a></div>
+<div class="Normal">&nbsp;If a <SPAN Class="swiss"><A HREF="RM-4-1.html#S0091">name</A></SPAN> 
+or <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+determines a target object, and the name denotes a protected entry or 
+procedure, then the target object shall be a variable, unless the <SPAN Class="swiss"><A HREF="RM-4-1.html#S0093">prefix</A></SPAN> 
+is for an <SPAN Class="swiss"><A HREF="RM-4-1-4.html#S0100">attribute_reference</A></SPAN> 
+to the Count attribute (see <A HREF="RM-9-9.html">9.9</A>).&nbsp;</div>
+<div class="paranum"><a name="p7.2">7.2/5</a></div>
+<div class="Normal">&nbsp;An internal call on a protected function shall not 
+occur within a precondition expression (see <A HREF="RM-6-1-1.html">6.1.1</A>) 
+of a protected operation nor within a <SPAN Class="swiss"><A HREF="RM-3-7.html#S0063">default_expression</A></SPAN> 
+of a <SPAN Class="swiss"><A HREF="RM-6-1.html#S0207">parameter_specification</A></SPAN> 
+of a protected operation.</div>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<div class="paranum"><a name="p8">8</a></div>
+<div class="Normal">Within the body of a protected operation, the current 
+instance (see <A HREF="RM-8-6.html">8.6</A>) of the immediately enclosing 
+protected unit is determined by the target object specified (implicitly 
+or explicitly) in the call (or requeue) on the protected operation.&nbsp;</div>
+<div class="paranum"><a name="p9">9</a></div>
+<div class="Normal">Any call on a protected procedure or entry of a target 
+protected object is defined to be an update to the object, as is a requeue 
+on such an entry.&nbsp;</div>
+
+<H4 Class="centered">Syntax</H4>
+<div class="paranum"><a name="p10">10/3</a></div>
+<div class="Indented1"><SPAN Class="swiss">synchronization_kind</SPAN><A NAME="I4500"></A><A NAME="S0256"></A><SPAN Class="swiss">&nbsp;::=&nbsp;</SPAN>By_Entry&nbsp;|&nbsp;By_Protected_Procedure&nbsp;|&nbsp;Optional</div>
+
+<H4 Class="centered">Static Semantics</H4>
+<div class="paranum"><a name="p11">11/3</a></div>
+<div class="Normal" style="margin-bottom: 0.4em">For the declaration 
+of a primitive procedure of a synchronized tagged type the following 
+language-defined representation aspect may be specified with an <SPAN Class="swiss"><A HREF="RM-13-1-1.html#S0346">aspect_specification</A></SPAN> 
+(see <A HREF="RM-13-1-1.html">13.1.1</A>):</div>
+<div class="paranum"><a name="p12">12/3</a></div>
+<div class="WideHanging-Term">Synchronization</div><div class="WideHanging-Body"><br clear="left">
+If specified, the aspect definition shall be a <SPAN Class="swiss"><A HREF="RM-9-5.html#S0256">synchronization_kind</A></SPAN>.<A NAME="I4501"></A><A NAME="I4502"></A></div>
+<div class="paranum"><a name="p13">13/3</a></div>
+<div class="Normal">Inherited subprograms inherit the Synchronization 
+aspect, if any, from the corresponding subprogram of the parent or progenitor 
+type. If an overriding operation does not have a directly specified Synchronization 
+aspect then the Synchronization aspect of the inherited operation is 
+inherited by the overriding operation.&nbsp;</div>
+
+<H4 Class="centered">Legality Rules</H4>
+<div class="paranum"><a name="p14">14/3</a></div>
+<div class="Normal">The <SPAN Class="swiss"><A HREF="RM-9-5.html#S0256">synchronization_kind</A></SPAN> 
+By_Protected_Procedure shall not be applied to a primitive procedure 
+of a task interface.</div>
+<div class="paranum"><a name="p15">15/3</a></div>
+<div class="Normal">A procedure for which the specified <SPAN Class="swiss"><A HREF="RM-9-5.html#S0256">synchronization_kind</A></SPAN> 
+is By_Entry shall be implemented by an entry. A procedure for which the 
+specified <SPAN Class="swiss"><A HREF="RM-9-5.html#S0256">synchronization_kind</A></SPAN> 
+is By_Protected_Procedure shall be implemented by a protected procedure. 
+A procedure for which the specified <SPAN Class="swiss"><A HREF="RM-9-5.html#S0256">synchronization_kind</A></SPAN> 
+is Optional may be implemented by an entry or by a procedure (including 
+a protected procedure).</div>
+<div class="paranum"><a name="p16">16/3</a></div>
+<div class="Normal">If a primitive procedure overrides an inherited operation 
+for which the Synchronization aspect has been specified to be By_Entry 
+or By_Protected_Procedure, then any specification of the aspect Synchronization 
+applied to the overriding operation shall have the same <SPAN Class="swiss"><A HREF="RM-9-5.html#S0256">synchronization_kind</A></SPAN>.</div>
+<div class="paranum"><a name="p17">17/3</a></div>
+<div class="Normal"><A NAME="I4503"></A>In addition to the places where 
+Legality Rules normally apply (see <A HREF="RM-12-3.html">12.3</A>), 
+these rules also apply in the private part of an instance of a generic 
+unit.&nbsp;</div>
+
+<H4 Class="centered">Static Semantics</H4>
+<div class="paranum"><a name="p18">18/5</a></div>
+<div class="Normal" style="margin-bottom: 0.4em">For a program unit, 
+task entry, formal package, formal subprogram, formal object of an anonymous 
+access-to-subprogram type, enumeration literal, and for a subtype (including 
+a formal subtype), the following language-defined operational aspect 
+is defined:</div>
+<div class="paranum"><a name="p19">19/5</a></div>
+<div class="WideHanging-Term">Nonblocking</div><div class="WideHanging-Body">
+This aspect specifies the blocking restriction for the entity; it shall 
+be specified by a static Boolean expression. The <SPAN Class="swiss"><A HREF="RM-13-1-1.html#S0348">aspect_definition</A></SPAN> 
+can be omitted from the specification of this aspect; in that case, the 
+aspect for the entity is True.<A NAME="I4504"></A><A NAME="I4505"></A></div>
+<div class="paranum"><a name="p20">20/5</a></div>
+<div class="WideHanging-Body">The Nonblocking aspect may be specified 
+for all entities for which it is defined, except for protected operations 
+and task entries. In particular, Nonblocking may be specified for generic 
+formal parameters.</div>
+<div class="paranum"><a name="p21">21/5</a></div>
+<div class="WideHanging-Term">} When aspect Nonblocking is False for 
+an entity, the entity can contain a potentially blocking operation; such 
+an entity <I>allows blocking</I>. If the aspect is True for an entity, 
+the entity is said to be <I>nonblocking</I>.<A NAME="I4506"></A><A NAME="I4507"></A><A NAME="I4508"></A><A NAME="I4509"></A></div>
+<div class="paranum"><a name="p22">22/5</a></div>
+<div class="WideHanging-Body">For a generic instantiation and entities 
+declared within such an instance, the aspect is determined by the Nonblocking 
+aspect for the corresponding entity of the generic unit, <B>and</B>ed 
+with the Nonblocking aspects of the actual generic parameters <I>used</I> 
+by the entity. If the aspect is directly specified for an instance, the 
+specified expression shall have the same value as the Nonblocking aspect 
+of the instance (after <B>and</B>ing with the aspects of the used actual 
+parameters). In the absence of a Use_Formal aspect, all actual generic 
+parameters are presumed to be <I>used</I> by an entity (see <A HREF="RM-H-7-1.html">H.7.1</A>).</div>
+<div class="paranum"><a name="p23">23/5</a></div>
+<div class="WideHanging-Body">For a (protected or task) entry, the Nonblocking 
+aspect is False.</div>
+<div class="paranum"><a name="p24">24/5</a></div>
+<div class="WideHanging-Body">For an enumeration literal, the Nonblocking 
+aspect is True.</div>
+<div class="paranum"><a name="p25">25/5</a></div>
+<div class="WideHanging-Body">For a predefined operator of an elementary 
+type, the Nonblocking aspect is True. For a predefined operator of a 
+composite type, the Nonblocking aspect of the operator is the same as 
+the Nonblocking aspect for the type.</div>
+<div class="paranum"><a name="p26">26/5</a></div>
+<div class="WideHanging-Body">For a dereference of an access-to-subprogram 
+type, the Nonblocking aspect of the designated subprogram is that of 
+the access-to-subprogram type.</div>
+<div class="paranum"><a name="p27">27/5</a></div>
+<div class="WideHanging-Body">For the base subtype of a scalar (sub)type, 
+the Nonblocking aspect is True.</div>
+<div class="paranum"><a name="p28">28/5</a></div>
+<div class="WideHanging-Body">For an inherited primitive dispatching 
+subprogram that is null or abstract, the subprogram is nonblocking if 
+and only if a corresponding subprogram of at least one ancestor is nonblocking. 
+For any other inherited subprogram, it is nonblocking if and only if 
+the corresponding subprogram of the parent is nonblocking.</div>
+<div class="paranum"><a name="p29">29/5</a></div>
+<div class="WideHanging-Body">Unless directly specified, overridings 
+of dispatching operations inherit this aspect.</div>
+<div class="paranum"><a name="p30">30/5</a></div>
+<div class="WideHanging-Body">Unless directly specified, for a formal 
+subtype, formal package, or formal subprogram, the Nonblocking aspect 
+is that of the actual subtype, package, or subprogram.</div>
+<div class="paranum"><a name="p31">31/5</a></div>
+<div class="WideHanging-Body">Unless directly specified, for a non-first 
+subtype <I>S</I>, the Nonblocking aspect is that of the subtype identified 
+in the subtype_indication defining <I>S</I>; unless directly specified 
+for the first subtype of a derived type, the Nonblocking aspect is that 
+of the ancestor subtype.</div>
+<div class="paranum"><a name="p32">32/5</a></div>
+<div class="WideHanging-Body">Unless directly specified, for any other 
+program unit, first  subtype, or formal object, the Nonblocking aspect 
+of the entity is determined by the Nonblocking aspect for the innermost 
+program unit enclosing the entity.</div>
+<div class="paranum"><a name="p33">33/5</a></div>
+<div class="WideHanging-Body">If not specified for a library unit, the 
+Nonblocking aspect is True if the library unit is declared pure, or False 
+otherwise.</div>
+<div class="paranum"><a name="p34">34/5</a></div>
+<div class="Normal" style="margin-bottom: 0.4em">The following are defined 
+to be <I>potentially blocking</I> operations:<A NAME="I4510"></A> <A NAME="I4511"></A></div>
+<div class="paranum"><a name="p35">35/5</a></div>
+<div class="Bulleted">a <SPAN Class="swiss"><A HREF="RM-9-7.html#S0269">select_statement</A></SPAN>;</div>
+<div class="paranum"><a name="p36">36/5</a></div>
+<div class="Bulleted">an <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0258">accept_statement</A></SPAN>;</div>
+<div class="paranum"><a name="p37">37/5</a></div>
+<div class="Bulleted">an <SPAN Class="swiss"><A HREF="RM-9-5-3.html#S0264">entry_call_statement</A></SPAN>, 
+or a call on a procedure that renames or is implemented by an entry;</div>
+<div class="paranum"><a name="p38">38/5</a></div>
+<div class="Bulleted">a <SPAN Class="swiss"><A HREF="RM-9-6.html#S0266">delay_statement</A></SPAN>;</div>
+<div class="paranum"><a name="p39">39/5</a></div>
+<div class="Bulleted">an <SPAN Class="swiss"><A HREF="RM-9-8.html#S0284">abort_statement</A></SPAN>;</div>
+<div class="paranum"><a name="p40">40/5</a></div>
+<div class="Bulleted">task creation or activation;</div>
+<div class="paranum"><a name="p41">41/5</a></div>
+<div class="Bulleted">during a protected action, an external call on 
+a protected subprogram (or an external requeue) with the same target 
+object as that of the protected action.</div>
+<div class="paranum"><a name="p42">42/5</a></div>
+<div class="Normal">If a language-defined subprogram allows blocking, 
+then a call on the subprogram is a potentially blocking operation.</div>
+
+<H4 Class="centered">Legality Rules</H4>
+<div class="paranum"><a name="p43">43/5</a></div>
+<div class="Normal" style="margin-bottom: 0.4em">A portion of program 
+text is called a <I>nonblocking region</I><A NAME="I4512"></A> if it 
+is anywhere within a parallel construct, or if the innermost enclosing 
+program unit is nonblocking. A nonblocking region shall not contain any 
+of the following:</div>
+<div class="paranum"><a name="p44">44/5</a></div>
+<div class="Bulleted">a <SPAN Class="swiss"><A HREF="RM-9-7.html#S0269">select_statement</A></SPAN>;</div>
+<div class="paranum"><a name="p45">45/5</a></div>
+<div class="Bulleted">an <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0258">accept_statement</A></SPAN>;</div>
+<div class="paranum"><a name="p46">46/5</a></div>
+<div class="Bulleted">a <SPAN Class="swiss"><A HREF="RM-9-6.html#S0266">delay_statement</A></SPAN>;</div>
+<div class="paranum"><a name="p47">47/5</a></div>
+<div class="Bulleted">an <SPAN Class="swiss"><A HREF="RM-9-8.html#S0284">abort_statement</A></SPAN>;</div>
+<div class="paranum"><a name="p48">48/5</a></div>
+<div class="Bulleted">task creation or activation.&nbsp;</div>
+<div class="paranum"><a name="p49">49/5</a></div>
+<div class="Normal">Furthermore, a parallel construct shall neither contain 
+a call on a callable entity for which the Nonblocking aspect is False, 
+nor shall it contain a call on a callable entity declared within a generic 
+unit that uses a generic formal parameter with Nonblocking aspect False 
+(see Use_Formal aspect in <A HREF="RM-H-7-1.html">H.7.1</A>).</div>
+<div class="paranum"><a name="p50">50/5</a></div>
+<div class="Normal">Finally, a nonblocking region that is outside of 
+a parallel construct shall not contain a call on a callable entity for 
+which the Nonblocking aspect is False, unless the region is within a 
+generic unit and the callable entity is associated with a generic formal 
+parameter of the generic unit, or the call is within the <SPAN Class="swiss"><A HREF="RM-13-1-1.html#S0348">aspect_definition</A></SPAN> 
+of an assertion aspect for an entity that allows blocking.</div>
+<div class="paranum"><a name="p51">51/5</a></div>
+<div class="Normal">For the purposes of the above rules, an <SPAN Class="swiss"><A HREF="RM-9-5-2.html#S0260">entry_body</A></SPAN> 
+is considered nonblocking if the immediately enclosing protected unit 
+is nonblocking.</div>
+<div class="paranum"><a name="p52">52/5</a></div>
+<div class="Normal">For a subtype for which aspect Nonblocking is True, 
+any predicate expression that applies to the subtype shall only contain 
+constructs that are allowed immediately within a nonblocking program 
+unit.</div>
+<div class="paranum"><a name="p53">53/5</a></div>
+<div class="Normal">A subprogram shall be nonblocking if it overrides 
+a nonblocking dispatching operation. An entry shall not implement a nonblocking 
+procedure. If an inherited dispatching subprogram allows blocking, then 
+the corresponding subprogram of each ancestor shall allow blocking.</div>
+<div class="paranum"><a name="p54">54/5</a></div>
+<div class="Normal">It is illegal to directly specify aspect Nonblocking 
+for the first subtype of the full view of a type that has a partial view. 
+If the Nonblocking aspect of the full view is inherited, it shall have 
+the same value as that of the partial view, or have the value True.</div>
+<div class="paranum"><a name="p55">55/5</a></div>
+<div class="Normal">Aspect Nonblocking shall be directly specified for 
+the first subtype of a derived type only if it has the same value as 
+the Nonblocking aspect of the ancestor subtype or if it is specified 
+True. Aspect Nonblocking shall be directly specified for a nonfirst subtype 
+<I>S</I> only if it has the same value as the Nonblocking aspect of the 
+subtype identified in the <SPAN Class="swiss"><A HREF="RM-3-2-2.html#S0027">subtype_indication</A></SPAN> 
+defining <I>S</I> or if it is specified True.</div>
+<div class="paranum"><a name="p56">56/5</a></div>
+<div class="Normal">For an access-to-object type that is nonblocking, 
+the Allocate, Deallocate, and Storage_Size operations on its storage 
+pool shall be nonblocking.</div>
+<div class="paranum"><a name="p57">57/5</a></div>
+<div class="Normal" style="margin-bottom: 0.4em">For a composite type 
+that is nonblocking:</div>
+<div class="paranum"><a name="p58">58/5</a></div>
+<div class="Bulleted">All component subtypes shall be nonblocking;</div>
+<div class="paranum"><a name="p59">59/5</a></div>
+<div class="Bulleted">For a record type or extension, every call in the 
+<SPAN Class="swiss"><A HREF="RM-3-7.html#S0063">default_expression</A></SPAN> 
+of a component (including discriminants) shall call an operation that 
+is nonblocking;</div>
+<div class="paranum"><a name="p60">60/5</a></div>
+<div class="Bulleted">For a controlled type, the Initialize, Finalize, 
+and Adjust (if any) subprograms shall be nonblocking.</div>
+<div class="paranum"><a name="p61">61/5</a></div>
+<div class="Normal" style="margin-bottom: 0.4em">The predefined equality 
+operator for a composite type, unless it is for a record type or record 
+extension and the operator is overridden by a primitive equality operator, 
+is illegal if it is nonblocking and:</div>
+<div class="paranum"><a name="p62">62/5</a></div>
+<div class="Bulleted">for a record type or record extension, the parent 
+primitive &quot;=&quot; allows blocking; or</div>
+<div class="paranum"><a name="p63">63/5</a></div>
+<div class="Bulleted">some component is of a type <I>T</I>, and:</div>
+<div class="paranum"><a name="p64">64/5</a></div>
+<div class="Indented2Bulleted"><I>T</I> is a record type or record extension 
+that has a primitive &quot;=&quot; that allows blocking; or</div>
+<div class="paranum"><a name="p65">65/5</a></div>
+<div class="Indented2Bulleted"><I>T</I> is neither a record type nor 
+a record extension, and <I>T</I> has a predefined &quot;=&quot; that 
+allows blocking.&nbsp;</div>
+<div class="paranum"><a name="p66">66/5</a></div>
+<div class="Normal" style="margin-bottom: 0.4em">In a generic instantiation:</div>
+<div class="paranum"><a name="p67">67/5</a></div>
+<div class="Bulleted">the actual subprogram corresponding to a nonblocking 
+formal subprogram shall be nonblocking (an actual that is an entry is 
+not permitted in this case);</div>
+<div class="paranum"><a name="p68">68/5</a></div>
+<div class="Bulleted">the actual subtype corresponding to a nonblocking 
+formal subtype shall be nonblocking;</div>
+<div class="paranum"><a name="p69">69/5</a></div>
+<div class="Bulleted">the actual object corresponding to a formal object 
+of a nonblocking access-to-subprogram type shall be of a nonblocking 
+access-to-subprogram type;</div>
+<div class="paranum"><a name="p70">70/5</a></div>
+<div class="Bulleted">the actual instance corresponding to a nonblocking 
+formal package shall be nonblocking.</div>
+<div class="paranum"><a name="p71">71/5</a></div>
+<div class="Normal"><A NAME="I4513"></A>In addition to the places where 
+Legality Rules normally apply (see <A HREF="RM-12-3.html">12.3</A>), 
+the above rules also apply in the private part of an instance of a generic 
+unit.</div>
+<div class="paranum"><a name="p72">72/3</a></div>
+<div class="Notes">NOTE&nbsp;&nbsp;&nbsp;The <SPAN Class="swiss"><A HREF="RM-9-5.html#S0256">synchronization_kind</A></SPAN> 
+By_Protected_Procedure implies that the operation will not block.&nbsp;</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-9-5-1.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle; font-size:120%">Ada 2005 and 2012 Editions sponsored in part by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

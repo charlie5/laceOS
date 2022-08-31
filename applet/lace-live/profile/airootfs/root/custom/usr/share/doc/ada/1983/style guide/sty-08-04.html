@@ -1,0 +1,341 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Quality and Style, Sec 8.4: Independence
+</TITLE>
+</HEAD><BODY>
+
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<H1>Ada '83 Quality and Style:</h1>
+<h2>Guidelines for Professional Programmers</H2>
+<h6><a href="sty-00.html">Copyright</a> 1989, 1991,1992
+<a href="http://software.org/">Software Productivity Consortium, Inc.</a>, Herndon, Virginia.</h6>
+<hr>
+<H2>CHAPTER 8: Reusability</H2>
+
+<H3><a name="8.4">8.4     Independence</a></H3>
+A reusable part should be as independent as possible from other reusable 
+parts.  A potential user is less inclined to reuse a part if that part 
+requires the use of other parts which seem unnecessary. The &quot;extra baggage&quot; of 
+the other parts wastes time and space. A user would like to be able to reuse 
+only that part which is perceived as useful.<P>
+Note that the concept of a &quot;part&quot; is intentionally vague here. A single 
+package does not need to be independent of each other package in a reuse 
+library, if the &quot;parts&quot; from that library which are typically reused are 
+entire subsystems.  If the entire subsystem is perceived as providing a useful 
+function, the entire subsystem is reused. However, the subsystem should not be 
+tightly coupled to all the other subsystems in the reuse library, so that it 
+is difficult or impossible to reuse the subsystem without reusing the entire 
+library. Coupling between reusable parts should only occur when it provides a 
+strong benefit perceptible to the user.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-10-04.html#10.4">10.4&nbsp;The Program Library</A>
+
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font><BR>
+<a href="#8.4.1">8.4.1   Using Generic Parameters to Reduce Coupling</a><BR>
+<a href="#8.4.2">8.4.2   Coupling Due to Pragmas</a><BR>
+<a href="#8.4.3">8.4.3   Part Families</a><BR>
+<a href="#8.4.4">8.4.4   Conditional Compilation</a><BR>
+<a href="#8.4.5">8.4.5   Table-Driven Programming</a></b>
+     </TD>
+   </TR>
+   <TR>
+      <TD>
+<b><a href="sty-08-05.html#8.5.4"> Summary of Guidelines from this section</a></b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+
+<H3><BR><a name="8.4.1">8.4.1   Using Generic Parameters to Reduce Coupling</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Minimize <CODE>with</CODE> clauses on reusable parts, especially on their  
+specifications. 
+<li>Use generic parameters instead of <CODE>with</CODE> statements to reduce the number  
+of context clauses on a reusable part. 
+<li> Use generic parameters instead of <CODE>with</CODE> statements to import portions 
+of a package rather than the entire package. 
+</UL>
+
+<H4>example</H4>
+A procedure like the following:
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------ 
+with Package_A; 
+procedure Produce_And_Store_A is 
+   ...
+   
+begin  -- Produce_And_Store_A 
+   ... 
+   Package_A.Produce (...);
+   
+   ... 
+   Package_A.Store (...);
+   
+   ... 
+end Produce_And_Store_A; 
+------------------------------------------------------------------------</pre></td></tr></table>
+<P>
+can be rewritten as a generic unit:
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------ 
+generic
+
+   with procedure Produce (...); 
+   with procedure Store   (...);
+   
+procedure Produce_And_Store;
+
+------------------------------------------------------------------------ 
+procedure Produce_And_Store is 
+   ...
+   
+begin  -- Produce_And_Store 
+   ... 
+   Produce (...);
+   
+   ... 
+   Store   (...);
+   
+   ... 
+end Produce_And_Store; 
+------------------------------------------------------------------------</pre></td></tr></table>
+<P>
+and then instantiated:
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------ 
+with Package_A; 
+with Produce_And_Store; 
+procedure Produce_And_Store_A is 
+        new Produce_And_Store (Produce =&gt; Package_A.Produce, 
+                               Store   =&gt; Package_A.Store); 
+------------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+Context (<CODE>with</CODE>) clauses specify the names of other units upon which this unit 
+depends. Such dependencies cannot and should not be entirely avoided, but it 
+is a good idea to minimize the number of them which occur in the specification 
+of a unit. Try to move them to the body, leaving the specification independent 
+of other units so that it is easier to understand in isolation. Also, organize 
+your reusable parts in such a way that the bodies of the units do not contain 
+large numbers of dependencies on each other. Partitioning your library into 
+independent functional areas with no dependencies spanning the boundaries of 
+the areas is a good way to start. Finally, reduce dependencies by using 
+generic formal parameters instead of <CODE>with</CODE> statements, as shown in the example 
+above. If the units in a library are too tightly coupled, then no single part 
+can be reused without reusing most or all of the library.<P>
+The first (nongeneric) version of <CODE>Produce_And_Store_A</CODE> above is difficult to 
+reuse because it depends on <CODE>Package_A</CODE> which may not be general purpose or 
+generally available. If the operation <CODE>Produce_And_Store</CODE> has reuse potential 
+which is reduced by this dependency, a generic unit and an instantiation 
+should be produced as shown above. Note that the with clause for <CODE>Package_A</CODE> has 
+been moved from the <CODE>Produce_And_Store</CODE> generic procedure which encapsulates the 
+reusable algorithm to the <CODE>Produce_And_Store_A</CODE> instantiation. Instead of naming 
+the package which provides the required operations, the generic unit simply 
+lists the required operations themselves. This increases the independence and 
+reusability of the generic unit.<P>
+This use of generic formal parameters in place of with clauses also allows 
+visibility at a finer granularity. The with clause on the nongeneric version 
+of <CODE>Produce_And_Store_A</CODE> makes <u>all</u> of the contents of <CODE>Package_A</CODE> visible to 
+<CODE>Produce_And_Store_A</CODE>, while the generic parameters on the generic version make 
+only the <CODE>Produce</CODE> and <CODE>Store</CODE> operations available to the generic instantiation.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-10-01.html#10.1.1">10.1.1&nbsp;Context Clauses - With Clauses</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-12-01.html#12.1">12.1&nbsp;Generic Declarations</A>
+
+
+<H3><BR><a name="8.4.2">8.4.2   Coupling Due to Pragmas</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>For nongenerics named in a context clause, avoid pragma <CODE>Elaborate</CODE>. 
+<li>Use pragma <CODE>Elaborate</CODE> for generics named in a context clause. 
+<li>Avoid pragma <CODE>Priority</CODE> in tasks hidden in reusable parts. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------
+generic
+   ...
+   
+package Stack is  
+   ...
+   
+end Stack;
+
+------------------------------------------------------------------------
+with Stack;
+pragma Elaborate (Stack); -- in case the body is not yet elaborated
+package My_Stack is
+        new Stack (...);
+        
+------------------------------------------------------------------------
+package body Stack is  
+begin
+   ...
+end Stack;
+---------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+Pragma <CODE>Elaborate</CODE> controls the order of elaboration of one unit with respect to <BR>
+another. This is another way of coupling units and should be avoided when <BR>
+possible in reusable parts, because it restricts the number of configurations <BR>
+in which the reusable parts can be combined.<P>
+However, as more compilers begin to allow generics to be instantiated before <BR>
+the bodies are compiled, elaboration orders that generally follow compilation <BR>
+order may result in program errors.  By forcing the compiler to elaborate the <BR>
+generic before the instantiation, this error can be avoided or possibly <BR>
+identify a problem of circularity
+(see <a href="http://archive.adaic.com/standards/83lrm/html/lrm-10-05.html">10.5 of Department of Defense 1983</a>).<P>
+Pragma <CODE>Priority</CODE> controls the priority of a task relative to all other tasks in<BR>
+a particular system. It is inappropriate in a reusable part which does not<BR>
+know anything about the requirements and importance of other parts of the<BR>
+systems in which it is reused. Give careful consideration to a reusable part<BR>
+which claims that it can only be reused if its embedded task has the highest<BR>
+priority in the system. No two such parts can ever be used together.
+
+<H4>note</H4>
+It is not possible to parameterize tasks with a priority to be specified at <BR>
+instantiation or elaboration.  However, a library of reusable parts that <BR>
+contain tasks can be designed to depend on a single package of named numbers.  <BR>
+These named numbers can then be easily updated to fit the application's need <BR>
+with the simple procedure of recompiling any library units that depend on the <BR>
+named numbers.  The configuration management implications of such an approach <BR>
+are heavily dependent on the Ada development environment and compilation <BR>
+system.<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-02-08.html#2.8">2.8&nbsp;Pragmas</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-01.html#9.1">9.1&nbsp;Abort Statements</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-09-08.html#9.8">9.8&nbsp;Priorities</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-10-01.html#10.1.1">10.1.1&nbsp;Context Clauses - With Clauses</A>, 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-10-05.html#10.5">10.5&nbsp;Elaboration of Library Units</A>
+
+
+<H3><BR><a name="8.4.3">8.4.3   Part Families</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Create families of generic or other parts with similar specifications. 
+</UL>
+
+<H4>example</H4>
+The Booch parts (Booch 1987) are an example of the application of this  
+guideline.
+
+<H4>rationale</H4>
+Different versions of similar parts (e.g., bounded versus unbounded stacks) 
+may be needed for different applications or to change the properties of a 
+given application. Often, the different behaviors required by these versions 
+cannot be obtained using generic parameters. Providing a family of parts with 
+similar specifications makes it easy for the programmer to select the 
+appropriate one for the current application or to substitute a different one 
+if the needs of the application change.
+
+<H4>note</H4>
+A reusable part which is structured from subparts which are members of part  
+families is particularly easy to tailor to the needs of a given application by  
+substitution of family members.<P>
+<b>Language Ref Manual references:</b> 
+  <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-12-01.html#12.1">12.1&nbsp;Generic Declarations</A>
+
+
+<H3><BR><a name="8.4.4">8.4.4   Conditional Compilation</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Structure reusable code to take advantage of dead code removal by the  
+compiler. 
+</UL>
+
+<H4>example</H4>
+<table border cellpadding=6><tr><td><pre>------------------------------------------------------------------------ 
+package Matrix_Math is
+
+   ... 
+   type Algorithm is (Gaussian, Pivoting, Choleski, Tri_Diagonal);
+   
+   generic 
+      Which_Algorithm : in     Algorithm := Gaussian; 
+   procedure Invert ( ... );
+   
+end Matrix_Math;
+
+------------------------------------------------------------------------ 
+package body Matrix_Math is 
+   ...
+   
+   --------------------------------------------------------------------- 
+   procedure Invert ( ... ) is 
+      ... 
+   begin  -- Invert 
+      case Which_Algorithm is 
+         when Gaussian =&gt;     ... ; 
+         when Pivoting =&gt;     ... ; 
+         when Choleski =&gt;     ... ; 
+         when Tri_Diagonal =&gt; ... ; 
+      end case;
+      
+   end Invert; 
+   ---------------------------------------------------------------------
+   
+end Matrix_Math; 
+------------------------------------------------------------------------</pre></td></tr></table>
+
+<H4>rationale</H4>
+Some compilers omit object code corresponding to parts of the program which 
+they detect can never be executed. Constant expressions in conditional 
+statements take advantage of this feature where it is available, providing a 
+limited form of conditional compilation. When a part is reused in an 
+implementation that does not support this form of conditional compilation, 
+this practice produces a clean structure which is easy to adapt by deleting or 
+commenting out redundant code where it creates an unacceptable overhead.<P>
+This feature should be used when other factors prevent the code from being 
+separated into separate subunits.  In the above example, it would be 
+preferable to have a different procedure for each algorithm.  But the 
+algorithms may differ in slight but complex ways so as to make separate 
+procedures difficult to maintain.
+
+<H4>caution</H4>
+Be aware of whether your implementation supports dead code removal, and be  
+prepared to take other steps to eliminate the overhead of redundant code if  
+necessary.<P>
+<b>Language Ref Manual references:</b> 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-10-06.html#10.6">10.6&nbsp;Program Optimization</A>, 
+   <A HREF="http://archive.adaic.com/standards/83lrm/html/lrm-12-03.html#12.3">12.3&nbsp;Generic Instantiation</A>
+
+
+<H3><BR><a name="8.4.5">8.4.5   Table-Driven Programming</a></H3>
+
+<H4>guideline</H4>
+<UL>
+<li>Write table-driven reusable parts where possible and appropriate. 
+</UL>
+
+<H4>example</H4>
+The epitome of table-driven reusable software is a parser generation system. A 
+specification of the form of the input data and of its output, along with some  
+specialization code, is converted to tables that are to be &quot;walked&quot; by 
+pre-existing code using predetermined algorithms in the parser produced. Other 
+forms of &quot;application generators&quot; work similarly.
+
+<H4>rationale</H4>
+Table-driven (sometimes known as data-driven) programs have behavior that 
+depends on data <CODE>with</CODE>'ed at compile time or read from a file at run-time. In 
+appropriate circumstances, table-driven programming provides a very powerful 
+way of creating general-purpose, easily tailorable, reusable parts.
+
+<H4>note</H4>
+Consider whether differences in the behavior of a general-purpose part could be 
+defined by some data structure at compile- or run-time and, if so, structure 
+the part to be table-driven. The approach is most likely to be applicable when 
+a part is designed for use in a particular application domain but needs to be  
+specialized for use in a specific application within the domain. Take  
+particular care in commenting the structure of the data needed to drive the  
+part.
+
+<hr>
+<A HREF="index.html">Back to document index</A>
+</BODY></HTML>

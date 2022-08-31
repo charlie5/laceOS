@@ -1,0 +1,204 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Priority Ceiling Locking</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    DIV.paranum {float: left; font-family: Arial, Helvetica, sans-serif; font-size: 64%; width: 2.8em; margin-left: -0.4em; margin-right: -3.0em; margin-top: 0.2em}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 1.2em; margin-bottom: 0.6em}
+    DIV.Notes {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em; margin-bottom: 0.6em}
+    DIV.NotesHeader {font-family: "Times New Roman", Times, serif; font-size: 80%; line-height: 122%; margin-left: 3.7em}
+    DIV.SyntaxIndented {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-bottom: 0.4em}
+    UL.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 3.2em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#000080" VLINK="#330033" ALINK="#0000FF">
+<DIV><SPAN Style="font-size:200%; color: rgb(0,0,153)"><B>Ada Reference Manual</B></SPAN> &mdash; <A HREF="RM-TTL.html"><B>Legal Information</B></A></DIV>
+<DIV Style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-2-6.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<HR>
+<H1>D.3 Priority Ceiling Locking</H1>
+<DIV Class="paranum">1</DIV>
+<DIV Class="Normal">This clause specifies the interactions between priority 
+task scheduling and protected object ceilings. This interaction is based 
+on the concept of the <I>ceiling priority</I> of a protected object. 
+</DIV>
+
+<H4 Class="centered">Syntax</H4>
+<DIV Class="paranum">2</DIV>
+<DIV Class="SyntaxIndented" Style="margin-bottom: 0.2em">The form of 
+a <SPAN Class="swiss"><A HREF="RM-2-8.html#S0019">pragma</A></SPAN> Locking_Policy 
+is as follows:&nbsp;</DIV>
+<DIV Class="paranum">3</DIV>
+<DIV Class="SyntaxIndented">&nbsp;&nbsp;<B>pragma</B> <A NAME="I6860"></A><A NAME="I6861"></A>Locking_Policy(<I>policy_</I><A NAME="I6862"></A><SPAN Class="swiss"><A HREF="RM-2-3.html#S0002">identifier</A></SPAN>); 
+</DIV>
+
+<H4 Class="centered">Legality Rules</H4>
+<DIV Class="paranum">4</DIV>
+<DIV Class="Normal">The <I>policy_</I><A NAME="I6863"></A><SPAN Class="swiss"><A HREF="RM-2-3.html#S0002">identifier</A></SPAN> 
+shall either be Ceiling_Locking or an implementation-defined <A NAME="I6864"></A><SPAN Class="swiss"><A HREF="RM-2-3.html#S0002">identifier</A></SPAN>. 
+</DIV>
+
+<H4 Class="centered">Post-Compilation Rules</H4>
+<DIV Class="paranum">5</DIV>
+<DIV Class="Normal"><A NAME="I6865"></A><A NAME="I6866"></A>A Locking_Policy 
+pragma is a configuration pragma.</DIV>
+
+<H4 Class="centered">Dynamic Semantics</H4>
+<DIV Class="paranum">6/2</DIV>
+<DIV Class="Normal"><A NAME="I6867"></A>A locking policy specifies the 
+details of protected object locking. All protected objects have a priority. 
+The locking policy specifies the meaning of the priority of a protected 
+object, and the relationships between these priorities and task priorities. 
+In addition, the policy specifies the state of a task when it executes 
+a protected action, and how its active priority is affected by the locking. 
+The <I>locking policy</I> is specified by a Locking_Policy pragma. For 
+implementation-defined locking policies, the meaning of the priority 
+of a protected object is implementation defined. If no Locking_Policy 
+pragma applies to any of the program units comprising a partition, the 
+locking policy for that partition, as well as the meaning of the priority 
+of a protected object, are implementation defined. <A NAME="I6868"></A></DIV>
+<DIV Class="paranum">6.1/2</DIV>
+<DIV Class="Normal">&nbsp;&nbsp;The <SPAN Class="swiss"><A HREF="RM-4-4.html#S0115">expression</A></SPAN> 
+of a Priority or Interrupt_Priority pragma (see <A HREF="RM-D-1.html">D.1</A>) 
+is evaluated as part of the creation of the corresponding protected object 
+and converted to the subtype System.Any_Priority or System.Interrupt_Priority, 
+respectively. The value of the expression is the initial priority of 
+the corresponding protected object. If no Priority or Interrupt_Priority 
+pragma applies to a protected object, the initial priority is specified 
+by the locking policy. <A NAME="I6869"></A><A NAME="I6870"></A></DIV>
+<DIV Class="paranum">7</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">There is one predefined 
+locking policy, Ceiling_Locking; this policy is defined as follows:&nbsp;</DIV>
+<DIV Class="paranum">8/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I6871"></A>Every protected 
+object has a <I>ceiling priority</I>, which is determined by either a 
+Priority or Interrupt_Priority pragma as defined in <A HREF="RM-D-1.html">D.1</A>, 
+or by assignment to the Priority attribute as described in <A HREF="RM-D-5-2.html">D.5.2</A>. 
+The ceiling priority of a protected object (or ceiling, for short) is 
+an upper bound on the active priority a task can have when it calls protected 
+operations of that protected object.</LI></UL>
+<DIV Class="paranum">9/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>The initial ceiling priority of a 
+protected object is equal to the initial priority for that object.</LI></UL>
+<DIV Class="paranum">10/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If an Interrupt_Handler or Attach_Handler 
+pragma (see <A HREF="RM-C-3-1.html">C.3.1</A>) appears in a <SPAN Class="swiss"><A HREF="RM-9-4.html#S0195">protected_definition</A></SPAN> 
+without an Interrupt_Priority pragma, the initial priority of protected 
+objects of that type is implementation defined, but in the range of the 
+subtype System.Interrupt_Priority.&nbsp;</LI></UL>
+<DIV Class="paranum">11/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>If no <SPAN Class="swiss"><A HREF="RM-2-8.html#S0019">pragma</A></SPAN> 
+Priority, Interrupt_Priority, Interrupt_Handler, or Attach_Handler is 
+specified in the <SPAN Class="swiss"><A HREF="RM-9-4.html#S0195">protected_definition</A></SPAN>, 
+then the initial priority of the corresponding protected object is System.Priority'Last.</LI></UL>
+<DIV Class="paranum">12</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>While a task executes a protected 
+action, it inherits the ceiling priority of the corresponding protected 
+object.</LI></UL>
+<DIV Class="paranum">13</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC><A NAME="I6872"></A><A NAME="I6873"></A><A NAME="I6874"></A>When 
+a task calls a protected operation, a check is made that its active priority 
+is not higher than the ceiling of the corresponding protected object; 
+Program_Error is raised if this check fails.</LI></UL>
+
+<H4 Class="centered">Bounded (Run-Time) Errors</H4>
+<DIV Class="paranum">13.1/2</DIV>
+<DIV Class="Normal" Style="margin-bottom: 0.4em">&nbsp;&nbsp;&nbsp;Following any change 
+of priority, it is a bounded error for the active priority of any task 
+with a call queued on an entry of a protected object to be higher than 
+the ceiling priority of the protected object. <A NAME="I6875"></A>In 
+this case one of the following applies:</DIV>
+<DIV Class="paranum">13.2/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>at any time prior to executing the 
+entry body Program_Error is raised in the calling task; <A NAME="I6876"></A></LI></UL>
+<DIV Class="paranum">13.3/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>when the entry is open the entry body 
+is executed at the ceiling priority of the protected object;</LI></UL>
+<DIV Class="paranum">13.4/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>when the entry is open the entry body 
+is executed at the ceiling priority of the protected object and then 
+Program_Error is raised in the calling task; or <A NAME="I6877"></A></LI></UL>
+<DIV Class="paranum">13.5/2</DIV>
+<UL Class="Bulleted"><LI TYPE=DISC>when the entry is open the entry body 
+is executed at the ceiling priority of the protected object that was 
+in effect when the entry call was queued.&nbsp;</LI></UL>
+
+<H4 Class="centered">Implementation Permissions</H4>
+<DIV Class="paranum">14</DIV>
+<DIV Class="Normal">The implementation is allowed to round all ceilings 
+in a certain subrange of System.Priority or System.Interrupt_Priority 
+up to the top of that subrange, uniformly.&nbsp;</DIV>
+<DIV Class="paranum">15/2</DIV>
+<DIV Class="Normal">&nbsp;Implementations are allowed to define other locking 
+policies, but need not support more than one locking policy per partition.</DIV>
+<DIV Class="paranum">16</DIV>
+<DIV Class="Normal">Since implementations are allowed to place restrictions 
+on code that runs at an interrupt-level active priority (see <A HREF="RM-C-3-1.html">C.3.1</A> 
+and <A HREF="RM-D-2-1.html">D.2.1</A>), the implementation may implement 
+a language feature in terms of a protected object with an implementation-defined 
+ceiling, but the ceiling shall be no less than Priority'Last.&nbsp;</DIV>
+
+<H4 Class="centered">Implementation Advice</H4>
+<DIV Class="paranum">17</DIV>
+<DIV Class="Normal">The implementation should use names that end with 
+&ldquo;_Locking&rdquo; for implementation-defined locking policies.</DIV>
+<DIV Class="NotesHeader">NOTES</DIV>
+<DIV Class="paranum">18</DIV>
+<DIV Class="Notes">20&nbsp;&nbsp;While a task executes in a protected 
+action, it can be preempted only by tasks whose active priorities are 
+higher than the ceiling priority of the protected object.</DIV>
+<DIV Class="paranum">19</DIV>
+<DIV Class="Notes">21&nbsp;&nbsp;If a protected object has a ceiling 
+priority in the range of Interrupt_Priority, certain interrupts are blocked 
+while protected actions of that object execute. In the extreme, if the 
+ceiling is Interrupt_Priority'Last, all blockable interrupts are blocked 
+during that time.</DIV>
+<DIV Class="paranum">20</DIV>
+<DIV Class="Notes">22&nbsp;&nbsp;The ceiling priority of a protected 
+object has to be in the Interrupt_Priority range if one of its procedures 
+is to be used as an interrupt handler (see <A HREF="RM-C-3.html">C.3</A>).</DIV>
+<DIV Class="paranum">21</DIV>
+<DIV Class="Notes">23&nbsp;&nbsp;When specifying the ceiling of a protected 
+object, one should choose a value that is at least as high as the highest 
+active priority at which tasks can be executing when they call protected 
+operations of that object. In determining this value the following factors, 
+which can affect active priority, should be considered: the effect of 
+Set_Priority, nested protected operations, entry calls, task activation, 
+and other implementation-defined factors.</DIV>
+<DIV Class="paranum">22</DIV>
+<DIV Class="Notes">24&nbsp;&nbsp;Attaching a protected procedure whose 
+ceiling is below the interrupt hardware priority to an interrupt causes 
+the execution of the program to be erroneous (see <A HREF="RM-C-3-1.html">C.3.1</A>).</DIV>
+<DIV Class="paranum">23</DIV>
+<DIV Class="Notes">25&nbsp;&nbsp;On a single processor implementation, 
+the ceiling priority rules guarantee that there is no possibility of 
+deadlock involving only protected subprograms (excluding the case where 
+a protected operation calls another protected operation on the same protected 
+object).</DIV>
+
+<HR>
+<DIV Style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="RM-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-0-5.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-STDS.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-2-6.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="RM-D-4.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</DIV>
+<DIV Style="margin-top:0.0em"><IMG SRC="AE_logo.gif" height=100 width=113 align=right ALT="Ada-Europe">
+<SPAN Style="vertical-align: middle">Sponsored by <SPAN Style="font-size: 125%"><A HREF="http://www.ada-europe.org/"><B>Ada-Europe</B></A></SPAN></SPAN></DIV>
+</BODY>
+</HTML>

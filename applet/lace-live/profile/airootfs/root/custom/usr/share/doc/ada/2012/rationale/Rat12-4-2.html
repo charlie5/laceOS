@@ -1,0 +1,354 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Subprogram parameters</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    A.Bar:link {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    A.Bar:visited {font-family: Arial, Helvetica, sans-serif; font-style: normal; text-decoration: none; color: rgb(204,204,51)}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.Indented1 {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(0,153,51)">Ada 2012</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat12-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-4-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-4-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>4.2 Subprogram parameters</H1>
+<div class="Normal">The main topic here is the fact that functions (but 
+not operators) in Ada 2012 can have parameters of any mode. <A NAME="I1329"></A><A NAME="I1330"></A><A NAME="I1331"></A></div>
+<div class="Normal">This is a topic left over from Ada 2005. The epilogue 
+to the Rationale for Ada 2005 <A HREF="Rat12-0-3.html#R15">[15]</A> discusses 
+a number of topics that were abandoned and in the case of function modes 
+says:</div>
+<div class="Normal">&quot;Clearly, Ada functions are indeed curious. 
+But strangely this AI (that is <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AIs/AI-00323.TXT">AI95-323</A>) 
+was abandoned quite early in the revision process on the grounds that 
+it was 'too late'. (Perhaps too late in this context meant 25 years too 
+late.)&quot; It was not possible to agree on a way forward and so effort 
+was devoted to other topics.</div>
+<div class="Normal">But mists clear with time. The big concern was that 
+allowing parameters of all modes might open the door to dangerous programming 
+practices but a solution to that was found in the introduction of stricter 
+rules preventing many order dependences.</div>
+<div class="Normal">It is instructive to quickly go through the various 
+historical documents.</div>
+<div class="Normal">A probably little known document is one written in 
+1976 by David Fisher of the Institute for Defense Analyses <A HREF="Rat12-0-3.html#R16">[16]</A> 
+which provided the foundation for the requirements for the development 
+of a new language. It doesn't seem to distinguish between procedures 
+and functions; it does mention the need for parameters which are constant 
+and those which effectively rename a variable. Moreover, it does say 
+(item C1 on page 81): <I>Side effects which are dependent on the evaluation 
+order among the arguments of an expression will be evaluated left-to-right.</I> 
+This does not actually require left-to-right evaluation but the behaviour 
+must be as if it were. I have always thought it tragic that this was 
+not observed.</div>
+<div class="Normal">This document was followed by a series known as Strawman, 
+Woodenman, Tinman, Ironman <A HREF="Rat12-0-3.html#R17">[17]</A> and 
+finishing with Steelman <A HREF="Rat12-0-3.html#R12">[12]</A>. <A NAME="I1332"></A><A NAME="I1333"></A></div>
+<div class="Normal">The requirement on left-to-right evaluation remained 
+in Tinman and was even stronger in Ironman but was somewhat weakened 
+in Steelman to allow instrumentation and ends with a warning about being 
+erroneous.</div>
+<div class="Normal">Further requirements are introduced in Ironman which 
+requires both functions and procedures as we know them. Moreover, Ironman 
+has a requirement about assignment to variables non-local to a function; 
+they must be encapsulated in a region that has no calls on the function; 
+this same requirement notes that it implies that functions can only have 
+input parameters. This requirement does not seem to have carried forward 
+to Steelman.</div>
+<div class="Normal">However, Ironman also introduces a requirement on 
+restrictions to prevent aliasing. One is that the same actual parameter 
+of a procedure cannot correspond to more than one input-output parameter. 
+This requirement does survive into Steelman. But, it only seems to apply 
+to procedures and not to functions and Steelman appears not to have noticed 
+that the implied requirement that functions can only have input parameters 
+has vanished.</div>
+<div class="Normal">It interesting to then see what was proposed in the 
+sequence of languages leading to Ada 83, namely, Preliminary Green <A HREF="Rat12-0-3.html#R18">[18]</A>, 
+Green <A HREF="Rat12-0-3.html#R19">[19]</A>, Preliminary Ada <A HREF="Rat12-0-3.html#R20">[20]</A>, 
+and Ada <A HREF="Rat12-0-3.html#R21">[21]</A>. Note that Preliminary 
+Green was based on Ironman whereas Green was based on Steelman.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Preliminary Green<A NAME="I1334"></A> 
+we find procedures and functions. Procedures can have parameters of three 
+modes, <B>in</B>, <B>out</B> and <B>access</B> (don't get excited, <B>access</B> 
+meant <B>in out</B>). Functions can only have parameters of mode <B>in</B>. 
+Moreover,</div>
+<div class="Indented1">side effects to variables accessible at the function 
+call are not allowed. In particular, variables that are global to the 
+function body may not be updated in the function body. The rationale 
+for Preliminary Green makes it quite clear that functions can have no 
+side effects whatsoever.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">In Green we find the 
+three modes <B>in</B>, <B>out</B>, and <B>in out</B>. <A NAME="I1335"></A>But 
+the big difference is that as well as procedures and functions as in 
+preliminary Green, there are now value returning procedures such as</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Random&nbsp;<B>return</B>&nbsp;Real&nbsp;<B>range</B>&nbsp;-1.0&nbsp;..&nbsp;1.0;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The intent is that 
+functions are still free of all side effects whereas value returning 
+procedures have more flexibility. However, value returning procedures 
+can only have parameters of mode <B>in</B> and</div>
+<div class="Indented1">assignments to global variables are permitted 
+within value returning procedures. Calls of such procedures are only 
+valid at points of the program where the corresponding variables are 
+not within the scope of their declaration. The order of evaluation of 
+these calls is strictly that given in the text of the program. Calls 
+to value returning procedures are only allowed in assignment statements, 
+initializations and procedure calls.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">The rationale for Green 
+notes that if you want to instrument a function then use a pragma. It 
+also notes that functions</div>
+<div class="Indented1">with arbitrary side effects would undermine the 
+advantage of the functional approach to software. In addition it would 
+complicate the semantics of all language structures where expressions 
+involving such calls may occur. Hence this form of function is not provided. 
+</div>
+<div class="Normal">And now we come to Ada herself. There are manuals 
+dated July 1979 (preliminary Ada), July 1980 (draft mil-std), July 1982 
+(proposed ANSI standard), and January 1983 (the ANSI standard usually 
+known as Ada 83).</div>
+<div class="Normal">In Preliminary Ada, we have procedures, functions 
+and value returning procedures exactly as in Green. Indeed, it seems 
+that the only difference between Green and Preliminary Ada is that the 
+name Green has been converted to Ada.<A NAME="I1336"></A></div>
+<div class="Normal">But the 1980 Ada manual omits value returning procedures 
+and any mention of any restrictions on what you can do in a function. 
+And by 1982 we find that we are warned that parameters can be evaluated 
+in any order and so on.</div>
+<div class="Normal">The Rationale for Ada 83 <A HREF="Rat12-0-3.html#R6">[6]</A> 
+didn't finally emerge until 1986 and discusses briefly the reason for 
+the change which is basically that benevolent side effects are important. 
+It concludes by quoting from a paper regarding Algol 60 <A HREF="Rat12-0-3.html#R22">[22]</A><A NAME="I1337"></A></div>
+<div class="Indented1">The plain fact of the matter is (1) that side-effects 
+are sometimes necessary, and (2) programmers who are irresponsible enough 
+to introduce side-effects unnecessarily will soon lose the confidence 
+of their colleagues and rightly so.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">However, an interesting 
+remark in the Rationale for Ada 83 in the light of the change in Ada 
+2012 is</div>
+<div class="Indented1">The only limitation imposed in Ada on functions 
+is that the mode of all parameters must be <B>in</B>: it would not be 
+logical to allow <B>in out</B> and <B>out</B> parameters for functions 
+in a language that excludes nested assignments within an expression. 
+</div>
+<div class="Normal">Hmm. That doesn't really seem to follow. Allowing 
+assignments in expressions as in C is obnoxious and one of the sources 
+of errors in C programs. It is not so much that permitting side-effects 
+in expressions via functions is unwise but more that treating the result 
+of an assignment as a value nested within an expression is confusing. 
+Such nested constructions are naturally still excluded from Ada 2012 
+and so it is very unlikely that the change will be regretted. <A NAME="I1338"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Now we must turn to 
+the question of order dependences. Primarily, to enable optimization, 
+Ada does not define the order of evaluation of a number of constructions. 
+<A NAME="I1339"></A>These include</div>
+<div class="Bulleted">the parameters in a subprogram or entry call,</div>
+<div class="Bulleted">the operands of a binary operator,</div>
+<div class="Bulleted">the destination and value in an assignment,</div>
+<div class="Bulleted">the components in an aggregate,</div>
+<div class="Bulleted">the index expressions in a multidimensional name,</div>
+<div class="Bulleted">the expressions in a range,</div>
+<div class="Bulleted">the barriers in a protected object,</div>
+<div class="Bulleted">the guards in a select statement,</div>
+<div class="Bulleted">the elaboration of library units.&nbsp;</div>
+<div class="Normal">The expressions involved in the above constructions 
+can include function calls. Indeed, as <A HREF="http://www.ada-auth.org/cgi-bin/cvsweb.cgi/AI05s/AI05-0144-2.TXT">AI-144</A> 
+states &quot;Arguably, Ada has selected the worst possible solution to 
+evaluation order dependences (by not specifying an order of evaluation), 
+it does not detect them in any way, and then says that if you depend 
+upon one (even if by accident), your code will fail at some point in 
+the future when your compiler changes. Something should be done about 
+this.&quot;</div>
+<div class="Normal">It is far too late to do anything about specifying 
+the order of evaluation so the approach taken is to prevent as much aliasing 
+as possible since aliasing is an important cause of order of evaluation 
+problems. Ada 2012 introduces rules for determining when two names are 
+&quot;known to denote the same object&quot;. <A NAME="I1340"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">Thus they denote the 
+same object if</div>
+<div class="Bulleted">both names statically denote the same stand-alone 
+object or parameter; or</div>
+<div class="Bulleted">both names are selected components, their prefixes 
+are known to denote the same object, and their selector names denote 
+the same component.&nbsp;</div>
+<div class="Normal" style="margin-bottom: 0.4em">and so on with similar 
+rules for dereferences, indexed components and slices. There is also 
+a rule about renaming so that if we have</div>
+<div class="SwissExamples">C:&nbsp;Character&nbsp;<B>renames</B>&nbsp;S(5);</div>
+<div class="Normal">then <SPAN Class="swiss">C</SPAN> and <SPAN Class="swiss">S(5)</SPAN> 
+are known to denote the same object. The index naturally has to be static.</div>
+<div class="Normal">A further step is to define when two names &quot;are 
+known to refer to the same object&quot;. This covers some cases of overlapping. 
+<A NAME="I1341"></A>Thus given a record <SPAN Class="swiss">R</SPAN> 
+of type <SPAN Class="swiss">T</SPAN> with a component <SPAN Class="swiss">C</SPAN>, 
+we say that <SPAN Class="swiss">R</SPAN> and <SPAN Class="swiss">R.C</SPAN> 
+are known to refer to the same object. Similarly with an array <SPAN Class="swiss">A</SPAN> 
+we say that <SPAN Class="swiss">A</SPAN> and <SPAN Class="swiss">A(K)</SPAN> 
+are known to refer to the same object (<SPAN Class="swiss">K</SPAN> does 
+not need to be static in this example).</div>
+<div class="Normal">Given these definitions we can now state the two 
+basic restrictions.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The first concerns 
+parameters of elementary types:</div>
+<div class="Bulleted">For each name <SPAN Class="swiss">N</SPAN> that 
+is passed as a parameter of mode <B>in out</B> or <B>out</B> to a call 
+of a subprogram <SPAN Class="swiss">S</SPAN>, there is no other name 
+among the other parameters of mode <B>in out</B> or <B>out</B> to that 
+call of <SPAN Class="swiss">S</SPAN> that is known to denote the same 
+object.&nbsp;</div>
+<div class="Normal">Roughly speaking this comes down to saying two or 
+more parameters of mode <B>out</B> or <B>in out</B> of an elementary 
+type cannot denote the same object. This applies to both functions and 
+procedures.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This excludes the example 
+given in the Introduction which was</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Do_It(Double,&nbsp;Triple:&nbsp;<B>in&nbsp;out</B>&nbsp;Integer)&nbsp;<B>is</B></div>
+<div class="SwissExamples"><B>begin</B><BR>
+&nbsp;&nbsp;&nbsp;Double&nbsp;:=&nbsp;Double&nbsp;*&nbsp;2;<BR>
+&nbsp;&nbsp;&nbsp;Triple&nbsp;:=&nbsp;Triple&nbsp;*&nbsp;3;<BR>
+<B>end</B>&nbsp;Do_It;</div>
+<div class="Normal" style="margin-bottom: 0.4em">with</div>
+<div class="SwissExamples">Var:&nbsp;Integer&nbsp;:=&nbsp;2;<BR>
+...<BR>
+Do_It(Var,&nbsp;Var);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal&nbsp;in&nbsp;Ada&nbsp;2012</I></SPAN></div>
+<div class="Normal">The key problem is that parameters of elementary 
+types are always passed by copy and the order in which the parameters 
+are copied back is not specified. Thus <SPAN Class="swiss">Var</SPAN> 
+might end up with either the value of <SPAN Class="swiss">Double</SPAN> 
+or the value of <SPAN Class="swiss">Triple</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The other restriction 
+concerns constructions which have several constituents that can be evaluated 
+in any order and can contain function calls. Basically it says:</div>
+<div class="Bulleted">If a name <SPAN Class="swiss">N</SPAN> is passed 
+as a parameter with mode <B>out</B> or <B>in out</B> to a function call 
+that occurs in one of the constituents, then no other constituent can 
+involve a name that is known to refer to the same object.&nbsp;</div>
+<div class="Normal">Constructions cover many situations such as aggregates, 
+assignments, ranges and so on as listed earlier.</div>
+<div class="Normal" style="margin-bottom: 0.4em">This rule excludes 
+the other example in the Introduction, namely, the aggregate</div>
+<div class="SwissExamples">(Var,&nbsp;F(Var))&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal&nbsp;in&nbsp;Ada&nbsp;2012</I></SPAN></div>
+<div class="Normal">where <SPAN Class="swiss">F</SPAN> has an <B>in out</B> 
+parameter.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The rule also excludes 
+the assignment</div>
+<div class="SwissExamples">Var&nbsp;:=&nbsp;F(Var);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal">if the parameter of <SPAN Class="swiss">F</SPAN> 
+has mode <B>in out</B>. Remember that the destination of an assignment 
+can be evaluated before or after the expression. So if <SPAN Class="swiss">Var</SPAN> 
+were an array element such as <SPAN Class="swiss">A(I)</SPAN> then the 
+behaviour could vary according to the order. To encourage good practice, 
+it is also forbidden even when <SPAN Class="swiss">Var</SPAN> is a stand-alone 
+object.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Similarly, the procedure 
+call</div>
+<div class="SwissExamples">Proc(Var,&nbsp;F(Var));&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">is illegal if the parameter 
+of <SPAN Class="swiss">F</SPAN> has mode <B>in out</B>. Examples of overlapping 
+are also forbidden such as</div>
+<div class="SwissExamples">ProcA(A,&nbsp;F(A(K)));&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="SwissExamples">ProcR(R,&nbsp;F(R.C));&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>illegal</I></SPAN></div>
+<div class="Normal">assuming still that <SPAN Class="swiss">F</SPAN> 
+has an <B>in out</B> parameter and that <SPAN Class="swiss">ProcA</SPAN> 
+and <SPAN Class="swiss">ProcR</SPAN> have appropriate profiles because, 
+as explained above, <SPAN Class="swiss">A</SPAN> and <SPAN Class="swiss">A(K)</SPAN> 
+are known to refer to the same object as are <SPAN Class="swiss">R</SPAN> 
+and <SPAN Class="swiss">R.C</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">On the other hand</div>
+<div class="SwissExamples">Proc(A(J),&nbsp;F(A(K)));&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>OK</I></SPAN></div>
+<div class="Normal">is permitted provided that <SPAN Class="swiss">J</SPAN> 
+and <SPAN Class="swiss">K</SPAN> are different objects because this is 
+only a problem if <SPAN Class="swiss">J</SPAN> and <SPAN Class="swiss">K</SPAN> 
+happen to have the same value.</div>
+<div class="Normal">For more details the reader is referred to the AI. 
+The intent is to detect situations that are clearly troublesome. Other 
+situations that might be troublesome (such as if <SPAN Class="swiss">J</SPAN> 
+and <SPAN Class="swiss">K</SPAN> happen to have the same value) are allowed, 
+since to prevent them would make many programs illegal that are not actually 
+dubious. This would cause incompatibilities and upset many users whose 
+programs are perfectly correct.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The other change in 
+Ada 2012 concerning parameters is that they may be explicitly marked 
+<B>aliased</B> thus<A NAME="I1342"></A><A NAME="I1343"></A> <A NAME="I1344"></A></div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;P(X:&nbsp;<B>aliased&nbsp;in&nbsp;out</B>&nbsp;T;&nbsp;...&nbsp;);</div>
+<div class="Normal">As a consequence within <SPAN Class="swiss">P</SPAN> 
+we can write <SPAN Class="swiss">X'Access</SPAN>. Recall that tagged 
+types were always considered implicitly aliased anyway and always passed 
+by reference. If the type <SPAN Class="swiss">T</SPAN> is a by-copy type 
+such as <SPAN Class="swiss">Integer</SPAN>, then adding <B>aliased</B> 
+causes it to be passed by reference. (So by-copy types are not always 
+passed by copy!)</div>
+<div class="Normal" style="margin-bottom: 0.4em">The possibility of 
+permitting explicitly aliased function results such as</div>
+<div class="SwissExamples"><B>function</B>&nbsp;F(&nbsp;...&nbsp;)<B>return&nbsp;aliased</B>&nbsp;T;&nbsp;&nbsp;&nbsp;&nbsp;--<SPAN Class="roman"><I>illegal&nbsp;Ada&nbsp;2012</I></SPAN></div>
+<div class="Normal">was considered but this led to difficulties and so 
+was not pursued.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The syntax for parameter 
+specification is modified thus</div>
+<div class="SwissExamples">parameter_specification&nbsp;::=<BR>
+&nbsp;&nbsp;&nbsp;defining_identifier_list:&nbsp;[<B>aliased</B>]&nbsp;mode&nbsp;[null&nbsp;exclusion]&nbsp;subtype_mark&nbsp;[:=&nbsp;default_expression]<BR>
+&nbsp;|&nbsp;defining_identifier_list:&nbsp;access_definition&nbsp;[:=&nbsp;default_expression]</div>
+<div class="Normal">showing that <B>aliased</B> comes first as it does 
+in all contexts where it is permitted.</div>
+<div class="Normal">The rules for mode conformance are modified as expected. 
+Two profiles are only mode conformant if both or neither are explicitly 
+marked as aliased. Although adding <B>aliased</B> for a tagged type parameter 
+makes little difference since tagged types are implicitly aliased, if 
+this is done for a subprogram declaration then it must be done for the 
+corresponding body as well.</div>
+<div class="Normal">There are (of course) rules regarding accessibility; 
+these are much as expected although a special case arises in function 
+return statements. These allow a function to safely return an access 
+to a part of an explicitly aliased parameter and be assured that the 
+result will not outlive the parameter. As usual, if the foolish programmer 
+does something silly, the compiler will draw attention to the error.</div>
+<div class="Normal">Explicitly aliased parameters are used in the functions 
+Reference (and Constant_Reference) declared in the various container 
+packages. See Section <A HREF="Rat12-6-3.html">6.3</A> on Iteration and 
+Section <A HREF="Rat12-8-3.html">8.3</A> on Iterating and updating containers.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat12-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-4.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-0-3.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-4-1.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat12-4-3.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2011, 2012, 2013 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="800">
+<TR><TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <b><A HREF="http://www.adaic.org/community/">Ada Resource Association</A></b>:<BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adaic.org"><IMG SRC="aralogo.gif" ALT="ARA" Height="120" Border="0"></A></SPAN>
+</TD>
+<TD Width="300" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">&nbsp; <b><A HREF="http://www.adacore.com">AdaCore</A></b>:<BR><BR><BR>
+&nbsp;&nbsp;&nbsp; <A HREF="http://www.adacore.com"><IMG SRC="adacore.gif" ALT="AdaCore" Height="80" Border="0"></A></SPAN>
+</TD>
+<TD Width="250" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <b><A HREF="http://www.ada-europe.org">Ada-Europe</A></b>:<BR><BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="128" Border="0"></A></SPAN>
+</TD></TR>
+</TABLE>
+</BODY>
+</HTML>

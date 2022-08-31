@@ -1,0 +1,1425 @@
+<html>
+<head>
+<title>
+Hypertext Ada 95 Rationale - Part Three - Chapter G
+</title>
+</head>
+
+<body>
+
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p3-f.html> Previous </a> |
+<a href=rat95-p3-h.html> Next </a>
+<hr>
+
+
+<h1>
+G   Numerics
+</h1>
+
+<p>
+The Numerics Annex addresses the particular needs of the numerically
+intensive computing community.  Like the other specialized needs annexes,
+support of this annex is optional.  The annex covers the following topics
+</p>
+<ul>
+<li>
+    Various generic packages are provided for the manipulation of
+     complex numbers including the computation of elementary functions
+     and input-output.
+<li>
+    The annex specifies two modes of operation, a strict mode in which
+     certain accuracy requirements must be met and the relaxed mode in
+     which they need not be met.  The accuracy requirements for the
+     strict mode cover both arithmetic and the noncomplex elementary
+     functions and random number generation of the core language.
+<li>
+    The models of floating point and fixed point arithmetic applicable
+     to the strict mode are described; these differ from those of Ada 83.
+<li>
+    Various model attributes are defined which are applicable to the
+     strict mode for floating point types; again these differ from Ada
+     83.
+</ul>
+<p>
+Note that since the elementary functions and random number generation are
+in the core language, they and their accuracy requirements are discussed
+elsewhere (see A.3).  The majority of attributes (including the so-called
+"primitive function" attributes) are also defined in the core language.
+</p>
+<p>
+   Implementations conforming to the numerics annex should also support
+the package Interfaces.Fortran, which is discussed in B.4.
+</p>
+
+<h2>
+<a name=1>
+G.1  Complex Arithmetic
+</a>
+</h2>
+
+<p>
+Several application areas depend on the use of complex arithmetic.
+Complex fast Fourier transforms are used, for example, in conjunction
+with radar and similar sensors; conformal mapping uses complex arithmetic
+in fluid-flow problems such as the analysis of velocity fields around
+airfoils; and electrical circuit analysis is classically modelled in
+terms of complex exponentials.
+</p>
+<p>
+   The Ada 95 facilities for complex arithmetic consist of the generic
+packages
+<pre>
+   Numerics.Generic_Complex_Types
+   Numerics.Generic_Complex_Elementary_Functions
+   Text_IO.Complex_IO
+</pre>
+which are children of Ada.
+</p>
+
+<h3>
+<a name=1-1>
+G.1.1  Complex Types and Arithmetic Operations
+</a>
+</h3>
+
+<p>
+When first designed, Numerics.Generic_Complex_Types was patterned after
+the version of the generic package, Generic_Complex_Types, that was then
+being developed in the SIGAda Numerics Working Group for proposal as an
+ISO standard for Ada 83.  At that time, roughly mid-1992, the latter
+defined a complex type as well as types for vectors and matrices of
+complex components, together with a large set of scalar, vector, and
+matrix operations on those types.  A decision was made to abbreviate the
+Ada 95 package by omitting the vector and matrix types and operations.
+One reason was that such types and operations were largely self-evident,
+so that little real help would be provided by defining them in the
+language.  Another reason was that a future version of Ada might add
+enhancements for array manipulation and so it would be inappropriate to
+lock in such operations prematurely.
+</p>
+<p>
+   The initial design for Numerics.Generic_Complex_Types also inherited a
+rather pedestrian approach to defining the complex type from the same
+proposed standard.  The Ada 9X Distinguished Reviewers recommended a
+different approach that enabled the writing of expressions whose
+appearance closely matches that of the standard mathematical notation for
+complex arithmetic.  The idea was to define not just a complex type, but
+also a pure imaginary type Imaginary and a constant i of that type;
+operations could then easily be defined to allow one to write expressions
+such as
+<pre>
+   3.0 + 5.0*i   -- of type Complex
+</pre>
+which has the feel of a complex literal.
+</p>
+<p>
+   Another advantage of this approach is that by providing mixed mode
+operations between complex and imaginary as well as between complex and
+real, it is possible to avoid unnecessary arithmetic operations on
+degenerate components.  Moreover, avoiding such unnecessary operations is
+crucial in environments featuring IEEE arithmetic [IEC 89], where signed
+infinities can arise and can be used in meaningful ways.
+</p>
+<p>
+   (Ada 95 does not support infinite values, but in an implementation in
+which the Machine_Overflows attribute is False, an overflow or a division
+by zero yields an implementation-defined result, which could well be an
+infinite value.  Thus a future Ada binding to IEEE arithmetic could
+capitalize on exactly that opportunity by providing semantics of
+arithmetic with infinities as in [IEC 89].)
+</p>
+<p>
+   To see how avoiding unnecessary operations provides more than just a
+gain in efficiency, consider the multiplication of a complex value x + iy
+by a pure imaginary value iv.  The result of the multiplication should,
+of course, be -vy + ivx.  Without a pure imaginary type, we have to
+represent the pure imaginary value as the complex value 0.0 + iv and
+perform a full complex multiplication, yielding (0.0x-vy) + i(vx+0.0y).
+This, of course, reduces to the same value as before, unless x or y is an
+infinity.
+</p>
+<p>
+   However, if x is infinity, y is finite, and v is nonzero (say,
+positive), the result should be -vy + i*infinity, but instead we get
+NaN + i*infinity, since multiplication of zero and infinity yields a NaN
+("Not-a-Number") in IEEE arithmetic, and NaNs propagate through addition.
+See [Kahan 91].
+</p>
+<p>
+   A similar situation can be demonstrated for the multiplication of a
+complex value and a pure real value, but in that case we expect to have
+such a mixed-mode operation, and if we use it the generation of the NaN
+is avoided.
+</p>
+<p>
+   Another subtle problem occurs when the imaginary value iv is added to
+the complex value x + iy.  The result, of course, should be x + i(y+v).
+Without an imaginary type, we have to represent the imaginary value as
+the complex value 0.0 + iv and perform a full complex addition, yielding
+(x+0.0) + i(y+v).  The problem here [Kahan 91] is that if x is a negative
+zero, the real component of the result of the full complex addition will
+have the wrong sign; it will be a positive zero instead of the expected
+negative zero.  This phenomenon, also a consequence of the rules of IEEE
+arithmetic, can and does occur in existing Ada 83 implementations, since
+it does not require an extension permitting infinities.
+</p>
+<p>
+   In both cases, the pure imaginary type gives the programmer the same
+opportunity to avoid problems in mixed complex/imaginary arithmetic as in
+mixed complex/real arithmetic.
+</p>
+<p>
+   With the inclusion of a pure imaginary type and mixed
+complex/imaginary operations, the generic complex types package in Ada 95
+could have diverged from the proposed standard under development in the
+SIGAda NumWG.  This was averted, however, when the working group changed
+its proposed standard to agree with the Ada 95 version.  It also removed
+the vector and matrix types and operations from its generic complex types
+package and put them in a separate package.  And so,
+Numerics.Generic_Complex_Types is just a slight variation of the generic
+package proposed for standardization for Ada 83.  (The differences have
+to do with the use of Real'Base, rather than just Real, as the subtype
+mark for the components of the complex type and for the parameter and
+result subtypes of some of the operations, Real being the name of the
+generic formal parameter.  This capability is lacking in Ada 83.)
+</p>
+<p>
+   The type Complex defined by Numerics.Generic_Complex_Types is a
+visible record type thus
+<pre>
+   type Complex is
+      record
+         Re, Im: Real'Base;
+      end record;
+</pre>
+corresponding to the cartesian representation of a complex value.  We
+have made the type visible to allow one to write complex "literals" using
+aggregate notation as in some other languages (and to ensure efficiency).
+The cartesian representation was chosen over a polar representation to
+avoid canonicalization problems and because it is normal practice.  An
+explicit choice of representation is required in any case to give meaning
+to the accuracy requirements.  Operations are provided, however, to
+compute the modulus (length) and argument (angle) of a complex value and
+to construct a complex value from a given modulus and argument, so that
+it is easy to convert between the built-in cartesian representation and a
+polar representation, if needed.
+</p>
+<p>
+   It is perhaps unusual that the components of the complex type are of
+the unconstrained subtype of the generic formal parameter, Real'Base,
+rather than just Real, but this is intended to increase the chances of
+being able to deliver the result computed by a complex arithmetic
+operation even when their operands belong to some restricted domain.
+This provides behavior analogous to that of the elementary functions (see
+A.3.1), which also yield results in the unconstrained subtype of the
+relevant generic formal parameter.  It is also similar to the behavior of
+the predefined arithmetic operations, which yield results of an
+unconstrained subtype, even when their operands are of a constrained
+subtype.  A consequence is that we cannot create complex types with
+constrained components, but that does not seem so severe in view of the
+fact that applications of complex arithmetic typically have a naturally
+circular domain, rather than a rectangular domain.
+</p>
+<p>
+   The type Imaginary, on the other hand, is private, its full type being
+derived from Real'Base thus
+<pre>
+   type Imaginary is new Real'Base;
+</pre>
+</p>
+<p>
+Making it private prevents the implicit conversion of a real literal to
+the type Imaginary, which would be available if Imaginary were visibly
+derived from Real'Base.  This avoids various ambiguous expressions and
+enables overload resolution to work properly.  It has the additional
+advantage of suppressing the implicit declaration of multiplying
+operators for the Imaginary type, which would incorrectly yield a result
+of the type Imaginary, when it should be Real'Base.  Operations with the
+correct result type such as
+<pre>
+   function "*" (Left, Right: Imaginary) return Real'Base;
+</pre>
+are, of course, explicitly declared.  The same benefits could have been
+achieved by defining Imaginary as a visible record type with a single
+component, but the method chosen prevents the writing of expressions
+containing pure imaginary values as aggregates, whose meaning would not
+be intuitively obvious.
+</p>
+<p>
+   The imaginary constant i (and its equivalent, j, provided for the
+engineering community), has the value 1.0, and so unoptimized expressions
+like 5.0*i will have the proper numerical value.  However, it is expected
+that compilers will optimize this and effectively convert the real
+literal 5.0 to the imaginary type.  Similarly, an expression such as 3.0
++ 5.0*i can be optimized to perform no arithmetic at all since it is
+functionally equivalent to the aggregate (3.0, 5.0) of the type Complex.
+</p>
+<p>
+   Note that there are also constructor and selector functions such as
+Compose_From_Cartesian.  The following expressions are thus equivalent
+<pre>
+   X + i*Y                         -- using operators
+
+   (X, Y)                          -- using an aggregate
+
+   Compose_From_Cartesian(X, Y)    -- using the constructor
+</pre>
+</p>
+<p>
+The constructor function has the merit that it can be used as a generic
+actual parameter, if it should be necessary.
+</p>
+<p>
+   Nongeneric equivalents of Numerics.Generic_Complex_Types are provided
+corresponding to instantiations with the predefined types Float,
+Long_Float and so on with names such as
+<pre>
+   Numerics.Complex_Types        -- for Float
+   Numerics.Long_Complex_Types   -- for Long_Float
+</pre>
+</p>
+<p>
+   This means that applications can effectively treat single-precision
+complex, double-precision complex, etc., as predefined types with the
+same convenience that is provided for the predefined floating point types
+(or, more importantly, so that independent libraries assuming the
+existence and availability of such types without the use of generics can
+be constructed and freely used in applications).  The nongeneric forms
+also have the advantage that Fortran programmers migrating to Ada do not
+have to learn generics in order to use complex arithemtic.
+</p>
+<p>
+   Accuracy requirements are generally specified for the complex
+arithmetic operations only in the strict mode.  Nevertheless, certain
+special cases are prescribed to give the exact result even in the relaxed
+mode, ensuring high quality at negligible implementation cost.  Examples
+are where one operand is pure real or pure imaginary.  (These prescribed
+results are likely to be achieved even without special attention by the
+implementation.)  Accuracy requirements are not given for exponentiation
+of a complex operand by an integer, owing to the variety of
+implementations that are allowed (ranging from repeated complex
+multiplication to well-known operations on the polar representation).
+</p>
+<p>
+   Note finally that spurious overflows (those occurring during the
+computation of an intermediate result, when the final result, or its
+components, would not overflow) are not allowed.  Thus, implementations
+of complex multiplication and division need to be somewhat more
+sophisticated than the textbook formulae for those operations.
+</p>
+
+<h3>
+<a name=1-2>
+G.1.2  Complex Elementary Functions
+</a>
+</h3>
+
+<p>
+The package Numerics.Generic_Complex_Elementary_Functions differs from
+the corresponding proposed standard for Ada 83 by taking advantage of the
+formal package parameter facility of Ada 95.  Thus it imports the one
+parameter which is an instance of Numerics.Generic_Complex_Types instead
+of the complex type and a long list of operations exported by such an
+instance.
+</p>
+<p>
+   In the Ada 83 version, the complex type has to be imported as a
+private type, and implementations of the complex elementary functions
+there have no choice but to use the imported selector functions, Re and
+Im, to extract the real and imaginary components of a complex value, and
+the imported constructor function, Compose_From_Cartesian, to assemble
+such components into a complex value.  Implementations of the Ada 95
+version see that type as the record type that it is, allowing more
+efficient composition and decomposition of complex values; they also have
+available the complete set of operations, not just the partial (albeit
+long enough) list of operations imported in the Ada 83 version.
+</p>
+<p>
+   Nonngeneric equivalents of
+Numerics.Generic_Complex_Elementary_Functions are also provided for each
+of the predefined floating point types.
+</p>
+<p>
+   The overloading of the Exp function for a pure imaginary parameter is
+provided to give the user an alternative way to construct the complex
+value having a given modulus and argument.  Thus, we can write either
+<pre>
+   Compose_From_Polar(R, Theta)
+</pre>
+or
+<pre>
+   R * Exp(i * Theta).
+</pre>
+</p>
+<p>
+   The treatment of accuracy requirements and prescribed results for the
+complex elementary functions is analogous to that discussed above for the
+complex arithmetic operations.  However, since the avoidance of spurious
+overflows is difficult and expensive to achieve in several of the
+functions, it is explicitly permitted, allowing those functions to be
+implemented in the obvious way.  No accuracy requirement is imposed on
+complex exponentiation (the operator "**") by a pure real, pure
+imaginary, or complex exponent, because the obvious implementation in
+terms of complex exponentials and logarithms yields poor accuracy in some
+parts of the domain, and better algorithms are not available.
+</p>
+
+<h3>
+<a name=1-3>
+G.1.3  Complex I/O
+</a>
+</h3>
+
+<p>
+Complex I/O is performed using the procedures in the generic child
+package, Text_IO.Complex_IO.  As with
+Numerics.Generic_Complex_Elementary_Functions, the user instantiates this
+generic package with an instance of Numerics.Generic_Complex_Types.
+(Note that nongeneric equivalents do not exist.)
+</p>
+<p>
+   A fundamental design decision underlying Text_IO.Complex_IO is that
+complex values are represented on the external medium in parenthesized
+aggregate notation, as in Fortran list-directed I/O.  This is the format
+produced on output, and it is the format expected on input, except that
+the comma, the parentheses, or both may be omitted when the real and
+imaginary components are separated by appropriate white space.  (This
+allows the reading of existing Fortran files containing complex data
+written by a variety of techniques.)
+</p>
+<p>
+   An implementation of Text_IO.Complex_IO can easily be built around an
+instance of Text_IO.Float_IO for Real'Base; the optional parentheses on
+input requires the use of the procedure Text_IO.Look_Ahead; see A.4.2.
+</p>
+<p>
+   Text_IO.Complex_IO defines similar Get and Put procedures to
+Text_IO.Float_IO with analogous semantics.  The only somewhat arbitrary
+decision that we made concerns the mechanism for filling the target
+string in the case of output to a string.  The question is where to put
+any extra blanks that are needed to fill the string.  A rule like the one
+for Text_IO.Float_IO.Put to a string might read:
+<pre>
+     Outputs the value of the parameter Item to the given string,
+     following the same rule as for output to a file, using a value
+     for Fore such that the sequence of characters output exactly
+     fills, or comes closest to filling, the string; in the latter
+     case, the string is filled by inserting one extra blank
+     immediately after the comma.
+</pre>
+</p>
+<p>
+Such a rule essentially allocates the available space equally to the real
+and imaginary components.  But that is not desirable when the value of
+the Exp parameter is zero and the two components of the Item parameter
+have disparate magnitudes, so that the integer part of one requires more
+characters than the integer part of the other.  To accommodate this case,
+we have chosen a rule, simple to implement, that left justifies the left
+parenthesis, real component, and comma and right justifies the imaginary
+component and right parenthesis.  All the extra spaces are placed between
+the comma and the imaginary component; they are available to accommodate
+either component, should it be unusually long.  If strings produced by
+this rule are eventually displayed in the output, the real and imaginary
+components will not line up in columns as well as with the previously
+cited rule, but it can be argued that output to a string is intended for
+further computation, rather than for display.
+</p>
+<p>
+   Early implementation experience indicated that it might also have been
+profitable to consider yet another rule for output to a string, namely,
+that all the components be right justified, with all the padding placed
+at the beginning of the string.  This rule would be extremely easy to
+implement if Text_IO.Float_IO.Put to a string (which right justifies its
+output in the target string), had an additional out parameter which gave
+the index of the first non-blank character that it put into the output
+string.
+</p>
+
+<h2>
+<a name=2>
+G.2  Floating Point Machine Numbers
+</a>
+</h2>
+
+<p>
+Many of the attributes of floating point types are defined with reference
+to a particular mathematical representation of rational numbers called
+the canonical form, which is defined, together with those attributes, in
+the Predefined Language Environment.  The definitions clarify certain
+aspects of the floating point machine numbers.  Several new
+representation-oriented attributes of floating point machine numbers are
+also defined, together with a group of functional attributes called the
+"primitive function" attributes.
+</p>
+
+<h3>
+<a name=2-1>
+G.2.1  Clarification of Existing Attributes
+</a>
+</h3>
+
+<p>
+The machine numbers of a floating point type are somewhat informally
+defined as the values of the type that are capable of being represented
+to full accuracy in all unconstrained variables of the type.  The intent
+is to exclude from the set of machine numbers any extra-precise numbers
+that might be held in extended registers in which they are generated as a
+consequence of performing arithmetic operations.  In other words, it is
+the stored values that matter and not values generated as intermediate
+results.
+</p>
+<p>
+   The representation-oriented attributes S'Machine_Mantissa,
+S'Machine_Emin, and S'Machine_Emax of a floating point subtype S are
+defined in terms of bounds on the components of the canonical form.  The
+attribute S'Machine_Radix is the radix of the hardware representation of
+the type and is used as the radix of the mantissa in the canonical form.
+</p>
+<p>
+   These definitions clarify that S'Machine_Emin is the minimum
+canonical-form exponent such that all numbers expressible in the
+canonical form, with that exponent, are indeed machine numbers.  In other
+words, S'Machine_Emin is determined by the normalized floating point
+numbers only; the presence of IEEE denormalized numbers in the
+implementation does not affect (reduce) the value of S'Machine_Emin.  A
+consequence of this definition of S'Machine_Emin is that the primitive
+function attribute S'Exponent(X) can yield a result whose value is less
+than that of S'Machine_Emin if X is denormalized.
+</p>
+<p>
+   The definitions also clarify that S'Machine_Emax is the canonical-form
+exponent of the machine number of largest magnitude whose negation is
+also a machine number; it is not the canonical-form exponent of the most
+negative number on radix-complement machines.
+</p>
+<p>
+   Alternative definitions for S'Machine_Emin and S'Machine_Emax were
+considered, namely, that they yield the minimum and maximum canonical-
+form exponents for which some combination of sign, exponent, and mantissa
+yields a machine number.  This would have allowed denormalized numbers to
+be accommodated without relaxing the normalization requirement (see the
+next section) in the definition of the canonical form, and the result of
+S'Exponent(X) would have necessarily remained within the range
+S'Machine_Emin .. S'Machine_Emax, which is appealing.  Nevertheless, it
+was judged to be too much of a departure from current practice and
+therefore too likely to cause compatibility problems.
+</p>
+
+<h3>
+<a name=2-2>
+G.2.2  Attributes Concerned With Denormalized Numbers and Signed Zeros
+</a>
+</h3>
+
+<p>
+Many implementations of Ada do provide IEEE denormalized numbers and
+"gradual underflow", as defined in [IEC 89], even though the full
+capabilities of IEEE arithmetic are not provided and must await an Ada
+binding to IEEE arithmetic.  (Denormalized numbers come for free with
+IEEE hardware chips and have always been consistent with the Ada model of
+floating point arithmetic; it would require extra code generation to
+suppress them.)  Since denormalized numbers are capable of being stored
+in variables of an unconstrained floating point type, they are machine
+numbers.  What characterizes the denormalized numbers is that they can be
+represented in the canonical form with an exponent of S'Machine_Emin,
+provided that the normalization requirement on the mantissa is relaxed.
+If every nonzero number expressible in this weakened canonical form is a
+machine number of the subtype S, then the new representation-oriented
+attribute, S'Denorm, is defined to have the value True.
+</p>
+<p>
+   Many implementations also provide IEEE signed zeros, which similarly
+come for free.  The new representation-oriented attribute,
+S'Signed_Zeros, is True if signed zeros are provided by the
+implementation and used by the predefined floating point operations as
+specified in [IEC 89].  The idea behind a signed zero is that a zero
+resulting from a computation that underflows can retain the sign of the
+underflowing quantity, as if the zero represented an infinitesimal
+quantity instead; the sign of a zero quantity, interpreted as if it were
+infinitesimal, can then affect the outcome of certain arithmetic
+operations.
+</p>
+<p>
+   Moreover, various higher-level operations, such as the elementary
+functions, are defined to yield zeros with specified signs for particular
+parameter values when the Signed_Zeros attribute of the target type is
+True.  And indeed, some such operations, for example, Arctan and Arccot
+produce different (nonzero) results in certain cases, depending on the
+sign of a zero parameter, when Signed_Zeros is True.
+</p>
+<p>
+   In some cases, no conventions exist yet for the sign of a zero result.
+We do not specify the sign in such cases, but instead require the
+implementation to document the sign it produces.  Also, we have not
+carried over into the facilities for complex arithmetic and the complex
+elementary functions the specifications for the signs of zero results (or
+their components) developed by the SIGAda NumWG, largely because of their
+excessive complexity. Instead we merely suggest that implementations
+should attempt to provide sensible and consistent behavior in this regard
+(for example, by preserving the sign of a zero parameter component in a
+result component that behaves like an odd function).
+</p>
+
+<h3>
+<a name=2-3>
+G.2.3  The Primitive Function Attributes
+</a>
+</h3>
+
+<p>
+A group of attributes of floating point types called the "primitive
+function" attributes is provided, in support of Requirement R11.1-A(1),
+to facilitate certain operations needed by the numerical specialists who
+develop mathematical software libraries such as the elementary functions.
+</p>
+<p>
+   These attributes are modelled on the various functions in the standard
+package Generic_Primitive_Functions for Ada 83 [ISO 94b], but made
+available in the language as attributes of a floating point subtype
+rather than as functions in a generic package.  These attributes support
+</p>
+<ul>
+<li>  
+    error-free scaling by a power of the hardware radix,
+<li>
+    decomposition of a floating point quantity into its components
+     (mantissa and exponent), and construction of a floating point
+     quantity from such components,
+<li>
+    calculation of exact remainders, and various directed rounding
+     operations.
+</ul>
+<p>
+All of these attributes yield the mathematically specified results, which
+are either machine numbers or have the accuracy of the parameters.  For a
+general rationale for the design of the primitive functions, see [Dritz
+91b].  (Some of the attributes have different names from the
+corresponding functions in [ISO 94b], since some of the names in the
+latter had already been used for other new, but unrelated, attributes.)
+</p>
+<p>
+   The casting of the primitive functions as attributes, rather than as
+functions in a generic package, befits their primitive nature and allows
+them to be used as components of static expressions, when their
+parameters are static.
+</p>
+<p>
+   The Exponent and Fraction attributes decompose a floating point number
+into its exponent and (signed) fraction parts.  (These attributes, along
+with Scaling and Leading_Part, are useful in the argument reduction step
+of certain kinds of function approximation algorithms in high-quality
+mathematical software; Scaling and Compose are similarly useful in the
+final result assembly steps of such algorithms.)
+</p>
+<p>
+   T'Exponent(X) is defined in such a way that it gives an indication of
+the gross magnitude of X, even when X is denormalized.  In particular, if
+X is repetitively scaled down by a power of the hardware radix,
+T'Exponent(X) will decrease by one and will continue to do so (on
+machines with denormalized numbers) even after X becomes denormalized.
+T'Fraction(X) will not change as X is scaled in this way, even when X
+becomes denormalized.  To achieve this behavior, an implementation of
+Exponent must do more than just pick up the hardware exponent field and
+unbias it, and an implementation of Fraction must do more than just pick
+up the hardware fraction field; both attributes must be sensitive to
+denormalized numbers.
+</p>
+<p>
+   (Indeed, the presence or absence of the leading fraction digit is
+dependent on whether a number is denormalized or not, on IEEE hardware.
+Probably the most efficient solution to the problem is for the
+implementation of Exponent to scale the operand up by an appropriate
+fixed amount k sufficient to normalize it when the operand is in the
+denormalized range, as evidenced by its having the minimum exponent or by
+other means; extract and unbias the exponent field; and then subtract k
+to obtain the result.  The implementation of Fraction can simply extract
+the fraction field after a similar scaling up when the operand is in the
+denormalized range, and then attach the appropriate fixed exponent; what
+the scaling accomplishes is the left shifting of the fraction field and
+the removal of its leading digit.)
+</p>
+<p>
+   The Copy_Sign attribute transfers the sign of one value to another.
+It is provided for those applications that require a sign to be
+propagated, even (on machines with signed zeros) when it originates on a
+zero; such a need cannot be met by the predefined comparison operators
+and various sign-changing operations (like abs and negation), because
+comparison ignores the sign of zero and therefore cannot be used to
+determine the sign of a zero.  By the same token, the implementation of
+Copy_Sign must likewise use some other technique, such as direct transfer
+of the sign bit or some other examination of the Sign operand to
+determine its sign.  An application can use the Copy_Sign attribute to
+determine the sign of a zero value, when required, by transferring that
+sign to a nonzero value and then comparing the latter to zero.
+</p>
+<p>
+   The Remainder attribute computes the remainder upon dividing its first
+floating point parameter by its second.  It considers both parameters to
+be exact, and it delivers the exact remainder, even when the first
+parameter is many orders of magnitude larger than the second; for this
+reason, its implementation can be tricky.  This attribute is useful in
+implementing the argument reduction step of algorithms for computing
+periodic functions (when the period is given exactly).
+   The function T'Remainder(X, Y) is defined so that the magnitude of the
+result is less than or equal to half the magnitude of Y; it may be
+negative, even when both parameters are positive.  Note that the
+Remainder attribute cannot be considered to be a natural extension of the
+predefined rem operator for floating point operands (and, indeed, that is
+one reason why the functionality was not made available by overloading
+rem).  To see this, observe that
+<pre>
+   Float'Remainder(14.0, 5.0)   -- yields -1.0
+</pre>
+whereas
+<pre>
+   14 rem 5                     -- yields 4
+</pre>
+and so are quite different.  The rationale for defining Remainder this
+way is twofold: it exhibits the behavior preferred by numerical analysts
+(i.e., it yields a reduced argument of generally smaller magnitude), and
+it agrees with the IEEE rem operator.  Indeed, the latter is implemented
+in hardware on some machines; when available, it should certainly be used
+instead of the painful alternative documented in [Dritz 91b].
+</p>
+<p>
+   The functionality of the Successor and Predecessor functions of [ISO
+94b] is provided by extending the existing attributes Succ and Pred to
+floating point types.  Note that T'Succ(0.0) returns the smallest
+positive number, which is a denormalized number if T'Denorm is True and a
+normalized number if T'Denorm is False; this is equivalent to the "fmin"
+derived constant of LIA-1 (Language Independent Arithmetic) [ISO 93].
+(Most of the other constants and operations of LIA-1 are provided either
+as primitive functions or other attributes in Ada 95; those that are
+absent can be reliably defined in terms of existing attributes.)
+</p>
+
+<h2>
+<a name=3>
+G.3  Assignments to Variables of Unconstrained Numeric Types
+</a>
+</h2>
+
+<p>
+Ada 83 did not make a distinction between unconstrained and constrained
+numeric subtypes.  Any subtype T was considered constrained by the values
+given by T'First and T'Last; if no range constraint was declared for T,
+then T'First = T'Base'First and T'Last = T'Base'Last.
+</p>
+<p>
+   It was technically not possible for a variable of an unconstrained
+subtype to be assigned a value outside the range T'Base'First ..
+T'Base'Last.  This prevented the optimization of leaving a value in an
+extended register beyond an assignment, fulfilling subsequent references
+to the target variable from the register.  To guarantee that the new
+value of the target variable after an assignment is not outside the range
+T'Base'First .. T'Base'Last, it is necessary in Ada 83 either to store
+the register into the variable's assigned storage location (if such a
+store operation could signal violation of the range check by generating
+an overflow condition) or to compare the value in the register to the
+values of T'Base'First and T'Base'Last; if the range check succeeds, the
+value in the register can be used subsequently.
+   Ada 95 does not perform a range check on the value assigned to a
+variable of an unconstrained numeric subtype; consequently, such a target
+variable can acquire a value outside its base range (T'Base'First ..
+T'Base'Last).  This allows the value to be retained in the register in
+which it was generated and never stored (if all subsequent references to
+the target variable can be fulfilled from the register) nor checked by
+comparison for inclusion in the base range.
+</p>
+<p>
+   A consequence of this change, which generally allows more efficient
+object code to be generated, is that an Ada 83 program that raised
+Constraint_Error for a range violation on assignment to a variable of an
+unconstrained numeric subtype may raise the exception later (at a
+different place) or not at all.  The first possibility arises because it
+may be necessary to store the extended register in the storage format for
+any of several reasons at a place far removed from the original
+assignment.  The opportunity to raise the exception at such remote places
+is provided by a new rule that allows Constraint_Error to be raised at
+the place where a variable is referenced (fetched), if its value is
+outside its base range.
+</p>
+
+<h2>
+<a name=4>
+G.4  Accuracy and Other Performance Issues
+</a>
+</h2>
+
+<p>
+The Numerics Annex specifies the accuracy to be delivered by the
+elementary functions, the complex arithmetic operations, and the complex
+elementary functions, and the performance to be expected from the random
+number generator.  It also specifies the accuracy expected of the
+predefined floating point and fixed point arithmetic operators.  If the
+Numerics Annex is not implemented, the predefined arithmetic operations
+and the various numerical packages do not have to yield any particular
+language-defined accuracy or performance, except where specified outside
+the Numerics Annex.
+</p>
+<p>
+   Even though the accuracy and performance requirements of the Numerics
+Annex are realistic, strict conformance may, in certain implementations,
+come only at a price.  One or more native floating point instructions may
+produce slightly anomalous behavior that cannot conform to the model
+without some kind of sacrifice; for example, the purported maximum
+precision may have to be reduced, or some operations may have to be
+simulated in software.  Similarly, achieving the specified accuracy in
+the elementary functions (say) may mean abandoning less accurate but much
+faster versions available on a hardware chip.  Thus, to allow the user to
+trade accuracy for other considerations, the Numerics Annex specifies a
+pair of modes, strict mode and relaxed mode, that may be selected by the
+user.  The accuracy and other performance requirements apply only when
+the strict mode is selected; the relaxed mode exempts implementations
+from these requirements, exactly as if the Numerics Annex had not been
+implemented.
+</p>
+<p>
+   A program that is intended for wide distribution, and whose numerical
+performance is to be guaranteed and portable across implementations, must
+be compiled and linked in the strict mode.  Its portability will clearly
+extend, in that case, only to implementations that support the Numerics
+Annex.
+</p>
+<p>
+   The language does not specify how the modes should be implemented.  It
+is clear, however, that the choice of mode can affect code generation,
+the values of the model-oriented attributes, and the version of the
+numerical libraries that is used.  In implementations that meet the
+requirements without any undue sacrifices, or that have nothing
+substantial to gain from their relaxation, the two modes may, in fact, be
+identical.
+</p>
+
+<h3>
+<a name=4-1>
+G.4.1  Floating Point Arithmetic and Attributes
+</a>
+</h3>
+
+<p>
+The strict-mode accuracy requirements for predefined floating point
+arithmetic operations are based on the same kind of model that was used
+in Ada 83, but with several changes.  The Ada 83 model of floating point
+arithmetic was a two-level adaptation of the "Brown Model" [Brown 81] and
+defined both model numbers and safe numbers.  The Ada 95 model is closer
+to a one-level, classical Brown Model that defines only model numbers,
+although it innovates slightly in the treatment of the overflow
+threshold.
+</p>
+<p>
+   The existence of both model numbers and safe numbers in Ada 83 caused
+confusion which hopefully will not apply to Ada 95.  Note however, that
+the model numbers in Ada 95 are conceptually closer to the safe numbers
+rather than the model numbers of Ada 83 in terms of their role in the
+accuracy requirements.  Other problems with the Ada 83 model centered
+around inherent compromises in the way the Brown Model was adapted to Ada
+83.  These compromises are eliminated in Ada 95, and other improvements
+are made, by
+</p>
+<ul>
+<li>
+    freeing the model numbers to have a mantissa length that depends
+     only on the implementation's satisfaction of the accuracy
+     requirements, rather than a quantized mantissa length;
+<li>
+    defining the model numbers to have the hardware radix, rather than a
+     fixed radix of two;
+<li>
+    defining the model numbers to form an infinite set, and basing
+     overflow considerations on the concept of a type's "safe range"
+     rather than on the largest model number;
+<li>
+    separating range and precision considerations, rather than tying
+     them together intimately via the infamous "4B Rule" [RM83 3.5.7];
+     and
+<li>
+         freeing the minimum exponent of the model numbers from a connection
+     to the overflow threshold, allowing it to reflect underflow
+     considerations only.
+</ul>
+<p>
+   We will now consider these in detail.
+</p>
+<dl>
+<dt>
+Mantissa Length
+<dd>
+<p>
+     The Ada 83 safe numbers have mantissa lengths that are a function of the
+Digits attribute of the underlying predefined type, giving them a
+quantized length chosen from the list (5, 8, 11, 15, 18, 21, 25, ...).
+Thus, on binary hardware having T'Machine_Mantissa equal to 24, which is
+a common mantissa length for the single-precision floating point hardware
+type, the last three bits of the machine representation exceed the
+precision of the safe numbers.  As a consequence, even when the machine
+arithmetic is fully accurate (at the machine-number level), one cannot
+deduce that Ada arithmetic operations deliver full machine-number
+accuracy.  By freeing the mantissa length from quantization, tighter
+accuracy claims will be provable on many machines.  As an additional
+consequence of this change, in Ada 95 the two types declared as follows
+<pre>
+   type T1 is digits D;
+   type T2 is digits T1'Digits range T1'First .. T1'Last;
+</pre>
+can be represented identically.  This matches one's intuition, since the
+declaration of T2 requests neither more precision nor more range than
+that of T1.  In Ada 83, the chosen representations almost always differ,
+with T2'Base'Digits being greater than T1'Base'Digits, for reasons having
+nothing to do with hardware considerations.  (Note that this artificial
+example is not intended to illustrate how one should declare two
+different types with the same representation.)
+</p>
+<dt>
+Radix
+<dd>
+<p>     
+Using the hardware radix rather than a binary radix has two effects:
+</p>
+<ul>
+<li>  
+    It permits practical implementations on decimal hardware (which,
+     though not currently of commercial significance for mainstream
+     computers, is permitted by the radix-independent IEEE floating point
+     arithmetic standard [IEEE 87]; is appealing for embedded computers
+     in consumer electronics; and is used in at least one such
+     application, a Hewlett-Packard calculator);
+<li>
+    On hexadecimal hardware, it allows more machine numbers to be
+     classed as model numbers (and therefore to be proven to possess
+     special properties, such as being exactly representable,
+     contributing no error in certain arithmetic operations, and so on).
+</ul>
+<p>
+As an example of the latter effect, note that T'Last will become a model
+number on most hexadecimal machines.  Also, on hexadecimal hardware, a
+64-bit double-precision type having 14 hexadecimal (or 56 binary) digits
+in the hardware mantissa, as on many IBM machines, has safe numbers with
+a mantissa length of 51 binary bits in Ada 83, and thus no machine number
+of this type with more than 51 bits of significance is a safe number.  In
+Ada 95, such a type would have a mantissa length of 14 hexadecimal
+digits, with the consequence that every machine number with 53 bits of
+significance is now a model number, as are some with even more.
+</p>
+<p>
+   Note that the type under discussion does not have Ada 83 safe numbers
+with 55 bits in the mantissa, even though that is the next possible
+quantized length and one which is less than that of the machine mantissa.
+This is because some machine numbers with 54 or 55 bits of significance
+do not yield exact results when divided by two and cannot therefore be
+safe numbers.  This is a consequence of their hexadecimal normalization,
+and it gives rise to the phenomenon known as "wobbling precision":  the
+hexadecimal exponent remains unchanged by the division, while the
+mantissa is shifted right, losing a bit at the low-order end.
+</p>
+<dt>
+Safe Range
+<dd>
+<p>     
+Extending the model numbers to an infinite set is intended to fill a gap
+in Ada 83 wherein the results of arithmetic operations are not formally
+defined when they are outside the range of the safe numbers but an
+exception is not raised.  Some of the reasons why this can happen are as
+follows:
+</p>
+<ul>
+<li>
+    the quantization of mantissa lengths may force the bounds of the
+     range of safe numbers to lie inside the actual hardware overflow
+     threshold;
+<li>
+    arithmetic anomalies of one operation may require the attributes of
+     model and safe numbers to be conservative, with the result that
+     other operations exceed the minimum guaranteed performance;
+<li>
+    the provision and use of extended registers in some machines moves
+     the overflow threshold of the registers used to hold arithmetic
+     results well away from that of the storage representation;
+<li>
+    the positive and negative actual overflow thresholds may be
+     different, as on radix-complement machines.
+</ul>
+<p>
+   The change means, of course, that one can no longer say that the model
+numbers of a type are a subset of the machine numbers of the type.  As a
+consequence we have introduced the concept of the "safe range" of a type
+in Ada 95.  This is the subrange of the type's base range that is
+guaranteed to be free of overflow; in Ada 83 terms, this subrange was the
+range of the type's safe numbers.  Thus, in Ada 95 the the model numbers
+of a type within the type's safe range are indeed a subset of the machine
+numbers of the type.
+</p>
+<p>
+   By continuing the model numbers beyond the safe range of a type, we
+can say that an operation whose result interval (defined, as usual, in
+terms of model numbers) transcends the safe range of the result type
+either raises Constraint_Error, signalling overflow, or delivers a value
+from that result interval (provided the Machine_Overflows attribute is
+True for the type).  In Ada 83, the result when an exception was not
+raised was completely implementation defined in this case.  Of course, it
+continues to be implementation defined when the Machine_Overflows
+attribute is False for the type.
+</p>
+<p>
+   Incidentally, the safe range of a type has bounds characterized by two
+independent attributes, Safe_First and Safe_Last.  In Ada 83, the range
+of safe numbers of a type was necessarily symmetric, with its upper bound
+being given by the value of the Safe_Large attribute.  This was
+necessary, because Safe_Large was itself defined in terms of Safe_Emax,
+which gave the maximum exponent of the safe numbers.  Because the model
+numbers no longer have a finite range, we no longer talk about the
+maximum exponent of the model numbers, and in fact there is no longer
+such an atttribute.  Allowing the safe range to be asymmetric
+accommodates radix-complement machines better than Ada 83; in fact, it
+removes another impediment to the identical representation of the types
+T1 and T2 in the example given earlier.
+</p>
+<dt>
+The 4B Rule
+<dd>
+<p>
+     Separating range and precision considerations is equivalent to dropping
+the "4B Rule" as it applies to the predefined types.  There is however a
+"4D Rule" which affects the implementation's implicit selection of an
+underlying representation for a user-declared floating point type lacking
+a range specification, providing in that case a guaranteed range tied to
+the requested precision.
+</p>
+<p>
+   The change in the application of the 4B Rule allows all hardware
+representations to be accommodated as predefined types with attributes
+that accurately characterize their properties.  Such types are available
+for implicit selection by the implementation when their properties are
+compatible with the precision and range requested by the user; but they
+remain unavailable for implicit selection, in the absence of an explicit
+range specification, exactly as in Ada 83.
+</p>
+<p>
+   The 4D Rule says that the representation chosen for a floating point
+type declared with a decimal precision of d, but lacking a range
+specification, must provide a safe range of at least -10.04d .. 10.04d.
+If the type declaration includes a range specification, the safe range
+need only cover the specified range.
+</p>
+<p>
+   The 4B Rule was introduced in Ada 83 in order to define the model
+numbers of a type entirely as a function of a single parameter (the
+requested decimal precision).  By its nature, the rule potentially
+precludes the implementation of Ada in some (hypothetical) environments;
+in other (actual) environments, it artificially penalizes some hardware
+types so strongly that they have only marginal utility as predefined
+types available for implicit selection and may end up being ignored by
+the vendor.  Such matters are best left to the judgment of the
+marketplace and not dictated by the language.  The particular minimum
+range required in Ada 83 (as a function of precision) is furthermore
+about twice that deemed minimally necessary for numeric applications
+[Brown 81].
+</p>
+<p>
+   Among implementations of Ada 83, the only predefined types whose
+characteristics are affected by the relaxation of the 4B Rule are DEC VAX
+D-format and IBM Extended Precision, both of which have a narrow exponent
+range in relation to their precision.
+</p>
+<p>
+   In the case of VAX D-format, even though the hardware type provides
+the equivalent of 16 decimal digits of precision, its narrow exponent
+range requires that the Digits attribute for this type be severely
+penalized and reported as 9 in Ada 83; the Mantissa attribute is
+similarly penalized and reported as 31, and the other model attributes
+follow suit.  In Ada 95, in contrast, the Digits attribute of this
+predefined type would have a truthful value of 16, the Model_Mantissa
+attribute (corresponding to Ada 83's Mantissa attribute, but interpreted
+relative to the hardware radix rather than a fixed radix of two) would
+have a value of 56, and the other model-oriented attributes would
+accurately reflect the type's actual properties.  A user-declared
+floating point type requesting more than 9 digits of precision does not
+select D-format as the underlying representation in Ada 83, but instead
+selects H-format; in Ada 95, it still cannot select D-format if it lacks
+a range specification (because of the effect of the new 4D Rule), but it
+can select D-format if it includes an explicit range specification with
+sufficiently small bounds.
+</p>
+<p>
+   The IBM Extended Precision hardware type has an actual decimal
+precision of 32, but the 4B Rule requires the value of its Digits
+attribute to be severely penalized and reported as 18 in Ada 83, only
+three more than that of the double-precision type.  Supporting this type
+allows an Ada 83 implementation to increase System.Max_Digits from 15 to
+18, a marginal gain and perhaps the reason why it is rarely supported.
+In Ada 95, on the other hand, such an implementation can support Extended
+Precision with a Digits attribute having a truthful value of 32, though
+System.Max_Digits must still be 18.  Although a floating point type
+declaration lacking a range specification cannot request more than 18
+digits on this machine, those including an explicit range specification
+with sufficiently small bounds can do so and can thereby select Extended
+Precision.
+</p>
+<p>
+   Note that the named number System.Max_Base_Digits has been added to
+Ada 95; it gives the maximum decimal precision that can be requested in a
+type declaration that includes a range specification.  In IBM systems
+having the Extended Precision type, the value of this named number can be
+32.
+</p>
+<dt>
+Minimum Exponent
+<dd>
+<p>     
+Freeing the minimum exponent of the model numbers to reflect only
+underflow considerations removes another compromise made necessary in Ada
+83 by defining the model numbers of a type in terms of a single
+parameter.  The minimum exponent of the model or safe numbers of a type
+in Ada 83 is required to be the negation of the maximum exponent (thereby
+tying it implicitly both to the overflow threshold and, through the 4B
+Rule, to the precision of the model numbers).
+</p>
+<p>
+   One consequence of this is that Ada 83's range of safe numbers may
+need to be reduced simply to avoid having the smallest positive safe
+number lie inside the implementation's actual underflow threshold.  Such
+a reduction gives yet another way of obtaining values outside the range
+of safe numbers without raising an exception.  Another consequnce is that
+the smallest positive safe number may, on the other hand, have a value
+unnecessarily greater than the actual underflow threshold.
+</p>
+<p>
+   This change therefore allows more of the machine numbers to be model
+numbers, allowing sharper accuracy claims to be proved.
+</p>
+<dt>
+Machine and Model Numbers
+<dd>
+<p>     
+Consideration was given to eliminating the model numbers and retaining
+only the machine numbers.  While this would further simplify the
+semantics of floating point arithmetic, it would not eliminate the
+interval orientation of the accuracy requirements if variations in
+rounding mode from one implementation to another and the use of extended
+registers are both to be tolerated.  It would simply substitute the
+machine numbers and intervals for the model numbers and intervals in
+those requirements, but their qualitative form would remain the same.
+However, rephrasing the accuracy requirements in terms of machine numbers
+and intervals cannot be realistically considered, since many platforms on
+which Ada has been implemented and might be implemented in the future
+could not conform to such stringent requirements.
+</p>
+<p>
+   If an implementation has clean arithmetic, its model numbers in the
+safe range will in fact coincide with its machine numbers, and an
+analysis of a program's behavior in terms of the model numbers will not
+only have the same qualitative form as it would have if the accuracy
+requirements were expressed in terms of machine numbers, but it will have
+the same quantitative implications as well.  On the other hand, if an
+implementation lacks guard digits or has genuine anomalies, its model
+numbers in the safe range will be a subset of its machine numbers having
+less precision, a narrower exponent range, or both, and accuracy
+requirements expressed in the same qualitative form, albeit in terms of
+the machine numbers, would be unsatisfiable.
+</p>
+<p>
+   The values of the model-oriented attributes of a subtype S of a
+floating point type T are defined in terms of the model numbers and safe
+range of the type T, when the Numerics Annex is implemented; this is true
+even in the relaxed mode.  (Some of these attributes have partially
+implementation-defined values if the Numerics Annex is not implemented.)
+</p>
+<p>
+   Although these attributes generally have counterparts in Ada 83, their
+names are new in Ada 95.  The reason is that their values may be
+different in Ada 95.  Clearly, S'Model_Mantissa and S'Model_Emin will
+have very different values on a nonbinary machine, since they are
+interpreted relative to the hardware radix, rather than a radix of two.
+(On a hexadecimal machine, each will have roughly a quarter of the value
+of the corresponding attribute in Ada 83.)  S'Model_Small and
+S'Model_Epsilon will only change slightly, if at all, because various
+effects will tend to cancel each other out.  In any case, the new names
+convert what would be upward inconsistencies into upward
+incompatibilities.  We have recommended that implementations continue to
+provide the old attributes, as implementation-defined attributes, during
+a transition period, with compiler warning messages when they are used.
+An Ada 83 program using the Safe_Small or Base'Epsilon attributes should
+be able to substitute the Model_Small and Model_Epsilon attributes for an
+equivalent (and logically consistent) effect, but substitutions for the
+other attributes may require more careful case by case analysis.
+</p>
+<p>
+   It is instructive to consider how the fundamental model-oriented
+attributes and the Digits attribute of a predefined floating point type P
+are determined in Ada 95, when the Numerics Annex is implemented.  The
+algorithm is as follows.
+</p>
+<ul>
+<li>  
+    Initially set P'Model_Emin to P'Machine_Emin and P'Model_Mantissa to
+     P'Machine_Mantissa.  This tentatively defines an infinite set of
+     model numbers.
+<li>
+    If the accuracy requirements, defined in terms of the model numbers,
+     are satisfied by every predefined arithmetic operation that is
+     required to satisfy them, when overflow does not occur, then these
+     are the final values of those attributes.  Otherwise, if the machine
+     lacks guard digits or exhibits precision anomalies independent of
+     the exponent, reduce P'Model_Mantissa by one until the accuracy
+     requirements are satisfied (when overflow does not occur); if
+     underflow occurs prematurely, increase P'Model_Emin by one until the
+     accuracy requirements are satisfied near the underflow threshold.
+     The final set of model numbers has now been determined.
+<li>
+    Let P'Safe_First be the smallest model number that is greater than
+     P'First and similarly let P'Safe_Last be the largest model number
+     that is less than P'Last.  These tentatively define the safe range.
+<li>
+    If overflow is avoided throughout the safe range by every predefined
+     arithmetic operation, then this is the final safe range.  Otherwise,
+     i.e. if overflow occurs prematurely, increase P'Safe_First and/or
+     decrease P'Safe_Last by one model number until overflow is correctly
+     avoided in the resulting safe range.  The final safe range has now
+     been determined.
+<li>
+    Finally, let P'Digits be the maximum value of d for which
+<pre>
+     Ceiling(d*log(10.0)/log(P'Machine_Radix) + 1) <= P'Model_Mantissa.
+</pre>
+     This is relevant in the context of the selection of a representation
+     for a user-declared floating point type, which must provide at least
+     as many decimal digits of precision as are requested.  If this
+     condition is satisfied, the type's arithmetic operations will
+     satisfy the accuracy requirements.
+</ul>
+<p>
+P'Model_Epsilon and P'Model_Small are defined in terms of other
+attributes by familiar formulae.  The algorithm for Ada 83, which is not
+given here, is much more complex and subtle, with more couplings among
+the attributes.
+</p>
+</dl>
+
+<h3>
+<a name=4-2>
+G.4.2  Fixed Point Arithmetic and Attributes
+</a>
+</h3>
+
+<p>
+The revision of the model of fixed point arithmetic focuses on two of the
+problems concerning fixed point types that have been identified in Ada
+83:
+</p>
+<ul>
+<li>  
+    The model used to define the accuracy requirements for operations of
+     fixed point types is much more complicated than it needs to be, and
+     many of its freedoms have never been exploited.  The accuracy
+     achieved by operations of fixed point types in a given
+     implementation is ultimately determined, in Ada 83, by the safe
+     numbers of the type, just as for floating point types, and indeed
+     the safe numbers can, and in some implementations do, have more
+     precision than the model numbers.  However, the model in Ada 83
+     allows the values of a real type (either fixed or float) to have
+     arbitrarily greater precision than the safe numbers, and so to lie
+     between safe numbers on the real number axis.  Implementations of
+     fixed point typically do not exploit this freedom.  Thus, the
+     opportunity to perturb an operand value within its operand interval,
+     although allowed, does not arise in the case of fixed point, since
+     the operands are safe numbers to begin with.  In a similar way, the
+     opportunity to select any result within the result interval is not
+     exploited by current implementations, which we believe always
+     produce a safe number; furthermore, in many cases (for some
+     operations) the result interval contains just a single safe number
+     anyway, given that the operands are safe numbers, and it ought to be
+     more readily apparent that the result is exact in these cases.
+<li>
+    Support for fixed point types is patchy, due to the difficulty of
+     dealing accurately with multiplications and divisions having
+     "incompatible smalls" as well as fixed point multiplications,
+     divisions, and conversions yielding a result of an integer or
+     floating point type.  Algorithms have been published in [Hilfinger
+     90], but these are somewhat complicated and do not quite cover all
+     cases, leading to implementations that do not support representation
+     clauses for Small and that, therefore, only support binary smalls.
+</ul>
+<p>
+   The solution adopted in Ada 95 is to remove some of the freedoms of
+the interval-based accuracy requirements that have never been exploited
+and to relax the accuracy requirements so as to encourage wider support
+for fixed point.  Applications that use binary scaling and/or carefully
+matched ("compatible") scale factors in multiplications and divisions,
+which is typical of sensor-based and other embedded applications, will
+see no loss of accuracy or efficiency.
+</p>
+<p>
+   A host of specialized requirements for information systems
+applications is addressed by the division of fixed point types into
+ordinary and decimal fixed point types.  The facilities for the latter
+are to be found in the Information Systems Annex, see Chapter F.
+</p>
+<p>
+   The default small in Ada 95 is an implementation-defined power of two
+less than or equal to the delta, whereas in Ada 83 it was defined to be
+the largest power of two less than or equal to the delta.  The purpose of
+this change is merely to allow implementations that previously used extra
+bits in the representation of a fixed point type for increased precision
+rather than for increased range, giving the safe numbers more precision
+than the model numbers, to continue to do so.  An implementation that
+does so must, however, accept the minor incompatibility represented by
+the fact that the type's default small will differ from its value in Ada
+83.  Implementations that used extra bits for extra range have no reason
+to change their default choice of small, even though Ada 95 allows them
+to do so.
+</p>
+<p>
+   Note that the simplification of the accuracy requirements that apply
+in the strict mode, by expressing them directly in terms of integer
+multiples of the result type's small rather than in terms of model or
+safe intervals, removes the need for many of the attributes of fixed
+point types.  However, it is recommended that implementations continue to
+provide these attributes as implementation-defined attributes during a
+transition period, with their Ada 83 values, and that implementations
+produce warning messages upon detecting their use.
+</p>
+<p>
+   The accuracy requirements for the adding operators and comparisons now
+simply say that the result is exact.  This was always the case in Ada 83,
+assuming operands were always safe numbers, and yet it was not clear from
+the model-interval form of the accuracy requirements that comparison of
+fixed point quantities was, in practice, deterministic.
+   Other accuracy requirements are now expressed in terms of small sets
+of allowable results, called "perfect result sets" or "close result sets"
+depending on the amount of accuracy that it is practical to require.
+These sets comprise consecutive integer multiples of the result type's
+small (or of a "virtual" small of 1.0 in the case of multiplication or
+division giving an integer result type).  In some cases, the sets contain
+a single such multiple or a pair of consecutive multiples; this
+translates into a requirement that the result be exact, if possible, but
+never off by more than one rounding error or truncation error.  This
+occurs with fixed point multiplications and divisions in which the
+operand and result smalls are "compatible" meaning that the product or
+quotient of the operand smalls (depending on whether the operation is a
+multiplication or a division) is either an integer multiple of the result
+small, or vice versa.
+</p>
+<p>
+   These compatible cases cover much of the careful matching of types
+typically exhibited by sensor-based and other embedded applications,
+which are intended to produce exact results for multiplications and at-
+most-one-rounding-error results for divisions, with no extra code for
+scaling; they can produce the same results in Ada 95, and with the same
+efficient implementation.  Our definition of "compatible" is more general
+than required just to cover those cases of careful matching of operand
+and result types, permitting some multiplications that require scaling of
+the result by at worst a single integer division, with an error no worse
+than one rounding error.
+</p>
+<p>
+   In cases where the smalls are incompatible, the accuracy requirements
+are relaxed, in support of Requirement R2.2-A(1); in fact, they are left
+implementation defined.  Implementations need not go so far as to use the
+Hilfinger algorithms [Hilfinger 90], though they may of course do so.  An
+Ada 95 implementation could, for instance, perform all necessary scaling
+on the result of a multiplication or division by a single integer
+multiplication or division (or shifting).  That is, the efficiency for
+the cases of incompatible smalls need not be less than that for the cases
+of compatible smalls.  This relaxation of the requirements is intended to
+encourage support for a wider range of smalls.  Indeed, we considered
+making support for all smalls mandatory in the strict mode on the grounds
+that the weaker requirements removed all barriers to practical support
+for arbitrary smalls, but we rejected it because it would make many
+existing implementations (which could in all other respects satisfy the
+requirements of strict mode) instantly nonconforming.
+</p>
+<p>
+   Ada 95 allows an operand of fixed point multiplication or division to
+be a real literal, named number, or attribute.  Since the value v of that
+operand can always be factored as an integer multiple of a compatible
+small, the operation must be performed with no more than one rounding
+error and will cost no more than one integer multiplication or division
+for scaling.  That v can always be factored in this way follows from the
+fact that it, and the smalls of the other operand and the result, are
+necessarily all rational quantities.
+</p>
+<p>
+   The accuracy requirements for fixed point multiplication, division,
+and conversion to a floating point target are left implementation defined
+(except when the operands' smalls are powers of the target's machine
+radix) because the implementation techniques described in [Hilfinger 90]
+rely on the availability of several extra bits in typical floating point
+representations beyond those belonging to the Ada 83 safe numbers; with
+the revision of the floating point model, in particular the elimination
+of the quantization of the mantissa lengths of model numbers, those bits
+are now likely gone.  Except when the operands' smalls are powers of the
+target's machine radix, requiring model-number accuracy for these
+operations would demand implementation techniques that are more exacting,
+expensive, and complicated than those in [Hilfinger 90], or it would
+result in penalizing the mantissa length of the model numbers of a
+floating point type just to recover those bits for this one relatively
+unimportant operation.  An implementation may use the techniques in
+[Hilfinger 90] for fixed point multiplication, division, and conversion
+to a floating point target; the accuracy achieved will be exactly as in
+Ada 83, but will simply not be categorizable as model-number accuracy,
+unless the operands' smalls are powers of the target's hardware radix.
+Furthermore, in the latter case, even simpler algorithms are available.
+</p>
+
+<h3>
+<a name=4-3>
+G.4.3  Accuracy of the Numerics Packages
+</a>
+</h3>
+
+<p>
+The Numerics Annex specifies the accuracy or other performance
+requirements that the mandatory elementary function and random number
+packages must satisfy in the strict mode.  These are discussed in A.3
+with the packages themselves.
+</p>
+
+<h2>
+<a name=5>
+G.5  Requirements Summary
+</a>
+</h2>
+
+<p>
+The facilities of the Numerics Annex and the floating point attributes of
+the Predefined Language Environment Annex relate to the requirements in
+11.1 (Floating Point).
+</p>
+<p>
+   The requirement
+<pre>
+     R11.1-A(1) - Standard Mathematics Packages
+</pre>
+is met in part by the Complex types and related packages of the Numerics
+Annex and in part by the elementary functions and random numbers packages
+of the Predefined Language Environment Annex.
+</p>
+<p>
+   The study topic
+<pre>
+     S11.1-B(1) - Floating Point Facilities
+</pre>
+is met by the numeric model presented in the Numerics Annex and by the
+floating point attributes provided in the Predefined Language Environment
+Annex.
+</p>
+
+<hr>
+<a href=rat95-copyright.html> Copyright </a> |
+<a href=rat95-contents.html> Contents </a> |
+<a href=rat95-index.html> Index </a> |
+<a href=rat95-p3-f.html> Previous </a> |
+<a href=rat95-p3-h.html> Next </a>
+
+<hr>
+<address>
+<a href=rat95-author.html> Laurent Guerby </a>
+</address>
+
+
+
+</body>
+</html>

@@ -1,0 +1,172 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 7.8: Change of Representation</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 7: Derived Types</H2>
+
+<H3><a name="7.8">7.8 Change of Representation</a></H3>
+
+The design  of Ada adheres to the principle of a single representation
+per type,  with the  consequence that  two types  must be  declared if
+there is  a need  for two  different representations.  Again  in  this
+situation, derivation  is used  to produce  a second  type that  is  a
+logical copy  of its  parent type, the only difference between the two
+types being the representation. Consider for example the parent type:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type PARENT(D :  BOOLEAN  :=  TRUE) is
+  record
+    A :  INTEGER;
+    case D is
+      when TRUE  =&gt;
+        U  :  INTEGER;
+        V  :  INTEGER;
+      when FALSE =&gt;
+        W  :  REAL;
+    end case;
+  end record;
+</pre></td></tr></table>
+<p>
+From a  logical point  of view,  derivation will produce a copy of the
+parent type:
+<p>
+<PRE>    type COPY is new PARENT;</PRE>
+<p>
+This means  that COPY  and PARENT  have the same components, including
+discriminants, and  components that  are declared  in variants. Having
+two  types,  we  can  specify  two  (different)  representations;  for
+example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+for PARENT use
+  record
+    -- a sparse representation that optimizes
+    -- efficiency of access to components
+  end record;
+
+for COPY use
+  record
+    -- a compact representation
+    -- to be stored on secondary storage
+  end record;
+</pre></td></tr></table>
+<p>
+For change  of representation  we can  exploit the  fact that  the two
+types are derived from each other and use explicit conversion:
+<p>
+<table border cellpadding=6><tr><td><pre>
+declare
+  C :  COPY;
+  P :  PARENT;
+begin
+  READ_FROM_DISK(C);
+  P :=  PARENT(C);      -- convert to PARENT form
+  OPERATE_EFFICIENTLY_ON (P);
+  C :=  COPY(P);        -- convert back to COPY form
+  WRITE_TO_DISK(C);
+end;
+</pre></td></tr></table>
+<p>
+or simply:
+<p>
+<table border cellpadding=6><tr><td><pre>
+declare
+  C :  COPY;
+begin
+  READ_FROM_DISK(C);
+  OPERATE_EFFICIENTLY_ON(PARENT(C));
+  WRITE_TO_DISK(C);
+end;
+</pre></td></tr></table>
+<p>
+Aside from  derivation, there  is  actually  no  satisfactory  way  to
+achieve this  change  of  representation.  Consider  for  example  the
+alternative of  copying (whether  manually or  with text  editors) the
+type definition of PARENT when defining the type COPY:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type COPY(D :  BOOLEAN  :=  TRUE) is
+  record
+    A :  INTEGER;
+    case D is
+      when TRUE   =&gt;
+        U  :  INTEGER;
+        V  :  INTEGER;
+      when FALSE =&gt;
+        W  :  REAL;
+    end case;
+  end record;
+</pre></td></tr></table>
+<p>
+To achieve  change of  representation, we  must first realize that the
+obvious idea - component-by-component assignment - will not work:
+<p>
+<table border cellpadding=6><tr><td><pre>
+P.D :=  C.D;       -- Illegal!
+P.A :=  C.A;
+case C.D is
+  when TRUE =&gt;
+    P.U :=  C.U;
+    P.V :=  C.V;
+  when FALSE =&gt;
+    P.W :=  C.W;
+end case;
+</pre></td></tr></table>
+<p>
+This is  the equivalent  of the  code that  will  be  generated  by  a
+compiler for  the conversion  for change  of  representation.  But  it
+cannot be  written directly  by the programmer since direct assignment
+to a  discriminant is  not allowed:  discriminant values  may only  be
+changed by  whole record  assignments. Therefore,  the solution to the
+above problem is to write:
+<p>
+<table border cellpadding=6><tr><td><pre>
+case C.D is
+  when TRUE =&gt;
+    P :=  (TRUE, C.A, C.V, C.U);
+  when FALSE =&gt;
+    P :=  (FALSE, C.A, C.W);
+end case;
+</pre></td></tr></table>
+<p>
+This solution  is wordy and again requires a manual copy of the record
+structure;  it   is  therefore   likely  to  create  errors  (such  as
+interchanging U  and V  above -  did you  spot it?).  Furthermore,  it
+suffers from  the  maintenance  problems  that  are  inherent  in  any
+solution that  requires text  duplication. Thus if the type definition
+is ever  extended, corresponding  changes need  to be performed in the
+above case  statement. Their  complexity - and hence the likelihood of
+error - will increase with the size of the record type definition.
+<p>
+Note finally  that defining  the type  PARENT in a generic package and
+creating copies  by generic  instantiation is  not a  solution to  our
+problem: All  instantiations would  result in types that have the same
+representation, and  conversions  between  such  types  would  not  be
+available.
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-07-09.html#7.9"><b>NEXT</b></a>
+&#128; <a href="ratl-07-07.html#7.7"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-07.html#7"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>
+

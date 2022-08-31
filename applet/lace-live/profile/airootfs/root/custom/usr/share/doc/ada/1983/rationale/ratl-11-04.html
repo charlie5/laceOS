@@ -1,0 +1,351 @@
+<HTML><HEAD>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<TITLE>Ada '83 Rationale, Sec 11.4: Overloading</TITLE>
+</HEAD>
+
+<BODY>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 11: General Program Structure - Visibility and Overloading</H2>
+
+<H3><a name="11.4">11.4 Overloading</a></H3>
+
+In Ada,  every use  of a  simple name or operator symbol is understood
+with reference to an (explicit or implicit) declaration of the name or
+symbol. In  the case  of types,  variables, and constants, at most one
+such declaration  can be  visible at  any one point in the program. In
+the case  of subprograms,  enumeration literals, and entries, however,
+several declarations may be simultaneously visible. An occurrence of a
+subprogram name,  such as  PUT or  "&#42;", may  therefore refer to one of
+several simultaneously  visible declarations.  The  name  or  operator
+symbol is then said to be overloaded.
+
+<p>
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<p>
+<a href="#11.4.1">11.4.1 Overloading of Operators</a><BR>
+<a href="#11.4.2">11.4.2 Overloading of Names</a><BR>
+<a href="#11.4.3">11.4.3 Overloading of Literals</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="11.4.1">11.4.1 Overloading of Operators</a></H3>
+
+The overloading  of operators  is a  situation familiar  also in other
+languages, and  it illustrates  the main  reason for  the existence of
+overloading in Ada. Consider, for example:
+<p>
+<table border cellpadding=6><tr><td><pre>
+I, J, K :  INTEGER;
+X, Y, Z :  REAL;
+</pre></td></tr></table>
+<p>
+It is then possible to write the statements
+<p>
+<table border cellpadding=6><tr><td><pre>
+K  :=  I&#42;J;
+Z  :=  X&#42;Y;
+</pre></td></tr></table>
+<p>
+in which the operator symbol "&#42;" refers in the first statement to
+<p>
+<PRE>    function "&#42;" (LEFT, RIGHT :  INTEGER) return INTEGER;</PRE>
+<p>
+and in the second statement to
+<p>
+<PRE>    function "&#42;" (LEFT, RIGHT :  REAL) return REAL;</PRE>
+<p>
+The functions  that  implement  integer  multiplication  and  floating
+multiplication are  represented by  the same  symbol because  they are
+different  implementations   of  the   same  abstract  operation:  the
+operation of multiplication.
+<p>
+The  overloading  of  predefined  operators  has  been  a  feature  of
+programming languages  ever since  <a href="ratl-BIB.html#languages">Fortran</a>. But Ada also permits users
+to define  new data types, for example COMPLEX or RATIONAL. Since much
+of the  power of  the language comes from its extensibility, and since
+proper use  of that  extensibility requires  that we  make  as  little
+distinction as  possible between predefined and user-defined types, it
+is natural  that Ada  also permits  new operations  to be  defined, by
+declaring new  overloadings of  the operator symbols. Therefore, since
+the operation  of  abstract  multiplication  applies  to  complex  and
+rational numbers, one would expect to see
+<p>
+<table border cellpadding=6><tr><td><pre>
+function "&#42;" (LEFT, RIGHT :  COMPLEX)     return COMPLEX;
+function "&#42;" (LEFT, RIGHT :  RATIONAL)    return RATIONAL;
+</pre></td></tr></table>
+<p>
+whereby the  programmer can multiply rational or complex numbers using
+the familiar  mathematical notation.  The ability  to coin descriptive
+names is  an important  part of  good programming, and it is therefore
+desirable that  a programming  language give  the programmer  as  much
+freedom as  possible in  the choice  of names.  Moreover, the  use  of
+familiar notation in new contexts is a very powerful descriptive tool:
+it is  an example  of the  principle of analogy. The ability of an Ada
+programmer to  overload operators  upon new types allows the principle
+of analogy  to be  used  in  programming.  Further  examples  of  this
+principle are:
+<p>
+<table border cellpadding=6><tr><td><pre>
+function "&#42;" (LEFT, RIGHT :  VECTOR)            return SCALAR;
+function "&#42;" (LEFT, RIGHT :  MATRIX)            return MATRIX;
+</pre></td></tr></table>
+<p>
+In practice,  it is  unlikely that  two quite  different overloadings,
+such as  the two  declarations of "&#42;" above, will be defined together.
+It is  more likely  that each  will be defined in its own package - in
+this case, one package might be called VECTOR_OPERATIONS and the other
+SCALAR_OPERATIONS. Similarly,  rational multiplication  might well  be
+defined in a package
+<p>
+<table border cellpadding=6><tr><td><pre>
+package RATIONAL_ARITHMETIC is
+
+  type RATIONAL is private;
+
+  function "+"   (RIGHT :  RATIONAL) return RATIONAL;
+  function "-"   (RIGHT :  RATIONAL) return RATIONAL;
+
+  function "+"                     (LEFT, RIGHT :  RATIONAL)  return RATIONAL;
+  function "-"                     (LEFT, RIGHT :  RATIONAL)  return RATIONAL;
+  function "&#42;"                     (LEFT, RIGHT :  RATIONAL)  return RATIONAL;
+  function "/"                     (LEFT, RIGHT :  RATIONAL)  return RATIONAL;
+
+  function "&#42;&#42;"                    (LEFT :  RATIONAL;  RIGHT : INTEGER) return RATIONAL;
+
+  function "/"   (LEFT :  INTEGER;  RIGHT :  POSITIVE) return RATIONAL;
+  ...
+private
+
+  type RATIONAL is
+    record
+      NUMERATOR    :  INTEGER;
+      DENOMINATOR  :  POSITIVE;
+    end record;
+
+end RATIONAL_ARITHMETIC;
+</pre></td></tr></table>
+<p>
+In this package, a new type is defined, together with the complete set
+of applicable  operations. The programmer defining the type is free to
+use the  traditional operator  symbols for  the new  type, and to give
+them a  meaning analogous  to their meaning with other types. There is
+no need  to worry about other meanings (declarations) that might occur
+in other  packages defining  other types: the Ada overloading facility
+permits  the   package  RATIONAL_ARITHMETIC   to  be   defined  as  an
+independent software component.
+<p>
+These operations could be used thus:
+<p>
+<table border cellpadding=6><tr><td><pre>
+CM_PER_INCH :  constant RATIONAL  :=  254/100;  -- by international decree!
+function INCH_TO_CM(INCHES :  RATIONAL) return RATIONAL is
+begin
+  return INCHES &#42; CM_PER_INCH;
+end;
+</pre></td></tr></table>
+<p>
+Note that,  by an  analysis similar to the one given in <a href="ratl-09-02.html#9.2.2">section 9.2.2</a>,
+we can identify the "/" operation in the expression "254/100" as being
+the function that takes two integers and yields a rational result.
+
+<H3><BR><a name="11.4.2">11.4.2 Overloading of Names</a></H3>
+
+Several languages  beside Ada,  such  as  <a href="ratl-BIB.html#languages">Algol  68</a>,  permit  operator
+symbols to be overloaded. Ada however also permits subprogram names to
+be overloaded, for exactly the same reasons. Consider for example
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure PUT(X :  in STRING);
+procedure PUT(X :  in INTEGER);
+</pre></td></tr></table>
+<p>
+This allows a programmer to write
+<p>
+<table border cellpadding=6><tr><td><pre>
+PUT("The value of X is:  ");
+PUT(X);
+</pre></td></tr></table>
+<p>
+The abstract  operation PUT  applies indifferently to both strings and
+integers; it  is therefore  appropriate that  the same name be used in
+both cases.  Observe that  this is  in accord  with the conventions of
+natural language:
+<p>
+<PRE>    "Put the book on the shelf"</PRE>
+<p>
+<PRE>    "Put the cat out"</PRE>
+<p>
+which does not have separate words for putting books and putting cats.
+<p>
+Ada does  not permit  the overloading  of variables or constants. This
+again is in accordance with traditional habits of thought: we seem far
+more willing to accept potentially ambiguous names for operations than
+for things. Thus, mathematicians typically write
+<p>
+<table border cellpadding=6><tr><td><pre>
+I1  +  I2       -- integers
+X1  +  X2       -- floating-point values
+V1  +  V2       -- vectors
+M1  +  M2       -- matrices
+Z1  +  Z2       -- complex numbers
+</pre></td></tr></table>
+<p>
+where all  the addition  operations are  written "+" but their operand
+types are distinguished by a systematic nomenclature. It seems to be a
+convention of  our language  that verbs  are  generic  but  nouns  are
+specific; Ada  reflects this by permitting operations to be overloaded
+but - normally - not operands. Thus, Ada allows (and we find normal)
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure SERVE(S :  SOUP);
+procedure SERVE(F :  FRUIT);        -- permitted overloading
+</pre></td></tr></table>
+<p>
+but does not allow (and which we would find abnormal)
+<p>
+<table border cellpadding=6><tr><td><pre>
+OF_THE_DAY :  SOUP;
+OF_THE_DAY :  FRUIT;              -- not a legal overloading!
+</pre></td></tr></table>
+
+<H3><BR><a name="11.4.3">11.4.3 Overloading of Literals</a></H3>
+
+Literals stand  for values.  However, in a strongly-typed language, it
+must be  possible to associate a type with every value, and so in some
+sense a  literal should imply a type. This creates difficulties in two
+cases: first, when different values, of different types, by chance are
+represented  by   the  same  literal;  and  secondly,  when  the  same
+conceptual value belongs to more than one type.
+<p>
+<H4>Enumeration Literals</H4>
+<p>
+The first case is called homography: two conceptually different values
+have the same symbol. It may be illustrated by
+<p>
+<table border cellpadding=6><tr><td><pre>
+package PALETTE is
+  type COLOR is (RED, ORANGE, YELLOW, GREEN,  ... );
+  procedure PUT(X :  COLOR);
+  ...
+end;
+
+package BOTANY is
+  type FRUIT is (APPLE, ORANGE, BANANA, KIWI,  ... );
+  procedure PUT(X º  FRUIT);
+  ...
+end;
+
+package ORNIT&#187;OLOGY is
+  type APTERON is (MOA, KIWI, OSTRICH,  ... );
+  procedure PUT(X :  APTERON);
+  ...
+end;
+</pre></td></tr></table>
+<p>
+In no  sense is a KIWI fruit the same as the flightless KIWI bird: the
+homography is an accident of language.
+<p>
+A programming  language should not forbid such homography: it would be
+unreasonable to  force the author of PALETTE to change the word ORANGE
+merely because  it was  a  fruit;  and  indeed  Ada  never  forbids  a
+programmer from  defining a  locally unambiguous  name. But  it  is  a
+separate design decision whether to permit overloading of such names.
+<p>
+Ada permits  overloading of  enumeration literals;  this is  in accord
+with the  idea that  an enumeration  literal resembles a parameterless
+function. Hence the following is legal:
+<p>
+<table border cellpadding=6><tr><td><pre>
+with   BOTANY,  ORNITHOLOGY;
+use BOTANY,  ORNITHOLOGY;
+procedure P is
+  FRUIT_OF_THE_DAY   :  FRUIT  :=  KIWI;
+  BIRD_IN_THE_HAND   :  APTERON :=  KIWI;
+  ...
+end;
+</pre></td></tr></table>
+<p>
+Resolution is  exactly as  for parameterless  functions: in  the above
+declarations the required type is evident from the context.
+<p>
+This rule  also permits character literals to be used in more than one
+type:
+<p>
+<table border cellpadding=6><tr><td><pre>
+type ASCII is ( ... ,  'A',  'B',  'C',  ... );
+type EBCDIC is ( ... ,  'A',  'B',  'C',  ... );
+
+AC  :  ASCII :=  'A';
+EC  :  EBCDIC    :=  'B';
+</pre></td></tr></table>
+<p>
+<H4>Numeric Literals</H4>
+<p>
+The numeric  literals, however,  illustrate the  second case.  In  the
+following:
+<p>
+<table border cellpadding=6><tr><td><pre>
+X  :  FLOAT     :=  1.0;
+Y  :  LONG_FLOAT :=  1.0;
+</pre></td></tr></table>
+<p>
+the two occurrences of "1.0" stand for the same abstract value - unity
+- but  in two  different physical  representations, and hence, in Ada,
+associated with  two different  types. It  would be  possible to  view
+"1.0" as  an overloaded  literal -  overloaded on  all real types. Ada
+however takes  a different  view, that  we  believe  corresponds  more
+closely to our intuition. It regards real literals as being all of one
+type, the  type universal_real,  and introduces an implicit conversion
+to the  required numeric  type. The  declarations above  are therefore
+interpreted as
+<p>   
+<table border cellpadding=6><tr><td><pre>
+X  :  FLOAT     :=  FLOAT(1.0);
+Y  :  LONG_FLOAT :=  LONG_FLOAT(1.0);
+</pre></td></tr></table>
+<p>
+The alternative  view -  that the  literals should be considered to be
+overloaded on  all numeric  types -  would lead  to some anomalies, of
+which the most annoying would perhaps be that
+<p>
+<PRE>    if 1 &lt; 2 then  ...</PRE>
+<p>
+would be ambiguous: would we mean to invoke the "&lt;" of type INTEGER or
+that of type LONG_INTEGER? The Ada view avoids such difficulties.
+<p>
+Observe by contrast that, if ASCII and EBCDIC are both visible, then
+<p>
+<PRE>    if 'A' &lt; '0' then  ...</PRE>
+<p>
+will indeed  be rejected  as ambiguous,  and  rightly  so,  since  the
+relation means different things in ASCII and EBCDIC.
+
+<p>
+<center>
+<hr width=60%>
+&#128; <a href="ratl-11-05.html#11.5"><b>NEXT</b></a>
+&#128; <a href="ratl-11-03.html#11.3"><b>PREVIOUS</b></a>
+&#128; <a href="ratl-11.html#11"><b>UP</b></a>
+&#128; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#128; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#128;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+<p>
+</BODY></HTML>

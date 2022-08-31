@@ -1,0 +1,329 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada 83 LRM, Sec 9.7: Select Statements</TITLE>
+</HEAD><BODY>
+<hr><a href="ada_lrm.html"><IMG SRC="adass.gif" align=LEFT hspace=6 vspace=6 alt="Lady Ada"></a><H1>Ada '83 Language Reference Manual</H1>
+<h6><a href="ada_legal.html">Copyright</a> 1980, 1982, 1983 owned by the United States Government. Direct reproduction and usage requests to the <a href="mailto://adainfo@sw-eng.falls-church.va.us">Ada Information Clearinghouse</a>.</h6>
+<br clear=LEFT>
+<hr>
+
+<H2><A NAME="9.7">9.7</A>.  Select Statements  </H2>
+<A HREF="lrm-09-06.html#9.6"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="lrm-09.html#9"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="lrm-09-08.html#9.8"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+There  are three forms of select statements.  One form provides a selective
+wait for one or more alternatives.  The other two provide  conditional  and
+timed entry calls. 
+<pre>
+    select_statement ::= selective_wait
+       | conditional_entry_call | timed_entry_call  
+</pre>
+<P>
+<b>References:</b>   <A HREF="#9.7.1">selective  wait</A>,
+<A HREF="#9.7.2">conditional  entry call</A>,
+<A HREF="#9.7.3">timed entry call</A>.
+<P>
+
+<b>Rationale references:</b> 
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-13-02.html#13.2.5">13.2.5&nbsp;The Select Statement</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-13-02.html#13.2.6">13.2.6&nbsp;Timing</a>,
+<a href="http://archive.adaic.com/standards/83rat/html/ratl-13-02.html#13.2.7">13.2.7&nbsp;Timed and Conditional Communication</a>
+<p>
+
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-02-01.html#2.1.2">2.1.2&nbsp;Indentation</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-05-06.html#5.6.1">5.6.1&nbsp;Nesting</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-02.html#6.2.1">6.2.1&nbsp;Efficient Task Communications</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-02.html#6.2.6">6.2.6&nbsp;Communication Complexity</a>
+<p>
+<b>Sub-topics:</b>
+<ul>
+<li><A HREF="#9.7.1">9.7.1</A> Selective Waits  
+<li><A HREF="#9.7.2">9.7.2</A> Conditional Entry Calls  
+<li><A HREF="#9.7.3">9.7.3</A> Timed Entry Calls  
+</ul>
+<H3><A NAME="9.7.1">9.7.1</A>.  Selective Waits  </H3>
+<A HREF="#9.7"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#9.7.2"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+This form of the select statement allows a combination of waiting for,  and
+selecting  from,  one  or  more  alternatives.  The selection can depend on
+conditions associated with each alternative of the selective wait.                  
+<pre>
+    selective_wait ::=
+        select
+          select_alternative
+       {or
+          select_alternative}
+       [else
+          sequence_of_statements]
+        end select; 
+
+    select_alternative ::=
+       [when condition =&gt;]
+          selective_wait_alternative 
+
+    selective_wait_alternative ::= accept_alternative
+       | delay_alternative | terminate_alternative 
+
+    accept_alternative ::= accept_statement [sequence_of_statements] 
+
+    delay_alternative  ::= delay_statement  [sequence_of_statements] 
+
+    terminate_alternative ::= terminate; 
+</pre>
+<P>
+A selective wait must contain at least one accept alternative.  In addition
+a selective wait can contain either a terminate alternative (only one),  or
+one or more delay alternatives, or an else part;  these three possibilities
+are mutually exclusive. 
+<P>
+A  select alternative is said to be open if it does not start with when and
+a condition, or if the  condition  is  TRUE.   It  is  said  to  be  closed
+otherwise. 
+<P>
+For  the execution of a selective wait, any conditions specified after when
+are evaluated in some order that is not  defined  by  the  language;   open
+alternatives are thus determined.  For an open delay alternative, the delay
+expression  is  also  evaluated.  Similarly, for an open accept alternative
+for an entry of a family, the entry index is also evaluated.  Selection and
+execution of one open alternative, or of the else part, then completes  the
+execution  of  the  selective  wait;   the  rules  for  this  selection are
+described below. 
+<P>
+Open accept alternatives are  first  considered.   Selection  of  one  such
+alternative  takes  place  immediately  if  a  corresponding  rendezvous is  
+possible, that is, if there is a corresponding entry call issued by another
+task and waiting to be accepted.   If  several  alternatives  can  thus  be
+selected,  one  of them is selected arbitrarily (that is, the language does
+not  define  which  one).   When  such  an  alternative  is  selected,  the
+corresponding  accept  statement  and  possible  subsequent  statements are
+executed.  If no rendezvous is immediately possible and there  is  no  else
+part,  the  task  waits  until  an  open  selective wait alternative can be
+selected. 
+<P>
+Selection of the other forms of alternative or of an else part is performed
+as follows:    
+<ul>
+<li>An open delay alternative will be selected if  no  accept  alternative
+can  be  selected before the specified delay has elapsed (immediately,
+for a negative or zero delay in the absence of  queued  entry  calls);
+any  subsequent  statements  of the alternative are then executed.  If
+several delay alternatives can thus be selected (that is, if they have
+the same delay), one of them is selected arbitrarily.<br><br> 
+<li>The else part is selected and its statements are executed if no accept
+alternative  can  be  immediately  selected,  in  particular,  if  all
+alternatives are closed.<br><br> 
+<li>An open terminate alternative is selected if the conditions stated  in
+section  <a href="lrm-09-04.html#9.4">9.4</a> are satisfied.  It is a consequence of other rules that a
+terminate alternative cannot be selected while there is a queued entry
+call for any entry of the task.                                                   
+</ul>
+<P>
+The exception PROGRAM_ERROR is raised if all alternatives  are  closed  and
+there is no else part.   
+<P>
+Examples of a select statement: 
+<pre>
+    select
+       accept DRIVER_AWAKE_SIGNAL;
+    or
+       delay 30.0*SECONDS;
+       STOP_THE_TRAIN;
+    end select; 
+</pre>
+<P>
+Example of a task body with a select statement: 
+<pre>
+    task body RESOURCE is
+       BUSY : BOOLEAN := FALSE;
+    begin
+       loop
+          select
+             when not BUSY =&gt;
+                accept SEIZE do
+                   BUSY := TRUE;
+                end;
+          or
+             accept RELEASE do
+                BUSY := FALSE;
+             end;
+          or
+             terminate;
+          end select;
+       end loop;
+    end RESOURCE; 
+</pre>
+<P>
+Notes: 
+<P>
+A  selective  wait  is  allowed to have several open delay alternatives.  A
+selective wait is allowed to have several open accept alternatives for  the
+same entry. 
+<P>
+<b>References:</b>   <A HREF="lrm-09-05.html#9.5">accept  statement</A>,
+<A HREF="lrm-05-03.html#5.3">condition</A>,
+<A HREF="lrm-03-01.html#3.1">declaration</A>,
+<A HREF="lrm-09-06.html#9.6">delay expression</A>,
+<A HREF="lrm-09-06.html#9.6">delay statement</A>,
+<A HREF="lrm-09-06.html#9.6">duration</A>,
+<A HREF="lrm-09-05.html#9.5">entry</A>,
+<A HREF="lrm-09-05.html#9.5">entry  call</A>,
+<A HREF="lrm-09-05.html#9.5">entry index</A>,
+<A HREF="lrm-11-01.html#11.1">program_error exception</A>,
+<A HREF="lrm-09-05.html#9.5">queued entry call</A>,
+<A HREF="lrm-09-05.html#9.5">rendezvous</A>,
+<A HREF="#9.7">select statement</A>,
+<A HREF="lrm-05-01.html#5.1">sequence of statements</A>,
+<A HREF="lrm-09.html#9">task</A>.
+<P>
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-02.html#6.2.1">6.2.1&nbsp;Efficient Task Communications</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-02.html#6.2.2">6.2.2&nbsp;Defensive Task Communication</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-02.html#6.2.4">6.2.4&nbsp;Shared Variables</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-02.html#6.2.5">6.2.5&nbsp;Tentative Rendezvous Constructs</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-03.html#6.3.2">6.3.2&nbsp;Normal Termination</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-07-04.html#7.4.4">7.4.4&nbsp;Select Statement Evaluation Order</a>
+
+<H3><A NAME="9.7.2">9.7.2</A>.  Conditional Entry Calls  </H3>
+<A HREF="#9.7.1"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#9.7"><img src="lrm-up.gif" alt="[UP]"></A><A HREF="#9.7.3"><img src="lrm-next.gif" alt="[NEXT]"></A>
+<P>
+A conditional entry call issues an entry call that is then  canceled  if  a
+rendezvous is not immediately possible. 
+<pre>
+    conditional_entry_call ::=
+       select  
+           entry_call_statement
+          [sequence_of_statements]
+       else
+           sequence_of_statements
+       end select;                                                                      
+</pre>
+<P>
+For  the  execution  of  a  conditional entry call, the entry name is first  
+evaluated.  This  is  followed  by  any  evaluations  required  for  actual
+parameters as in the case of a subprogram call (see <a href="lrm-06-04.html#6.4">6.4</a>). 
+<P>
+The  entry  call  is  canceled  if the execution of the called task has not
+reached a point where it is ready to accept the call (that  is,  either  an
+accept statement for the corresponding entry, or a select statement with an
+open  accept alternative for the entry), or if there are prior queued entry
+calls for this entry.  If the called task has reached a  select  statement,
+the  entry  call is canceled if an accept alternative for this entry is not
+selected. 
+<P>
+If the entry call  is  canceled,  the  statements  of  the  else  part  are
+executed.   Otherwise,  the  rendezvous  takes  place;   and  the  optional
+sequence of statements after the entry call is then executed. 
+<P>
+The  execution  of  a  conditional  entry   call   raises   the   exception
+TASKING_ERROR  if  the called task has already completed its execution (see
+also <a href="lrm-09-10.html#9.10">9.10</a> for the case when the called task becomes abnormal). 
+<P>
+Example: 
+<pre>
+    procedure SPIN(R : RESOURCE) is
+    begin
+       loop
+          select
+             R.SEIZE;
+             return;
+          else
+             null;  --  busy waiting
+          end select;
+       end loop;
+    end; 
+</pre>
+<P>
+<b>References:</b>  <A HREF="lrm-09-10.html#9.10">abnormal task</A>,
+<A HREF="lrm-09-05.html#9.5">accept  statement</A>,
+<A HREF="lrm-06-04.html#6.4">actual  parameter part</A>,
+<A HREF="lrm-09-04.html#9.4">completed task</A>,
+<A HREF="lrm-09-05.html#9.5">entry call statement</A>,
+<A HREF="lrm-09-05.html#9.5">entry family</A>,
+<A HREF="lrm-09-05.html#9.5">entry index</A>,
+<A HREF="lrm-04-05.html#4.5">evaluation</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="#9.7.1">open  alternative</A>,
+<A HREF="lrm-09-05.html#9.5">queued  entry  call</A>,
+<A HREF="lrm-09-05.html#9.5">rendezvous</A>,
+<A HREF="#9.7">select statement</A>,
+<A HREF="lrm-05-01.html#5.1">sequence of statements</A>,
+<A HREF="lrm-09.html#9">task</A>,
+<A HREF="lrm-11-01.html#11.1">tasking_error exception</A>.
+<P>
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-04-02.html#4.2.4">4.2.4&nbsp;Hiding Tasks</a>, 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-02.html#6.2.5">6.2.5&nbsp;Tentative Rendezvous Constructs</a>
+
+<H3><A NAME="9.7.3">9.7.3</A>.  Timed Entry Calls  </H3>
+<A HREF="#9.7.2"><img src="lrm-prev.gif" alt="[PREVIOUS]"></A><A HREF="#9.7"><img src="lrm-up.gif" alt="[UP]"></A>
+<P>
+A timed entry call issues an entry call that is canceled if a rendezvous is
+not started within a given delay. 
+<pre>
+    timed_entry_call ::=
+       select
+           entry_call_statement
+          [sequence_of_statements]
+       or
+           delay_alternative  
+       end select;                                                                 
+</pre>
+<P>
+For the execution of a timed entry call, the entry name is first evaluated.
+This is followed by any evaluations required for actual  parameters  as  in
+the  case of a subprogram call (see <a href="lrm-06-04.html#6.4">6.4</a>).  The expression stating the delay
+is then evaluated, and the entry call is finally issued. 
+<P>
+If  a  rendezvous  can  be  started  within  the  specified  duration   (or
+immediately,  as  for  a  conditional  entry  call,  for a negative or zero
+delay), it is performed and the optional sequence of statements  after  the
+entry  call  is  then executed.  Otherwise, the entry call is canceled when
+the specified duration has expired, and the optional sequence of statements
+of the delay alternative is executed. 
+<P>
+The execution of a timed entry call raises the exception  TASKING_ERROR  if
+the called task completes its execution before accepting the call (see also
+<a href="lrm-09-10.html#9.10">9.10</a> for the case when the called task becomes abnormal). 
+<P>
+Example: 
+<pre>
+    select
+       CONTROLLER.REQUEST(MEDIUM)(SOME_ITEM);
+    or
+       delay 45.0;
+       --  controller too busy, try something else
+    end select; 
+</pre>
+<P>
+<b>References:</b>   <A HREF="lrm-09-10.html#9.10">abnormal  task</A>,
+<A HREF="lrm-09-05.html#9.5">accept statement</A>,
+<A HREF="lrm-06-04.html#6.4">actual parameter part</A>,
+<A HREF="lrm-09-04.html#9.4">completed  task</A>,
+<A HREF="#9.7.2">conditional  entry  call</A>,
+<A HREF="lrm-09-06.html#9.6">delay expression</A>,
+<A HREF="lrm-09-06.html#9.6">delay  statement</A>,
+<A HREF="lrm-09-06.html#9.6">duration</A>,
+<A HREF="lrm-09-05.html#9.5">entry call statement</A>,
+<A HREF="lrm-09-05.html#9.5">entry family</A>,
+<A HREF="lrm-09-05.html#9.5">entry index</A>,
+<A HREF="lrm-04-05.html#4.5">evaluation</A>,
+<A HREF="lrm-04-04.html#4.4">expression</A>,
+<A HREF="lrm-09-05.html#9.5">rendezvous</A>,
+<A HREF="lrm-05-01.html#5.1">sequence of statements</A>,
+<A HREF="lrm-09.html#9">task</A>,
+<A HREF="lrm-11-01.html#11.1">tasking_error exception</A>.
+<P>
+
+<b>Style Guide references:</b> 
+<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-04-02.html#4.2.4">4.2.4&nbsp;Hiding Tasks</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-01.html#6.1.5">6.1.5&nbsp;Delay Statements</a>, 
+	<A HREF="http://archive.adaic.com/docs/style-guide/83style/html/sty-06-02.html#6.2.5">6.2.5&nbsp;Tentative Rendezvous Constructs</a>
+<p>
+
+<A HREF="lrm-IDX.html"><img src="lrm-idx.gif" alt="[INDEX]"></A><A HREF="lrm-TOC.html"><img src="lrm-toc.gif" alt="[CONTENTS]"></A>
+
+<hr>
+<address><a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a><p>
+Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address>
+</BODY></HTML>

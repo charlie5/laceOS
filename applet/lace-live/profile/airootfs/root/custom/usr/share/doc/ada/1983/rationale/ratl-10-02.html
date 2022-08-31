@@ -1,0 +1,603 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>Ada '83 Rationale, Sec 10.2: Presentation of the Separate Compilation Facility</TITLE>
+</HEAD>
+
+<BODY>
+<a href="http://sw-eng.falls-church.va.us/AdaIC/"><IMG SRC="small_adaic_logo.gif" ALT="[Ada Information Clearinghouse]"></a>
+<hr>
+<center><h2>"Rationale for the Design of the<BR>
+Ada&#174; Programming Language"</H2>
+<H3>[Ada '83 Rationale, HTML Version]</h3>
+<h6><i><a href="ratl-00.html#copyright">Copyright</a> &#169;1986
+owned by the United States Government. All rights reserved.<BR>
+Direct inquiries to the <a href="http://sw-eng.falls-church.va.us/AdaIC/">Ada Information Clearinghouse</a>
+at <A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</i></h6></center>
+<hr>
+
+<H2>CHAPTER 10: Separate Compilation and Libraries</H2>
+
+<H3><a name="10.2">10.2 Presentation of the Separate Compilation Facility</a></H3>
+
+A complete  program is  a collection of compilation units submitted to
+the compiler  individually or  in  batches  (called  compilations).  A
+compilation unit  is either  a library  unit or  a secondary  unit.  A
+library unit can be:
+<ul>
+<li>a package declaration
+
+<li>a subprogram declaration
+
+<li>a generic declaration or instantiation
+</ul>
+
+A secondary  unit, as the name indicates, is always related to another
+compilation unit: A secondary unit can be the body of a library unit -
+<ul>
+<li>a package body
+
+<li>a subprogram body
+
+<li>the body of a generic unit
+</ul>
+
+
+or,  as we  shall see  later, a  secondary unit  can be a subunit of
+another compilation  unit (the  latter being  either a library unit or
+another secondary unit).
+<p>
+Each compilation  unit may  have a  context clause  at the  beginning,
+containing with  clauses that mention the names of other library units
+that the  compilation unit needs. Thus, although compilation units can
+be submitted individually to a compiler, they can depend on each other
+as  indicated by <CODE>with</CODE> clauses. For this reason the compilation units
+that form a given program are said to belong to a program library.
+<p>
+Traditionally,  one   distinguishes  two   main  styles   of   program
+development:  top-down   (or  hierarchical)  program  development  and
+bottom-up  program  development.  The  separate  compilation  facility
+provided in Ada supports both styles, as well as intermediate forms.
+
+<center><TABLE BORDER CELLPADDING=6>
+   <TR>
+      <TD>
+<b><font size=+1>In this section...</font>
+<br><br>
+<a href="#10.2.1">10.2.1 Bottom-Up Program Development</a><BR>
+<a href="#10.2.2">10.2.2 Hierarchical Program Development</a><BR>
+<a href="#10.2.3">10.2.3 Compilation Order</a><BR>
+<a href="#10.2.4">10.2.4 Recompilation Order</a><BR>
+<a href="#10.2.5">10.2.5 Execution of a Main Program</a><BR>
+<a href="#10.2.6">10.2.6 The Pragma ELABORATE</a><BR>
+</b>
+     </TD>
+   </TR>
+</TABLE></center>
+
+<H3><BR><a name="10.2.1">10.2.1 Bottom-Up Program Development</a></H3>
+
+In  this   style  of  program  development  we  may  have  programmers
+developing libraries of generally usable packages.
+<p>
+Each generally usable package can be separately compiled and therefore
+made available  in the  program library.  The  specification  and  the
+package body  (if any)  can both be compilation units, and they can be
+submitted either  in the  same  or  in  different  compilations  (each
+compilation is a succession of compilation units).
+<p>
+Some of  these packages  do not  depend on  any  outside  information,
+except  perhaps  that  of  the  predefined  environment  (the  package
+STANDARD, which  defines types  such  as  BOOLEAN  and  INTEGER).  The
+package declarations  for METRIC_CONVERSIONS  and WORK_DATA  given  in
+<a href="ratl-09.html#9">Chapter 9</a> fall into this category.
+<p>
+More generally,  packages may depend on information that is defined by
+other packages  of the  program library.  For example  an application-
+level input-output  package may  depend on  a more  basic input-output
+package;  similarly   a  surveying   package  could   depend  on  this
+application-level input-output  package and  on another  package  that
+defines trigonometric functions.
+<p>
+As an  example of  a compilation  unit that  depends on  other library
+units consider  the following  procedure,  which  presents  a  (naive)
+solution of  quadratic equations. The compilation unit starts with the
+context clause:
+<PRE>    with TEXT_IO, REAL_OPERATIONS;  use REAL_OPERATIONS;</PRE>
+<p>
+The  with   clause   specifies   that   the   packages   TEXT_IO   and
+REAL_OPERATIONS are both needed. The use clause for the latter package
+achieves direct  visibility of  the entities  declared in  its visible
+part -  the type  REAL, the (nested) package REAL_IO, and the function
+SQRT:
+<table border cellpadding=6><tr><td><pre>
+with TEXT_IO, REAL_OPERATIONS;  use REAL_OPERATIONS;
+procedure QUADRATIC_EQUATION is
+  A, B, C, D :  REAL;
+  use REAL_IO;    -- To see GET and PUT for the type REAL
+  use TEXT_IO;    -- To see PUT for strings, and NEW_LINE
+begin
+  GET(A);  GET(B);  GET(C);
+  D :=  B&#42;&#42;2 - 4.0&#42;A&#42;C;
+  if D &lt; 0.0 then
+    PUT("IMAGINARY ROOTS.");
+  else
+    PUT("REAL ROOTS :  X1 = ");
+    PUT((-B - SQRT(D))/(2.0&#42;A));
+    PUT (" X2 = ");
+    PUT((-B + SQRT(D))/(2.0&#42;A));
+  end if;
+  NEW_LINE;
+end QUADRATIC_EQUATION;
+</pre></td></tr></table>
+<p>
+Although the  programmer who  wrote QUADRATIC_EQUATION  might think he
+had finished  at this  stage, the  complete program includes more than
+this single  procedure. Thus,  it is  not going  to  work  unless  the
+program library  already contains  the  packages  REAL_OPERATIONS  and
+TEXT_IO on  which QUADRATIC_EQUATION  depends. Otherwise  the function
+SQRT supplied by the package REAL_OPERATIONS would not be visible; nor
+would similarly  the procedures GET and PUT supplied by REAL_IO within
+REAL_OPERATIONS and by TEXT_IO.
+<p>
+Realizing that  this program might be generally usable, the programmer
+may decide  to encapsulate  it within  a package,  perhaps along  with
+other similar procedures:
+<table border cellpadding=6><tr><td><pre>
+with REAL_OPERATIONS;  use REAL_OPERATIONS;
+package EQUATION_SOLVER is
+  procedure QUADRATIC_EQUATION;
+  procedure LINEAR_EQUATION;
+  -- other procedures needing real operations
+  -- in their declaration
+end;
+
+with TEXT_IO;
+package body EQUATION_SOLVER is
+
+  procedure QUADRATIC_EQUATION is
+    -- same text as before
+  end;
+
+  procedure LINEAR_EQUATION is
+    -- reads a linear equation, solves it, prints results
+  end;
+    ...
+end EQUATION_SOLVER;
+</pre></td></tr></table>
+<p>
+Note that  the context  clause for  REAL_OPERATIONS is  needed for the
+body as  well as  for the  declaration of the package EQUATION_SOLVER,
+but need  not be  repeated for  the body since the context clause of a
+package declaration  applies also  to the  corresponding package body.
+However, TEXT_IO  is needed  only by  the body,  so it would introduce
+unwanted dependences  to mention  it in  the  context  clause  of  the
+package declaration.
+<p>
+A program that uses this package is shown below:
+<table border cellpadding=6><tr><td><pre>
+with EQUATION_SOLVER;  use EQUATION_SOLVER;
+procedure EXERCISE is        -- solves 10 quadratic equations
+begin
+  for I in 1 .. 10 loop
+    QUADRATIC_EQUATION;
+  end loop;
+end EXERCISE;
+</pre></td></tr></table>
+<p>
+The program  EXERCISE need only mention the package EQUATION_SOLVER in
+its context  clause. It need not (and should not) mention the packages
+REAL_OPERATIONS and  TEXT_IO, which are actually needed by the package
+body of  EQUATION_SOLVER, since EXERCISE does not contain direct calls
+to subprograms defined in either REAL_OPERATIONS or TEXT_IO.
+<p>
+Note also that a library unit may be a generic unit. Instances of such
+generic compilation units can be obtained as usual:
+<table border cellpadding=6><tr><td><pre>
+with DIRECT_IO;
+procedure TREAT_ITEMS is
+  type ITEM is ...
+  package ITEM_IO is new DIRECT_IO (ELEMENT_TYPE =&gt;  ITEM);
+  ...          -- use of the input-output procedures for objects of
+type ITEM
+end TREAT_ITEMS;
+</pre></td></tr></table>
+<p>
+Here a  use clause for the generic package DIRECT_IO would be illegal;
+one for the instance ITEM_IO may appear after the instantiation.
+<p>
+Finally, a  library unit  may be  an  instance  of  another  (generic)
+library unit:
+<table border cellpadding=6><tr><td><pre>
+with DIRECT_IO;
+package FLOAT_IO is new DIRECT_IO(FLOAT);
+</pre></td></tr></table>
+
+<H3><BR><a name="10.2.2">10.2.2 Hierarchical Program Development</a></H3>
+
+The other  style of program development is called hierarchical or top-
+down, as  used in  programming by  stepwise refinement <a href="ratl-BIB.html">[Wi 71, Wo 72]</a>.
+The top  level provides  a formulation  of the  program  in  terms  of
+operations that  are to be supplied by the next lower level. Each such
+operation is  then further  defined in  terms of operations of another
+lower  level,  and  so  on.  In  support  of  this  style  of  program
+development, Ada  offers the  possibility of  having compilation units
+that are subunits of other compilation units.
+<p>
+We illustrate subunits by means of a variant of the example of <a href="http://archive.adaic.com/standards/83lrm/html/lrm-10-02.html#10.2.1">section
+10.2.1 of  the Reference  Manual</a>. Assume  that we  are developing  the
+procedure TOP  in a  top-down fashion.  The top level of definition is
+given by the following compilation unit:
+<table border cellpadding=6><tr><td><pre>
+procedure TOP is
+
+  type REAL is digits 10;
+  NEXT :  REAL;
+
+  procedure TRANSFORM(U :  in out REAL);
+
+  package TABLE is
+    procedure    INSERT(X :  in REAL);
+    function     FIRST return REAL;
+    procedure    DISPLAY;
+  end;
+
+  package body TABLE is separate;                      -- stub of TABLE
+
+  procedure TRANSFORM(U :  in out REAL) is separate;   -- stub of TRANSFORM
+
+begin      -- TOP
+  ...
+  TRANSFORM(NEXT);
+  ...
+  TABLE.INSERT(NEXT);
+  TABLE.DISPLAY;
+  ...
+end TOP;
+</pre></td></tr></table>
+<p>
+The specifications of the procedure TRANSFORM and of the package TABLE
+are given  as usual.  Hence the  statements of TOP can be expressed in
+terms of  these units  and can  invoke the procedure TRANSFORM and the
+subprograms INSERT, FIRST, and DISPLAY that are defined by the package
+TABLE. However, the proper body of TRANSFORM (and TABLE) is separately
+compiled and  is not,  therefore, provided as part of the text of TOP.
+In each  case a body stub has been given at the place where the proper
+body would  appear if it were not separately compiled. The role of the
+stub is  to inform  the compiler  that the  proper body is to be found
+elsewhere -  as a  separately compiled  subunit. Without the stub, the
+compiler would  issue an  error message;  with the stub, it is told to
+expect that  sooner or  later a  subunit such as the following will be
+submitted:
+<p>
+<table border cellpadding=6><tr><td><pre>
+separate (TOP) procedure TRANSFORM(U :  in out REAL) is
+  use TABLE;
+begin
+  ...
+  U :=  FIRST;
+  ...
+end TRANSFORM;
+</pre></td></tr></table>
+<p>
+Although separately  compiled, TRANSFORM  still has  visibility of the
+identifiers that are declared within TOP. For example it sees the type
+REAL and  the package  name TABLE. This dependence is reflected by the
+presence of
+<p>
+<PRE>    separate(TOP)</PRE>
+<p>
+at the  start of  the subunit.  This indicates  that TOP is the parent
+unit of  the procedure  TRANSFORM; the parent unit is the program unit
+that  contains   the  stub   that  announces   the  subunit.   Similar
+considerations apply  to the  separately compiled  body of the package
+TABLE:
+<p>
+<table border cellpadding=6><tr><td><pre>
+separate (TOP) package body TABLE is
+  -- some local declarations of TABLE followed by
+
+  procedure INSERT(X :  REAL) is
+  begin
+    -- sequence of statements of INSERT
+  end;
+
+  function FIRST return REAL is
+  begin
+    -- sequence of statements of FIRST
+  end;
+
+  procedure DISPLAY is separate;      -- stub of DISPLAY
+end TABLE;
+</pre></td></tr></table>
+<p>
+In this  case the  package body  contains the  proper  bodies  of  the
+procedure INSERT  and the function FIRST, but another stub in the case
+of the procedure DISPLAY, which is thus a subunit of TABLE:
+<p>
+<table border cellpadding=6><tr><td><pre>
+with TEXT_IO;
+separate (TOP.TABLE) procedure DISPLAY is
+begin
+  -- sequence of statements of DISPLAY
+end DISPLAY;
+</pre></td></tr></table>
+<p>
+Note that  the name of the parent unit must be given in full, starting
+with the  ancestor library  unit TOP,  in order  correctly to identify
+TABLE. There  could be other subunits called TABLE in the same program
+library (although not for the same ancestor TOP).
+<p>
+Note also  that it is possible to provide a with clause for a subunit,
+as for any compilation unit. In this example, assuming that DISPLAY is
+the only  procedure performing input-output, the dependence on TEXT_IO
+is conveniently  localized to  that procedure  (instead of  creating a
+more global dependence at the level of TOP or at that of TABLE).
+<p>
+Subunits can  be declared  at the  outermost level  of another unit or
+subunit. This  creates the  possibility of  an  hierarchy  of  program
+subunits depending  on a  given compilation unit. This hierarchy is no
+different from  the nesting  hierarchy in  ordinary program  units. In
+particular, the visibility rules are the same and a subunit can depend
+on dynamic information. For example, consider
+<p>
+<table border cellpadding=6><tr><td><pre>
+separate (TOP) procedure TRANSFORM(U :  in out REAL) is
+  use TABLE;
+  SQUARE :  REAL  :=  U &#42;&#42; 2;
+  procedure UPDATE is separate;
+begin
+  ...
+end TRANSFORM;
+</pre></td></tr></table>
+<p>
+Access to  the local  variable SQUARE is still possible within UPDATE,
+exactly as if the body of UPDATE were textually nested at the place of
+the stub.
+<p>
+<table border cellpadding=6><tr><td><pre>
+separate (TOP.TRANSFORM) procedure UPDATE is
+begin
+  -- access to SQUARE is possible
+end UPDATE;
+</pre></td></tr></table>
+<p>
+It should  be clear  that these two methods of introducing compilation
+units are  not mutually  exclusive and can be used in combination. For
+example, a general purpose package may be split into subunits in order
+to   facilitate   its   development,   compilation,   and   subsequent
+recompilation.
+
+<H3><BR><a name="10.2.3">10.2.3 Compilation Order</a></H3>
+
+Compilation units  may be  compiled separately, but this does not mean
+that compilations  can be submitted in an arbitrary order, since units
+are not  independent. In  particular we  have seen  that  the  context
+clause of one unit may mention the name of another unit, and that some
+units are  subunits of  other units. These two forms of dependence and
+the usual  dependence of  a body  on the  corresponding  specification
+determine a partial ordering of compilations:
+<ul>
+<li>A compilation  unit must be compiled after all units that are named
+   by its context clause.
+<p>
+<li>A secondary  unit that  is a subprogram body or a package body must
+   be compiled  after the library unit that provides the corresponding
+   subprogram specification or package specification.
+<p>
+<li>A secondary  unit that  is a  subunit must  be compiled  after  its
+   parent unit.
+</ul>
+
+These rules  are rules of common sense and they must be enforced by an
+Ada Compiler.  These order  relations are summarized below in the case
+of the  procedures QUADRATIC_EQUATION  and TOP. The notation "A &lt;-- B"
+is used to indicate that A must be compiled before B.
+<p>
+<table border cellpadding=6><tr><td><pre>
+Specification of REAL_OPERATIONS &lt;-- Body of REAL_OPERATIONS
+Specification of REAL_OPERATIONS &lt;-- QUADRATIC_EQUATION
+
+Specification of TEXT_IO &lt;-- Body of TEXT_IO
+Specification of TEXT_IO &lt;-- QUADRATIC_EQUATION
+Specification of TEXT_IO &lt;-- DISPLAY
+
+TOP &lt;-- TABLE     &lt;-- DISPLAY
+TOP &lt;-- TRANSFORM &lt;-- UPDATE
+</pre></td></tr></table>
+<p>
+It should be clear that these relations only define a partial ordering
+of compilations. For example:
+<ul>
+<li>The bodies  of the  packages REAL_OPERATIONS  and TEXT_IO  are  two
+   secondary units  that can  be compiled in either order. Furthermore
+   QUADRATIC_EQUATION can be compiled either before or after either of
+   these secondary units.
+<p>
+<li>The subunit  TABLE can  be  compiled  before  or  after  TRANSFORM,
+   indifferently. Similarly the relative order of compilation of TABLE
+   with respect  to UPDATE,  of TRANSFORM with respect to DISPLAY, and
+   of DISPLAY with respect to UPDATE, are all undefined.
+</ul>
+
+Of course,  in order  to execute the program, it is necessary that all
+compilations be  completed: an  Ada compiler  or library  manager will
+report an error if this is not the case.
+<p>
+Note that  although the  body of  TRANSFORM includes a use clause that
+mentions TABLE,  this has  no influence on compilation order: the only
+information that TRANSFORM may obtain about TABLE is that given by the
+declaration of  TABLE, and  this declaration  is part  of the (common)
+parent unit  TOP; hence  the use  clause will  not affect  the subunit
+TABLE -  which is  a package  body. No  use clause  will  ever  affect
+compilation order.
+
+<H3><BR><a name="10.2.4">10.2.4 Recompilation Order</a></H3>
+
+Similar considerations  apply in  the case  of  recompilation.  If  we
+change the  definition of  some entity, then any compilation unit that
+used the previous definition is now obsolete and must be recompiled.
+<p>
+In principle,  this rule  could be applied to individual declarations.
+However, for  the sake  of compiler simplicity, Ada compilers are only
+required to consider that the quantum of change is the (re)compilation
+of  a   whole  compilation   unit.  Thus   any  change  to  a  package
+specification is  assumed to affect any compilation unit that mentions
+this package  in a  with clause. Similarly any change to a parent unit
+is  assumed   to  affect  all  its  subunits.  With  this  simplifying
+assumption, the  rules defining  the need  for  recompilations  follow
+directly from the above-defined order relations.
+<ul>
+<li>After recompilation  of the declaration of REAL_OPERATIONS the body
+   of REAL_OPERATIONS  and the  procedure QUADRATIC_EQUATION  must  be
+   recompiled.
+<p>
+<li>After recompilation  of the declaration of TEXT_IO (if that is even
+   possible) the  body of  TEXT_IO, the  procedure QUADRATIC_EQUATION,
+   and the subunit DISPLAY must be recompiled.
+<p>
+<li>The subunit  DISPLAY must  be recompiled after the recompilation of
+   its parent  TABLE; similarly the subunit UPDATE after recompilation
+   of TRANSFORM;  and all  of TABLE,  DISPLAY, TRANSFORM,  and  UPDATE
+   after recompilation of TOP.
+</ul>
+
+In principle, a compiler that included a librarian facility for source
+texts could  compare the  old text  of a compilation unit with the new
+text and  keep track  of changes on an individual basis. Thus it could
+detect  that   although  a   given  package   specification  had  been
+recompiled, the modification did not actually affect other compilation
+units that used this package but did not use the modified part. Such a
+compiler could  then optimize  by cutting  short the  process and  not
+recompiling those  other units  - simply  marking them  as  no  longer
+obsolete, realizing  that the  recompiled dependent unit would deliver
+the same results as the previous one.
+<p>
+The above  optimization is not imposed on all Ada compilers: given the
+ability separately  to compile  a package  or subprogram specification
+and the  corresponding body,  the simple strategy (using a compilation
+unit  as   quantum)  should   not  in   practice  require   many  more
+recompilations than strictly necessary.
+<p>
+Note, in  this respect, that the language design has carefully avoided
+unnecessary textual  dependence. For  example, the fact that a context
+clause is  associated with  a subunit  rather than with a body stub is
+quite important. Consider the alternative:
+<p>
+<table border cellpadding=6><tr><td><pre>
+procedure EXAMPLE is
+  ...
+  -- The following is not in Ada:
+
+  with TEXT_IO;               -- Illegal in this position
+  procedure P(X :  INTEGER) is separate;
+
+  with REAL_OPERATIONS;       -- Illegal in this position
+  procedure Q(Y :  REAL) is separate;
+  ...
+end EXAMPLE;
+</pre></td></tr></table>
+<p>
+Assume that  in some  later revision of this program, TEXT_IO needs to
+be used  also within  the body  of Q.  Then if  context  clauses  were
+provided with  the stubs as shown, it would be necessary to modify the
+stub of  Q and  hence to  recompile the  text of  the EXAMPLE. However
+since the  stub of  P is  also provided  there -  this is  the textual
+dependence -  a compiler  using the  simple strategy  would not notice
+that the  stub of  P was  unmodified, and would have to recompile P as
+well.
+<p>
+While we  recognize that  future compilers  might adopt more ambitious
+schemes, the  Ada design  has carefully avoided any feature that would
+be incompatible with the simple strategy. Given this careful avoidance
+of unnecessary textual dependences the number of recompilations can be
+kept quite close to the actual minimum.
+
+<H3><BR><a name="10.2.5">10.2.5 Execution of a Main Program</a></H3>
+
+Prior  to   the  execution   of  a   main  program   such  as  TOP  or
+QUADRATIC_EQUATION,  any   library  unit  that  is  used  directly  or
+indirectly by  this main  program must be elaborated. For example, the
+package declarations  of TEXT_IO  and REAL_OPERATIONS  are  elaborated
+before control is passed to QUADRATIC_EQUATION; furthermore, any other
+library unit  that is  used by  these packages or by their bodies must
+also be elaborated before control is passed to QUADRATIC_EQUATION.
+<p>
+The order  of elaboration  of these library units is not fully defined
+but must  be consistent  with the  partial  ordering  defined  by  the
+dependences.
+
+<H3><BR><a name="10.2.6">10.2.6 The Pragma ELABORATE</a></H3>
+
+In most  cases, the  Ada library  manager can  choose any  elaboration
+order consistent  with the unit dependences, and the resulting program
+will always  have the  same effect.  However, in  some  cases  further
+control over elaboration order is required. Here is an example.
+<p>
+Suppose we  have a  package specification  PRINT that uses the package
+SIMPLE_IO of <a href="ratl-09.html#9">Chapter 9</a>. The specification might look like this:
+<p>
+<table border cellpadding=6><tr><td><pre>
+with SIMPLE_IO; use SIMPLE_IO;
+package PRINT is
+  DATA, RESULTS :  FILE_NAME;
+  ...
+end;
+</pre></td></tr></table>
+<p>
+and the package body will of course say something like:
+<PRE>    CREATE(RESULTS, "Results");</PRE>
+<p>
+This creates the partial orderings
+<p>
+<table border cellpadding=6><tr><td><pre>
+Specification of SIMPLE_IO &lt;-- Body of SIMPLE_IO
+Specification of SIMPLE_IO &lt;-- Specification of PRINT
+Specification of PRINT     &lt;-- Body of PRINT
+</pre></td></tr></table>
+<p>
+Note that  (so far)  there is no ordering relation between the body of
+SIMPLE_IO and the specification or body of PRINT. However, PRINT calls
+SIMPLE_IO.CREATE. CREATE presumably changes the local object DIRECTORY
+in the  body of SIMPLE_IO. And DIRECTORY is initialized - set into its
+first consistent  state - by the elaboration of the body of SIMPLE_IO.
+For this  sequence of  events to  work, we  must elaborate the body of
+SIMPLE_IO before any call of SIMPLE_IO.CREATE.
+<p>
+To  express  this  kind  of  dependence,  Ada  introduces  the  pragma
+ELABORATE. It  may be used immediately following a context clause, and
+may take  as arguments  any of  the library  units referred  to by the
+context clause.  Its meaning  is that  the body of the referenced unit
+must be elaborated before the elaboration of the referencing unit.
+<p>
+In the case above, the user would write
+<p>
+<table border cellpadding=6><tr><td><pre>
+with SIMPLE_IO;
+pragma ELABORATE(SIMPLE_IO);
+use SIMPLE_IO;
+package PRINT is
+  ...
+end;
+</pre></td></tr></table>
+<p>
+This creates a new partial ordering
+<p>
+<PRE>    Body of SIMPLE_IO &lt;-- Specification of PRINT</PRE>
+<p>
+which ensures  that any  use of the services of SIMPLE_IO occurs after
+the state  variables have  been initialized. Of course, the program is
+illegal if no consistent order is possible.
+
+<p>
+<center>
+<hr width=60%>
+&#164; <a href="ratl-10-03.html#10.3"><b>NEXT</b></a>
+&#164; <a href="ratl-10-01.html#10.1"><b>PREVIOUS</b></a>
+&#164; <a href="ratl-10.html#10"><b>UP</b></a>
+&#164; <a href="ratl-TOC.html"><b>TOC</b></a>
+&#164; <a href="ratl-IDX.html"><b>INDEX</b></a>
+&#164;
+<hr width=60%>
+<address>Address any questions or comments to
+<A HREF="mailto://adainfo@sw-eng.falls-church.va.us">adainfo@sw-eng.falls-church.va.us</A>.</address></center>
+</BODY></HTML>

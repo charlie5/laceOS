@@ -1,0 +1,304 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Characters and strings</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <META NAME="Author" CONTENT="JTC1/SC22/WG9/ARG, by Randall Brukardt, ARG Editor">
+    <META NAME="GENERATOR" CONTENT="Arm_Form.Exe, Ada Reference Manual generator">
+    <STYLE type="text/css">
+    H4.centered {text-align: center}
+    SPAN.swiss {font-family: Arial, Helvetica, sans-serif; font-size: 92%}
+    SPAN.roman {font-family: "Times New Roman", Times, serif}
+    TT {font-family: "Courier New", monospace}
+    DT {display: compact}
+    DIV.Normal {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-bottom: 0.6em}
+    DIV.SwissExamples {font-family: Arial, Helvetica, sans-serif; font-size: 90%; line-height: 122%; margin-left: 2.2em; margin-bottom: 0.6em}
+    DIV.Bulleted-NoPrefix {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em}
+    DIV.Bulleted {font-family: "Times New Roman", Times, serif; line-height: 122%; margin-left: 2.0em; margin-right: 2.0em; margin-top: 0em; margin-bottom: 0.5em; display: list-item; list-style-type: disc}
+    </STYLE>
+<!-- BEGIN Google Analytics -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-117428-5']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- END Google Analytics -->
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFF0" LINK="#0000FF" VLINK="#800080" ALINK="#FF0000">
+<H1 Style='font-family: "Rockwell", "Times New Roman", Times, serif; font-size: 240%'><B><SPAN Style="color:rgb(0,0,153)">Rationale</SPAN> for <SPAN Style="color:rgb(204,0,0)">Ada 2005</SPAN></B></H1>
+<DIV Class="Normal"><FONT SIZE="+1"><I><A HREF="Rat-TTL.html">John Barnes</A></I></FONT></DIV>
+<div style="margin-top: 0.6em; margin-bottom: 0.0em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<HR>
+<H1>7.5 Characters and strings</H1>
+<div class="Normal">An important improvement in Ada 2005 is the ability 
+to deal with 16- and 32-bit characters both in the program text and in 
+the executing program.<A NAME="I1316"></A><A NAME="I1317"></A></div>
+<div class="Normal">The fine detail of the changes to the program text 
+are perhaps for the language lawyer. The purpose is to permit the use 
+of all relevant characters of the entire ISO/IEC 10646:2003 repertoire. 
+The most important effect is that we can write programs using Cyrillic, 
+Greek and other character sets.<A NAME="I1318"></A><A NAME="I1319"></A></div>
+<div class="Normal" style="margin-bottom: 0.4em">A good example is provided 
+by the addition of the constant&nbsp;</div>
+<div class="SwissExamples">&pi;&nbsp;:&nbsp;<B>constant</B>&nbsp;:=&nbsp;Pi;</div>
+<div class="Normal" style="margin-bottom: 0.4em">to the package <SPAN Class="swiss">Ada.Numerics</SPAN>. 
+This enables us to write mathematical programs in a more natural notation 
+thus&nbsp;</div>
+<div class="SwissExamples">Circumference:&nbsp;Float&nbsp;:=&nbsp;2.0&nbsp;*&nbsp;&pi;&nbsp;*&nbsp;Radius;</div>
+<div class="Normal" style="margin-bottom: 0.4em">Other examples might 
+be for describing polar coordinates thus&nbsp;</div>
+<div class="SwissExamples">R:&nbsp;Float&nbsp;:=&nbsp;Sqrt(X*X&nbsp;+&nbsp;Y*Y);<BR>
+&#952;:&nbsp;Angle&nbsp;:=&nbsp;Arctan(Y,&nbsp;X);</div>
+<div class="Normal" style="margin-bottom: 0.4em">and of course in France 
+we can now declare a decent set of ingredients for breakfast<A NAME="I1320"></A> 
+</div>
+<div class="SwissExamples"><B>type</B>&nbsp;Breakfast_Stuff&nbsp;<B>is</B>&nbsp;(Croissant,&nbsp;Caf&eacute;,&nbsp;&#338;uf,&nbsp;Beurre);</div>
+<div class="Normal" style="margin-bottom: 0.4em">Curiously, although 
+the ligature <SPAN Class="swiss">&aelig;</SPAN> is in Latin-1 and thus 
+available in Ada 95 in identifiers, the ligature <SPAN Class="swiss">&#339;</SPAN> 
+is not (for reasons we need not go into). However, in Ada 95, <SPAN Class="swiss">&#339;</SPAN> 
+is a character of the type <SPAN Class="swiss">Wide_Character</SPAN> 
+and so even in Ada 95 one can order breakfast thus&nbsp;</div>
+<div class="SwissExamples">Put(&quot;Deux&nbsp;&#339;ufs&nbsp;easy-over&nbsp;avec&nbsp;jambon&quot;);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>wide&nbsp;string</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">In order to manipulate 
+32-bit characters, Ada 2005 includes types <SPAN Class="swiss">Wide_Wide_Character</SPAN> 
+and <SPAN Class="swiss">Wide_Wide_String</SPAN> in the package <SPAN Class="swiss">Standard</SPAN> 
+and the appropriate operations to manipulate them in packages such as<A NAME="I1321"></A><A NAME="I1322"></A> 
+</div>
+<div class="SwissExamples">Ada.Strings.Wide_Wide_Bounded<A NAME="I1323"></A><A NAME="I1324"></A><A NAME="I1325"></A><BR>
+Ada.Strings.Wide_Wide_Fixed<A NAME="I1326"></A><A NAME="I1327"></A><A NAME="I1328"></A><BR>
+Ada.Strings.Wide_Wide_Maps<A NAME="I1329"></A><A NAME="I1330"></A><A NAME="I1331"></A><BR>
+Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants<BR>
+Ada.Strings.Wide_Wide_Unbounded<A NAME="I1332"></A><A NAME="I1333"></A><A NAME="I1334"></A><BR>
+Ada.Wide_Wide_Text_IO<A NAME="I1335"></A><A NAME="I1336"></A><A NAME="I1337"></A><BR>
+Ada.Wide_Wide_Text_IO.Text_Streams<BR>
+Ada.Wide_Wide_Text_IO.Complex_IO<BR>
+Ada.Wide_Wide_Text_IO.Editing</div>
+<div class="Normal">There are also new attributes <SPAN Class="swiss">Wide_Wide_Image</SPAN>, 
+<SPAN Class="swiss">Wide_Wide_Value</SPAN> and <SPAN Class="swiss">Wide_Wide_Width</SPAN> 
+and so on.</div>
+<div class="Normal">The addition of wide-wide characters and strings 
+introduces many additional possibilities for conversions. Just adding 
+these directly to the existing package <SPAN Class="swiss">Ada.Characters.Handling</SPAN> 
+could cause ambiguities in existing programs when using literals. So 
+a new package <SPAN Class="swiss">Ada.Characters. Conversions</SPAN> 
+has been added.<A NAME="I1338"></A><A NAME="I1339"></A><A NAME="I1340"></A> 
+This contains conversions in all combinations between <SPAN Class="swiss">Character</SPAN>, 
+<SPAN Class="swiss">Wide_Character</SPAN> and <SPAN Class="swiss">Wide_Wide_Character</SPAN> 
+and similarly for strings. The existing functions from <SPAN Class="swiss">Is_Character</SPAN> 
+to <SPAN Class="swiss">To_Wide_String</SPAN> in <SPAN Class="swiss">Ada.Characters.Handling</SPAN> 
+have been banished to <A HREF="http://www.adaic.org/resources/add_content/standards/05rm/html/RM-J-14.html">Annex 
+J</A>.</div>
+<div class="Normal">The introduction of more complex writing systems 
+makes the definition of the case insensitivity of identifiers, (the equivalence 
+between upper and lower case), much more complicated.</div>
+<div class="Normal" style="margin-bottom: 0.4em">In some systems, such 
+as the ideographic system used by Chinese, Japanese and Korean, there 
+is only one case, so things are easy. But in other systems, like the 
+Latin, Greek and Cyrillic alphabets, upper and lower case characters 
+have to be considered. Their equivalence is usually straightforward but 
+there are some interesting exceptions such as</div>
+<div class="Bulleted">Greek has two forms for lower case sigma (the normal 
+form &#963; and the final form &#962; which is used at the end of a word). 
+These both convert to the one upper case letter &#931;.</div>
+<div class="Bulleted">German has the lower case letter &szlig; whose 
+upper case form is made of two letters, namely SS.</div>
+<div class="Bulleted">Slovenian has a grapheme LJ which is considered 
+a single letter and has three forms: LJ, Lj and lj.&nbsp;</div>
+<div class="Normal">The Greek situation used to apply in English where 
+the long s was used in the middle of words (where it looked like an f 
+but without a cross stroke) and the familiar short s only at the end. 
+To modern eyes this makes poetic lines such as &quot;Where the bee sucks, 
+there suck I&quot; somewhat dubious. (This is sung by Ariel in Act V 
+Scene I of The Tempest by William Shakespeare.)</div>
+<div class="Normal">The definition chosen for Ada 2005 closely follows 
+those provided by ISO/IEC 10646:2003 and by the Unicode Consortium; this 
+hopefully means that all users should find that the case insensitivity 
+of identifiers works as expected in their own language.<A NAME="I1341"></A></div>
+<div class="Normal">Of interest to all users whatever their language 
+is the addition of a few more subprograms in the string handling packages. 
+As explained in the Introduction, Ada 95 requires rather too many conversions 
+between bounded and unbounded strings and the raw type <SPAN Class="swiss">String</SPAN> 
+and, moreover, multiple searching is inconvenient.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The additional subprograms 
+in the packages are as follows.</div>
+<div class="Normal">In the package <SPAN Class="swiss">Ada.Strings.Fixed</SPAN> 
+(assuming <B>use</B> <SPAN Class="swiss">Maps;</SPAN> for brevity)<A NAME="I1342"></A><A NAME="I1343"></A> 
+</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Index(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source:&nbsp;String;&nbsp;Pattern:&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From:&nbsp;Positive;&nbsp;Going:&nbsp;Direction&nbsp;:=&nbsp;Forward;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mapping:&nbsp;Character_Mapping&nbsp;:=&nbsp;Identity)&nbsp;<B>return</B>&nbsp;Natural;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Index(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source:&nbsp;String;&nbsp;Pattern:&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From:&nbsp;Positive;&nbsp;Going:&nbsp;Direction&nbsp;:=&nbsp;Forward;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mapping:&nbsp;Character_Mapping_Function)&nbsp;<B>return</B>&nbsp;Natural;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Index(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source:&nbsp;String;&nbsp;Set:&nbsp;Character_Set;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From:&nbsp;Positive;&nbsp;Test:&nbsp;Membership&nbsp;:=&nbsp;Inside;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Going:&nbsp;Direction&nbsp;:=&nbsp;Forward)&nbsp;<B>return</B>&nbsp;Natural;</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Index_Non_Blank(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source:&nbsp;String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From:&nbsp;Positive;&nbsp;Going:&nbsp;Direction&nbsp;:=&nbsp;Forward)&nbsp;<B>return</B>&nbsp;Natural;</div>
+<div class="Normal">The difference between these and the existing functions 
+is that these have an additional parameter <SPAN Class="swiss">From</SPAN>. 
+This makes it much easier to search for all the occurrences of some pattern 
+in a string.</div>
+<div class="Normal">Similar functions are also added to the packages 
+<SPAN Class="swiss">Ada.Strings.Bounded</SPAN> and <SPAN Class="swiss">Ada.Strings.Unbounded</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Thus suppose we want 
+to find all the occurrences of <SPAN Class="swiss">&quot;bar&quot;</SPAN> 
+in the string <SPAN Class="swiss">&quot;barbara barnes&quot;</SPAN> held 
+in the variable <SPAN Class="swiss">BS</SPAN> of type <SPAN Class="swiss">Bounded_String</SPAN>. 
+(I have put my wife into lower case for convenience.) There are 3 of 
+course. The existing function <SPAN Class="swiss">Count</SPAN> can be 
+used to determine this fact quite easily&nbsp;</div>
+<div class="SwissExamples">N&nbsp;:=&nbsp;Count(BS,&nbsp;&quot;bar&quot;)&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>is&nbsp;3</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">But we really need 
+to know where they are; we want the corresponding index values. The first 
+is easy in Ada 95&nbsp;</div>
+<div class="SwissExamples">I&nbsp;:=&nbsp;Index(BS,&nbsp;&quot;bar&quot;)&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>is&nbsp;1</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">But to find the next 
+one in Ada 95 we have to do something such as take a slice by removing 
+the first three characters and then search again. This would destroy 
+the original string so we need to make a copy of at least part of it 
+thus&nbsp;</div>
+<div class="SwissExamples">Part&nbsp;:=&nbsp;Delete(BS,&nbsp;I,&nbsp;I+2);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>2&nbsp;is&nbsp;length&nbsp;&quot;bar&quot;&nbsp;&ndash;&nbsp;1</I></SPAN><BR>
+I&nbsp;:=&nbsp;Index(Part,&nbsp;&quot;bar&quot;)&nbsp;+&nbsp;3;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>is&nbsp;4</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">and so on in the not-so-obvious 
+loop. (There are other ways such as making a complete copy first, this 
+could either be in another bounded string or perhaps it is simplest just 
+to copy it into a normal <SPAN Class="swiss">String</SPAN> first; but 
+whatever we do it is messy.) In Ada 2005, having found the index of the 
+first in <SPAN Class="swiss">I</SPAN>, we can find the second by writing 
+</div>
+<div class="SwissExamples">I&nbsp;:=&nbsp;Index(BS,&nbsp;&quot;bar&quot;,&nbsp;From&nbsp;=&gt;&nbsp;I+3);</div>
+<div class="Normal">and so on. This is clearly much easier.</div>
+<div class="Normal" style="margin-bottom: 0.4em">The following are also 
+added to <SPAN Class="swiss">Ada.Strings.Bounded</SPAN>&nbsp;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Set_Bounded_String(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Target:&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source:&nbsp;<B>in</B>&nbsp;String;&nbsp;Drop:&nbsp;<B>in</B>&nbsp;Truncation&nbsp;:=&nbsp;Error);</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Bounded_Slice(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source:&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Low:&nbsp;Positive;&nbsp;High:&nbsp;Natural)&nbsp;<B>return</B>&nbsp;Bounded_String;</div>
+<div class="SwissExamples"><B>procedure</B>&nbsp;Bounded_Slice(<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Source:&nbsp;<B>in</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Target:&nbsp;<B>out</B>&nbsp;Bounded_String;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Low:&nbsp;<B>in</B>&nbsp;Positive;&nbsp;High:&nbsp;<B>in</B>&nbsp;Natural);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The procedure <SPAN Class="swiss">Set_Bounded_String</SPAN> 
+is similar to the existing function <SPAN Class="swiss">To_Bounded_String</SPAN>. 
+Thus rather than&nbsp;</div>
+<div class="SwissExamples">BS&nbsp;:=&nbsp;To_Bounded_String(&quot;A&nbsp;Bounded&nbsp;String&quot;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">we can equally write 
+</div>
+<div class="SwissExamples">Set_Bounded_String(BS,&nbsp;&quot;A&nbsp;Bounded&nbsp;String&quot;);</div>
+<div class="Normal" style="margin-bottom: 0.4em">The slice subprograms 
+avoid conversion to and from the type <SPAN Class="swiss">String</SPAN>. 
+Thus to extract the characters from 3 to 9 we can write&nbsp;</div>
+<div class="SwissExamples">BS&nbsp;:=&nbsp;Bounded_Slice(BS,&nbsp;3,&nbsp;9);&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;<SPAN Class="roman"><I>&quot;Bounded&quot;</I></SPAN></div>
+<div class="Normal" style="margin-bottom: 0.4em">whereas in Ada 95 we 
+have to write something like</div>
+<div class="SwissExamples">BS&nbsp;:=&nbsp;To_Bounded(Slice(BS,&nbsp;3,&nbsp;9));</div>
+<div class="Normal">Similar subprograms are added to <SPAN Class="swiss">Ada.Strings.Unbounded</SPAN>. 
+These are even more valuable because unbounded strings are typically 
+implemented with controlled types and the use of a procedure such as 
+<SPAN Class="swiss">Set_Unbounded_String</SPAN> is much more efficient 
+than the function <SPAN Class="swiss">To_Unbounded_String</SPAN> because 
+it avoids assignment and thus calls of <SPAN Class="swiss">Adjust</SPAN>.</div>
+<div class="Normal" style="margin-bottom: 0.4em">Input and output of 
+bounded and unbounded strings in Ada 95 can only be done by converting 
+to or from the type <SPAN Class="swiss">String</SPAN>. This is both slow 
+and untidy. This problem is particularly acute with unbounded strings 
+and so Ada 2005 provides the following additional package (we have added 
+a use clause for brevity as usual)<A NAME="I1344"></A><A NAME="I1345"></A><A NAME="I1346"></A> 
+</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Strings.Unbounded;&nbsp;&nbsp;<B>use</B>&nbsp;Ada.Strings.Unbounded;<BR>
+<B>package</B>&nbsp;Ada.Text_IO.Unbounded_IO&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Put(File:&nbsp;<B>in</B>&nbsp;File_Type;&nbsp;Item:&nbsp;<B>in</B>&nbsp;Unbounded_String);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Put(Item:&nbsp;<B>in</B>&nbsp;Unbounded_String);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Put_Line(File:&nbsp;<B>in</B>&nbsp;File_Type;&nbsp;Item:&nbsp;<B>in</B>&nbsp;Unbounded_String);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Put_Line(Item:&nbsp;<B>in</B>&nbsp;Unbounded_String);</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Get_Line(File:&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;Unbounded_String;<BR>
+&nbsp;&nbsp;&nbsp;<B>function</B>&nbsp;Get_Line&nbsp;<B>return&nbsp;</B>Unbounded_String;</div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Get_Line(File:&nbsp;<B>in</B>&nbsp;File_Type;&nbsp;Item:&nbsp;<B>out</B>&nbsp;Unbounded_String);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Get_Line(Item:&nbsp;<B>out</B>&nbsp;Unbounded_String);</div>
+<div class="SwissExamples"><B>end</B>&nbsp;Ada.Text_IO.Unbounded_IO;</div>
+<div class="Normal">The behaviour is as expected.</div>
+<div class="Normal">There is a similar package for bounded strings but 
+it is generic. It has to be generic because the package <SPAN Class="swiss">Generic_Bounded_Length</SPAN> 
+within <SPAN Class="swiss">Strings.Bounded</SPAN> is itself generic and 
+has to be instantiated with the maximum string size. So the specification 
+is<A NAME="I1347"></A><A NAME="I1348"></A><A NAME="I1349"></A>&nbsp;</div>
+<div class="SwissExamples"><B>with</B>&nbsp;Ada.Strings.Bounded;&nbsp;&nbsp;<B>use</B>&nbsp;Ada.Strings.Bounded;<BR>
+<B>generic</B><BR>
+&nbsp;&nbsp;&nbsp;<B>with&nbsp;package</B>&nbsp;Bounded&nbsp;<B>is&nbsp;new</B>&nbsp;Generic_Bounded_Length(&lt;&gt;);<BR>
+&nbsp;&nbsp;&nbsp;<B>use</B>&nbsp;Bounded;<BR>
+<B>package</B>&nbsp;Ada.Text_IO.Bounded_IO&nbsp;<B>is</B></div>
+<div class="SwissExamples">&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Put(File:&nbsp;<B>in</B>&nbsp;File_Type;&nbsp;Item:&nbsp;<B>in</B>&nbsp;Bounded_String);<BR>
+&nbsp;&nbsp;&nbsp;<B>procedure</B>&nbsp;Put(Item:&nbsp;<B>in</B>&nbsp;Bounded_String);</div>
+<div class="SwissExamples">...&nbsp;--&nbsp;<SPAN Class="roman"><I>etc&nbsp;as&nbsp;for&nbsp;Unbounded_IO</I></SPAN></div>
+<div class="SwissExamples"><B>end</B>&nbsp;Ada.Text_IO.Bounded_IO;</div>
+<div class="Normal">It will be noticed that these packages include functions 
+<SPAN Class="swiss">Get_Line</SPAN> as well as procedures <SPAN Class="swiss">Put_Line</SPAN> 
+and <SPAN Class="swiss">Get_Line</SPAN> corresponding to those in <SPAN Class="swiss">Text_IO</SPAN>. 
+The reason is that procedures <SPAN Class="swiss">Get_Line</SPAN> are 
+not entirely satisfactory.</div>
+<div class="Normal">If we do successive calls of the procedure <SPAN Class="swiss">Text_IO.Get_Line</SPAN> 
+using a string of length 80 on a series of lines of length 80 (we are 
+reading a nice old deck of punched cards), then it does not work as expected. 
+Alternate calls return a line of characters and a null string (the history 
+of this behaviour goes back to early Ada 83 days and is best left dormant).</div>
+<div class="Normal" style="margin-bottom: 0.4em">Ada 2005 accordingly 
+adds corresponding functions <SPAN Class="swiss">Get_Line</SPAN> to the 
+package <SPAN Class="swiss">Ada.Text_IO</SPAN> itself thus<A NAME="I1350"></A><A NAME="I1351"></A><A NAME="I1352"></A> 
+</div>
+<div class="SwissExamples"><B>function</B>&nbsp;Get_Line(File:&nbsp;File_Type)&nbsp;<B>return</B>&nbsp;String;<BR>
+<B>function</B>&nbsp;Get_Line&nbsp;<B>return</B>&nbsp;String;</div>
+<div class="Normal">Successive calls of a function <SPAN Class="swiss">Get_Line</SPAN> 
+then neatly return the text on the cards one by one without bother.</div>
+
+<HR>
+<div style="margin-top: 0.0em; margin-bottom: 0.6em"><A HREF="Rat-TOC.html"><IMG SRC="cont.gif" ALT="Contents" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-3.html"><IMG SRC="index.gif" ALT="Index" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-0-2.html"><IMG SRC="lib.gif" ALT="References" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-SRCH.html"><IMG SRC="find.gif" ALT="Search" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-4.html"><IMG SRC="prev.gif" ALT="Previous" BORDER=0></A>&nbsp;
+&nbsp;<A HREF="Rat-7-6.html"><IMG SRC="next.gif" ALT="Next" BORDER=0></A>&nbsp;
+</div>
+<DIV Class="Normal">&copy; 2005, 2006, 2007 John Barnes Informatics.</DIV>
+<DIV Class="Normal">Sponsored in part by:</DIV>
+<TABLE Summary="Sponsors" Width="710">
+<TR><TD VAlign="Top" Width="490">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">The <A HREF="http://www.adaic.org/community/">Ada Resource Association</A> and its member companies:</SPAN>
+<img src="http://www.adaic.org/resources/images/sponsors/ARA-members-5.gif" alt="ARA Members" usemap="#member-map" border=1>
+<map name="member-map">
+  <AREA href="http://www.adacore.com/" alt="AdaCore"
+          shape="rect"          coords="0,0,222,66">
+  <AREA href="http://www.polyspace.com/" alt="Polyspace Technologies"
+          shape="rect"          coords="0,66,155,179">
+	<AREA href="http://www.sparkada.com/" alt="Praxis Critical Systems"
+	         shape="rect"         coords="156,66,295,179">
+	<AREA href="http://www-306.ibm.com/software/awdtools/developer/ada/" alt="IBM Rational"
+	         shape="rect"         coords="222,0,480,66">
+	<AREA href="http://www.sofcheck.com/" alt="Sofcheck"
+	         shape="rect"         coords="296,66,480,130">
+</map>
+<TD Width="220" Align="Center" VAlign="Top">
+<SPAN Style="font-family: Arial, Helvetica, sans-serif; font-size: 92%">and &nbsp; <A HREF="http://www.ada-europe.org">Ada-Europe</A>:<BR>
+<A HREF="http://www.ada-europe.org"><IMG SRC="AE_logo.gif" ALT="Ada-Europe" Height="200" Border="0"></A></SPAN>
+</TABLE>
+</BODY>
+</HTML>
