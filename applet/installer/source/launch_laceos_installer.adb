@@ -163,9 +163,11 @@ begin
    choose_target_Disk:
    loop
       declare
-         the_Disks       : storage.Disks := laceOS.storage.current_Disks;
-         Options         : Strings;
-         disk_Choice     : Positive;
+         first_Disk  : Boolean       := True;
+         the_Disks   : storage.Disks := laceOS.storage.current_Disks;
+         Options     : Strings;
+         disk_Choice : Positive;
+
       begin
          for Each of the_Disks
          loop
@@ -182,7 +184,13 @@ begin
                                                        & Model_of (Each)
                                                        & Transport);
             begin
-               Options.append (Details);
+               if first_Disk
+               then
+                  first_Disk := False;
+                  Options.append (Details & " (default)");
+               else
+                  Options.append (Details);
+               end if;
             end;
          end loop;
 
