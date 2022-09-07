@@ -351,7 +351,7 @@ is
          Dlog ("");
          log  (".", new_Line => False);
 
-         Dlog (run ("rsync -av /root/aur /mnt/root"));     -- TODO: Use 'mv' ?
+         Dlog (run ("rsync -av --quiet /root/aur /mnt/root"));     -- TODO: Use 'mv' ?
 
          declare
             use String_Vectors,
@@ -669,7 +669,7 @@ is
       procedure add_custom_Files_to_etc
       is
       begin
-         Dlog (run ("rsync -av custom/etc/ /mnt/etc"));
+         Dlog (run ("rsync -av --quiet custom/etc/ /mnt/etc"));
 
          Dlog (run ("chmod --recursive u+x /mnt/etc/skel/Desktop/study/ada/1983"));
          Dlog (run ("chmod --recursive u+x /mnt/etc/skel/Desktop/study/ada/1995"));
@@ -771,7 +771,7 @@ is
          end loop;
 
          Dlog (run ("grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB", in_Chroot => True));
-         Dlog (run ("rsync -av custom/boot/grub/ada-mascot.png /mnt/boot/grub"));
+         Dlog (run ("rsync -av --quiet custom/boot/grub/ada-mascot.png /mnt/boot/grub"));
          Dlog (run ("grub-mkconfig -o /boot/grub/grub.cfg",                                        in_Chroot => True));
 
          for i in 1 .. Id
