@@ -2,12 +2,12 @@
 # shellcheck disable=SC2034
 
 iso_name="laceOS"
-#iso_label="laceOS_$(date +%Y%m)"
-iso_label="laceOS_live"
+iso_label="laceOS_$(date +%Y%m)"
+#iso_label="laceOS_live"
 iso_publisher="Rod Kay <http://www.orthanc.site:8080>"
 iso_application="laceOS Linux Install/Rescue CD"
 #iso_version="$(date +%Y.%m.%d)"
-iso_version="0.0"
+iso_version="0.1"
 
 install_dir="laceos"
 
