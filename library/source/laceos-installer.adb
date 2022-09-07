@@ -403,6 +403,9 @@ is
                end;
             end if;
 
+            Dlog ("***************************************");
+            Dlog ("***** Recreating the AUR install order: " & recreate_install_Order'Image);
+            Dlog ("***************************************");
 
             if recreate_install_Order
             then
@@ -429,6 +432,9 @@ is
                            then
                               log (".", new_Line => False);
                               Dlog ("SUCCESS for '" & full_Name & "'");
+                              Dlog ("");
+                              Dlog ("");
+                              Dlog ("");
 
                               just_Installed.append (full_Name);
                               install_Order .append (full_Name);
@@ -504,6 +510,9 @@ is
                         then
                            log (".", new_Line => False);
                            Dlog ("SUCCESS for '" & full_Name & "'");
+                           Dlog ("");
+                           Dlog ("");
+                           Dlog ("");
                         end if;
                      end;
                   end loop;
