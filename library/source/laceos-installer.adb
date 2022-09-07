@@ -353,6 +353,9 @@ is
 
          Dlog (run ("rsync -av --quiet /root/aur /mnt/root"));     -- TODO: Use 'mv' ?
 
+         Dlog (run ("pacman -U pikaur-1.11-1-any.pkg.tar.zst", in_Chroot => True));
+
+
          declare
             use String_Vectors,
                 shell.Directory_iteration;
