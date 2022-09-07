@@ -140,7 +140,7 @@ begin
 
          loop
             declare
-               Code : constant String := Query (Question => "Enter locale code",
+               Code : constant String := Query (Question => "Enter your locale code",
                                                 Default  => default_Code);
             begin
                if Code'Length <= locale_Code.Capacity
