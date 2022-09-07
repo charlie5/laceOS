@@ -26,6 +26,7 @@ file_permissions=(
   ["/etc/shadow"]="0:0:400"
   ["/root"]="0:0:750"
   ["/root/.zshrc"]="0:0:750"
+  ["/root/build_aur_packages"]="0:0:750"
   ["/root/scripts/fetch.sh"]="0:0:750"
   ["/root/scripts/sync_installed_pkgs.sh"]="0:0:750"
   ["/root/scripts/sync_essential_pkgs.sh"]="0:0:750"
