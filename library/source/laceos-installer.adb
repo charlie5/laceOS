@@ -784,6 +784,13 @@ is
 
          Dlog (run ("grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB", in_Chroot => True));
          Dlog (run ("rsync -av --quiet custom/boot/grub/ada-mascot.png /mnt/boot/grub"));
+
+         if not ada.Directories.exists ("/mnt/boot/amd-ucode.img")
+         then
+            Dlog (run ("pacman -S --noconfirm amd-ucode",
+                  in_Chroot => True));
+         end if;
+
          Dlog (run ("grub-mkconfig -o /boot/grub/grub.cfg",                                        in_Chroot => True));
 
          for i in 1 .. Id
