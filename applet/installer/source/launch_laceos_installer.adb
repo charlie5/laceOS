@@ -204,7 +204,11 @@ begin
          log ("");
          use_entire_Disk := Query_yes_or_no ("Erase and use the entire disk");
 
+
          exit choose_target_Disk when use_entire_Disk;
+
+         log ("Aborting installation.");       -- Remove this when dual-booting works.
+         return;                               --
 
 
          Dlog (disk_Choice'Image & " " & table_Kind_of (the_Disk)'Image);
