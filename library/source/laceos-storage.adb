@@ -356,7 +356,7 @@ is
    begin
       Dlog ("");
       Dlog ("Adding an EFI system partition.");
-      run ("parted " & install_Disk & " mkpart ""EFI system partition"" fat32 1MiB 301MiB");
+      run ("parted " & install_Disk & " mkpart EFI_System_Partition fat32 1MiB 501MiB");
 
       Dlog ("");
       Dlog ("Making the EFI system partition bootable.");
@@ -380,7 +380,7 @@ is
    begin
       Dlog ("");
       Dlog ("Adding the root partition.");
-      run  ("parted " & install_Disk & " mkpart ""root partition"" ext4 301MiB 100%");
+      run  ("parted " & install_Disk & " mkpart Root_Partition ext4 502MiB 100%");
 
       Dlog ("");
       Dlog ("Formatting the root partition.");
