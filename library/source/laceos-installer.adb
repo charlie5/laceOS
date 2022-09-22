@@ -669,7 +669,7 @@ is
          Dlog ("");
          Dlog ("Configuring the network.");
 
-         IO.store (in_File  => "/mnt/etc/hostname",
+         IO.store (in_File  => "/mnt/etc/hostname",     -- TODO: What about /etc/hosts ?
                    the_Text => hostName);
          Dlog ("");
          Dlog ("Enabling the network manager.");
@@ -701,21 +701,21 @@ is
             use ada.Characters;
          begin
             Dlog (run ("useradd -m -G wheel -s /bin/bash " & userName,
-                  in_Chroot => True));
+                       in_Chroot => True));
 
             -- Set the user password.
             --
             Dlog (run ("passwd " & userName,
-                  Input     =>   Password & latin_1.LF
-                  & Password & latin_1.LF,
-                  in_Chroot => True));
+                       Input     =>   Password & latin_1.LF
+                                    & Password & latin_1.LF,
+                       in_Chroot => True));
 
             -- Set the root password.
             --
             Dlog (run ("passwd",
-                  Input     =>   Password & latin_1.LF
-                  & Password & latin_1.LF,
-                  in_Chroot => True));
+                        Input     =>   Password & latin_1.LF
+                                     & Password & latin_1.LF,
+                        in_Chroot => True));
 
             -- Allow the user to run 'sudo' without entering a password.
             --
@@ -776,7 +776,7 @@ is
                   begin
                      Id_Image (1) := '/';
                      Dlog (run ("mount --mkdir " & Path_of (each_Partition) & " /mnt" & Id_Image,
-                           in_Chroot => True));
+                                in_Chroot => True));
                   end;
                end if;
             end loop;
@@ -788,10 +788,11 @@ is
          if not ada.Directories.exists ("/mnt/boot/amd-ucode.img")
          then
             Dlog (run ("pacman -S --noconfirm amd-ucode",
-                  in_Chroot => True));
+                       in_Chroot => True));
          end if;
 
-         Dlog (run ("grub-mkconfig -o /boot/grub/grub.cfg",                                        in_Chroot => True));
+         Dlog (run ("grub-mkconfig -o /boot/grub/grub.cfg",
+                    in_Chroot => True));
 
          for i in 1 .. Id
          loop
