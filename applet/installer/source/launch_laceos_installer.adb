@@ -23,6 +23,7 @@ procedure launch_laceOS_Installer
 is
    use laceOS,
        laceOS.Console,
+       laceOS.Commands,
        laceOS.storage,
        laceOS.Logger,
        laceOS.Containers,
@@ -86,7 +87,6 @@ begin
       log ("Choose keyboard layout:");
 
       declare
-         use laceOS.Commands;
          Keymap : constant String := Query (Options => Keymaps);
       begin
          if Keymap /= Keymaps (1)
@@ -122,8 +122,7 @@ begin
 
       query_locale_Code:
       declare
-         use laceOS.Commands,
-             lace.Text.utility;
+         use lace.Text.utility;
 
          default_Code : constant String         := Details.locale_Code;
          locale_gen   : constant lace.Text.item := forge.to_Text (Filename => "/etc/locale.gen");
@@ -161,210 +160,77 @@ begin
 
 
    choose_target_Disk:
-   loop
-      declare
-         first_Disk  : Boolean       := True;
-         the_Disks   : storage.Disks := laceOS.storage.current_Disks;
-         Options     : Strings;
-         disk_Choice : Positive;
+   declare
+      first_Disk  :          Boolean       := True;
+      the_Disks   : constant storage.Disks := laceOS.storage.current_Disks;
+      Options     :          Strings;
+      disk_Choice :          Positive;
 
-      begin
-         for Each of the_Disks
-         loop
-            declare
-               use ada.Characters.handling,
-                   gnat.formatted_String;
+   begin
+      for Each of the_Disks
+      loop
+         declare
+            use ada.Characters.handling,
+                gnat.formatted_String;
 
-               Format    : constant formatted_String := +"%-16s      %5d GiB   %-16s   %s";
+            Format    : constant formatted_String := +"%-16s      %5d GiB   %-16s   %s";
 
-               Transport : constant String := (if Transport_of (Each) = Unknown then ""
-                                                                                else to_Lower (Transport_of (Each)'Image));
-               Details   : constant String := -(Format & Path_of (Each)
-                                                       & Integer (Size_of (Each) / gibiBytes)
-                                                       & Model_of (Each)
-                                                       & Transport);
-            begin
-               if first_Disk
-               then
-                  first_Disk := False;
-                  Options.append (Details & " (default)");
-               else
-                  Options.append (Details);
-               end if;
-            end;
-         end loop;
+            Transport : constant String := (if Transport_of (Each) = Unknown then ""
+                                                                             else to_Lower (Transport_of (Each)'Image));
+            Details   : constant String := -(Format & Path_of (Each)
+                                                    & Integer (Size_of (Each) / gibiBytes)
+                                                    & Model_of (Each)
+                                                    & Transport);
+         begin
+            if first_Disk
+            then
+               first_Disk := False;
+               Options.append (Details & " (default)");
+            else
+               Options.append (Details);
+            end if;
+         end;
+      end loop;
 
-         log ("");
-         log ("Choose target disk.");
+      log ("");
+      log ("Choose target disk.");
 
-         disk_Choice := Query (Options);
-         the_Disk    := the_Disks (disk_Choice);
+      disk_Choice := Query (Options);
+      the_Disk    := the_Disks (disk_Choice);
 
-         log ("Installing to disk '" & Path_of (the_Disk) & "'.");
-         log ("");
-         use_entire_Disk := Query_yes_or_no ("Erase and use the entire disk");
+      log ("Installing to disk '" & Path_of (the_Disk) & "'.");
+      log ("");
+      use_entire_Disk := Query_yes_or_no ("The entire disk will be erased ... continue ");
 
+      if not use_entire_Disk
+      then
+         log ("Aborting installation.");
 
-         exit choose_target_Disk when use_entire_Disk;
+         delay 2.0;
+         return;
+      end if;
 
-         log ("Aborting installation.");       -- Remove this when dual-booting works.
-         return;                               --
-
-
-         Dlog (disk_Choice'Image & " " & table_Kind_of (the_Disk)'Image);
-
-         if table_Kind_of (the_Disk) /= GPT
-         then
-            log ("Only GPT partition tables are supported.");
-            log ("");
-
-            declare
-               use laceOS.Commands;
-
-               Choice  : Positive;
-               Options : Strings;
-            begin
-               Options.append ("Customise disks");
-               Options.append ("Choose a different disk");
-
-               Choice := Query (Options);
-
-               case Choice
-               is
-                  when 1 =>
-                     log  ("");
-                     log  ("Running partition editor.");
-                     Dlog (run ("gnome-disks"));
-
-                     the_Disks := laceOS.storage.current_Disks;
-                     the_Disk  := the_Disks (disk_Choice);
-
-                  when 2 =>
-                     null;
-
-                  when others =>
-                     raise program_Error with "Illegal choice.";
-               end case;
-            end;
-
-         else
-            choose_root_Partition:
-            begin
-               loop
-                  declare
-                     use laceOS.Commands;
-
-                     the_Partitions   : laceOS.storage.Partitions renames Partitions_of (the_Disk);
-                     partition_Choice : Positive;
-                     Options          : Strings;
-                  begin
-                     if the_Partitions'Length = 0
-                     then
-                        log ("");
-                        log ("No partitions found on disk '" & Path_of (the_Disk) & "'.");
-                     else
-                        for Each of the_Partitions
-                        loop
-                           declare
-                              use ada.Characters.handling,
-                                  gnat.formatted_String;
-
-                              Format  : constant formatted_String := +"%-16s      %5d GiB   %-20s   %-20s   %s";
-                              Details : constant String           := -(  Format & Path_of (Each)
-                                                                       & Integer (Size_of (Each) / gibiBytes)
-                                                                       & Label_of     (Each)
-                                                                       & type_Name_of (Each)
-                                                                       & to_Lower (Filesystem_of (Each)'Image));
-                              begin
-                                 Options.append (Details);
-                              end;
-                        end loop;
-                     end if;
-
-                     Options.append ("Customise partitions");
-                     Options.append ("Choose a different disk");
-
-                     log ("");
-                     log ("");
-                     log ("Choose target partition.");
-                     partition_Choice := Query (Options);
-
-                     if partition_Choice = the_Partitions'Length + 1      -- Custom partitioning option.
-                     then
-                        log  ("");
-                        log  ("Running partition editor.");
-                        Dlog (run ("gnome-disks"));
-
-                        the_Disks := laceOS.storage.current_Disks;
-                        the_Disk  := the_Disks (disk_Choice);
-
-                        Dlog (disk_Choice'Image & " " & table_Kind_of (the_Disk)'Image);
-
-                        if table_Kind_of (the_Disk) /= GPT
-                        then
-                           log ("Only GPT partition tables are supported.");
-                           exit;
-                        end if;
-
-                     elsif partition_Choice = the_Partitions'Length + 2   -- Choose a different disk option.
-                     then
-                        exit;
-
-                     else
-                        root_Partition := the_Partitions (partition_Choice);
-
-                        if root_Partition = EFI_boot_Partition_of (the_Disk)
-                        then
-                           log ("The EFI boot partition may not be used for the root partition.");
-                        else
-                           exit choose_target_Disk;
-                        end if;
-                     end if;
-                  end;
-               end loop;
-            end choose_root_Partition;
-         end if;
-
-      end;
-   end loop choose_target_Disk;
+   end choose_target_Disk;
 
 
    laceOS.Commands.run ("umount -R /mnt");     -- Ensure /mnt is unmounted, in case of a failed prior install.
 
-   if use_entire_Disk
-   then
-      create_Partition_Table (the_Disk);
-      create_EFI_Partition   (the_Disk);
+   create_Partition_Table (the_Disk);
+   create_EFI_Partition   (the_Disk);
 
-      root_Partition := create_root_Partition (the_Disk);
-   end if;
-
-
-   if Filesystem_of (root_Partition) = None
-   then
-      Dlog ("Formatting the root partition to the ext4 filesystem.");
-      laceOS.Commands.run ("mkfs.ext4 " & Path_of (root_Partition));
-   end if;
-
+   root_Partition := create_root_Partition (the_Disk);
 
    mount_root_and_boot_Partitions:
-   declare
-      use laceOS.Commands;
    begin
       Dlog ("");
       Dlog ("Mounting the root partition.");
-
       mount (root_Partition, "/mnt");
-      Dlog  (run ("rm -fr /mnt"));     -- Erase the root partition to remove any pre-existing files.
 
       Dlog ("Mounting the EFI boot partition.");
       mount (EFI_boot_Partition_of (the_Disk),
              "/mnt/boot");
    end mount_root_and_boot_Partitions;
 
-   --  Installer.create_and_mount_the_root_Partition (root_Partition  => root_Partition,
-   --                                                 the_Disk        => the_Disk,
-   --                                                 use_entire_Disk => use_entire_Disk);
    Installer.install_Packages;
    Installer.configure_the_System (hostName            => +hostName,
                                    userName            => +userName,
@@ -377,7 +243,6 @@ begin
    log ("Remove the installation media and press <Enter> to shutdown.");
 
    declare
-      use laceOS.Commands;
       Unused : String := ada.Text_IO.get_Line;
    begin
       log ("Shutting down.");
