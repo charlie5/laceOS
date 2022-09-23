@@ -671,6 +671,14 @@ is
 
          IO.store (in_File  => "/mnt/etc/hostname",     -- TODO: What about /etc/hosts ?
                    the_Text => hostName);
+
+         Dlog ("");
+         Dlog ("Configuring the /etc/hosts.");
+
+         IO.replace (in_File   => "/mnt/etc/hosts",
+                     Pattern   => "$My_Hostname",
+                     with_Text => hostName);
+
          Dlog ("");
          Dlog ("Enabling the network manager.");
          Dlog (run ("systemctl enable NetworkManager.service", in_Chroot => True));
@@ -826,8 +834,8 @@ is
       configure_the_Time;
       configure_the_Locale;
       set_the_keyboard_Layout;
-      configure_the_Network;
       add_custom_Files_to_etc;
+      configure_the_Network;
       create_the_User;
       enable_Services;
       install_the_boot_Loader;
