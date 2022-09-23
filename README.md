@@ -117,7 +117,7 @@ The installer is currently console based, albeit in a graphical desktop environm
 - Double click on the 'Install laceOS' desktop icon.
 
 The installer will only accept legal hostnames, usernames and passwords. The user will be prompted again if any are illegal. 
-Disks and partitions may be customised during the install process (via the 'gnome-disk-utility').
+The installer will use an entire disk as the installation target.
 
 
 ___________
