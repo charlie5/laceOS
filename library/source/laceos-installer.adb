@@ -580,7 +580,7 @@ is
          -- Swapfile size is set to the same as RAM size.
          Free  : constant long_Integer := Free_in (the_root_Partition);
          RAM   : constant long_Integer := Memory.RAM;
-         Size  : constant long_Integer := long_Integer'Min (Free - 10*gibiBytes,     -- 10 GiB is the approximate OS usage.
+         Size  : constant long_Integer := long_Integer'Min ((Free - 10 * gibiBytes) / 10,     -- 10 GiB is the approximate OS usage.
                                                             RAM);
          Count : constant long_Integer := Size / mebiBytes;
          Image : constant String       := Count'Image;
