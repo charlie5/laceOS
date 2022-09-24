@@ -28,6 +28,7 @@ file_permissions=(
   ["/root/.zshrc"]="0:0:750"
   ["/root/build_aur_packages"]="0:0:750"
   ["/root/scripts/fetch.sh"]="0:0:750"
+  ["/root/scripts/sync_aur_install_order.sh"]="0:0:750"
   ["/root/scripts/sync_installed_pkgs.sh"]="0:0:750"
   ["/root/scripts/sync_essential_pkgs.sh"]="0:0:750"
   ["/root/scripts/update_installer_xfce4_conf.sh"]="0:0:750"
