@@ -551,7 +551,7 @@ is
 
 
    begin
-      run ("mount -o remount,size=16G /run/archiso/cowspace");                     -- Increase the size of cowspace.
+      run ("mount -o remount,size=8G /run/archiso/cowspace");                      -- Increase the size of cowspace.
       run ("rsync -av --quiet custom/var/cache/pacman/pkg /var/cache/pacman");     -- Add the pacman cache for use by 'pacstrap -c' below.
 
       install_essential_Packages;
