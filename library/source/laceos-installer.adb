@@ -393,6 +393,7 @@ is
                   loop
                      if not Contains (AUR_install_Order, Each)
                      then
+                        Dlog ("Missing package '" & Each & "' in 'aur_install_order'.");
                         recreate_install_Order := True;
                         exit;
                      end if;
