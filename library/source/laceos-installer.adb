@@ -487,7 +487,7 @@ is
                end install_each_AUR_Package;
 
 
-            else   -- Not recreating the install order.
+            else   -- Using the existing AUR install order.
                declare
                   use lace.Text;
                   the_Text     : constant lace.Text.item     := forge.to_Text (Filename => "aur_install_order");
@@ -495,24 +495,27 @@ is
                begin
                   for Each of the_Packages
                   loop
-                     declare
-                        full_Name : constant String := +Each;
-                        Success   :          Boolean;
-                        Output    : constant String := run ("pacman -U --noconfirm " & full_Name,
-                                                            Normal_Exit => Success,
-                                                            in_Chroot   => True);
-                     begin
-                        Dlog (Output);
+                     if +Each /= ""     -- Skip final empty line.
+                     then
+                        declare
+                           full_Name : constant String := +Each;
+                           Success   :          Boolean;
+                           Output    : constant String := run ("pacman -U --noconfirm " & full_Name,
+                                                               Normal_Exit => Success,
+                                                               in_Chroot   => True);
+                        begin
+                           Dlog (Output);
 
-                        if Success
-                        then
-                           log (".", new_Line => False);
-                           Dlog ("SUCCESS for '" & full_Name & "'");
-                           Dlog ("");
-                           Dlog ("");
-                           Dlog ("");
-                        end if;
-                     end;
+                           if Success
+                           then
+                              log (".", new_Line => False);
+                              Dlog ("SUCCESS for '" & full_Name & "'");
+                              Dlog ("");
+                              Dlog ("");
+                              Dlog ("");
+                           end if;
+                        end;
+                     end if;
                   end loop;
                end;
             end if;
