@@ -317,28 +317,28 @@ is
 
          -- TODO: Microde seems to break GRUB. Investigate and find out why.
          --
-         -- Install bootloader microcode.
-         --
-         --  declare
-         --     use CPU;
-         --  begin
-         --     case CPU.Kind
-         --     is
-         --     when AMD =>
-         --        if not ada.Directories.exists ("/mnt/boot/amd-ucode.img")
-         --        then
-         --           Dlog (run ("pacman -S --noconfirm amd-ucode",
-         --                 in_Chroot => True));
-         --        end if;
-         --
-         --     when Intel =>
-         --        if not ada.Directories.exists ("/mnt/boot/intel-ucode.img")
-         --        then
-         --           Dlog (run ("pacman -S --noconfirm intel-ucode",
-         --                 in_Chroot => True));
-         --        end if;
-         --     end case;
-         --  end;
+         -- Install_ bootloader microcode.
+
+         declare
+            use CPU;
+         begin
+            case CPU.Kind
+            is
+            when AMD =>
+               if not ada.Directories.exists ("/mnt/boot/amd-ucode.img")
+               then
+                  Dlog (run ("pacman -S --noconfirm amd-ucode",
+                        in_Chroot => True));
+               end if;
+
+            when Intel =>
+               if not ada.Directories.exists ("/mnt/boot/intel-ucode.img")
+               then
+                  Dlog (run ("pacman -S --noconfirm intel-ucode",
+                        in_Chroot => True));
+               end if;
+            end case;
+         end;
 
       end install_miscellaneous_Packages;
 
@@ -794,11 +794,11 @@ is
          Dlog (run ("grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB", in_Chroot => True));
          Dlog (run ("rsync -av --quiet custom/boot/grub/ada-mascot.png /mnt/boot/grub"));
 
-         if not ada.Directories.exists ("/mnt/boot/amd-ucode.img")
-         then
-            Dlog (run ("pacman -S --noconfirm amd-ucode",
-                       in_Chroot => True));
-         end if;
+         --  if not ada.Directories.exists ("/mnt/boot/amd-ucode.img")
+         --  then
+         --     Dlog (run ("pacman -S --noconfirm amd-ucode",
+         --                in_Chroot => True));
+         --  end if;
 
          Dlog (run ("grub-mkconfig -o /boot/grub/grub.cfg",
                     in_Chroot => True));
