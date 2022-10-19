@@ -3,8 +3,8 @@
 set -e
 
 #umount -R /mnt
-mount /dev/vda2 /mnt
-mount /dev/vda1 /mnt/boot
+mount /dev/sda2 /mnt
+mount /dev/sda1 /mnt/boot
 
 chmod a+rwx /root/scripts/build_aur_packages.sh
 cp /root/scripts/build_aur_packages.sh /mnt/home/rod
