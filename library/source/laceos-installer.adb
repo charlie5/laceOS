@@ -703,6 +703,8 @@ is
       procedure create_the_User
       is
       begin
+         Dlog (run ("chmod u+x /mnt/etc/skel/Desktop/Awesome\ Ada.desktop"));
+
          Dlog ("Setting the user name and password.");
 
          declare
