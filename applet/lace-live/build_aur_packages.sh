@@ -21,7 +21,7 @@ pikaur $FLAGS gnatcoll-gmp      \
               gnatcoll-iconv    \
               gnatcoll-lzma     \
               gnatcoll-omp      \
-              gnatcoll-python2  \
+              gnatcoll-python   \
               gnatcoll-readline \
               gnatcoll-syslog   \
               gnatcoll-zlib
