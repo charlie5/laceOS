@@ -346,12 +346,24 @@ is
 
       procedure install_AUR_Packages
       is
+         Success : Boolean ;
       begin
+         Dlog ("");   Dlog ("");   Dlog ("");   Dlog ("");
          Dlog ("Installing AUR packages.");
          Dlog ("");
          log  (".", new_Line => False);
 
-         Dlog (run ("rsync -av --quiet /root/aur /mnt/root"));     -- TODO: Use 'mv' ?
+         Dlog (run ("rsync -av --quiet /root/aur              /mnt/root"));     -- TODO: Use 'mv' ?
+         Dlog (run ("rsync -av --quiet /root/builder_packages /mnt/root"));
+
+         Dlog (run ("pacman -U --noconfirm /root/builder_packages/pikaur-1.12-1-any.pkg.tar.zst",
+               Normal_Exit => Success,
+               in_Chroot   => True));
+         Dlog (run ("pacman -U --noconfirm /root/builder_packages/xmlada-1:22.0.0-2-x86_64.pkg.tar.zst "
+                                        & "/root/builder_packages/libgpr-1:22.0.0-2-x86_64.pkg.tar.zst "
+                                        & "/root/builder_packages/gprbuild-1:22.0.0-2-x86_64.pkg.tar.zst",
+               Normal_Exit => Success,
+               in_Chroot   => True));
 
          declare
             use String_Vectors,
