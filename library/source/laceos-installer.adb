@@ -521,7 +521,6 @@ is
             end if;
          end;
 
-         Dlog (run ("ln -s /usr/lib/libcrypt.so.2 /usr/lib/libcrypt.so.1", in_Chroot => True));     -- Create a link so gnatstudio bin can run.
       end install_AUR_Packages;
 
 
