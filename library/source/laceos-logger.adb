@@ -19,7 +19,7 @@ is
 
 
 
-    --  Debug : constant Boolean := True;
+   --  Debug : constant Boolean := True;
    Debug : constant Boolean := False;
 
    procedure Dlog (Message : in String;   new_Line : in Boolean := True)
