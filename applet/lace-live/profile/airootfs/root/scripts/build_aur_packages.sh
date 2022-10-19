@@ -17,7 +17,7 @@ set -e
 pikaur -S --noconfirm --rebuild gprbuild
 
 #FLAGS="-S --noconfirm --rebuild"
-FLAGS="-S --noconfirm"
+FLAGS="-S --noconfirm --disable-download-timeout"
 
 pikaur $FLAGS gnatcoll-core
 pikaur $FLAGS alire
