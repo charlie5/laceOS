@@ -700,6 +700,14 @@ is
 
 
 
+      procedure add_custom_Files_to_usr
+      is
+      begin
+         Dlog (run ("rsync -av --quiet custom/usr/ /mnt/usr"));
+      end add_custom_Files_to_usr;
+
+
+
       procedure create_the_User
       is
       begin
@@ -837,6 +845,7 @@ is
       configure_the_Locale;
       set_the_keyboard_Layout;
       add_custom_Files_to_etc;
+      add_custom_Files_to_usr;
       configure_the_Network;
       create_the_User;
       enable_Services;
