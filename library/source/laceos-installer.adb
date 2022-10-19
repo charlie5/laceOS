@@ -724,6 +724,8 @@ is
       is
       begin
          Dlog (run ("chmod u+x /mnt/etc/skel/Desktop/Awesome\ Ada.desktop"));
+         Dlog (run ("chmod u+x /mnt/etc/skel/Desktop/Wikipedia.desktop"));
+         Dlog (run ("chmod u+x /mnt/etc/skel/Desktop/Wiktionary.desktop"));
 
          Dlog ("Setting the user name and password.");
 
