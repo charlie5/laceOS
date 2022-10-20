@@ -14,8 +14,8 @@ _______________
 | RAM:          |  4+ GiB     |
 | Disk:         | 64+ GiB     |
 
-_____________
-##OS Components
+________________
+## OS Components
 
 |               |                | 
 |---------------|:--------------:|
@@ -71,36 +71,13 @@ _______________
 - sphinxcontrib-adadomain
 - xmlada
 
-___________
-## Building
-
-### Depends on:
-
-- Archlinux
-- Ada 2012
-- [Lace Project](https://github.com/charlie5/lace)
-- [aShell Project](https://github.com/charlie5/aShell)
-- An Internet Connection
-
-Install the dependencies and then ...
-
-
-$ cd laceOS/applet/lace-live<br>
-$ ./build_iso.sh
-
-
-The resulting ISO will be created in 'laceOS/applet/lace-live/out'.
-
-Should the build fail (due to a slow internet connnection) or is otherwise interrupted, simply restart the build. Do ***not*** use the
-'rid_build.sh" script until after the build completes successfully (see [here](https://wiki.archlinux.org/title/Archiso#Removal_of_work_directory)).
-
 _____________
 ## Installing
 
-Either build the install ISO as detailed above or download a pre-built
+Download a pre-built 
 [ISO](https://github.com/charlie5/laceOS/raw/master/laceOS-0.0-x86_64.iso.torrent) using a bittorrent client.
 
-As the current initial version is a prototype, please test/trial in a virtual machine until a stable version is released.
+As the current initial version is an alpha, please test/trial in a virtual machine until a stable version is released.
 
 ### Depends on:
 
@@ -125,3 +102,31 @@ ___________
 
 Comments, suggestions and critiques are very welcome, either via the github project 'Issues' section or IRC to 'charlie5' on #ada channel
  at 'irc.libera.chat'.
+
+
+___________
+## Building
+
+Currently the ISO build system uses several hard-coded folder paths. This will be corrected in the next release. For the moment please use
+the pre-built install ISO.
+
+
+### Depends on:
+
+- Archlinux
+- Ada 2012
+- [Lace Project](https://github.com/charlie5/lace)
+- [aShell Project](https://github.com/charlie5/aShell)
+- An Internet Connection
+
+Install the dependencies and then ...
+
+
+$ cd laceOS/applet/lace-live<br>
+$ ./build_iso.sh
+
+
+The resulting ISO will be created in 'laceOS/applet/lace-live/out'.
+
+Should the build fail (due to a slow internet connnection) or is otherwise interrupted, simply restart the build. Do ***not*** use the
+'rid_build.sh" script until after the build completes successfully (see [here](https://wiki.archlinux.org/title/Archiso#Removal_of_work_directory)).
