@@ -240,15 +240,8 @@ begin
                                    the_root_Partition  => root_Partition);
    log ("");
    log ("Installation is complete.");
-   log ("Remove the installation media and press <Enter> to shutdown.");
+   log ("");
 
-   declare
-      Unused : String := ada.Text_IO.get_Line;
-   begin
-      log ("Shutting down.");
-      delay 1.0;
-      Dlog (run ("shutdown now"));
-   end;
 
 exception
    when Installer.no_wifi_Devices =>
