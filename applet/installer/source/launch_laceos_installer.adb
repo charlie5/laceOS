@@ -15,8 +15,7 @@ with
 
      ada.Directories,
      ada.Characters.handling,
-     ada.Exceptions,
-     ada.Text_IO;
+     ada.Exceptions;
 
 
 procedure launch_laceOS_Installer
