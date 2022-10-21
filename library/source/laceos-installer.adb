@@ -768,11 +768,14 @@ is
          --- Lightdm login manager
          --
          Dlog (run ("systemctl enable lightdm.service",
-               in_Chroot => True));
+                    in_Chroot => True));
 
          IO.replace (in_File   => "/mnt/etc/lightdm/lightdm.conf",
                      Pattern   => "#greeter-session=example-gtk-gnome",
                      with_Text => "greeter-session=lightdm-slick-greeter");
+
+         Dlog (run ("pkgfile --update",
+                    in_Chroot => True));
       end enable_Services;
 
 
