@@ -241,25 +241,33 @@ begin
    log ("Installation is complete.");
    log ("");
 
+   delay 2.0;
+
 
 exception
    when Installer.no_wifi_Devices =>
       log ("No ethernet or WIFI device detected.");
       log ("Aborting install.");
+      delay 2.0;
 
    when Installer.no_wifi_Networks =>
       log ("No WIFI networks available.");
       log ("Aborting install.");
+      delay 2.0;
 
    when Installer.unable_to_connect_to_WIFI =>
       log ("Unable to connect to WIFI.");
       log ("Aborting install.");
+      delay 2.0;
 
    when Ctrl_C_Error =>
-      null;
+      Installer.abort_Install;
+      log ("Install aborted by user.");
+      delay 2.0;
 
    when E : others =>
       log (exception_Information (E));
       Installer.abort_Install;
+      delay 2.0;
 
 end launch_laceOS_Installer;
