@@ -30,6 +30,7 @@ file_permissions=(
   ["/root/scripts/fetch.sh"]="0:0:750"
   ["/root/scripts/enter_chroot.sh"]="0:0:750"
   ["/root/scripts/build_aur_packages.sh"]="0:0:750"
+  ["/root/scripts/clear_installed_package_caches.sh"]="0:0:750"
   ["/root/scripts/sync_all_package_caches.sh"]="0:0:750"
   ["/root/scripts/sync_aur_install_order.sh"]="0:0:750"
   ["/root/scripts/sync_installed_pkgs.sh"]="0:0:750"
