@@ -13,6 +13,7 @@ with
      gnat.formatted_String,
      gnat.Ctrl_C,
 
+     ada.command_Line,
      ada.Directories,
      ada.Characters.handling,
      ada.Exceptions;
@@ -30,6 +31,7 @@ is
        lace.Text,
        lace.Text.forge,
 
+       ada.command_Line,
        ada.Exceptions;
 
    Ctrl_C_Error : exception;
@@ -58,6 +60,11 @@ is
    userName    : lace.Text.item_32;
    Password    : lace.Text.item_32;
    locale_Code : lace.Text.item_16;
+
+   final_Install : Boolean := (if       Argument_Count = 1
+                               and then Argument (1)   = "final" then True
+                                                                 else False);
+
 
 begin
    gnat.Ctrl_C.install_Handler (Ctrl_C_abort'unrestricted_Access);
@@ -237,6 +244,19 @@ begin
                                    the_locale_Code     => +locale_Code,
                                    the_keyboard_Layout => +keyboard_Layout,
                                    the_root_Partition  => root_Partition);
+
+   if final_Install
+   then
+      mount (root_Partition, "/mnt");
+
+      Dlog (run ("rm -fr /mnt/var/cache/pacman/pkg"));
+      Dlog (run ("rm -fr /mnt/root/aur"));
+      Dlog (run ("rm -fr /mnt/root/builder_packages"));
+
+      Dlog (run ("umount -R /mnt"));
+   end if;
+
+
    log ("");
    log ("Installation is complete.");
    log ("");
