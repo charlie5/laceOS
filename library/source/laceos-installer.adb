@@ -774,10 +774,29 @@ is
          IO.replace (in_File   => "/mnt/etc/lightdm/lightdm.conf",
                      Pattern   => "#greeter-session=example-gtk-gnome",
                      with_Text => "greeter-session=lightdm-slick-greeter");
-
-         Dlog (run ("pkgfile --update",
-                    in_Chroot => True));
       end enable_Services;
+
+
+
+      procedure configure_Packages
+      is
+      begin
+         Dlog (run ("pkgfile --update",
+               in_Chroot => True));
+      end configure_Packages;
+
+
+
+      procedure configure_root_Access
+      is
+      begin
+         Dlog (run ("passwd --lock root",
+                    in_Chroot => True));
+
+         IO.replace (in_File   => "/mnt/etc/ssh/sshd_config",
+                     Pattern   => "#PermitRootLogin prohibit-password",
+                     with_Text => "PermitRootLogin no");
+      end configure_root_Access;
 
 
 
@@ -861,6 +880,8 @@ is
       configure_the_Network;
       create_the_User;
       enable_Services;
+      configure_Packages;
+      configure_root_Access;
       install_the_boot_Loader;
 
       Dlog (run ("swapoff /laceOS/swapfile", in_Chroot => True));
