@@ -315,8 +315,6 @@ is
          end loop;
 
 
-         -- TODO: Microde seems to break GRUB. Investigate and find out why.
-         --
          -- Install_ bootloader microcode.
 
          declare
@@ -539,8 +537,6 @@ is
 
       procedure install_desktop_Backgrounds
       is
-         use lace.Text;
-         Lines : constant lace.Text.items_64 := all_Lines.Lines (forge.to_Text ("miscellaneous_packages"));
       begin
          Dlog ("Installing desktop backgrounds.");
          Dlog ("");
@@ -552,8 +548,6 @@ is
 
       procedure install_ada_Documents
       is
-         use lace.Text;
-         Lines : constant lace.Text.items_64 := all_Lines.Lines (forge.to_Text ("miscellaneous_packages"));
       begin
          Dlog ("Installing Ada documents.");
          Dlog ("");
