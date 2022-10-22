@@ -697,6 +697,7 @@ is
 
       procedure add_custom_Files_to_etc
       is
+         use ada.Characters;
       begin
          Dlog (run ("rsync -av --quiet custom/etc/ /mnt/etc"));
 
@@ -705,6 +706,9 @@ is
          Dlog (run ("chmod --recursive u+x /mnt/etc/skel/Desktop/study/ada/2005"));
          Dlog (run ("chmod --recursive u+x /mnt/etc/skel/Desktop/study/ada/2012"));
          Dlog (run ("chmod --recursive u+x /mnt/etc/skel/Desktop/study/ada/2022"));
+
+         IO.append (to_File  => "/mnt/etc/pam.d/system-login",
+                    the_Text => latin_1.LF & "auth optional pam_faildelay.so delay=5000000");
       end add_custom_Files_to_etc;
 
 
@@ -816,12 +820,6 @@ is
 
          Dlog (run ("grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB", in_Chroot => True));
          Dlog (run ("rsync -av --quiet custom/boot/grub/ada-mascot.png /mnt/boot/grub"));
-
-         --  if not ada.Directories.exists ("/mnt/boot/amd-ucode.img")
-         --  then
-         --     Dlog (run ("pacman -S --noconfirm amd-ucode",
-         --                in_Chroot => True));
-         --  end if;
 
          Dlog (run ("grub-mkconfig -o /boot/grub/grub.cfg",
                     in_Chroot => True));
