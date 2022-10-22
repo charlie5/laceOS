@@ -37,8 +37,8 @@ _______________
 - alire
 - aunit
 - florist
-- gcc-ada (v12.1.1)
-- gcc-ada-debug (v12.1.1)
+- gcc-ada (v12.2.0)
+- gcc-ada-debug (v12.2.0)
 - gnatcoll-core
 - gnatcoll-db2ada
 - gnatcoll-gmp
