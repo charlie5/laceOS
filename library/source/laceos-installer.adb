@@ -599,6 +599,9 @@ is
             Dlog (run ("mkswap -U clear    " & Filename));
             Dlog (run ("swapon /laceOS/swapfile",
                        in_Chroot => True));
+
+            IO.store (in_File  => "/mnt/etc/sysctl.d/99-swappiness.conf",
+                      the_Text => "vm.swappiness = 5");
          end if;
       end create_Swapfile;
 
