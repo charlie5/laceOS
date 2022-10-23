@@ -24,9 +24,9 @@ is
       use ada.Text_IO;
       the_File : File_type;
    begin
-      create (the_File, append_File, String (to_File));
-      put    (the_File, the_Text);
-      close  (the_File);
+      open  (the_File, append_File, String (to_File));
+      put   (the_File, the_Text);
+      close (the_File);
    end append;
 
 
