@@ -229,6 +229,8 @@ is
       is
          Count : Natural := 0;
       begin
+         run ("rsync -av --quiet /root/pacstrap_packages/ /var/cache/pacman/pkg");
+
          loop
             declare
                use shell.Commands.unsafe;
