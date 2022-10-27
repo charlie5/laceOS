@@ -229,7 +229,7 @@ is
       is
          Count : Natural := 0;
       begin
-         run ("rsync -av --quiet /root/pacstrap_packages/ /var/cache/pacman/pkg");
+         run ("rsync -av --quiet /root/packages/pacstrap/ /var/cache/pacman/pkg");
 
          loop
             declare
