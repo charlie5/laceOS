@@ -583,7 +583,7 @@ is
       is
          use laceOS.Storage;
 
-         Filename : constant String := "/mnt/laceOS/swapfile";
+         Filename : constant String := "/mnt/var/swapfile";
 
          -- Swapfile size is set to the same as RAM size.
          Free  : constant long_Integer := Free_in (the_root_Partition);
@@ -599,7 +599,7 @@ is
             Dlog (run ("dd if=/dev/zero of=" & Filename & " bs=1M count=" & Image (2 .. Image'Last)));
             Dlog (run ("chmod 0600         " & Filename));
             Dlog (run ("mkswap -U clear    " & Filename));
-            Dlog (run ("swapon /laceOS/swapfile",
+            Dlog (run ("swapon /var/swapfile",
                        in_Chroot => True));
 
             IO.store (in_File  => "/mnt/etc/sysctl.d/99-swappiness.conf",
@@ -868,7 +868,6 @@ is
       Dlog ("");
       Dlog ("Generating the 'fstab'.");
 
-      create_Directory ("/mnt/laceOS");
       create_Swapfile;
 
       IO.store (in_File  => "/mnt/etc/fstab",
@@ -886,7 +885,7 @@ is
       configure_root_Access;
       install_the_boot_Loader;
 
-      Dlog (run ("swapoff /laceOS/swapfile", in_Chroot => True));
+      Dlog (run ("swapoff /var/swapfile", in_Chroot => True));
       run ("umount -R /mnt");
    end configure_the_System;
 
@@ -895,7 +894,7 @@ is
    procedure abort_Install
    is
    begin
-      Dlog (run ("swapoff /laceOS/swapfile", in_Chroot => True));
+      Dlog (run ("swapoff /var/swapfile", in_Chroot => True));
       Dlog (run ("umount -R /mnt"));
    end abort_Install;
 
