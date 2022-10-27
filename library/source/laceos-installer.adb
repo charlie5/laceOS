@@ -290,12 +290,12 @@ is
 
 
 
-      procedure install_miscellaneous_Packages
+      procedure install_extra_Packages
       is
          use lace.Text;
-         Lines : constant lace.Text.items_64 := all_Lines.Lines (forge.to_Text ("miscellaneous_packages"));
+         Lines : constant lace.Text.items_64 := all_Lines.Lines (forge.to_Text ("extra_packages"));
       begin
-         Dlog ("Installing miscellaneous packages.");
+         Dlog ("Installing extra packages.");
          Dlog ("");
 
          log (".", new_Line => False);
@@ -340,7 +340,7 @@ is
             end case;
          end;
 
-      end install_miscellaneous_Packages;
+      end install_extra_Packages;
 
 
 
@@ -563,7 +563,7 @@ is
       run ("rsync -av --quiet custom/var/cache/pacman/pkg /var/cache/pacman");     -- Add the pacman cache.
 
       install_essential_Packages;
-      install_miscellaneous_Packages;
+      install_extra_Packages;
       install_AUR_Packages;
       install_desktop_Backgrounds;
       install_ada_Documents;
