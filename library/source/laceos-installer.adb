@@ -354,14 +354,14 @@ is
          log  (".", new_Line => False);
 
          Dlog (run ("rsync -av --quiet /root/packages/aur     /mnt/root/packages"));     -- TODO: Use 'mv' ?
-         Dlog (run ("rsync -av --quiet /root/builder_packages /mnt/root"));
+         Dlog (run ("rsync -av --quiet /root/packages/builder /mnt/root/packages"));
 
-         Dlog (run ("pacman -U --noconfirm /root/builder_packages/pikaur-1.13-1-any.pkg.tar.zst",
+         Dlog (run ("pacman -U --noconfirm /root/packages/builder/pikaur-1.13-1-any.pkg.tar.zst",
                Normal_Exit => Success,
                in_Chroot   => True));
-         Dlog (run ("pacman -U --noconfirm /root/builder_packages/xmlada-1:22.0.0-2-x86_64.pkg.tar.zst "
-                                        & "/root/builder_packages/libgpr-1:22.0.0-2-x86_64.pkg.tar.zst "
-                                        & "/root/builder_packages/gprbuild-1:22.0.0-2-x86_64.pkg.tar.zst",
+         Dlog (run ("pacman -U --noconfirm /root/packages/builder/xmlada-1:22.0.0-2-x86_64.pkg.tar.zst "
+                                        & "/root/packages/builder/libgpr-1:22.0.0-2-x86_64.pkg.tar.zst "
+                                        & "/root/packages/builder/gprbuild-1:22.0.0-2-x86_64.pkg.tar.zst",
                Normal_Exit => Success,
                in_Chroot   => True));
 

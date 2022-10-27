@@ -251,7 +251,7 @@ begin
 
       Dlog (run ("rm -fr /mnt/var/cache/pacman/pkg"));
       Dlog (run ("rm -fr /mnt/root/packages/aur"));
-      Dlog (run ("rm -fr /mnt/root/builder_packages"));
+      Dlog (run ("rm -fr /mnt/root/packages/builder"));
 
       Dlog (run ("umount -R /mnt"));
    end if;
