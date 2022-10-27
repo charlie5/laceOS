@@ -12,6 +12,7 @@ rsync -av                                 \
       /mnt/home/rod/.cache/pikaur/pkg/    \
       rod@$IP:/eden/forge/applet/os/laceOS/applet/lace-live/profile/airootfs/root/aur
       
-umount /mnt
+sync
+umount -R /mnt
 
 echo Done.
