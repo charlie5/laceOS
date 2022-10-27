@@ -353,7 +353,7 @@ is
          Dlog ("");
          log  (".", new_Line => False);
 
-         Dlog (run ("rsync -av --quiet /root/aur              /mnt/root"));     -- TODO: Use 'mv' ?
+         Dlog (run ("rsync -av --quiet /root/packages/aur     /mnt/root/packages"));     -- TODO: Use 'mv' ?
          Dlog (run ("rsync -av --quiet /root/builder_packages /mnt/root"));
 
          Dlog (run ("pacman -U --noconfirm /root/builder_packages/pikaur-1.13-1-any.pkg.tar.zst",
@@ -369,7 +369,7 @@ is
             use String_Vectors,
                 shell.Directory_iteration;
 
-            AUR_Folder     : constant Directory := to_Directory ("/root/aur", Recurse => True);
+            AUR_Folder     : constant Directory := to_Directory ("/root/packages/aur", Recurse => True);
             Packages       :          Strings;
             just_Installed :          Strings;
 

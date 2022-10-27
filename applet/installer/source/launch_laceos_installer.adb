@@ -250,7 +250,7 @@ begin
       mount (root_Partition, "/mnt");
 
       Dlog (run ("rm -fr /mnt/var/cache/pacman/pkg"));
-      Dlog (run ("rm -fr /mnt/root/aur"));
+      Dlog (run ("rm -fr /mnt/root/packages/aur"));
       Dlog (run ("rm -fr /mnt/root/builder_packages"));
 
       Dlog (run ("umount -R /mnt"));
