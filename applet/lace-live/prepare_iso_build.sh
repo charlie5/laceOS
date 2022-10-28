@@ -17,7 +17,7 @@ pikaur -Syu
 rm -fr ~/.cache/pikaur/*
 pikaur -S --noconfirm pikaur
 pikaur -S --noconfirm xmlada libgpr gprbuild
-rsync -av ~/.cache/pikaur/pkg/ profile/airootfs/root/builder_packages
+rsync -av ~/.cache/pikaur/pkg/ profile/airootfs/root/packages/builder
 
 
 echo

@@ -61,7 +61,7 @@ pikaur $FLAGS sphinxcontrib-adadomain
 pikaur $FLAGS xmlada
 
 
-rsync -av --delete ~/.cache/pikaur/pkg/ profile/airootfs/root/aur
+rsync -av --delete ~/.cache/pikaur/pkg/ profile/airootfs/root/packages/aur
 
 #rm -f profile/airootfs/root/aur/gprbuild-bootstrap-*-x86_64.pkg.tar.zst
 #rm -f profile/airootfs/root/aur/gnatcoll-python3-*-x86_64.pkg.tar.zst
