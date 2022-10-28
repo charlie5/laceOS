@@ -502,8 +502,8 @@ is
             else   -- Using the existing AUR install order.
                declare
                   use lace.Text;
-                  the_Text     : constant lace.Text.item     := forge.to_Text (Filename => "aur_install_order");
-                  the_Packages : constant lace.Text.items_64 := all_Lines.Lines (the_Text);
+                  the_Text     : constant lace.Text.item      := forge.to_Text (Filename => "aur_install_order");
+                  the_Packages : constant lace.Text.items_128 := all_Lines.Lines (the_Text);
                begin
                   for Each of the_Packages
                   loop
