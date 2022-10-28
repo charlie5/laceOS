@@ -225,7 +225,7 @@ is
    procedure install_Packages
    is
 
-      procedure install_essential_Packages
+      procedure install_pacstrap_Packages
       is
          Count : Natural := 0;
       begin
@@ -286,7 +286,7 @@ is
 
 
          Dlog (run ("umount /mnt/dev"));     -- TODO: This is needed to prevent a current error in 'arch-chroot' commands. Remove when error is fixed..
-      end install_essential_Packages;
+      end install_pacstrap_Packages;
 
 
 
@@ -562,7 +562,7 @@ is
       run ("mount -o remount,size=8G /run/archiso/cowspace");                      -- Increase the size of cowspace.
       run ("rsync -av --quiet custom/var/cache/pacman/pkg /var/cache/pacman");     -- Add the pacman cache.
 
-      install_essential_Packages;
+      install_pacstrap_Packages;
       install_extra_Packages;
       install_AUR_Packages;
       install_desktop_Backgrounds;
