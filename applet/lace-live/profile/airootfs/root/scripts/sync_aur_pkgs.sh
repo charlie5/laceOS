@@ -2,9 +2,6 @@
 
 set -E
 
-#export IP=192.168.165.253
-#export IP=192.168.33.67
-
 mount /dev/sda2 /mnt
 
 rsync -av                                 \

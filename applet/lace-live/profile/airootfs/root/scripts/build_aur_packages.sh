@@ -2,18 +2,6 @@
 
 set -e
 
-#mount /dev/vda2 /mnt
-#mount /dev/vda1 /mnt/boot
-
-#arch-chroot /mnt -u rod 
-
-#su - rod
-
-
-#rm -fr /tmp/makepkg
-#rm -fr ~/.cache/pikaur
-#mv ~/.cache/pikaur ~/.cache/pikaur-original
-
 pikaur -S --noconfirm --rebuild gprbuild
 
 #FLAGS="-S --noconfirm --rebuild"
@@ -69,18 +57,6 @@ pikaur $FLAGS sdlada
 pikaur $FLAGS sphinxcontrib-adadomain
 pikaur $FLAGS xmlada
 
-
-#rsync -av --delete ~/.cache/pikaur/pkg/ profile/airootfs/root/aur
-
-#rm -f profile/airootfs/root/aur/gprbuild-bootstrap-*-x86_64.pkg.tar.zst
-#rm -f profile/airootfs/root/aur/gnatcoll-python3-*-x86_64.pkg.tar.zst
-
-#rm -fr ~/.cache/pikaur
-#mv     ~/.cache/pikaur-original  ~/.cache/pikaur
-
-
 exit
-#umount -R /mnt
-
 
 echo All AUR packages built.
