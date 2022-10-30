@@ -356,14 +356,42 @@ is
          Dlog (run ("rsync -av --quiet /root/packages/aur     /mnt/root/packages"));     -- TODO: Use 'mv' ?
          Dlog (run ("rsync -av --quiet /root/packages/builder /mnt/root/packages"));
 
-         Dlog (run ("pacman -U --noconfirm /root/packages/builder/pikaur-1.13-1-any.pkg.tar.zst",
-               Normal_Exit => Success,
-               in_Chroot   => True));
-         Dlog (run ("pacman -U --noconfirm /root/packages/builder/xmlada-1:22.0.0-2-x86_64.pkg.tar.zst "
-                                        & "/root/packages/builder/libgpr-1:22.0.0-2-x86_64.pkg.tar.zst "
-                                        & "/root/packages/builder/gprbuild-1:22.0.0-2-x86_64.pkg.tar.zst",
-               Normal_Exit => Success,
-               in_Chroot   => True));
+
+         install_builder_Packages:
+         declare
+            use shell.Directory_iteration,
+                ada.Directories;
+
+            Packages       :          Strings;
+            builder_Folder : constant shell.Directory_iteration.Directory := to_Directory ("/root/packages/builder",
+                                                                                           recurse => True);
+         begin
+            for Each of builder_Folder
+            loop
+               if    simple_Name (Each) /= "."
+                 and simple_Name (Each) /= ".."
+               then
+                  Packages.append (full_Name (Each));
+               end if;
+            end loop;
+
+            loop
+               for i in 1 .. Integer (Packages.Length)
+               loop
+                  Dlog (run ("pacman -U --noconfirm " & Packages.Element (i),
+                             normal_Exit => Success,
+                             in_Chroot   => True));
+                  if Success
+                  then
+                     Packages.delete (i);
+                     exit;
+                  end if;
+               end loop;
+
+               exit when Packages.is_Empty;
+            end loop;
+         end install_builder_Packages;
+
 
          declare
             use String_Vectors,
