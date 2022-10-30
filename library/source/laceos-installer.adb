@@ -796,7 +796,7 @@ is
       procedure enable_Services
       is
       begin
-         --- Lightdm login manager
+         --- Lightdm login manager.
          --
          Dlog (run ("systemctl enable lightdm.service",
                     in_Chroot => True));
@@ -817,6 +817,8 @@ is
       procedure configure_Packages
       is
       begin
+         --- Pkgfile.
+         --
          Dlog (run ("pkgfile --update",
                     in_Chroot => True));
 
@@ -896,8 +898,6 @@ is
          end loop;
       end install_the_boot_Loader;
 
-
-      use ada.Directories;
 
    begin
       log ("");
