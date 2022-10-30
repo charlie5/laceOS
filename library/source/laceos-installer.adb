@@ -804,6 +804,12 @@ is
          IO.replace (in_File   => "/mnt/etc/lightdm/lightdm.conf",
                      Pattern   => "#greeter-session=example-gtk-gnome",
                      with_Text => "greeter-session=lightdm-slick-greeter");
+
+         --- Uncomplicated firewall.
+         --
+         Dlog (run ("systemctl enable ufw.service",
+                    in_Chroot => True));
+
       end enable_Services;
 
 
@@ -812,7 +818,12 @@ is
       is
       begin
          Dlog (run ("pkgfile --update",
-               in_Chroot => True));
+                    in_Chroot => True));
+
+         --- Uncomplicated Firewall.
+         --
+         Dlog (run ("ufw enable",
+                    in_Chroot => True));
       end configure_Packages;
 
 
