@@ -61,12 +61,27 @@ is
    Password    : lace.Text.item_32;
    locale_Code : lace.Text.item_16;
 
-   final_Install : Boolean := (if       Argument_Count = 1
-                               and then Argument (1)   = "final" then True
-                                                                 else False);
+   final_Install : Boolean := False;
 
 
 begin
+   for i in 1 .. argument_Count
+   loop
+      declare
+         the_Argument : String := Argument (i);
+      begin
+         if the_Argument = "final"
+         then
+            final_Install := True;
+
+         elsif the_Argument = "debug"
+         then
+            laceOS.Logger.enable_debug_Logging;
+         end if;
+      end;
+   end loop;
+
+
    gnat.Ctrl_C.install_Handler (Ctrl_C_abort'unrestricted_Access);
 
 
