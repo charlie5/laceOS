@@ -12,7 +12,7 @@ _______________
 | BIOS:         | UEFI        |
 | Architecture: | x86_64      |
 | RAM:          |  4+ GiB     |
-| Disk:         | 64+ GiB     |
+| Disk:         | 32+ GiB     |
 
 ________________
 ## OS Components
@@ -37,7 +37,7 @@ _______________
 - alire
 - aunit
 - florist
-- gcc-ada (v12.2.0)
+- gcc-ada       (v12.2.0)
 - gcc-ada-debug (v12.2.0)
 - gnatcoll-core
 - gnatcoll-db2ada
