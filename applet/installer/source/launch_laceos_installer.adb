@@ -68,7 +68,7 @@ begin
    for i in 1 .. argument_Count
    loop
       declare
-         the_Argument : String := Argument (i);
+         the_Argument : constant String := Argument (i);
       begin
          if the_Argument = "final"
          then
