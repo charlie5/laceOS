@@ -85,10 +85,11 @@ is
             C        :          lace.Text.Cursor.item := First (the_Text'Access);
 
          begin
+            C.skip_Line;         -- Skip past header lines.
             C.skip_Line;
             C.skip_Line;
             C.skip_Line;
-            C.skip_Line;
+            C.advance (" ");     -- Skip garbage character in 1st line.
 
             if Contains (+C.peek_Line, "No networks available")
             then
@@ -234,7 +235,7 @@ is
          loop
             declare
                use shell.Commands.unsafe;
-               the_Command : shell.Commands.unsafe.Command := Forge.to_Command (  "pacstrap -c /mnt base base-devel linux-lts linux-firmware nano networkmanager"
+               the_Command : shell.Commands.unsafe.Command := Forge.to_Command (  "pacstrap -c /mnt base base-devel linux-lts linux-lts-headers linux-firmware nano networkmanager"
                                                                                 & "                 grub os-prober efibootmgr"
                                                                                 & "                 xorg xfce4 xfce4-goodies lightdm lightdm-slick-greeter"
                                                                                 & "                 network-manager-applet nm-connection-editor");
