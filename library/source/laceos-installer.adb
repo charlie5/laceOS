@@ -154,7 +154,6 @@ is
          end if;
 
          declare
-               --  connect_Command : constant unsafe.Command  := forge.to_Command ("start_wifi.sh");
             Success : Boolean;
             Count   : Natural := 0;
          begin
@@ -303,7 +302,7 @@ is
          run ("rsync -av --quiet custom/var/cache/pacman/pkg /mnt/var/cache/pacman");
 
          Dlog (run ("pacman -Syu",             -- TODO: Needed ?
-               in_Chroot => True));
+                    in_Chroot => True));
 
          for Each of Lines
          loop
