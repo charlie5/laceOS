@@ -6,7 +6,6 @@ with
      lace.Text.Cursor,
 
      ada.numerics.discrete_Random,
-     --  ada.Characters.latin_1,
      ada.Directories;
 
 
@@ -362,9 +361,18 @@ is
       Dlog ("Making the EFI system partition bootable.");
       run ("parted " & install_Disk & " set 1 esp on");
 
-      Dlog ("");
-      Dlog ("Formatting the EFI system partition.");
-      run ("mkfs.fat -F 32 " & install_Disk & "1");
+      Dlog ("Transport: " & Transport_of (Disk)'Image);
+
+      declare
+         partition_ID : constant String := (if Transport_of (Disk) = NVME then "p1"
+                                                                          else  "1");
+      begin
+         Dlog ("");
+         Dlog ("Formatting the EFI system partition.");
+         Dlog ("Disk Transport: " & Transport_of (Disk)'Image);
+
+         Dlog (run ("mkfs.fat -F 32 " & install_Disk & partition_ID));
+      end;
    end create_EFI_Partition;
 
 
@@ -377,6 +385,8 @@ is
 
       install_Disk : constant String   := +Disk.Path;
       Root         :          Partition;
+      partition_ID : constant String := (if Transport_of (Disk) = NVME then "p2"
+                                                                       else  "2");
    begin
       Dlog ("");
       Dlog ("Adding the root partition.");
@@ -384,10 +394,12 @@ is
 
       Dlog ("");
       Dlog ("Formatting the root partition.");
-      run  ("mkfs.ext4 " & install_Disk & "2");
 
-      Root.Path := to_Text (install_Disk & "2",
+      run  ("mkfs.ext4 " & install_Disk & partition_ID);
+
+      Root.Path := to_Text (install_Disk & partition_ID,
                             Capacity => Root.Path.Capacity);
+
       return Root;
    end create_root_Partition;
 
@@ -400,11 +412,12 @@ is
           lace.Text;
 
       install_Disk : constant String := +Disk.Path;
-
+      partition_ID : constant String := (if Transport_of (Disk) = NVME then "p2"
+                                                                       else  "2");
    begin
       Dlog ("");
       Dlog ("Mounting the root partition.");
-      run ("mount " & install_Disk & "2 /mnt");
+      run ("mount " & install_Disk & partition_ID & " /mnt");
    end mount_root_Partition;
 
 
@@ -416,11 +429,12 @@ is
           lace.Text;
 
       install_Disk : constant String := +Disk.Path;
-
+      partition_ID : constant String := (if Transport_of (Disk) = NVME then "p1"
+                                                                       else  "1");
    begin
       Dlog ("");
       Dlog ("Mounting the EFI boot partition.");
-      run ("mount --mkdir " & install_Disk & "1 /mnt/boot");
+      run ("mount --mkdir " & install_Disk & partition_ID & " /mnt/boot");
    end mount_EFI_Partition;
 
 
@@ -440,7 +454,7 @@ is
 
       Dlog ("Warning: EFI_boot_partition not found.");
 
-      return null_Partition;
+      return null_Partition;     -- TODO: Raise an exception.
    end EFI_boot_Partition_of;
 
 
