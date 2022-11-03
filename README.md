@@ -14,6 +14,7 @@ _______________
 | RAM:          |  4+ GiB     |
 | Disk:         | 32+ GiB     |
 
+
 ________________
 ## OS Components
 
@@ -24,6 +25,7 @@ ________________
 | Desktop Environment: | XFCE4   |
 | Window Manager:      | XFWM    |
 | Display Manager:     | LightDM |
+
 
 _______________
 ## Ada Projects
@@ -71,6 +73,7 @@ _______________
 - sphinxcontrib-adadomain
 - xmlada
 
+
 _____________
 ## Installing
 
@@ -95,6 +98,19 @@ The installer is currently console based, albeit in a graphical desktop environm
 
 The installer will only accept legal hostnames, usernames and passwords. The user will be prompted again if any are illegal. 
 The installer will use an entire disk as the installation target.
+
+
+_______________
+## Post-Install
+
+To use a Nvidia GPU:
+
+$ pikaur -S nvidia-dkms
+$ sudo reboot
+
+If any problems result, try using 'nvidia-xconfig' to generate an X11 configuration file.
+
+$ sudo nvidia-xconfig
 
 
 ___________
