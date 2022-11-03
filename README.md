@@ -106,7 +106,9 @@ _______________
 To use a Nvidia GPU:
 
 $ pikaur -S nvidia-dkms
+
 $ sudo reboot
+
 
 If any problems result, try using 'nvidia-xconfig' to generate an X11 configuration file.
 
