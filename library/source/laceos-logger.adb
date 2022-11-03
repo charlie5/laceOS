@@ -19,8 +19,8 @@ is
 
 
 
-   --  Debug : constant Boolean := True;
-   Debug : constant Boolean := False;
+   Debug : Boolean := False;
+
 
    procedure Dlog (Message : in String;   new_Line : in Boolean := True)
    is
@@ -30,6 +30,14 @@ is
          log (Message, new_Line);
       end if;
    end Dlog;
+
+
+
+   procedure enable_debug_Logging
+   is
+   begin
+      Debug := True;
+   end enable_debug_Logging;
 
 
 end laceOS.Logger;
