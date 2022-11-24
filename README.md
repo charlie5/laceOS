@@ -49,7 +49,7 @@ _______________
 - gnatcoll-lzma
 - gnatcoll-omp
 - gnatcoll-postgres
-- gnatcoll-python2
+- gnatcoll-python
 - gnatcoll-readline
 - gnatcoll-sql
 - gnatcoll-sqlite
@@ -59,6 +59,8 @@ _______________
 - gnatdoc
 - gnatstudio
 - gnatsymbolize
+- gpr
+- gpr-unit-provider
 - gprbuild
 - gtkada
 - ini_file_manager
@@ -68,6 +70,7 @@ _______________
 - libadalang-tools
 - libgpr
 - libvss
+- markdown
 - polyorb
 - sdlada
 - sphinxcontrib-adadomain
