@@ -25,8 +25,6 @@ pikaur $FLAGS gnatcoll-gmp      \
               gnatcoll-syslog   \
               gnatcoll-zlib
 
-#pikaur $FLAGS gnatcoll-python3
-
 pikaur $FLAGS cpu-x
 pikaur $FLAGS fswatch
 pikaur $FLAGS libiconv
@@ -56,6 +54,12 @@ pikaur $FLAGS polyorb
 pikaur $FLAGS sdlada
 pikaur $FLAGS sphinxcontrib-adadomain
 pikaur $FLAGS xmlada
+
+pikaur $FLAGS spark2014-git
+#pikaur $FLAGS alt-ergo
+pikaur $FLAGS z3
+pikaur $FLAGS cvc4
+
 
 exit
 
