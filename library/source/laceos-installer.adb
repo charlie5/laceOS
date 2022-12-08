@@ -346,7 +346,7 @@ is
 
       procedure install_AUR_Packages
       is
-         Success : Boolean ;
+         Success : Boolean;
       begin
          Dlog ("");   Dlog ("");   Dlog ("");   Dlog ("");
          Dlog ("Installing AUR packages.");
