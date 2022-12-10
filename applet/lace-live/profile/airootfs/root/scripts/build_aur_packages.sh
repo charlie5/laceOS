@@ -60,6 +60,7 @@ pikaur $FLAGS spark2014-git
 pikaur $FLAGS z3
 pikaur $FLAGS cvc4
 
+pikaur $FLAGS gnatcoverage-bin
 
 exit
 

@@ -56,6 +56,7 @@ _______________
 - gnatcoll-syslog
 - gnatcoll-xref
 - gnatcoll-zlib
+- gnatcoverage
 - gnatdoc
 - gnatstudio
 - gnatsymbolize
