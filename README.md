@@ -83,7 +83,7 @@ _____________
 ## Installing
 
 Download a pre-built 
-[ISO](https://github.com/charlie5/laceOS/raw/master/laceOS-0.2-x86_64.iso.torrent) using a bittorrent client.
+[ISO](https://github.com/charlie5/laceOS/raw/master/laceOS-0.3-x86_64.iso.torrent) using a bittorrent client.
 
 As the current initial version is an alpha, please test/trial in a virtual machine until a stable version is released.
 
