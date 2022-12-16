@@ -254,6 +254,8 @@ begin
 
    Installer.install_Packages;
    Installer.rid_unwanted_Packages;
+   Installer.tailor_applications_Menu;
+
    Installer.configure_the_System (hostName            => +hostName,
                                    userName            => +userName,
                                    Password            => +Password,

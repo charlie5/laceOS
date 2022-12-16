@@ -609,6 +609,47 @@ is
    end rid_unwanted_Packages;
 
 
+
+   procedure tailor_applications_Menu
+   is
+      use ada.Characters.latin_1,
+          ada.Directories;
+   begin
+      if not exists ("/mnt/usr/share/applications/draw.io.desktop")
+      then
+         return;    -- AUR packages have not been installed yet.
+      end if;
+
+
+      -- DrawIO Desktop
+      --
+      IO.replace (in_File   => "/mnt/usr/share/applications/draw.io.desktop",
+                  Pattern   => "Name=drawio",
+                  with_Text => "Name=DrawIO");
+
+      IO.replace (in_File   => "/mnt/usr/share/applications/draw.io.desktop",
+                  Pattern   => "Comment=draw.io desktop",
+                  with_Text => "Comment=Diagram Editor");
+
+      IO.replace (in_File   => "/mnt/usr/share/applications/draw.io.desktop",
+                  Pattern   => "Categories=Graphics",
+                  with_Text => "Categories=Development");
+
+      -- Electron
+      --
+      IO.append  (to_File   => "/mnt/usr/share/applications/electron.desktop",
+                  the_Text  => "NoDisplay=true");
+
+      -- Xfce4 Terminal
+      --
+      IO.replace (in_File   => "/mnt/usr/share/applications/xfce4-terminal.desktop",
+                  Pattern   => "Actions=preferences;",
+                  with_Text => "Actions=preferences;" & LF &
+                               "NoDisplay=true;");
+   end tailor_applications_Menu;
+
+
+
    procedure configure_the_System (hostName : in String;
                                    userName : in String;
                                    Password : in String;

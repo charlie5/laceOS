@@ -12,6 +12,8 @@ is
    procedure update_the_system_Clock;
    procedure install_Packages;
    procedure rid_unwanted_Packages;
+   procedure tailor_applications_Menu;
+
    procedure configure_the_System (hostName : in String;
                                    userName : in String;
                                    Password : in String;
