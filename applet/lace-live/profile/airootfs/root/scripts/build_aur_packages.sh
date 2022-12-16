@@ -62,6 +62,8 @@ pikaur $FLAGS cvc4
 
 pikaur $FLAGS gnatcoverage-bin
 
+pikaur $FLAGS drawio-desktop
+
 exit
 
 echo All AUR packages built.
