@@ -149,7 +149,7 @@ begin
          default_Code : constant String         := Details.locale_Code;
          locale_gen   : constant lace.Text.item := forge.to_Text (Filename => "/etc/locale.gen");
       begin
-         if default_Code = ""
+         if default_Code = "unknown"
          then
             log ("");
             log ("Locale options are in '/etc/locale.gen'.");
