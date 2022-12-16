@@ -787,6 +787,7 @@ is
          Dlog (run ("chmod --recursive u+x /mnt/etc/skel/Desktop/study/ada/2005"));
          Dlog (run ("chmod --recursive u+x /mnt/etc/skel/Desktop/study/ada/2012"));
          Dlog (run ("chmod --recursive u+x /mnt/etc/skel/Desktop/study/ada/2022"));
+         Dlog (run ("chmod --recursive u+x /mnt/etc/skel/Desktop/study/python"));
 
          IO.append (to_File  => "/mnt/etc/pam.d/system-login",
                     the_Text => latin_1.LF & "auth optional pam_faildelay.so delay=5000000");
