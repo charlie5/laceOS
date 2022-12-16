@@ -253,6 +253,7 @@ begin
    end mount_root_and_boot_Partitions;
 
    Installer.install_Packages;
+   Installer.rid_unwanted_Packages;
    Installer.configure_the_System (hostName            => +hostName,
                                    userName            => +userName,
                                    Password            => +Password,

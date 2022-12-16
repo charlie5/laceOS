@@ -11,6 +11,7 @@ is
    procedure setup_Networking;
    procedure update_the_system_Clock;
    procedure install_Packages;
+   procedure rid_unwanted_Packages;
    procedure configure_the_System (hostName : in String;
                                    userName : in String;
                                    Password : in String;

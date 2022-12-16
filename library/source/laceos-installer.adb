@@ -601,6 +601,14 @@ is
 
 
 
+   procedure rid_unwanted_Packages
+   is
+   begin
+      Dlog (run ("pacman -R --noconfirm parole",
+            in_Chroot => True));
+   end rid_unwanted_Packages;
+
+
    procedure configure_the_System (hostName : in String;
                                    userName : in String;
                                    Password : in String;
