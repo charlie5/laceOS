@@ -13,6 +13,7 @@ with
      gnat.formatted_String,
      gnat.Ctrl_C,
 
+     ada.Text_IO,
      ada.command_Line,
      ada.Directories,
      ada.Characters.handling,
@@ -278,8 +279,13 @@ begin
    log ("");
    log ("Installation is complete.");
    log ("");
+   log ("Press <Enter> to close the installer window.");
 
-   delay 2.0;
+   declare
+      Unusued : String := ada.Text_IO.get_Line with unreferenced;
+   begin
+      null;
+   end;
 
 
 exception
