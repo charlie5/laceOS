@@ -123,6 +123,7 @@ $ sudo nvidia-xconfig
 To update the package mirror list:
 
 $ pikaur -S reflector
+
 $ update_pacman_mirrors
 
 This may take some time.
