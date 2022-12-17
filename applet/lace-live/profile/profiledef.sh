@@ -7,7 +7,7 @@ iso_label="laceOS_$(date +%Y%m)"
 iso_publisher="Rod Kay <http://www.orthanc.site:8080>"
 iso_application="laceOS Linux Install/Rescue CD"
 #iso_version="$(date +%Y.%m.%d)"
-iso_version="0.3"
+iso_version="0.4"
 
 install_dir="laceos"
 
