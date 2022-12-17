@@ -120,6 +120,14 @@ If any problems result, try using 'nvidia-xconfig' to generate an X11 configurat
 $ sudo nvidia-xconfig
 
 
+To update the package mirror list:
+
+$ pikaur -S reflector
+$ update_pacman_mirrors
+
+This may take some time.
+
+
 ___________
 ## Feedback
 
