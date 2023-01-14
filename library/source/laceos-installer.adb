@@ -9,7 +9,7 @@ with
      laceOS.Containers,
 
      shell.Commands.unsafe,
-     shell.Directory_iteration,
+     shell.Directories,
 
      lace.Text.forge,
      lace.Text.utility,
@@ -359,12 +359,12 @@ is
 
          install_builder_Packages:
          declare
-            use shell.Directory_iteration,
+            use shell.Directories,
                 ada.Directories;
 
             Packages       :          Strings;
-            builder_Folder : constant shell.Directory_iteration.Directory := to_Directory ("/root/packages/builder",
-                                                                                           recurse => True);
+            builder_Folder : constant shell.Directories.Directory := to_Directory ("/root/packages/builder",
+                                                                                   recurse => True);
          begin
             for Each of builder_Folder
             loop
@@ -395,7 +395,7 @@ is
 
          declare
             use String_Vectors,
-                shell.Directory_iteration;
+                shell.Directories;
 
             AUR_Folder     : constant Directory := to_Directory ("/root/packages/aur", Recurse => True);
             Packages       :          Strings;
