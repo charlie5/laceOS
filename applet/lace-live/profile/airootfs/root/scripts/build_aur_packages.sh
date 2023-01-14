@@ -55,7 +55,7 @@ pikaur $FLAGS sdlada
 pikaur $FLAGS sphinxcontrib-adadomain
 pikaur $FLAGS xmlada
 
-pikaur $FLAGS spark2014-git
+pikaur $FLAGS spark2014
 #pikaur $FLAGS alt-ergo
 pikaur $FLAGS z3
 pikaur $FLAGS cvc4
