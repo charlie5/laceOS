@@ -637,8 +637,8 @@ is
 
       -- Electron
       --
-      IO.append  (to_File   => "/mnt/usr/share/applications/electron.desktop",
-                  the_Text  => "NoDisplay=true");
+--      IO.append  (to_File   => "/mnt/usr/share/applications/electron.desktop",
+--                  the_Text  => "NoDisplay=true");
 
       -- Xfce4 Terminal
       --
