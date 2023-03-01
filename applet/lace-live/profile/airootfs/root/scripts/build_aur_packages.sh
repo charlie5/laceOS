@@ -61,7 +61,8 @@ pikaur $FLAGS z3
 pikaur $FLAGS cvc4
 
 pikaur $FLAGS gnatcoverage-bin
-
 pikaur $FLAGS drawio-desktop
+pikaur $FLAGS kazakov_simple_components
+
 
 echo All AUR packages built.
