@@ -66,6 +66,7 @@ _______________
 - gtkada
 - ini_file_manager
 - inotify-ada
+- kazakov_simple_components
 - langkit
 - libadalang
 - libadalang-tools
