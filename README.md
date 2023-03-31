@@ -35,6 +35,7 @@ _______________
 - ada-libfswatch
 - ada_spawn
 - ada-web-server
+- adaogg
 - ahven
 - alire
 - aunit
@@ -77,6 +78,7 @@ _______________
 - sdlada
 - spark2014
 - sphinxcontrib-adadomain
+- vulkada
 - xmlada
 
 
@@ -84,7 +86,7 @@ _____________
 ## Installing
 
 Download a pre-built 
-[ISO](https://github.com/charlie5/laceOS/raw/master/laceOS-0.7-x86_64.iso.torrent) using a bittorrent client.
+[ISO](https://github.com/charlie5/laceOS/raw/master/laceOS-0.8-x86_64.iso.torrent) using a bittorrent client.
 
 Please test/trial in a virtual machine until a stable version (v1.0.0) is released.
 
