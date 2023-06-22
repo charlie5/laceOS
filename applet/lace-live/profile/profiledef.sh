@@ -4,17 +4,17 @@
 iso_name="laceOS"
 iso_label="laceOS_$(date +%Y%m)"
 #iso_label="laceOS_live"
-iso_publisher="Rod Kay <http://www.orthanc.site:8080>"
+iso_publisher="Rod Kay <https://www.orthanc.site>"
 iso_application="laceOS Linux Install/Rescue CD"
 #iso_version="$(date +%Y.%m.%d)"
-iso_version="0.9"
+iso_version="1.0"
 
 install_dir="laceos"
 
 buildmodes=('iso')
-bootmodes=('bios.syslinux.mbr' 'bios.syslinux.eltorito'
-	   'uefi-ia32.grub.esp' 'uefi-x64.systemd-boot.esp'
-	   'uefi-ia32.grub.eltorito' 'uefi-x64.systemd-boot.eltorito')
+bootmodes=('bios.syslinux.mbr'       'bios.syslinux.eltorito'
+	       'uefi-ia32.grub.esp'      'uefi-x64.systemd-boot.esp'
+	       'uefi-ia32.grub.eltorito' 'uefi-x64.systemd-boot.eltorito')
 
 arch="x86_64"
 pacman_conf="pacman.conf"

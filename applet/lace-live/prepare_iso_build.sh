@@ -15,10 +15,22 @@ echo
 sleep 2
 pikaur -Syu
 rm -fr ~/.cache/pikaur/*
+rm -fr /tmp/makepkg/*
 pikaur -S --noconfirm pikaur
-pikaur -S --noconfirm xmlada libgpr gprbuild
-rsync -av --delete ~/.cache/pikaur/pkg/ profile/airootfs/root/packages/builder
 
+set +e
+pikaur -Rsc --confirm xmlada
+pikaur -Rsc --confirm gprbuild-toolbox
+pikaur -Rsc --confirm gprbuild-bootstrap
+set -e
+
+#pikaur -S --noconfirm gprbuild-toolbox    #xmlada libgpr gprbuild
+pikaur -S gprbuild-bootstrap
+pikaur -S gprbuild gprtools libgpr
+pikaur -S gprbuild-toolbox
+
+rm                 ~/.cache/pikaur/pkg/gprbuild-bootstrap-*.zst
+rsync -av --delete ~/.cache/pikaur/pkg/ profile/airootfs/root/packages/builder
 
 echo
 echo ~~~~~~~~~~~~~~~~~~~~~~~

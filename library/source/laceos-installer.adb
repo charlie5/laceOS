@@ -17,6 +17,7 @@ with
      lace.Text.Cursor,
 
      ada.Directories,
+     ada.Strings.unbounded,
      ada.Characters.latin_1,
      ada.Text_IO;
 
@@ -353,215 +354,99 @@ is
          Dlog ("");
          log  (".", new_Line => False);
 
-         Dlog (run ("rsync -av --quiet /root/packages/aur     /mnt/root/packages"));     -- TODO: Use 'mv' ?
-         Dlog (run ("rsync -av --quiet /root/packages/builder /mnt/root/packages"));
+         Dlog (run ("mkdir -p /mnt/root/packages"));
+
+         Dlog (run ("rsync -av /root/packages/aur     /mnt/root/packages"));     -- TODO: Use 'mv' ?
+         Dlog (run ("rsync -av /root/packages/builder /mnt/root/packages"));
+         --  Dlog (run ("rsync -av --quiet /root/packages/aur     /mnt/root/packages"));     -- TODO: Use 'mv' ?
+         --  Dlog (run ("rsync -av --quiet /root/packages/builder /mnt/root/packages"));
 
 
          install_builder_Packages:
          declare
             use shell.Directories,
-                ada.Directories;
+                ada.Directories,
+                ada.Strings.unbounded;
 
             Packages       :          Strings;
             builder_Folder : constant shell.Directories.Directory := to_Directory ("/root/packages/builder",
                                                                                    recurse => True);
+            all_package_Paths : unbounded_String;
+
          begin
             for Each of builder_Folder
             loop
                if    simple_Name (Each) /= "."
                  and simple_Name (Each) /= ".."
                then
-                  Packages.append (full_Name (Each));
+                  append (all_package_Paths, " " & full_Name (Each));
                end if;
             end loop;
 
-            loop
-               for i in 1 .. Integer (Packages.Length)
-               loop
-                  Dlog (run ("pacman -U --noconfirm " & Packages.Element (i),
-                             normal_Exit => Success,
-                             in_Chroot   => True));
-                  if Success
-                  then
-                     Packages.delete (i);
-                     exit;
-                  end if;
-               end loop;
+            declare
+               Success     :          Boolean;
+               --  Output      : constant String := run ("pacman -U --noconfirm " & "/root/packages/builder/*.zst",
+               --  Output      : constant String := run ("bash -c ""pacman -U --noconfirm " & "/root/packages/builder/*.zst""",
+               Output      : constant String := run ("pacman -U --noconfirm" & to_String (all_package_Paths),
+                                                     normal_Exit => Success,
+                                                     in_Chroot   => True);
+            begin
+               Dlog (Output);
 
-               exit when Packages.is_Empty;
-            end loop;
+               if Success
+               then
+                  log (".", new_Line => False);
+                  Dlog ("SUCCESS for 'Builder packages'.");
+                  Dlog ("");
+               end if;
+            end;
+
          end install_builder_Packages;
 
 
+         install_other_Packages:
          declare
-            use String_Vectors,
-                shell.Directories;
+            use shell.Directories,
+                ada.Directories,
+                ada.Strings.unbounded;
 
-            AUR_Folder     : constant Directory := to_Directory ("/root/packages/aur", Recurse => True);
             Packages       :          Strings;
-            just_Installed :          Strings;
+            aur_Folder : constant shell.Directories.Directory := to_Directory ("/root/packages/aur",
+                                                                               recurse => True);
+            all_package_Paths : unbounded_String;
 
-            recreate_install_Order : Boolean := False;
          begin
-            build_the_list_of_AUR_Packages:
-            begin
-               for Each of AUR_Folder
-               loop
-                  declare
-                     use ada.Directories;
-                  begin
-                     if    simple_Name (Each) /= ".."
-                       and simple_Name (Each) /= "."
-                       and Kind        (Each) /= ada.Directories.Directory
-                     then
-                        Packages.append (full_Name (Each));
-                     end if;
-                  end;
-               end loop;
-            end build_the_list_of_AUR_Packages;
+            for Each of aur_Folder
+            loop
+               if    simple_Name (Each) /= "."
+                 and simple_Name (Each) /= ".."
+               then
+                  append (all_package_Paths, " " & full_Name (Each));
+               end if;
+            end loop;
 
-
-            if not ada.Directories.Exists ("aur_install_order")
+            if Length (all_package_Paths) > 0
             then
-               recreate_install_Order := True;
-            else
                declare
-                  use lace.Text.utility;
-                  AUR_install_Order : constant lace.Text.item := to_Text (Filename => "aur_install_order");
+                  Success     :          Boolean;
+                  Output      : constant String := run ("pacman -U --noconfirm" & to_String (all_package_Paths),
+                                                        normal_Exit => Success,
+                                                        in_Chroot   => True);
                begin
-                  for Each of Packages
-                  loop
-                     if not Contains (AUR_install_Order, Each)
-                     then
-                        log ("");
-                        log ("");
-                        log ("Missing package '" & Each & "' in 'aur_install_order'.");
-                        log ("");
-                        recreate_install_Order := True;
-                     end if;
-                  end loop;
-               end;
-            end if;
+                  Dlog (Output);
 
-            Dlog ("***************************************");
-            Dlog ("***** Recreating the AUR install order: " & recreate_install_Order'Image);
-            Dlog ("***************************************");
-
-            if recreate_install_Order
-            then
-               install_each_AUR_Package:
-               declare
-                  install_Order : Strings;
-               begin
-                  while not Packages.is_Empty
-                  loop
+                  if Success
+                  then
                      log (".", new_Line => False);
-
-                     for Each of Packages
-                     loop
-                        declare
-                           full_Name   : constant String := ada.Directories.full_Name (Each);
-                           Success     :          Boolean;
-                           Output      : constant String := run ("pacman -U --noconfirm " & full_Name,
-                                                                 Normal_Exit => Success,
-                                                                 in_Chroot   => True);
-                        begin
-                           Dlog (Output);
-
-                           if Success
-                           then
-                              log (".", new_Line => False);
-                              Dlog ("SUCCESS for '" & full_Name & "'");
-                              Dlog ("");
-                              Dlog ("");
-                              Dlog ("");
-
-                              just_Installed.append (full_Name);
-                              install_Order .append (full_Name);
-                           end if;
-                        end;
-                     end loop;
-
-                     rid_Packages_just_installed_from_the_AUR_Packages_list:
-                     begin
-                        for Each of just_Installed
-                        loop
-                           Packages.delete (Packages.find_Index (Each));
-                        end loop;
-
-                        exit_if_no_Packages_were_just_installed_but_the_Packages_list_is_not_empty:
-                        begin
-                           if    just_Installed.is_Empty
-                             and not   Packages.is_Empty
-                           then
-                              log ("Error: Failed to install the following packages:");
-
-                              for Each of Packages
-                              loop
-                                 log (Each);
-                              end loop;
-
-                              exit;
-                           end if;
-                        end exit_if_no_Packages_were_just_installed_but_the_Packages_list_is_not_empty;
-                     end rid_Packages_just_installed_from_the_AUR_Packages_list;
-
-                     just_Installed.clear;
-                  end loop;
-
-                  save_install_Order:
-                  declare
-                     use ada.Text_IO;
-                     File : File_type;
-                  begin
-                     create (File, out_File, "aur_install_order");
-
-                     for Each of install_Order
-                     loop
-                        put_Line (File, Each);
-                     end loop;
-
-                     close (File);
-
-                     log ("");
-                     log ("New AUR install order file created.");
-                  end save_install_Order;
-               end install_each_AUR_Package;
-
-
-            else   -- Using the existing AUR install order.
-               declare
-                  use lace.Text;
-                  the_Text     : constant lace.Text.item      := forge.to_Text (Filename => "aur_install_order");
-                  the_Packages : constant lace.Text.items_128 := all_Lines.Lines (the_Text);
-               begin
-                  for Each of the_Packages
-                  loop
-                     if +Each /= ""     -- Skip final empty line.
-                     then
-                        declare
-                           full_Name : constant String := +Each;
-                           Success   :          Boolean;
-                           Output    : constant String := run ("pacman -U --noconfirm " & full_Name,
-                                                               Normal_Exit => Success,
-                                                               in_Chroot   => True);
-                        begin
-                           Dlog (Output);
-
-                           if Success
-                           then
-                              log (".", new_Line => False);
-                              Dlog ("SUCCESS for '" & full_Name & "'");
-                              Dlog ("");
-                              Dlog ("");
-                              Dlog ("");
-                           end if;
-                        end;
-                     end if;
-                  end loop;
+                     Dlog ("SUCCESS for 'AUR packages'.");
+                     Dlog ("");
+                  end if;
                end;
+
+            else
+               Dlog ("No AUR packages available.");
             end if;
-         end;
+         end install_other_Packages;
 
       end install_AUR_Packages;
 

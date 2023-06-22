@@ -30,9 +30,12 @@ pikaur $FLAGS fswatch
 pikaur $FLAGS libiconv
 pikaur $FLAGS lightdm-settings
 pikaur $FLAGS pikaur
+pikaur $FLAGS yay
 pikaur $FLAGS smartgit
 pikaur $FLAGS timeshift
+
 pikaur $FLAGS adacurses
+#pikaur $FLAGS adasockets
 pikaur $FLAGS ada_language_server
 pikaur $FLAGS ada-libfswatch
 pikaur $FLAGS ada_spawn
@@ -40,7 +43,9 @@ pikaur $FLAGS ada-web-server
 pikaur $FLAGS ahven
 pikaur $FLAGS aunit
 pikaur $FLAGS florist
-pikaur $FLAGS gnatstudio-bin
+pikaur $FLAGS gnatdoc
+#pikaur $FLAGS gnatstudio-bin
+pikaur $FLAGS gnatstudio
 pikaur $FLAGS gnatsymbolize
 pikaur $FLAGS gtkada
 pikaur $FLAGS ini_file_manager
@@ -55,7 +60,8 @@ pikaur $FLAGS sdlada
 pikaur $FLAGS sphinxcontrib-adadomain
 pikaur $FLAGS xmlada
 
-pikaur $FLAGS spark2014
+#pikaur $FLAGS spark2014
+
 #pikaur $FLAGS alt-ergo
 pikaur $FLAGS z3
 pikaur $FLAGS cvc4
